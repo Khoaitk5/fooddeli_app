@@ -1,0 +1,13 @@
+{
+  "name": "fooddeli_app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "app": "concurrently \"npm run client\" \"npm run server\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
