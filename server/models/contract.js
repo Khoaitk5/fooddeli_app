@@ -1,3 +1,4 @@
+
 class Contract {
   constructor({
     contract_id,
