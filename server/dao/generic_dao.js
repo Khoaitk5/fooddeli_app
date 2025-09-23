@@ -1,5 +1,6 @@
 // dao/genericDao.js
-const pool = require("../db");
+const pool = require("../config/db");
+
 
 class GenericDao {
   constructor(tableName, Model) {
