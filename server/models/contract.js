@@ -1,4 +1,4 @@
-// models/Contract.js
+
 class Contract {
   constructor({
     contract_id,
