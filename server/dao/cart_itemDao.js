@@ -1,4 +1,4 @@
-// dao/cartItemDao.js
+// dao/cart_itemDao.js
 const GenericDao = require("./generic_dao");
 const CartItem = require("../models/cart_item");
 

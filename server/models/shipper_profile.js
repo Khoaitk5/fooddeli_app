@@ -1,5 +1,5 @@
 // models/ShipperProfile.js
-const User = require("./User");
+const User = require("./user");
 
 class ShipperProfile extends User {
   constructor({
