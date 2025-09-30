@@ -1,49 +1,43 @@
-const UserService = require("../services/userService");
+// server/controllers/userController.js
+const userService = require("../services/userService");
 
-exports.createUser = async (req, res) => {
+// 📌 Lấy thông tin user theo ID
+const getUserById = async (req, res) => {
   try {
-    const result = await UserService.createUser(req.body);
-    res.status(201).json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const userId = req.params.id || 4; // mặc định là 4 nếu không truyền
+    const user = await userService.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "❌ Không tìm thấy người dùng!" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("⚠️ Lỗi getUserById:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy dữ liệu người dùng." });
   }
 };
 
-exports.getAllUsers = async (req, res) => {
+// 📌 Cập nhật thông tin user
+const updateUser = async (req, res) => {
   try {
-    const result = await UserService.getAllUsers();
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const userId = req.params.id || 4;
+    const updateData = req.body;
+
+    const updatedUser = await userService.updateUser(userId, updateData);
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "❌ Không thể cập nhật - Người dùng không tồn tại!" });
+    }
+
+    res.status(200).json({
+      message: "✅ Cập nhật thông tin thành công!",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("⚠️ Lỗi updateUser:", error);
+    res.status(500).json({ message: "Lỗi server khi cập nhật thông tin người dùng." });
   }
 };
 
-exports.getUserById = async (req, res) => {
-  try {
-    const result = await UserService.getUserById(req.params.id);
-    if (!result) return res.status(404).json({ message: "User not found" });
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.updateUser = async (req, res) => {
-  try {
-    const result = await UserService.updateUser(req.params.id, req.body);
-    if (!result) return res.status(404).json({ message: "User not found" });
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.deleteUser = async (req, res) => {
-  try {
-    const result = await UserService.deleteUser(req.params.id);
-    if (!result) return res.status(404).json({ message: "User not found" });
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+module.exports = { getUserById, updateUser };

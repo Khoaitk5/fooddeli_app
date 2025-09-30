@@ -1,9 +1,9 @@
 // models/ShopProfile.js
-const User = require("./User");
+const User = require("./user");
 
 class ShopProfile extends User {
   constructor({
-    id, // id trong shop_profiles
+    id, // id in shop_profiles
     user_id,
     username,
     password,
@@ -25,8 +25,9 @@ class ShopProfile extends User {
     shop_status,
     shop_created_at,
     shop_updated_at,
+    total_sales // ✅ new field
   }) {
-    // gọi constructor User
+    // Call User constructor
     super({
       id: user_id,
       username,
@@ -42,7 +43,7 @@ class ShopProfile extends User {
       updated_at,
     });
 
-    // thuộc tính riêng của shop_profiles
+    // shop_profiles specific properties
     this.shop_profile_id = id;
     this.shop_name = shop_name;
     this.address = address;
@@ -53,6 +54,9 @@ class ShopProfile extends User {
     this.shop_status = shop_status;
     this.shop_created_at = shop_created_at;
     this.shop_updated_at = shop_updated_at;
+
+    // ✅ New property: total number of sales
+    this.total_sales = total_sales ?? 0; // default 0 if not provided
   }
 }
 

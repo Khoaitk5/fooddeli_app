@@ -1,6 +1,6 @@
 // dao/orderVoucherDao.js
 const GenericDao = require("./generic_dao");
-const OrderVoucher = require("../models/OrderVoucher");
+const OrderVoucher = require("../models/order_voucher");
 
 const orderVoucherDao = new GenericDao("order_vouchers", OrderVoucher);
 
