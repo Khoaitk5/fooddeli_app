@@ -26,7 +26,12 @@ const FacebookButton = ({ onClick, style, ...props }) => (
         <FacebookIcon />
       </div>
 
-      <span>Tiếp tục với Facebook</span>
+      <span style={{
+        fontSize: 13,
+        fontFamily: 'TikTok Sans',
+        fontWeight: '600',
+        color: 'black'
+      }}>Tiếp tục với Facebook</span>
     </div>
   </Button>
 );

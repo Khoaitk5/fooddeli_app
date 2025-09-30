@@ -26,7 +26,13 @@ const PhoneEmailButton = ({ onClick, style, ...props }) => (
         <UserIcon />
       </div>
 
-      <span>Sử dụng SĐT hoặc email</span>
+      <span style={{
+        fontSize: 13,
+        fontFamily: 'TikTok Sans',
+        fontWeight: '600',
+        color: 'black'
+      }}
+      >Sử dụng SĐT hoặc email</span>
     </div>
   </Button>
 );

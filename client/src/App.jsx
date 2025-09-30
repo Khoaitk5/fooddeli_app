@@ -4,11 +4,15 @@ import Home from './pages/Customer/Home';
 import Cart from './pages/Customer/Cart';
 import OrderHistory from './pages/Customer/OrderHistory';
 import Login from './pages/Auth/Login';
+import LoginPhone from './pages/Auth/LoginPhone';
+import LoginEmail from './pages/Auth/LoginEmail';
 
 function App() {
   return (
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/login/phone" element={<LoginPhone />} />
+        <Route path="/login/email" element={<LoginEmail />} />
         <Route path="/customer/*" element={<MobileLayout />}>
           <Route path="home" element={<Home />} />
           <Route path="discover" element={<div>Discover Page</div>} />

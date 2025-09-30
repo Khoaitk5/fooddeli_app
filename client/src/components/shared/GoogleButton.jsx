@@ -1,4 +1,3 @@
-// GoogleButton.jsx
 import Button from './Button';
 import GoogleIcon from './GoogleIcon';
 
@@ -27,7 +26,12 @@ const GoogleButton = ({ onClick, style, ...props }) => (
         <GoogleIcon />
       </div>
 
-      <span>Tiếp tục với Google</span>
+      <span style={{
+        fontSize: 13,
+        fontFamily: 'TikTok Sans',
+        fontWeight: '600',
+        color: 'black'
+      }}>Tiếp tục với Google</span>
     </div>
   </Button>
 );

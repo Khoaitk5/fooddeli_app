@@ -80,3 +80,10 @@ button:focus-visible {
     padding: 0;
   }
 }
+
+input::placeholder {
+  color: #aaaaae;
+  font-family: 'TikTok Sans';
+  font-size: 14px;
+  font-weight: 400;
+}

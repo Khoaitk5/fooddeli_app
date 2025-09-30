@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Logo from '@/components/shared/Logo';
 import FooterBar from '@/components/shared/FooterBar';
 import TermsAgreement from '@/components/shared/TermsAgreement';
@@ -8,6 +9,7 @@ import GoogleButton from '@/components/shared/GoogleButton';
 import SubmitButton from '@/components/shared/SubmitButton';
 
 const Login = () => {
+  const navigate = useNavigate();
 
   return (
     <div style={{
@@ -61,7 +63,7 @@ const Login = () => {
           width: '267px',
         }}
       >
-        <PhoneEmailButton onClick={() => {}} style={{ marginBottom: '15px' }} />
+        <PhoneEmailButton onClick={() => navigate('/login/phone')} style={{ marginBottom: '15px' }} />
         <FacebookButton onClick={() => {}} style={{ marginBottom: '15px' }} />
         <GoogleButton onClick={() => {}} style={{ marginBottom: '20px' }} />
         <SubmitButton>
