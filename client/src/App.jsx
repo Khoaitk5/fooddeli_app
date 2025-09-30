@@ -1,35 +1,41 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import MobileLayout from './components/layout/MobileLayout';
+import Home from './pages/Customer/Home';
+import Cart from './pages/Customer/Cart';
+import OrderHistory from './pages/Customer/OrderHistory';
+import Login from './pages/Auth/Login';
+
+const theme = createTheme({
+  palette: {
+    primary: { main: '#1976d2' },
+    secondary: { main: '#dc004e' },
+  },
+});
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/customer/*" element={<MobileLayout />}>
+          <Route path="home" element={<Home />} />
+          <Route path="discover" element={<div>Discover Page</div>} />
+          <Route path="notifications" element={<div>Notifications Page</div>} />
+          <Route path="profile" element={<div>Customer Profile</div>} />
+        </Route>
+        <Route path="/shipper/*" element={<MobileLayout />}>
+          <Route path="orders" element={<div>Shipper Orders</div>} />
+          <Route path="map" element={<div>Shipper Map</div>} />
+          <Route path="notification" element={<div>Shipper Notifications</div>} />
+          <Route path="profile" element={<div>Shipper Profile</div>} />
+        </Route>
+        <Route path="*" element={<Navigate to="/customer/home" />} />
+      </Routes>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
