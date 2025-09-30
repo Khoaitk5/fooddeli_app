@@ -90,12 +90,7 @@ const Register = () => {
             </svg>
           } />
           <SocialButton onClick={handleGoogle} label="Tiếp tục với Google" icon={
-            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#EA4335" d="M12 10.2v3.6h5.02A4.3 4.3 0 0 1 12 19a7 7 0 1 1 6.63-9.3l-2.85 2.22A3.98 3.98 0 1 0 12 10.2z"/>
-              <path fill="#4285F4" d="M21.99 12.23a7 7 0 0 0-.21-1.73H12v3.24h5.02a4.3 4.3 0 0 1-1.85 2.82l2.85 2.22c1.65-1.52 2.6-3.76 2.6-6.55z"/>
-              <path fill="#FBBC05" d="M7.15 14.29A4.2 4.2 0 0 1 6.9 13a4.2 4.2 0 0 1 .25-1.29L4.23 9.33A7 7 0 0 0 5 17.18l2.15-2.89z"/>
-              <path fill="#34A853" d="M12 19a6.99 6.99 0 0 0 4.83-1.74l-2.85-2.22A3.98 3.98 0 0 1 8.5 12H5a7 7 0 0 0 7 7z"/>
-            </svg>
+            <img src="https://cmctelecom.vn/wp-content/uploads/2024/01/png-transparent-google-logo-google-text-trademark-logo-300x293.png" alt="Google" style={{ width: 24, height: 24, objectFit: 'contain' }} />
           } />
         </div>
       </div>
