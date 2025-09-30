@@ -1,47 +1,30 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import MobileLayout from './components/layout/MobileLayout';
-import Home from './pages/Customer/Home';
-import Cart from './pages/Customer/Cart';
-import OrderHistory from './pages/Customer/OrderHistory';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import ProfileDetails from './pages/Auth/ProfileDetails';
-import CustomerProfile from './pages/Customer/Profile';
-
-const theme = createTheme({
-  palette: {
-    primary: { main: '#1976d2' },
-    secondary: { main: '#dc004e' },
-  },
-});
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Login from './pages/Auth/Login.jsx'
+import Register from './pages/Auth/Register.jsx'
+import LoginPhone from './pages/Auth/RegisterPhone.jsx'
+import RegisterEmail from './pages/Auth/RegisterEmail.jsx'
+import LoginMethod from './pages/Auth/LoginMethod.jsx'
+import OtpVerify from './pages/Auth/OtpVerify.jsx'
+import Home from './pages/Customer/Home.jsx'
+import AppShell from './components/layout/AppShell.jsx'
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <AppShell>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/customer/*" element={<MobileLayout />}>
-          <Route path="home" element={<Home />} />
-          <Route path="discover" element={<div>Discover Page</div>} />
-          <Route path="notifications" element={<div>Notifications Page</div>} />
-          <Route path="profile" element={<div>Customer Profile</div>} />
-        </Route>
-        <Route path="/shipper/*" element={<MobileLayout />}>
-          <Route path="orders" element={<div>Shipper Orders</div>} />
-          <Route path="map" element={<div>Shipper Map</div>} />
-          <Route path="notification" element={<div>Shipper Notifications</div>} />
-          <Route path="profile" element={<div>Shipper Profile</div>} />
-        </Route>
-        <Route path="*" element={<Navigate to="/customer/home" />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/register/profile" element={<ProfileDetails />} />
-        <Route path="/customer/profile" element={<CustomerProfile />} />
+        <Route path="/register/phone" element={<LoginPhone />} />
+        <Route path="/register/email" element={<RegisterEmail />} />
+        <Route path="/login/method" element={<LoginMethod />} />
+        <Route path="/login/otp" element={<OtpVerify />} />
+        <Route path="/customer/home" element={<Home />} />
+        <Route path="/" element={<Navigate to="/register" replace />} />
+        <Route path="*" element={<Navigate to="/register" replace />} />
       </Routes>
-    </ThemeProvider>
-  );
+    </AppShell>
+  )
 }
 
-export default App;
+export default App

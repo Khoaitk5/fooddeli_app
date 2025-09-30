@@ -1,281 +1,126 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Box, Typography, Button, TextField } from "@mui/material";
-import axios from "axios";
+import React from 'react';
+import SocialButton from '../../components/shared/SocialButton.jsx';
+import PrimaryButton from '../../components/shared/PrimaryButton.jsx';
+
+const BrandLogo = () => {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      {/* simple cloche icon */}
+      <svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 22c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="var(--brand)" strokeWidth="3" strokeLinecap="round"/>
+        <path d="M2 22h32" stroke="var(--brand)" strokeWidth="3" strokeLinecap="round"/>
+        <circle cx="17" cy="7" r="2" fill="var(--brand)"/>
+      </svg>
+      <div>
+        <span style={{ color: 'var(--brand)', fontSize: 'var(--text-xl)', fontFamily: 'var(--font-display)', fontWeight: 500 }}>Food</span>
+        <span style={{ color: 'var(--brand)', fontSize: 'var(--text-xl)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>Deli</span>
+      </div>
+    </div>
+  );
+};
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // 📡 Hàm đăng nhập gọi về backend
-  const handleLogin = async () => {
-    if (!phone || !password) {
-      alert("⚠️ Vui lòng nhập đầy đủ số điện thoại và mật khẩu!");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // 📡 Gọi API backend
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
-        phone: phone,
-        password: password,
-      });
-
-      if (res.data.success) {
-        alert(res.data.message || "✅ Đăng nhập thành công!");
-
-        // 📦 Lưu thông tin người dùng vào localStorage
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-
-        // 📍 Điều hướng sang trang home
-        navigate("/customer/home");
-      } else {
-        alert(res.data.message || "❌ Sai số điện thoại hoặc mật khẩu");
-      }
-    } catch (err) {
-      console.error("Lỗi đăng nhập:", err);
-      alert(
-        err.response?.data?.message ||
-          "❌ Không thể kết nối tới server. Vui lòng thử lại."
-      );
-    } finally {
-      setLoading(false);
-    }
+  const handleFacebook = () => {
+    alert('Facebook login chưa được triển khai');
   };
 
-  const handleFacebook = () => alert("Facebook login not implemented");
-  const handleGoogle = () => alert("Google login not implemented");
-  const handleGuest = () => navigate("/customer/home");
+  const handleGoogle = () => {
+    alert('Google login chưa được triển khai');
+  };
+
+  const handleGuest = () => {
+    alert('Tiếp tục với khách');
+  };
+
+  const wrapperStyle = {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    background: 'var(--color-surface)'
+  };
+
+  const stackStyle = {
+    marginTop: 72,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+  };
+
+  const buttonColStyle = {
+    marginTop: 8,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    width: 320,
+  };
+
+  const disclaimerStyle = {
+    width: 283,
+    textAlign: 'center',
+    color: 'rgba(22, 24, 35, 0.50)',
+    fontSize: 'var(--text-xs)',
+    fontFamily: 'var(--font-display)',
+    lineHeight: '15px',
+    marginTop: 120,
+  };
 
   return (
-    <Box
-      sx={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#f5f5f5",
-        margin: 0,
-        padding: 0,
-      }}
-    >
-      {/* ✅ Container giữ toàn bộ UI */}
-      <Box
-        sx={{
-          width: 360,
-          height: 800,
-          position: "relative",
-          background: "white",
-          overflow: "hidden",
-          boxShadow: "0 0 20px rgba(0,0,0,0.1)",
-          borderRadius: 4,
-        }}
-      >
-        {/* Logo */}
-        <Box sx={{ left: 152, top: 73, position: "absolute" }}>
-          <Typography
-            sx={{
-              color: "#F9704B",
-              fontSize: 25,
-              fontWeight: "500",
-              display: "inline",
-            }}
-          >
-            Food
-          </Typography>
-          <Typography
-            sx={{
-              color: "#F9704B",
-              fontSize: 25,
-              fontWeight: "700",
-              display: "inline",
-            }}
-          >
-            Deli
-          </Typography>
-        </Box>
+    <div style={wrapperStyle}>
+      <div style={stackStyle}>
+        <BrandLogo />
+        <div style={{ color: 'var(--brand-strong)', fontSize: 'var(--text-2xl)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>Đăng nhập</div>
 
-        {/* Title */}
-        <Box
-          sx={{
-            width: 144,
-            height: 50,
-            left: 107,
-            top: 202,
-            position: "absolute",
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "#EF5126",
-            fontSize: 29,
-            fontWeight: "700",
-            wordWrap: "break-word",
-          }}
-        >
-          Đăng nhập
-        </Box>
+        <div style={buttonColStyle}>
+          <SocialButton
+            onClick={() => (window.location.href = '/login/method')}
+            label="Sử dụng SĐT hoặc email"
+            icon={
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" stroke="var(--color-title)" strokeWidth="1.5"/>
+                <path d="M4 20c1.5-4 6-6 8-6s6.5 2 8 6" stroke="var(--color-title)" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            }
+          />
 
-        {/* 📱 Ô nhập Số điện thoại */}
-        <TextField
-          label="Số điện thoại"
-          variant="outlined"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          fullWidth
-          sx={{
-            position: "absolute",
-            top: 280,
-            left: 46,
-            width: 267,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "12px",
-            },
-          }}
-        />
+          <SocialButton
+            onClick={handleFacebook}
+            label="Tiếp tục với Facebook"
+            icon={
+              <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 12a10 10 0 1 0-11.56 9.9v-7h-2.3V12h2.3V9.8c0-2.27 1.35-3.53 3.42-3.53.99 0 2.03.18 2.03.18v2.24h-1.14c-1.12 0-1.47.7-1.47 1.42V12h2.5l-.4 2.9h-2.1v7A10 10 0 0 0 22 12Z" fill="#1877F2"/>
+                <path d="M15.5 14.9 15.9 12h-2.5V10.1c0-.72.35-1.42 1.47-1.42h1.14V6.44s-1.04-.18-2.03-.18c-2.07 0-3.42 1.26-3.42 3.53V12h-2.3v2.9h2.3v7a10.08 10.08 0 0 0 3 .02v-7.02h2.1Z" fill="#fff"/>
+              </svg>
+            }
+          />
 
-        {/* 🔒 Ô nhập Mật khẩu */}
-        <TextField
-          label="Mật khẩu"
-          type="password"
-          variant="outlined"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          fullWidth
-          sx={{
-            position: "absolute",
-            top: 340,
-            left: 46,
-            width: 267,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "12px",
-            },
-          }}
-        />
+          <SocialButton
+            onClick={handleGoogle}
+            label="Tiếp tục với Google"
+            icon={
+              <img src="https://cmctelecom.vn/wp-content/uploads/2024/01/png-transparent-google-logo-google-text-trademark-logo-300x293.png" alt="Google" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+            }
+          />
 
-        {/* ✅ Nút đăng nhập */}
-        <Button
-          onClick={handleLogin}
-          disabled={loading}
-          sx={{
-            width: 267,
-            height: 50,
-            left: 46,
-            top: 410,
-            position: "absolute",
-            background: "#F9704B",
-            borderRadius: 9999,
-            textTransform: "none",
-            color: "white",
-            fontWeight: "600",
-            fontSize: 14,
-            "&:hover": { background: "#EF5126" },
-          }}
-        >
-          {loading ? "⏳ Đang đăng nhập..." : "Đăng nhập"}
-        </Button>
-
-        {/* Hoặc đăng nhập bằng */}
-        <Typography
-          sx={{
-            position: "absolute",
-            top: 480,
-            left: 0,
-            width: "100%",
-            textAlign: "center",
-            fontSize: 13,
-            color: "#999",
-          }}
-        >
-          — hoặc đăng nhập bằng —
-        </Typography>
-
-        {/* Facebook button */}
-        <Button
-          onClick={handleFacebook}
-          sx={{
-            width: 267,
-            height: 43,
-            left: 46,
-            top: 510,
-            position: "absolute",
-            background: "white",
-            borderRadius: 12,
-            border: "0.8px solid #D0D1D3",
-            textTransform: "none",
-            justifyContent: "flex-start",
-            paddingLeft: "18px",
-            "&:hover": { background: "white" },
-          }}
-        >
-          <Typography
-            sx={{
-              color: "#161823",
-              fontSize: 13,
-              fontWeight: "600",
-              marginLeft: "16px",
-            }}
-          >
-            Tiếp tục với Facebook
-          </Typography>
-        </Button>
-
-        {/* Google button */}
-        <Button
-          onClick={handleGoogle}
-          sx={{
-            width: 267,
-            height: 43,
-            left: 46,
-            top: 560,
-            position: "absolute",
-            background: "white",
-            borderRadius: 12,
-            border: "0.8px solid #D0D1D3",
-            textTransform: "none",
-            justifyContent: "flex-start",
-            paddingLeft: "18px",
-            "&:hover": { background: "white" },
-          }}
-        >
-          <Typography
-            sx={{
-              color: "#161823",
-              fontSize: 13,
-              fontWeight: "600",
-              marginLeft: "16px",
-            }}
-          >
-            Tiếp tục với Google
-          </Typography>
-        </Button>
-
-        {/* Guest button */}
-        <Button
-          onClick={handleGuest}
-          sx={{
-            width: 267,
-            height: 50,
-            left: 46,
-            top: 630,
-            position: "absolute",
-            background: "#F9704B",
-            boxShadow: "0px -1px 33.7px rgba(0, 0, 0, 0.25)",
-            borderRadius: 9999,
-            textTransform: "none",
-            "&:hover": { background: "#F9704B" },
-          }}
-        >
-          <Typography sx={{ color: "white", fontSize: 13, fontWeight: "600" }}>
+          <PrimaryButton onClick={handleGuest} style={{ width: '100%', height: 50 }}>
             Tiếp tục với tư cách là khách
-          </Typography>
-        </Button>
-      </Box>
-    </Box>
+          </PrimaryButton>
+        </div>
+      </div>
+
+      <div style={disclaimerStyle}>
+        Bằng việc tiếp tục với tài khoản có vị trí tại <strong style={{ color: 'rgba(22, 24, 35, 0.75)', fontWeight: 600, fontFamily: 'IBM Plex Sans' }}>Việt Nam</strong>, bạn đồng ý với <strong style={{ color: '#161823', fontWeight: 500, fontFamily: 'IBM Plex Sans' }}>Điều khoản dịch vụ</strong>, đồng thời xác nhận rằng bạn đã đọc <strong style={{ color: '#161823', fontWeight: 500, fontFamily: 'IBM Plex Sans' }}>Chính sách quyền riêng tư</strong> của chúng tôi.
+      </div>
+
+      <div style={{ marginTop: 12, color: 'var(--color-text)', fontSize: 14, fontFamily: 'var(--font-display)' }}>
+        Bạn không có tài khoản? <button onClick={() => (window.location.href = '/register')} style={{ background: 'transparent', border: 'none', color: 'var(--brand-strong)', fontWeight: 700, cursor: 'pointer' }}>Đăng ký</button>
+      </div>
+    </div>
   );
 };
 
