@@ -18,7 +18,7 @@ const LoginEmail = () => {
 
         if (email && (email.endsWith('@gmail.com') || email.endsWith('@outlook.com') || email.endsWith('@hotmail.com'))) {
             // Navigate to OTP page or handle login
-            navigate('/otp');
+            navigate('/otp', { state: { email } });
         } else {
             setError('Please enter a valid email address from Gmail, Outlook, or Hotmail');
         }

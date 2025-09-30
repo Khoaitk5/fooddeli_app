@@ -18,7 +18,7 @@ const LoginPhone = () => {
 
         if (phone.length === 10) {
             // Navigate to OTP page or handle login
-            navigate('/otp');
+            navigate('/otp', { state: { phone } });
         } else {
             setError('Please enter a valid 10-digit phone number');
         }
