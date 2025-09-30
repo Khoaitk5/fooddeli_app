@@ -5,10 +5,10 @@ const productService = {
         return await productDao.create(productData);
     },
     async getProductById(productId){
-        return await productDao.getById(productId);
+        return await productDao.findById(productId);
     },
     async getAllProducts(){
-        return await productDao.getAll();
+        return await productDao.findAll();
     },
     async updateProduct(productId, updateData){
         return await productDao.update(productId, updateData);

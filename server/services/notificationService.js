@@ -5,10 +5,10 @@ const notificationService = {
         return await notificationDao.create(notificationData);
     },
     async getNotificationById(notificationId){
-        return await notificationDao.getById(notificationId);
+        return await notificationDao.findById(notificationId);
     },
     async getAllNotifications(){
-        return await notificationDao.getAll();
+        return await notificationDao.findAll();
     },
     async updateNotification(notificationId, updateData){
         return await notificationDao.update(notificationId, updateData);

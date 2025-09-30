@@ -5,10 +5,10 @@ const voucherService = {
         return await voucherDao.create(voucherData);
     },
     async getVoucherById(voucherId){
-        return await voucherDao.getById(voucherId);
+        return await voucherDao.findById(voucherId);
     },
     async getAllVouchers(){
-        return await voucherDao.getAll();
+        return await voucherDao.findAll();
     },
     async updateVoucher(voucherId, updateData){
         return await voucherDao.update(voucherId, updateData);

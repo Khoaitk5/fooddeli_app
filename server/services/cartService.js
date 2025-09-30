@@ -5,10 +5,10 @@ const cartService = {
         return await cartDao.create(cartData);
     },
     async getCartById(cartId){
-        return await cartDao.getById(cartId);
+        return await cartDao.findById(cartId);
     },
     async getAllCarts(){
-        return await cartDao.getAll();
+        return await cartDao.findAll();
     },
     async updateCart(cartId, updateData){
         return await cartDao.update(cartId, updateData);

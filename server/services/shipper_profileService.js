@@ -5,10 +5,10 @@ const shipper_profileService = {
         return await shipper_profileDao.create(profileData);
     },
     async getShipperProfileById(profileId){
-        return await shipper_profileDao.getById(profileId);
+        return await shipper_profileDao.findById(profileId);
     },
     async getAllShipperProfiles(){
-        return await shipper_profileDao.getAll();
+        return await shipper_profileDao.findAll();
     },
     async updateShipperProfile(profileId, updateData){
         return await shipper_profileDao.update(profileId, updateData);
