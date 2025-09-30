@@ -1,5 +1,5 @@
 // models/ShopProfile.js
-const User = require("./User");
+const User = require("./user");
 
 class ShopProfile extends User {
   constructor({
