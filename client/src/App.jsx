@@ -6,6 +6,8 @@ import Home from './pages/Customer/Home';
 import Cart from './pages/Customer/Cart';
 import OrderHistory from './pages/Customer/OrderHistory';
 import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
+import ProfileDetails from './pages/Auth/ProfileDetails';
 
 const theme = createTheme({
   palette: {
@@ -33,6 +35,8 @@ function App() {
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
         <Route path="*" element={<Navigate to="/customer/home" />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/register/profile" element={<ProfileDetails />} />
       </Routes>
     </ThemeProvider>
   );
