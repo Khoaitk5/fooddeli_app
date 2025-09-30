@@ -5,10 +5,10 @@ const order_voucherService = {
         return await order_voucherDao.create(orderVoucherData);
     },
     async getOrderVoucherById(orderVoucherId){
-        return await order_voucherDao.getById(orderVoucherId);
+        return await order_voucherDao.findById(orderVoucherId);
     },
     async getAllOrderVouchers(){
-        return await order_voucherDao.getAll();
+        return await order_voucherDao.findAll();
     },
     async updateOrderVoucher(orderVoucherId, updateData){
         return await order_voucherDao.update(orderVoucherId, updateData);

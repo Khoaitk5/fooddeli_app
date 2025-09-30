@@ -5,10 +5,10 @@ const shop_profileService = {
         return await shop_profileDao.create(profileData);
     },
     async getShopProfileById(profileId){
-        return await shop_profileDao.getById(profileId);
+        return await shop_profileDao.findById(profileId);
     },
     async getAllShopProfiles(){
-        return await shop_profileDao.getAll();
+        return await shop_profileDao.findAll();
     },
     async updateShopProfile(profileId, updateData){
         return await shop_profileDao.update(profileId, updateData);

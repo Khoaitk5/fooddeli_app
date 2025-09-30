@@ -5,10 +5,10 @@ const userService = {
         return await userDao.create(userData);
     },
     async getUserById(userId){
-        return await userDao.getById(userId);
+        return await userDao.findById(userId);
     },
     async getAllUsers(){
-        return await userDao.getAll();
+        return await userDao.findAll();
     },
     async updateUser(userId, updateData){
         return await userDao.update(userId, updateData);

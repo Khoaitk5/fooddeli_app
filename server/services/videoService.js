@@ -5,10 +5,10 @@ const videoService = {
         return await videoDao.create(videoData);
     },
     async getVideoById(videoId){
-        return await videoDao.getById(videoId);
+        return await videoDao.findById(videoId);
     },
     async getAllVideos(){
-        return await videoDao.getAll();
+        return await videoDao.findAll();
     },
     async updateVideo(videoId, updateData){
         return await videoDao.update(videoId, updateData);
