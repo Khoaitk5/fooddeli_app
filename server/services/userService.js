@@ -1,9 +1,6 @@
 const userDao = require("../dao/userDao");
 
 const userService = {
-    async createUser(userData){
-        return await userDao.create(userData);
-    },
     async getUserById(userId){
         return await userDao.findById(userId);
     },
