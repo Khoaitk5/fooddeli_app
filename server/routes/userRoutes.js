@@ -1,18 +1,12 @@
-// routes/userRoutes.js
+// server/routes/userRoutes.js
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
 
-// 📄 Lấy danh sách tất cả users
-router.get("/", userController.getAllUsers);
-
-// 🔍 Lấy user theo ID
+// 📌 Lấy thông tin user theo ID (vd: id = 4)
 router.get("/:id", userController.getUserById);
 
-// ✏️ Cập nhật user theo ID
+// 📌 Cập nhật thông tin user theo ID
 router.put("/:id", userController.updateUser);
-
-// ❌ Xóa user theo ID
-router.delete("/:id", userController.deleteUser);
 
 module.exports = router;

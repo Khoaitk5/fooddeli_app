@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -14,57 +14,82 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import axios from "axios";
 
-const CustomerProfile = () => {
-  const [user, setUser] = useState({
-    id: 1,
-    username: "john_doe",
-    email: "john@example.com",
-    phone: "0909123456",
-    full_name: "John Doe",
-    avatar_url: "https://i.pravatar.cc/150?u=john",
-    rating: 4.5,
-    password: "123456",
-    addresses: ["123 Đường ABC, Quận 1, TP.HCM", "456 Đường DEF, Quận 3"],
-  });
-
+const Profile = () => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [newAddress, setNewAddress] = useState("");
   const [editingField, setEditingField] = useState(null);
   const [passwordDialog, setPasswordDialog] = useState(false);
 
-  // mật khẩu
+  // 🔐 Đổi mật khẩu
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const [error, setError] = useState("");
+
+  // 📡 Gọi API lấy thông tin user id=4 khi trang load
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/users/4")
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        setError("❌ Không thể tải thông tin người dùng: " + err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  // 📌 Xử lý thay đổi input
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    setEditingField(null);
-    alert("✅ Cập nhật thông tin thành công!");
-    console.log("📤 Gửi dữ liệu lên server:", user);
+  // 📤 Gửi thông tin cập nhật lên server
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const res = await axios.put("http://localhost:5000/api/users/4", user);
+      alert(res.data.message || "✅ Cập nhật thông tin thành công!");
+      setUser(res.data.user);
+      setEditingField(null);
+    } catch (err) {
+      alert("❌ Cập nhật thất bại: " + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
+  // ➕ Thêm địa chỉ
   const handleAddAddress = () => {
     if (newAddress.trim() === "") {
       alert("⚠️ Địa chỉ không được để trống");
       return;
     }
-    setUser({ ...user, addresses: [...user.addresses, newAddress] });
+    const updated = [...(user.addresses || []), newAddress];
+    setUser({ ...user, addresses: updated });
     setNewAddress("");
   };
 
+  // 🗑️ Xóa địa chỉ
   const handleDeleteAddress = (index) => {
-    const updatedAddresses = user.addresses.filter((_, i) => i !== index);
-    setUser({ ...user, addresses: updatedAddresses });
+    const updated = user.addresses.filter((_, i) => i !== index);
+    setUser({ ...user, addresses: updated });
   };
 
-  const handlePasswordChange = () => {
+  // 🔐 Đổi mật khẩu
+  const handlePasswordChange = async () => {
     if (oldPassword !== user.password) {
       alert("❌ Mật khẩu cũ không chính xác!");
       return;
@@ -78,12 +103,18 @@ const CustomerProfile = () => {
       return;
     }
 
-    setUser({ ...user, password: newPassword });
-    setPasswordDialog(false);
-    setOldPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    alert("✅ Đổi mật khẩu thành công!");
+    try {
+      const updatedUser = { ...user, password: newPassword };
+      const res = await axios.put("http://localhost:5000/api/users/4", updatedUser);
+      alert("✅ Đổi mật khẩu thành công!");
+      setUser(res.data.user);
+      setPasswordDialog(false);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      alert("❌ Lỗi đổi mật khẩu: " + err.message);
+    }
   };
 
   // 🧠 Hàm render ô nhập có nút Edit ở cuối
@@ -92,7 +123,7 @@ const CustomerProfile = () => {
       label={label}
       name={name}
       type={type}
-      value={user[name]}
+      value={user?.[name] || ""}
       onChange={handleChange}
       fullWidth
       disabled={editingField !== name}
@@ -108,6 +139,29 @@ const CustomerProfile = () => {
       }}
     />
   );
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -131,17 +185,27 @@ const CustomerProfile = () => {
         }}
       >
         {/* 📸 Avatar */}
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Avatar
             src={user.avatar_url}
             alt={user.full_name}
             sx={{ width: 100, height: 100, mb: 2 }}
           />
-          <Typography variant="h5" sx={{ color: "#EF5126", fontWeight: 600 }}>
+          <Typography
+            variant="h5"
+            sx={{ color: "#EF5126", fontWeight: 600 }}
+          >
             {user.full_name}
           </Typography>
           <Typography variant="body2" sx={{ color: "gray" }}>
-            ⭐ Đánh giá: {user.rating}
+            ⭐ Đánh giá: {user.rating || "4.5"}
           </Typography>
         </Box>
 
@@ -165,7 +229,7 @@ const CustomerProfile = () => {
         </Typography>
 
         <List>
-          {user.addresses.map((addr, index) => (
+          {(user.addresses || []).map((addr, index) => (
             <ListItem
               key={index}
               secondaryAction={
@@ -211,8 +275,9 @@ const CustomerProfile = () => {
             mt: 4,
           }}
           onClick={handleSave}
+          disabled={saving}
         >
-          💾 Lưu
+          {saving ? "💾 Đang lưu..." : "💾 Lưu thay đổi"}
         </Button>
       </Box>
 
@@ -256,4 +321,4 @@ const CustomerProfile = () => {
   );
 };
 
-export default CustomerProfile;
+export default Profile;
