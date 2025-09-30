@@ -1,20 +1,49 @@
 import React, { useState } from "react";
 import { Box, Typography, TextField, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Register = () => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    if (!phone || !otp || !password) {
-      alert("Vui lòng nhập đầy đủ thông tin!");
+  const handleRegister = async () => {
+    if (!phone || !password) {
+      alert("⚠️ Vui lòng nhập số điện thoại và mật khẩu!");
       return;
     }
-    alert(`📱 SĐT: ${phone}\n📩 Mã xác nhận: ${otp}\n🔐 Mật khẩu: ${password}`);
-    navigate("/register/profile");
+
+    try {
+      setLoading(true);
+
+      // 📡 Gọi API backend để đăng ký
+      const res = await axios.post("http://localhost:5000/api/auth/register", {
+        phone,
+        password,
+        // Có thể thêm username, full_name, email, address ở bước tiếp theo
+      });
+
+      if (res.data.success) {
+        alert("✅ Đăng ký thành công!");
+        console.log("👤 User:", res.data.user);
+
+        // 📦 Lưu user vào localStorage nếu muốn
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        // ✅ Điều hướng tới bước hoàn tất thông tin
+        navigate("/register/profile");
+      } else {
+        alert(res.data.message || "❌ Đăng ký thất bại");
+      }
+    } catch (err) {
+      console.error("❌ Lỗi đăng ký:", err);
+      alert(err.response?.data?.message || "Lỗi kết nối tới server!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,7 +57,6 @@ const Register = () => {
         alignItems: "center",
       }}
     >
-      {/* Container chính */}
       <Box
         sx={{
           width: 360,
@@ -42,10 +70,14 @@ const Register = () => {
       >
         {/* Logo */}
         <Box sx={{ position: "absolute", top: 73, left: 152 }}>
-          <Typography sx={{ color: "#F9704B", fontSize: 25, fontWeight: 500, display: "inline" }}>
+          <Typography
+            sx={{ color: "#F9704B", fontSize: 25, fontWeight: 500, display: "inline" }}
+          >
             Food
           </Typography>
-          <Typography sx={{ color: "#F9704B", fontSize: 25, fontWeight: 700, display: "inline" }}>
+          <Typography
+            sx={{ color: "#F9704B", fontSize: 25, fontWeight: 700, display: "inline" }}
+          >
             Deli
           </Typography>
         </Box>
@@ -59,13 +91,12 @@ const Register = () => {
             fontSize: 29,
             fontWeight: 700,
             color: "#EF5126",
-            fontFamily: "TikTok Sans",
           }}
         >
           Đăng ký
         </Typography>
 
-        {/* Ô nhập Số điện thoại */}
+        {/* 📱 Số điện thoại */}
         <TextField
           label="Số điện thoại"
           variant="outlined"
@@ -80,13 +111,11 @@ const Register = () => {
               borderRadius: "12px",
               background: "rgba(22, 24, 35, 0.06)",
             },
-            "& .MuiInputLabel-root": {
-              fontSize: 12,
-            },
+            "& .MuiInputLabel-root": { fontSize: 12 },
           }}
         />
 
-        {/* Ô nhập mã OTP */}
+        {/* 📩 Mã OTP (hiện tại chưa dùng tới, nhưng vẫn để UI) */}
         <TextField
           label="Mã xác nhận"
           variant="outlined"
@@ -101,13 +130,9 @@ const Register = () => {
               borderRadius: "12px",
               background: "rgba(22, 24, 35, 0.06)",
             },
-            "& .MuiInputLabel-root": {
-              fontSize: 12,
-            },
+            "& .MuiInputLabel-root": { fontSize: 12 },
           }}
         />
-
-        {/* Gửi mã */}
         <Button
           sx={{
             position: "absolute",
@@ -117,11 +142,12 @@ const Register = () => {
             color: "#EF5126",
             textTransform: "none",
           }}
+          onClick={() => alert("📩 OTP sẽ được xử lý sau")}
         >
           Gửi mã
         </Button>
 
-        {/* Ô nhập mật khẩu */}
+        {/* 🔐 Mật khẩu */}
         <TextField
           label="Mật khẩu"
           type="password"
@@ -137,15 +163,14 @@ const Register = () => {
               borderRadius: "12px",
               background: "rgba(22, 24, 35, 0.06)",
             },
-            "& .MuiInputLabel-root": {
-              fontSize: 12,
-            },
+            "& .MuiInputLabel-root": { fontSize: 12 },
           }}
         />
 
-        {/* Nút Tiếp */}
+        {/* ✅ Nút Tiếp */}
         <Button
           onClick={handleRegister}
+          disabled={loading}
           sx={{
             position: "absolute",
             top: 490,
@@ -159,10 +184,10 @@ const Register = () => {
             "&:hover": { background: "#EF5126" },
           }}
         >
-          Tiếp
+          {loading ? "⏳ Đang đăng ký..." : "Tiếp"}
         </Button>
 
-        {/* Đường link chuyển sang đăng nhập */}
+        {/* 🔁 Chuyển sang đăng nhập */}
         <Typography
           sx={{
             position: "absolute",

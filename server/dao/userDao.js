@@ -49,4 +49,12 @@ userDao.findByEmail = async (email) => {
   return res.rows[0] ? new User(res.rows[0]) : null;
 };
 
+userDao.findByPhone = async (phone) => {
+  const res = await require("../config/db").query(
+    "SELECT * FROM users WHERE phone = $1",
+    [phone]
+  );
+  return res.rows[0] || null;
+};
+
 module.exports = userDao;
