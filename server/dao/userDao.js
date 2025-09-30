@@ -1,4 +1,5 @@
 // dao/userDao.js
+const pool = require("../config/db");
 const GenericDao = require("./generic_dao");
 const User = require("../models/user");
 
@@ -30,6 +31,22 @@ userDao.lockUserAccount = async (userId) => {
     console.error("Error locking user account:", error.message);
     throw error;
   }
+};
+
+// 🔍 Tìm user theo username
+userDao.findByUsername = async (username) => {
+  const res = await pool.query(`SELECT * FROM users WHERE username = $1`, [
+    username,
+  ]);
+  return res.rows[0] ? new User(res.rows[0]) : null;
+};
+
+// 🔍 Tìm user theo email (nếu đăng nhập bằng email)
+userDao.findByEmail = async (email) => {
+  const res = await pool.query(`SELECT * FROM users WHERE email = $1`, [
+    email,
+  ]);
+  return res.rows[0] ? new User(res.rows[0]) : null;
 };
 
 module.exports = userDao;
