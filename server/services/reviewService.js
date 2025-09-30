@@ -5,10 +5,10 @@ const reviewService = {
         return await reviewDao.create(reviewData);
     },
     async getReviewById(reviewId){
-        return await reviewDao.getById(reviewId);
+        return await reviewDao.findById(reviewId);
     },
     async getAllReviews(){
-        return await reviewDao.getAll();
+        return await reviewDao.findAll();
     },
     async updateReview(reviewId, updateData){
         return await reviewDao.update(reviewId, updateData);

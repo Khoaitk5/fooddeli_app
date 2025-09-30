@@ -5,10 +5,10 @@ const contractsService = {
         return await contractsDao.create(contractData);
     },
     async getContractById(contractId){
-        return await contractsDao.getById(contractId);
+        return await contractsDao.findById(contractId);
     },
     async getAllContracts(){
-        return await contractsDao.getAll();
+        return await contractsDao.findAll();
     },
     async updateContract(contractId, updateData){
         return await contractsDao.update(contractId, updateData);

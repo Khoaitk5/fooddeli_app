@@ -5,10 +5,10 @@ const videoLikeService = {
         return await video_likeDao.create(videoLikeData);
     },
     async getVideoLikeById(videoLikeId){
-        return await video_likeDao.getById(videoLikeId);
+        return await video_likeDao.findById(videoLikeId);
     },
     async getAllVideoLikes(){
-        return await video_likeDao.getAll();
+        return await video_likeDao.findAll();
     },
     async updateVideoLike(videoLikeId, updateData){
         return await video_likeDao.update(videoLikeId, updateData);

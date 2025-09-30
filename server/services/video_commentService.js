@@ -5,10 +5,10 @@ const videoCommentService = {
         return await video_commentDao.create(videoCommentData);
     },
     async getVideoCommentById(videoCommentId){
-        return await video_commentDao.getById(videoCommentId);
+        return await video_commentDao.findById(videoCommentId);
     },
     async getAllVideoComments(){
-        return await video_commentDao.getAll();
+        return await video_commentDao.findAll();
     },
     async updateVideoComment(videoCommentId, updateData){
         return await video_commentDao.update(videoCommentId, updateData);
