@@ -1,23 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import MobileLayout from './components/layout/MobileLayout';
 import Home from './pages/Customer/Home';
 import Cart from './pages/Customer/Cart';
 import OrderHistory from './pages/Customer/OrderHistory';
 import Login from './pages/Auth/Login';
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#1976d2' },
-    secondary: { main: '#dc004e' },
-  },
-});
-
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/customer/*" element={<MobileLayout />}>
@@ -34,7 +23,6 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to="/customer/home" />} />
       </Routes>
-    </ThemeProvider>
   );
 }
 

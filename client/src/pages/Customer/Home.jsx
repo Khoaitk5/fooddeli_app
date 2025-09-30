@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid } from '@mui/material';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import ProductCard from '../../components/role-specific/Customer/ProductCard';
@@ -42,18 +41,16 @@ const Home = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Menu
-      </Typography>
-      <Grid container spacing={2}>
+    <div style={{ padding: '16px' }}>
+      <h1 style={{ marginBottom: '16px', fontSize: '2.125rem', fontWeight: '400' }}>Menu</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
         {products.map((product) => (
-          <Grid item xs={12} sm={6} md={4} key={product.id}>
+          <div key={product.id}>
             <ProductCard product={product} onAddToCart={handleAddToCart} />
-          </Grid>
+          </div>
         ))}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 };
 

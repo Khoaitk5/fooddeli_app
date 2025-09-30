@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, List, ListItem, ListItemText, Chip, Card, CardContent } from '@mui/material';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
@@ -29,46 +28,54 @@ const OrderHistory = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Delivered': return 'success';
-      case 'In Progress': return 'warning';
-      case 'Cancelled': return 'error';
-      default: return 'default';
+      case 'Delivered': return '#4caf50';
+      case 'In Progress': return '#ff9800';
+      case 'Cancelled': return '#f44336';
+      default: return '#9e9e9e';
     }
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
+    <div style={{ padding: '16px' }}>
+      <h1 style={{ marginBottom: '16px', fontSize: '2.125rem', fontWeight: '400' }}>
         Order History
-      </Typography>
+      </h1>
       {orders.length === 0 ? (
-        <Typography>No orders yet.</Typography>
+        <p>No orders yet.</p>
       ) : (
-        <List>
+        <div>
           {orders.map((order) => (
-            <Card key={order.id} sx={{ mb: 2 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="h6">Order #{order.id}</Typography>
-                  <Chip label={order.status} color={getStatusColor(order.status)} />
-                </Box>
-                <Typography variant="body2" color="text.secondary">
+            <div key={order.id} style={{ border: '1px solid #ddd', borderRadius: '8px', marginBottom: '16px', overflow: 'hidden' }}>
+              <div style={{ padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: '500', margin: 0 }}>Order #{order.id}</h2>
+                  <span style={{
+                    background: getStatusColor(order.status),
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.75rem'
+                  }}>
+                    {order.status}
+                  </span>
+                </div>
+                <p style={{ color: '#666', fontSize: '0.875rem', margin: '4px 0' }}>
                   Date: {order.date}
-                </Typography>
-                <Typography variant="body2">
+                </p>
+                <p style={{ fontSize: '0.875rem', margin: '4px 0' }}>
                   Items: {order.items.join(', ')}
-                </Typography>
-                <Typography variant="h6" sx={{ mt: 1 }}>
+                </p>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '500', margin: '8px 0 0 0' }}>
                   Total: ${order.total}
-                </Typography>
-              </CardContent>
-            </Card>
+                </h3>
+              </div>
+            </div>
           ))}
-        </List>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

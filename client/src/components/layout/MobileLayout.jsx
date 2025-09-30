@@ -1,7 +1,5 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { BottomNavigation, BottomNavigationAction, Paper, Box, AppBar, Toolbar, Typography, IconButton } from '@mui/material';
-import { History, Map, Notifications } from '@mui/icons-material';
 import HomeIcon from '../shared/HomeIcon';
 import DiscoverIcon from '../shared/DiscoverIcon';
 import NotificationIcon from '../shared/NotificationIcon';
@@ -25,8 +23,8 @@ const MobileLayout = () => {
   ];
 
   const shipperMenu = [
-    { label: 'Đơn hàng', icon: <History />, path: '/shipper/orders' },
-    { label: 'Bản đồ', icon: <Map />, path: '/shipper/map' },
+    { label: 'Đơn hàng', icon: <span>📦</span>, path: '/shipper/orders' },
+    { label: 'Bản đồ', icon: <span>🗺️</span>, path: '/shipper/map' },
     { label: 'Thông báo', icon: <NotificationIcon />, path: '/shipper/notification' },
     { label: 'Hồ sơ', icon: <ProfileIcon />, path: '/shipper/profile' },
   ];
@@ -41,32 +39,52 @@ const MobileLayout = () => {
   const title = isCustomer ? 'FoodDeli - Customer' : 'FoodDeli - Shipper';
 
   return (
-    <Box sx={{ pb: 7 }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {title}
-          </Typography>
-          {/* <IconButton color="inherit" onClick={logout}>
+    <div style={{ paddingBottom: '70px' }}>
+      <header style={{ background: '#1976d2', color: 'white', padding: '16px', position: 'static' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: '1.25rem', fontWeight: '500', flexGrow: 1 }}>{title}</span>
+          {/* <button style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer' }} onClick={logout}>
             Logout
-          </IconButton> */}
-        </Toolbar>
-      </AppBar>
-      <Box sx={{ p: 2 }}>
+          </button> */}
+        </div>
+      </header>
+      <div style={{ padding: '16px' }}>
         <Outlet />
-      </Box>
-      <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, width: '383px', height: '57.5px', flexShrink: 0, background: '#FFF', boxShadow: '0 -4.69px 23.47px 0 rgba(63, 76, 95, 0.12)' }} elevation={0}>
-        <BottomNavigation
-          showLabels
-          value={value}
-          onChange={handleNavigation}
-        >
-          {navigationItems.map((item) => (
-            <BottomNavigationAction key={item.label} label={item.label} icon={item.icon} />
-          ))}
-        </BottomNavigation>
-      </Paper>
-    </Box>
+      </div>
+      <nav style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: '383px',
+        height: '57.5px',
+        background: '#FFF',
+        boxShadow: '0 -4.69px 23.47px 0 rgba(63, 76, 95, 0.12)',
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center'
+      }}>
+        {navigationItems.map((item, index) => (
+          <button
+            key={item.label}
+            onClick={() => handleNavigation(null, index)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '8px',
+              color: value === index ? '#1976d2' : '#666'
+            }}
+          >
+            {item.icon}
+            <span style={{ fontSize: '12px', marginTop: '4px' }}>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
   );
 };
 

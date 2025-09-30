@@ -1,16 +1,15 @@
 import React from 'react';
-import { Typography, Box } from '@mui/material';
 
 const Dashboard = () => {
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <div>
+      <h1 style={{ marginBottom: '16px', fontSize: '2.125rem', fontWeight: '400' }}>
         Admin Dashboard
-      </Typography>
-      <Typography variant="body1">
+      </h1>
+      <p>
         Welcome to the admin panel. Here you can manage users, orders, etc.
-      </Typography>
-    </Box>
+      </p>
+    </div>
   );
 };
 

@@ -1,24 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, List, ListItem, ListItemText, Button, IconButton, Divider, Card, CardContent } from '@mui/material';
-import { Delete } from '@mui/icons-material';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => (
-  <ListItem>
-    <ListItemText
-      primary={item.product.name}
-      secondary={`$${item.product.price} x ${item.quantity} = $${(item.product.price * item.quantity).toFixed(2)}`}
-    />
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Button size="small" onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)} disabled={item.quantity <= 1}>-</Button>
-      <Typography sx={{ mx: 1 }}>{item.quantity}</Typography>
-      <Button size="small" onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}>+</Button>
-      <IconButton onClick={() => onRemove(item.product.id)}>
-        <Delete />
-      </IconButton>
-    </Box>
-  </ListItem>
+  <li style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+    <div>
+      <div style={{ fontWeight: 'bold' }}>{item.product.name}</div>
+      <div style={{ color: '#666', fontSize: '0.875rem' }}>
+        ${item.product.price} x {item.quantity} = ${(item.product.price * item.quantity).toFixed(2)}
+      </div>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <button
+        style={{ padding: '4px 8px', margin: '0 4px', border: '1px solid #ccc', background: 'white', cursor: 'pointer' }}
+        onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+        disabled={item.quantity <= 1}
+      >
+        -
+      </button>
+      <span style={{ margin: '0 8px' }}>{item.quantity}</span>
+      <button
+        style={{ padding: '4px 8px', margin: '0 4px', border: '1px solid #ccc', background: 'white', cursor: 'pointer' }}
+        onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+      >
+        +
+      </button>
+      <button
+        style={{ padding: '4px 8px', margin: '0 4px', border: 'none', background: '#f44336', color: 'white', cursor: 'pointer', borderRadius: '4px' }}
+        onClick={() => onRemove(item.product.id)}
+      >
+        🗑️
+      </button>
+    </div>
+  </li>
 );
 
 const Cart = () => {
@@ -79,16 +93,16 @@ const Cart = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
+    <div style={{ padding: '16px' }}>
+      <h1 style={{ marginBottom: '16px', fontSize: '2.125rem', fontWeight: '400' }}>
         Your Cart
-      </Typography>
+      </h1>
       {cartItems.length === 0 ? (
-        <Typography>Your cart is empty.</Typography>
+        <p>Your cart is empty.</p>
       ) : (
-        <Card>
-          <CardContent>
-            <List>
+        <div style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '16px' }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {cartItems.map((item) => (
                 <CartItem
                   key={item.product.id}
@@ -97,16 +111,29 @@ const Cart = () => {
                   onRemove={removeItem}
                 />
               ))}
-            </List>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h6">Total: ${total.toFixed(2)}</Typography>
-            <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={placeOrder}>
+            </ul>
+            <hr style={{ margin: '16px 0', border: 'none', borderTop: '1px solid #eee' }} />
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '500' }}>Total: ${total.toFixed(2)}</h2>
+            <button
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginTop: '16px',
+                background: '#1976d2',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
+              onClick={placeOrder}
+            >
               Place Order
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 
