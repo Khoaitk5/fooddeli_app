@@ -61,7 +61,7 @@ userDao.findByEmail = async (email) => {
 };
 
 userDao.findByPhone = async (phone) => {
-  const res = await require("../config/db").query(
+  const res = await pool.query(
     "SELECT * FROM users WHERE phone = $1",
     [phone]
   );
