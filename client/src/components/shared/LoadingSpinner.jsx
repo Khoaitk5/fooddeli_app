@@ -1,10 +1,22 @@
-import React from 'react';
-import { CircularProgress, Box } from '@mui/material';
-
 const LoadingSpinner = ({ size = 40 }) => (
-  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 2 }}>
-    <CircularProgress size={size} />
-  </Box>
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '16px' }}>
+    <div
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        border: '4px solid #f3f3f3',
+        borderTop: '4px solid #1976d2',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }}
+    />
+    <style>{`
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
 );
 
 export default LoadingSpinner;
