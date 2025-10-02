@@ -2,16 +2,20 @@
 const GenericDao = require("./generic_dao");
 const Contract = require("../models/contract");
 
-const contractDao = new GenericDao("contracts", Contract);
+class ContractDao extends GenericDao {
+  constructor() {
+    super("contracts", Contract);
+  }
 
-/**
- * Lock a contract (change status from 'active' to 'inactive')
- * @param {string} contractId - ID of the contract to lock
- * @returns {Promise<object>} - Returns the updated contract or throws an error
- */
-contractDao.lockContract = async (contractId) => {
-  try {
-    const contract = await Contract.findById(contractId);
+  /**
+   * Khóa hợp đồng (chuyển trạng thái từ 'active' sang 'inactive')
+   * @param {number} contractId - ID của hợp đồng cần khóa
+   * @returns {Promise<object>} - Hợp đồng sau khi cập nhật
+   * @throws {Error} - Nếu hợp đồng không tồn tại hoặc không ở trạng thái 'active'
+   */
+  async lockContract(contractId) {
+    // Lấy hợp đồng theo ID
+    const contract = await this.findById(contractId);
 
     if (!contract) {
       throw new Error("Contract not found");
@@ -21,14 +25,32 @@ contractDao.lockContract = async (contractId) => {
       throw new Error("Only active contracts can be locked");
     }
 
-    contract.status = "inactive";
-    await contract.save();
-
-    return contract;
-  } catch (error) {
-    console.error("Error locking contract:", error.message);
-    throw error;
+    // Cập nhật trạng thái hợp đồng sang inactive
+    const query = `
+      UPDATE contracts
+      SET status = 'inactive',
+          updated_at = NOW()
+      WHERE contract_id = $1
+      RETURNING *;
+    `;
+    const result = await this.db.query(query, [contractId]);
+    return result.rows[0];
   }
-};
 
-module.exports = contractDao;
+  /**
+   * Lấy danh sách hợp đồng theo user_id
+   * @param {number} userId - ID của người dùng
+   * @returns {Promise<object[]>} - Danh sách hợp đồng
+   */
+  async getContractsByUserId(userId) {
+    const query = `
+      SELECT * FROM contracts
+      WHERE user_id = $1
+      ORDER BY created_at DESC;
+    `;
+    const result = await this.db.query(query, [userId]);
+    return result.rows;
+  }
+}
+
+module.exports = new ContractDao();
