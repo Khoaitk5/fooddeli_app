@@ -22,8 +22,25 @@ class CartDao extends GenericDao {
     const result = await this.db.query(query, [userId]);
     return result.rows[0] || null;
   }
-
+  /**
+   * Cập nhật tổng tiền và số lượng sản phẩm trong giỏ
+   * @param {number} cartId - ID giỏ hàng
+   * @param {number} subtotal - Tổng tiền mới
+   * @param {number} itemsCount - Số lượng dòng hàng mới
+   * @returns {Promise<object>} - Giỏ hàng sau khi cập nhật
+   */
+  async updateCartSummary(cartId, subtotal, itemsCount) {
+    const query = `
+      UPDATE carts
+      SET subtotal = $1,
+          items_count = $2,
+          updated_at = NOW()
+      WHERE cart_id = $3
+      RETURNING *;
+    `;
+    const result = await this.db.query(query, [subtotal, itemsCount, cartId]);
+    return result.rows[0];
+  }
 }
 
-// Export một instance để dùng ở service/controller
 module.exports = new CartDao();

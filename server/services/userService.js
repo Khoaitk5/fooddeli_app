@@ -123,23 +123,6 @@ const userService = {
     return await userDao.getUsersByRole(role);
   },
 
-  /**
-   * 🔑 Đăng nhập bằng username hoặc phone/email
-   * @param {string} identifier - username / email / phone
-   * @param {string} password
-   * @returns {Promise<object|null>}
-   */
-  async login(identifier, password) {
-    let user =
-      (await userDao.findByUsername(identifier)) ||
-      (await userDao.findByEmail(identifier)) ||
-      (await userDao.findByPhone(identifier));
-
-    if (!user) return null;
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    return isMatch ? user : null;
-  },
 };
 
 module.exports = userService;
