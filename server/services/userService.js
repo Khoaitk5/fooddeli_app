@@ -1,64 +1,144 @@
-// server/services/userService.js
+// services/userService.js
 const userDao = require("../dao/userDao");
+const bcrypt = require("bcrypt");
 
 const userService = {
-  async createUser(userData) {
-    return await userDao.create(userData);
-  },
   /**
-   * 📌 Lấy thông tin người dùng theo ID
+   * ➕ Tạo người dùng mới
+   * @param {object} userData - { username, password, full_name, phone, email, role }
+   * @returns {Promise<object>}
+   */
+  async createUser(userData) {
+    if (!userData.username || !userData.password) {
+      throw new Error("Thiếu username hoặc password");
+    }
+
+    // 🔐 Hash mật khẩu trước khi lưu
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    return await userDao.create({ ...userData, password: hashedPassword });
+  },
+
+  /**
+   * 📦 Lấy thông tin người dùng theo ID
+   * @param {number} userId
+   * @returns {Promise<object|null>}
    */
   async getUserById(userId) {
     return await userDao.findById(userId);
   },
 
   /**
-   * 📌 Lấy tất cả người dùng
+   * 📜 Lấy danh sách tất cả người dùng
+   * @returns {Promise<object[]>}
    */
   async getAllUsers() {
     return await userDao.findAll();
   },
 
   /**
-   * 📌 Cập nhật thông tin người dùng
+   * ✏️ Cập nhật thông tin người dùng
+   * @param {number} userId
+   * @param {object} updateData
+   * @returns {Promise<object>}
    */
   async updateUser(userId, updateData) {
-    return await userDao.update("id", userId, updateData);
+    const existing = await userDao.findById(userId);
+    if (!existing) {
+      throw new Error("Người dùng không tồn tại");
+    }
+
+    // Nếu có cập nhật mật khẩu → hash lại
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    return await userDao.update(userId, updateData);
   },
 
   /**
-   * 📌 Xóa người dùng theo ID
+   * 🗑️ Xóa người dùng theo ID
+   * @param {number} userId
+   * @returns {Promise<boolean>}
    */
   async deleteUser(userId) {
-    return await userDao.delete("id", userId);
+    const existing = await userDao.findById(userId);
+    if (!existing) {
+      throw new Error("Người dùng không tồn tại");
+    }
+    return await userDao.delete(userId);
   },
 
   /**
    * 🔐 Khóa tài khoản người dùng
+   * @param {number} userId
+   * @returns {Promise<object>}
    */
   async lockUserAccount(userId) {
     return await userDao.lockUserAccount(userId);
   },
 
   /**
-   * 🔍 Tìm người dùng theo username
+   * 🔍 Tìm user theo username
+   * @param {string} username
+   * @returns {Promise<object|null>}
    */
   async getUserByUsername(username) {
     return await userDao.findByUsername(username);
   },
 
   /**
-   * 🔍 Tìm người dùng theo email
+   * 🔍 Tìm user theo email
+   * @param {string} email
+   * @returns {Promise<object|null>}
    */
   async getUserByEmail(email) {
     return await userDao.findByEmail(email);
   },
 
   /**
-   * 🔍 Tìm người dùng theo số điện thoại
+   * 🔍 Tìm user theo số điện thoại
+   * @param {string} phone
+   * @returns {Promise<object|null>}
    */
   async getUserByPhone(phone) {
     return await userDao.findByPhone(phone);
+  },
+
+  /**
+   * 📊 Cập nhật điểm đánh giá trung bình của người dùng
+   * @param {number} userId
+   * @param {number} newRating
+   * @returns {Promise<object>}
+   */
+  async updateUserRating(userId, newRating) {
+    return await userDao.updateRating(userId, newRating);
+  },
+
+  /**
+   * 📜 Lấy danh sách người dùng theo vai trò
+   * @param {"user"|"shop"|"shipper"|"admin"} role
+   * @returns {Promise<object[]>}
+   */
+  async getUsersByRole(role) {
+    return await userDao.getUsersByRole(role);
+  },
+
+  /**
+   * 🔑 Đăng nhập bằng username hoặc phone/email
+   * @param {string} identifier - username / email / phone
+   * @param {string} password
+   * @returns {Promise<object|null>}
+   */
+  async login(identifier, password) {
+    let user =
+      (await userDao.findByUsername(identifier)) ||
+      (await userDao.findByEmail(identifier)) ||
+      (await userDao.findByPhone(identifier));
+
+    if (!user) return null;
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    return isMatch ? user : null;
   },
 };
 

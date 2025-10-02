@@ -1,33 +1,44 @@
+// services/cartItemService.js
 const cart_itemDao = require("../dao/cart_itemDao");
 
-const cart_itemService = {
+const cartItemService = {
   async createCartItem(itemData) {
-    // Nếu truyền vào là danh sách nhiều item
     if (Array.isArray(itemData)) {
       const results = [];
       for (const item of itemData) {
-        const createdItem = await cartItemDao.create(item);
+        if (item.quantity <= 0) throw new Error("Số lượng phải lớn hơn 0");
+        const createdItem = await cart_itemDao.create(item);
         results.push(createdItem);
       }
-      return results; // trả về danh sách item đã thêm
+      return results;
     }
 
-    // Nếu chỉ truyền vào 1 item
-    return await cartItemDao.create(itemData);
+    if (itemData.quantity <= 0) throw new Error("Số lượng phải lớn hơn 0");
+    return await cart_itemDao.create(itemData);
   },
 
   async getCartItemById(itemId) {
     return await cart_itemDao.findById(itemId);
   },
+
   async getAllCartItems() {
-    return await cart_itemDao.findAll;
+    return await cart_itemDao.findAll();
   },
+
   async updateCartItem(itemId, updateData) {
     return await cart_itemDao.update(itemId, updateData);
   },
+
   async deleteCartItem(itemId) {
     return await cart_itemDao.delete(itemId);
   },
+
+  /**
+   * 🛍️ Lấy tất cả item theo cart_id (✅ GỌI DAO, không query trực tiếp)
+   */
+  async getItemsByCartId(cartId) {
+    return await cart_itemDao.getByCartId(cartId);
+  },
 };
 
-module.exports = cart_itemService;
+module.exports = cartItemService;

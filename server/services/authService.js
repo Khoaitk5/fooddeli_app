@@ -1,30 +1,21 @@
-// services/authService.js
 const bcrypt = require("bcrypt");
 const userDao = require("../dao/userDao");
+const addressDao = require("../dao/addressDao"); // ✅ thêm dao địa chỉ
 
 exports.login = async (phone, password) => {
   // 🔎 Tìm user theo số điện thoại
   const user = await userDao.findByPhone(phone);
-  if (!user) return null; // ❌ Không tồn tại user với số điện thoại này
+  if (!user) return null;
 
-  // 🔐 So sánh password nhập vào với password hash trong DB
+  // 🔐 So sánh password
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return null; // ❌ Sai mật khẩu
+  if (!isMatch) return null;
 
-  // ✅ Thành công → trả về thông tin user
-  return user;
+  return user; // ✅ Thành công
 };
 
 exports.register = async (userData) => {
-  const {
-    username,
-    full_name,
-    password,
-    phone,
-    email,
-    address,
-    role = "user",
-  } = userData;
+  const { username, full_name, password, phone, email, address, role = "user" } = userData;
 
   // 📌 Kiểm tra: phải có ít nhất 1 trong 2 trường: phone hoặc email
   if (!phone && !email) {
@@ -34,40 +25,43 @@ exports.register = async (userData) => {
   // 📌 Kiểm tra trùng username
   if (username) {
     const existingUsername = await userDao.findByUsername(username);
-    if (existingUsername) {
-      throw new Error("Tên đăng nhập đã tồn tại");
-    }
+    if (existingUsername) throw new Error("Tên đăng nhập đã tồn tại");
   }
 
-  // 📌 Kiểm tra trùng số điện thoại nếu có nhập
+  // 📌 Kiểm tra trùng số điện thoại
   if (phone) {
     const existingPhone = await userDao.findByPhone(phone);
-    if (existingPhone) {
-      throw new Error("Số điện thoại đã được sử dụng");
-    }
+    if (existingPhone) throw new Error("Số điện thoại đã được sử dụng");
   }
 
-  // 📌 Kiểm tra trùng email nếu có nhập
+  // 📌 Kiểm tra trùng email
   if (email) {
     const existingEmail = await userDao.findByEmail(email);
-    if (existingEmail) {
-      throw new Error("Email đã được sử dụng");
-    }
+    if (existingEmail) throw new Error("Email đã được sử dụng");
   }
 
   // 🔐 Hash mật khẩu
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 📦 Tạo user mới trong DB
+  // 📦 1️⃣ Tạo user mới trong DB
   const newUser = await userDao.create({
     username,
     full_name,
     password: hashedPassword,
     phone: phone || null,
     email: email || null,
-    address: address || null,
     role,
+    status: "active",
   });
+
+  // 🏡 2️⃣ Nếu có nhập địa chỉ -> tạo luôn địa chỉ mặc định
+  if (address) {
+    await addressDao.addAddress({
+      user_id: newUser.id,            // 📌 khóa ngoại liên kết user
+      address_line: address,
+      is_default: true,               // 📍 địa chỉ đầu tiên mặc định
+    });
+  }
 
   return newUser;
 };
