@@ -1,222 +1,317 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import SubmitButton from '@/components/shared/SubmitButton';
-import BackArrow from '@/components/shared/BackArrow';
-import OutlineBorder from '@/components/shared/OutlineBorder';
-import InputFrame from '@/components/shared/InputFrame';
-import BlackOutline from '@/components/shared/BlackOutline';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Logo from "@/components/shared/Logo";
+import FooterBar from "@/components/shared/FooterBar";
+import BackArrow from "@/components/shared/BackArrow";
 
+const Register = () => {
+  const navigate = useNavigate();
 
-const RegisterEmail = () => {
-    const [email, setEmail] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-
-        if (email && (email.endsWith('@gmail.com') || email.endsWith('@outlook.com') || email.endsWith('@hotmail.com'))) {
-            // Navigate to OTP page or handle registration
-            navigate('/otp', { state: { email } });
-        } else {
-            setError('Please enter a valid email address from Gmail, Outlook, or Hotmail');
-        }
-    };
-
-    const handleEmailChange = (e) => {
-        let value = e.target.value.replace(/\s/g, '');
-        value = value.replace(/[^a-zA-Z0-9@._-]/g, '');
-        setEmail(value);
-    };
-
-    const buttonBackground = email && (email.endsWith('@gmail.com') || email.endsWith('@outlook.com') || email.endsWith('@hotmail.com')) ? 'rgba(249, 112, 75, 1)' : 'rgba(249, 112, 75, 0.5)';
-
-    const inputStyle = {
-        width: '100%',
-        padding: '12px',
-        marginBottom: '16px',
-        border: '1px solid #ccc',
-        borderRadius: '12px',
-        fontSize: '16px',
-    };
-
-    return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            background: '#f5f5f5',
-            padding: '20px'
-        }}>
-            <div style={{
-                width: '360px',
-                height: '800px',
-                position: 'relative',
-                background: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-            }}>
-
-                {/* Title */}
-                <div style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: '44.5px',
-                    transform: 'translateX(-50%)',
-                }}>
-                    <div style={{
-                        width: '100%',
-                        height: '100%',
-                        justifyContent: 'center',
-                        display: 'flex'
-                    }}>
-                        <span style={{
-                            color: 'black',
-                            fontSize: 16,
-                            fontFamily: 'TikTok Sans',
-                            fontWeight: '700',
-                            wordWrap: 'break-word'
-                        }}>
-                            Đăng ký
-                        </span>
-                    </div>
-                </div>
-
-                {/* Back Arrow */}
-                <div style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '43px',
-                    cursor: 'pointer'
-                }} onClick={() => navigate('/register')}>
-                    <BackArrow />
-                </div>
-
-                {/* Phone Label */}
-                <div style={{
-                  position: 'absolute',
-                  left: '71px',
-                  top: '91px',
-                  cursor: 'pointer'
-                }} onClick={() => navigate('/register/phone')}>
-                  <div style={{
-                    justifyContent: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    color: '#868686',
-                    fontSize: 14,
-                    fontFamily: 'TikTok Sans',
-                    fontWeight: '500',
-                    wordWrap: 'break-word'
-                  }}>
-                    Điện thoại
-                  </div>
-                </div>
-
-                {/* Email Label */}
-                <div style={{
-                  position: 'absolute',
-                  right: '71.5px',
-                  top: '91px',
-                }}>
-                  <div style={{
-                    justifyContent: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    color: '#868686',
-                    fontSize: 14,
-                    fontFamily: 'TikTok Sans',
-                    fontWeight: '500',
-                    wordWrap: 'break-word'
-                  }}>
-                    Email
-                  </div>
-                </div>
-
-                {/* Outline Border */}
-                <div style={{
-                  position: 'absolute',
-                  top: '115px',
-                  left: 0
-                }}>
-                  <OutlineBorder />
-                </div>
-
-                {/* Black Outline */}
-                <div style={{
-                  position: 'absolute',
-                  top: '115px',
-                  right: '29px',
-                }}>
-                  <BlackOutline width='123px' />
-                </div>
-
-                {/* Form */}
-                <form
-                    onSubmit={handleSubmit}
-                    style={{
-                        position: 'absolute',
-                        left: '50%',
-                        top: '137px',
-                        transform: 'translateX(-50%)',
-                        width: '267px',
-                    }}
-                >
-                    <InputFrame>
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={handleEmailChange}
-                            onKeyDown={(e) => { if (e.key === ' ') e.preventDefault(); }}
-                            style={{
-                                width: '100%',
-                                border: 'none',
-                                outline: 'none',
-                                fontSize: '14px',
-                                fontWeight: '400',
-                                fontFamily: 'TikTok Sans',
-                                color: '#aaaaae',
-                                backgroundColor: 'transparent',
-                            }}
-                        />
-                    </InputFrame>
-                    {error && (
-                        <div style={{
-                            position: 'absolute',
-                            top: '185px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            width: '267px',
-                            color: 'red'
-                        }}>
-                            {error}
-                        </div>
-                    )}
-                    <SubmitButton style={{ background: buttonBackground, marginTop: '565px' }}>
-                        <div style={{
-                            width: '100%',
-                            height: '100%',
-                            textAlign: 'center',
-                            justifyContent: 'center',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            color: 'white',
-                            fontSize: 13,
-                            fontFamily: 'TikTok Sans',
-                            fontWeight: '600',
-                            wordWrap: 'break-word'
-                        }}>
-                            Tiếp tục
-                        </div>
-                    </SubmitButton>
-                </form>
-
-            </div>
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f5f5f5",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          width: "360px",
+          height: "800px",
+          position: "relative",
+          background: "white",
+          borderRadius: "12px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        }}
+      >
+        {/* Logo */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: 0,
+            transform: "translateX(-50%)",
+            marginTop: "71.13px",
+          }}
+        >
+          <Logo />
         </div>
-    );
+
+        {/* Title */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "200px",
+            transform: "translateX(-50%)",
+            color: "#EF5126",
+            fontSize: 29,
+            fontFamily: "TikTok Sans",
+            fontWeight: "700",
+          }}
+        >
+          Đăng ký
+        </div>
+        {/* Phone Section */}
+        <div
+          style={{
+            position: "absolute",
+            top: "278px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "267px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {/*Email*/}
+          <div
+            style={{
+              color: "#161823",
+              fontSize: 13,
+              fontFamily: "TikTok Sans",
+              fontWeight: "600",
+              wordWrap: "break-word",
+            }}
+          >
+            Email
+          </div>
+
+          {/* Đăng ký bằng số điện thoại */}
+          <div
+            style={{
+              color: "rgba(22, 24, 35, 0.75)",
+              fontSize: 11,
+              fontFamily: "IBM Plex Sans",
+              fontWeight: "600",
+              wordWrap: "break-word",
+              cursor: "pointer",
+            }}
+            onClick={() => navigate("/register/email")}
+          >
+            Đăng ký bằng số điện thoại
+          </div>
+        </div>
+
+        {/* Phone Input Frame */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "310px",
+            transform: "translateX(-50%)",
+            width: "232px",
+            height: "43px",
+            background: "#F2F2F2",
+            borderRadius: 12,
+            display: "flex",
+            alignItems: "center",
+            padding: "0 12px",
+          }}
+        >
+          <input
+            type="tel"
+            placeholder="Email"
+            style={{
+              width: "100%",
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              fontSize: 14,
+              fontFamily: "TikTok Sans",
+            }}
+          />
+        </div>
+
+        {/* Password Section */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "370px",
+            transform: "translateX(-50%)",
+            width: "267px",
+          }}
+        >
+          {/*Mật khẩu*/}
+          <div
+            style={{
+              color: "#161823",
+              fontSize: 13,
+              fontFamily: "TikTok Sans",
+              fontWeight: "600",
+              wordWrap: "break-word",
+              marginBottom: "8px",
+            }}
+          >
+            Mật khẩu
+          </div>
+
+          {/* Password Input Frame */}
+          <div
+            style={{
+              width: "232px",
+              height: "43px",
+              background: "#F2F2F2",
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              overflow: "hidden",
+              padding: 0,
+            }}
+          >
+            {/* Phần nhập mã */}
+            <div style={{ width: "162px", paddingLeft: 12 }}>
+              <input
+                type="text"
+                placeholder="Nhập mã"
+                style={{
+                  width: "100%",
+                  border: "none",
+                  outline: "none",
+                  background: "transparent",
+                  fontSize: 14,
+                  fontFamily: "TikTok Sans",
+                  color: "black",
+                }}
+              />
+            </div>
+            {/* Thanh ngăn mờ */}
+            <div
+              style={{
+                width: 1,
+                height: 28,
+                background: "#E3E3E3",
+                opacity: 0.7,
+                margin: "0 4px",
+              }}
+            />
+            {/* Nút gửi mã */}
+            <div
+              style={{
+                width: "70px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              }}
+            >
+              <button
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#B0B0B0",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  fontFamily: "TikTok Sans",
+                  wrap: "nowrap",
+                }}
+                type="button"
+              >
+                Gửi mã
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Confirm Password Section */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "440px",
+            transform: "translateX(-50%)",
+            width: "267px",
+          }}
+        >
+          {/*Xác nhận mật khẩu*/}
+          <div
+            style={{
+              color: "#161823",
+              fontSize: 13,
+              fontFamily: "TikTok Sans",
+              fontWeight: "600",
+              wordWrap: "break-word",
+              marginBottom: "8px",
+            }}
+          >
+            Nhập mật khẩu
+          </div>
+
+          {/* Confirm Password Input Frame */}
+          <div
+            style={{
+              width: "232px",
+              height: "43px",
+              background: "#F2F2F2",
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              padding: "0 12px",
+            }}
+          >
+            <input
+              type="password"
+              placeholder="Nhập mật khẩu"
+              style={{
+                width: "100%",
+                border: "none",
+                outline: "none",
+                background: "transparent",
+                fontSize: 14,
+                fontFamily: "TikTok Sans",
+              }}
+            />
+          </div>
+        </div>
+        {/* Button Tiếp */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "530px", // đặt top phù hợp ngay dưới ô nhập mật khẩu
+            transform: "translateX(-50%)",
+            width: "232px",
+            height: "43px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <button
+            style={{
+              width: "100%",
+              height: "100%",
+              background: "#F2F2F2",
+              borderRadius: 28,
+              border: "none",
+              color: "#B0B0B0",
+              fontWeight: 700,
+              fontSize: 16,
+              cursor: "pointer",
+              fontFamily: "TikTok Sans",
+            }}
+            type="button"
+            onClick={() => navigate("/ProfileRegister")}
+          >
+            Tiếp
+          </button>
+        </div>
+
+        <FooterBar
+          text1="Bạn đã có tài khoản?"
+          text2="Đăng nhập"
+          onClick={() => navigate("/login")}
+        />
+      </div>
+    </div>
+  );
 };
 
-export default RegisterEmail;
+export default Register;
