@@ -1,7 +1,44 @@
-// controllers/authController.js
 const authService = require("../services/authService");
 
-// 🆕 Đăng ký tài khoản mới (bằng email hoặc SĐT)
+/**
+ * 📱 Bước 1 - xác thực số điện thoại và mật khẩu (chưa tạo user)
+ */
+exports.verifyPhone = async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    if (!phone || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "⚠️ Vui lòng nhập đầy đủ số điện thoại và mật khẩu",
+      });
+    }
+
+    // ✅ Gọi service để kiểm tra tồn tại
+    const isPhoneTaken = await authService.isPhoneExist(phone);
+    if (isPhoneTaken) {
+      return res.status(400).json({
+        success: false,
+        message: "📱 Số điện thoại này đã tồn tại",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "✅ Số điện thoại hợp lệ, tiếp tục đăng ký bước 2",
+    });
+  } catch (err) {
+    console.error("❌ Lỗi verifyPhone:", err);
+    res.status(500).json({
+      success: false,
+      message: "❌ Lỗi server khi xác thực số điện thoại",
+    });
+  }
+};
+
+/**
+ * 🆕 Đăng ký tài khoản mới
+ */
 exports.register = async (req, res) => {
   try {
     const newUser = await authService.register(req.body);
@@ -28,7 +65,9 @@ exports.register = async (req, res) => {
   }
 };
 
-// 🔑 Đăng nhập bằng số điện thoại
+/**
+ * 🔑 Đăng nhập bằng số điện thoại
+ */
 exports.login = async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -70,7 +109,9 @@ exports.login = async (req, res) => {
   }
 };
 
-// 🔴 Đăng xuất (nếu dùng JWT thì xoá token ở đây)
+/**
+ * 🔴 Đăng xuất (xóa JWT nếu có)
+ */
 exports.logout = async (req, res) => {
   try {
     res.status(200).json({

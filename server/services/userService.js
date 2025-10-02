@@ -2,6 +2,9 @@
 const userDao = require("../dao/userDao");
 
 const userService = {
+  async createUser(userData) {
+    return await userDao.create(userData);
+  },
   /**
    * 📌 Lấy thông tin người dùng theo ID
    */
@@ -56,7 +59,7 @@ const userService = {
    */
   async getUserByPhone(phone) {
     return await userDao.findByPhone(phone);
-  }
+  },
 };
 
 module.exports = userService;
