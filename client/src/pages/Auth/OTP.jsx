@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BackArrow from '@/components/shared/BackArrow';
+import Rectangle164 from '@/components/shared/Rectangle164';
 
 const OTP = () => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [error, setError] = useState('');
     const [countdown, setCountdown] = useState(60);
+    const [showOptions, setShowOptions] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const phone = location.state?.phone || '';
@@ -25,8 +27,7 @@ const OTP = () => {
         setError('');
 
         if (otp.every(digit => digit !== '')) {
-            // Navigate to home or handle login
-            navigate('/customer/home');
+            navigate('/customer/feed');
         } else {
             setError('Please enter a valid 6-digit OTP');
         }
@@ -48,7 +49,7 @@ const OTP = () => {
         }
     };
 
-    const buttonBackground = otp.every(digit => digit !== '') ? 'rgba(249, 112, 75, 1)' : 'rgba(249, 112, 75, 0.5)';
+    const OTP_FILLED = otp.every(digit => digit !== '');
 
     return (
         <div style={{
@@ -218,6 +219,167 @@ const OTP = () => {
                         Gửi lại mã{countdown > 0 ? ` ${countdown}s` : ''}
                     </span>
                 </div>
+
+                {/* Help text */}
+                <div style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '318px',
+                    transform: 'translateX(-50%)',
+                }}>
+                    <div style={{
+                        width: '100%',
+                        height: '100%',
+                        textAlign: 'center',
+                        justifyContent: 'center',
+                        display: 'flex'
+                    }}>
+                        <span onClick={() => setShowOptions(true)} style={{
+                            color: 'black',
+                            fontSize: 14,
+                            fontFamily: 'TikTok Sans',
+                            fontWeight: '700',
+                            whiteSpace: 'nowrap',
+                            cursor: 'pointer'
+                        }}>
+                            Bạn cần trợ giúp đăng nhập?
+                        </span>
+                    </div>
+                </div>
+
+                {/* Popup bottom sheet - only show when help is clicked */}
+                {showOptions && (
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        style={{ position: 'absolute', inset: 0 }}
+                    >
+                        {/* Backdrop */}
+                        <div
+                            onClick={() => setShowOptions(false)}
+                            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }}
+                        />
+
+                        <Rectangle164 style={{ top: '540px', height: '260px' }}>
+                            {/* Section title */}
+                            <div style={{
+                                position: 'absolute',
+                                left: '50%',
+                                top: '10px',
+                                transform: 'translateX(-50%)',
+                                color: '#868686',
+                                fontSize: 12,
+                                fontFamily: 'TikTok Sans',
+                                fontWeight: '600',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                Chọn một tùy chọn đăng nhập
+                            </div>
+
+                            {/* Divider 1 */}
+                            <div style={{ position: 'absolute', left: 0, top: '34px', width: '360px', height: '0.3px', background: '#d9d9d9' }} />
+
+                            {/* Change to email */}
+                            <div
+                                onClick={() => { setShowOptions(false); navigate('/login/email'); }}
+                                style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: '56px',
+                                    transform: 'translateX(-50%)',
+                                    color: 'black',
+                                    fontSize: 14,
+                                    fontFamily: 'TikTok Sans',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Chuyển sang dùng email
+                            </div>
+
+                            {/* Divider 2 */}
+                            <div style={{ position: 'absolute', left: 0, top: '88px', width: '360px', height: '0.3px', background: '#d9d9d9' }} />
+
+                            {/* Change to password */}
+                            <div
+                                onClick={() => { setShowOptions(false); navigate('/login/password'); }}
+                                style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: '112px',
+                                    transform: 'translateX(-50%)',
+                                    color: 'black',
+                                    fontSize: 14,
+                                    fontFamily: 'TikTok Sans',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Chuyển sang dùng mật khẩu
+                            </div>
+
+                            {/* Divider 3 */}
+                            <div style={{ position: 'absolute', left: 0, top: '144px', width: '360px', height: '0.3px', background: '#d9d9d9' }} />
+
+                            {/* Recover account */}
+                            <div
+                                onClick={() => { setShowOptions(false); navigate('/recover'); }}
+                                style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: '168px',
+                                    transform: 'translateX(-50%)',
+                                    color: 'black',
+                                    fontSize: 14,
+                                    fontFamily: 'TikTok Sans',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Khôi phục tài khoản của bạn
+                            </div>
+                        </Rectangle164>
+
+                        {/* Neutral bar separating Cancel line */}
+                        <div style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: '745px',
+                            width: '360px',
+                            height: '7px',
+                            background: '#f5f5f5'
+                        }} />
+
+                        {/* White background for Cancel row */}
+                        <div style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: '752px',
+                            width: '360px',
+                            height: '48px',
+                            background: 'white'
+                        }} />
+
+                        {/* Cancel link inside overlay */}
+                        <div style={{
+                            position: 'absolute',
+                            left: '50%',
+                            top: '776px',
+                            transform: 'translateX(-50%)',
+                            color: 'black',
+                            fontSize: 14,
+                            fontFamily: 'TikTok Sans',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                        }} onClick={() => setShowOptions(false)}>
+                            Hủy
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>

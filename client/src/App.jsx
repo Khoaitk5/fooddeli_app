@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
-import Home from './pages/Customer/Home';
+import Feed from './pages/Customer/Feed';
 import Cart from './pages/Customer/Cart';
 import OrderHistory from './pages/Customer/OrderHistory';
 import Login from './pages/Auth/Login';
@@ -10,6 +10,7 @@ import Register from './pages/Auth/Register';
 import RegisterPhone from './pages/Auth/RegisterPhone';
 import RegisterEmail from './pages/Auth/RegisterEmail';
 import OTP from './pages/Auth/OTP';
+import LoginPassword from './pages/Auth/LoginPassword';
 
 function App() {
   return (
@@ -21,8 +22,10 @@ function App() {
         <Route path="/register/phone" element={<RegisterPhone />} />
         <Route path="/register/email" element={<RegisterEmail />} />
         <Route path="/otp" element={<OTP />} />
+        <Route path="/login/password" element={<LoginPassword />} />
         <Route path="/customer/*" element={<MobileLayout />}>
-          <Route path="home" element={<Home />} />
+          <Route path="home" element={<Feed />} />
+          <Route path="feed" element={<Feed />} />
           <Route path="discover" element={<div>Discover Page</div>} />
           <Route path="notifications" element={<div>Notifications Page</div>} />
           <Route path="profile" element={<div>Customer Profile</div>} />
@@ -33,7 +36,7 @@ function App() {
           <Route path="notification" element={<div>Shipper Notifications</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
-        <Route path="*" element={<Navigate to="/customer/home" />} />
+        <Route path="*" element={<Navigate to="/customer/feed" />} />
       </Routes>
   );
 }
