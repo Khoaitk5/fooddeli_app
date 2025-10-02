@@ -1,4 +1,5 @@
 const authService = require("../services/authService");
+const userService = require("../services/userService");
 
 /**
  * 📱 Bước 1 - xác thực số điện thoại và mật khẩu (chưa tạo user)
@@ -15,7 +16,7 @@ exports.verifyPhone = async (req, res) => {
     }
 
     // ✅ Gọi service để kiểm tra tồn tại
-    const isPhoneTaken = await authService.isPhoneExist(phone);
+    const isPhoneTaken = await userService.getUserByPhone(phone);
     if (isPhoneTaken) {
       return res.status(400).json({
         success: false,
