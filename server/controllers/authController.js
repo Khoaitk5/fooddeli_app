@@ -1,10 +1,12 @@
 const authService = require("../services/authService");
 const userService = require("../services/userService");
+const admin = require("../config/firebase");
+const jwt = require("jsonwebtoken");
 
 /**
  * 📱 Bước 1 - xác thực số điện thoại và mật khẩu (chưa tạo user)
  */
-exports.verifyPhone = async (req, res) => {
+exports.verifyResPhone = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
@@ -107,6 +109,35 @@ exports.login = async (req, res) => {
       success: false,
       message: err.message || "Lỗi server",
     });
+  }
+};
+
+const generateJwt = (user) => {
+  return jwt.sign(
+    { id: user._id, phone: user.phone },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+};
+
+exports.verifyPhone = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    const phoneNumber = decoded.phone_number;
+
+    // ❌ Không tạo user mới nữa — chỉ tìm thôi
+    const user = await userService.getUserByPhone(phoneNumber);
+    if (!user) {
+      return res.status(404).json({ error: "Tài khoản chưa tồn tại. Vui lòng đăng ký trước." });
+    }
+
+    const jwtToken = generateJwt(user);
+    return res.status(200).json({ success: true, token: jwtToken, user });
+  } catch (error) {
+    console.error("❌ Lỗi xác thực token:", error);
+    return res.status(401).json({ error: "Token không hợp lệ hoặc hết hạn" });
   }
 };
 

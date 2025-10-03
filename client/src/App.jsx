@@ -6,6 +6,7 @@ import OrderHistory from './pages/Customer/OrderHistory';
 import Login from './pages/Auth/Login';
 import LoginPhone from './pages/Auth/LoginPhone';
 import LoginEmail from './pages/Auth/LoginEmail';
+import LoginPassword from './pages/Auth/LoginPassword';
 import Register from './pages/Auth/Register';
 import RegisterPhone from './pages/Auth/RegisterPhone';
 import RegisterEmail from './pages/Auth/RegisterEmail';
@@ -19,6 +20,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/login/phone" element={<LoginPhone />} />
         <Route path="/login/email" element={<LoginEmail />} />
+        <Route path="/login/password" element={<LoginPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register/phone" element={<RegisterPhone />} />
         <Route path="/register/email" element={<RegisterEmail />} />
