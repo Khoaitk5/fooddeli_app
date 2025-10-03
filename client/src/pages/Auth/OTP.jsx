@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BackArrow from '@/components/shared/BackArrow';
+import HelpPopup from '@/components/shared/HelpPopup';
 
 const OTP = () => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [error, setError] = useState('');
     const [countdown, setCountdown] = useState(60);
+    const [showHelpPopup, setShowHelpPopup] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const phone = location.state?.phone || '';
@@ -219,7 +221,37 @@ const OTP = () => {
                     </span>
                 </div>
 
+                {/* Help Link */}
+                <div style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '320px',
+                    transform: 'translateX(-50%)',
+                    textAlign: 'center',
+                    justifyContent: 'center',
+                    display: 'flex',
+                    flexDirection: 'row'
+                }}>
+                    <span style={{
+                        color: '#EF5126',
+                        fontSize: 14,
+                        fontFamily: 'TikTok Sans',
+                        fontWeight: '500',
+                        wordWrap: 'break-word',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                    }} onClick={() => setShowHelpPopup(true)}>
+                        Bạn cần trợ giúp đăng nhập?
+                    </span>
+                </div>
+
             </div>
+
+            {/* Help Popup */}
+            <HelpPopup 
+                isOpen={showHelpPopup} 
+                onClose={() => setShowHelpPopup(false)} 
+            />
         </div>
     );
 };
