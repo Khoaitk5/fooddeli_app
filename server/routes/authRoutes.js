@@ -12,6 +12,8 @@ router.post("/login", authController.login);
 // 🔴 Đăng xuất (tuỳ chọn)
 router.post("/logout", authController.logout);
 
+router.post("/verify-res-phone", authController.verifyResPhone);
+
 router.post("/verify-phone", authController.verifyPhone);
 
 module.exports = router;
