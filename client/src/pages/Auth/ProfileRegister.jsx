@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Typography, TextField, Button } from "@mui/material";
+import { Box, Typography, TextField, Button, InputAdornment } from "@mui/material";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useNavigate } from "react-router-dom";
 
 const ProfileDetails = () => {
@@ -87,6 +88,16 @@ const ProfileDetails = () => {
           onChange={handleChange}
           fullWidth
           sx={{ mb: 3 }}
+          onClick={() => navigate('/address/add')}
+          InputProps={{
+            readOnly: true,
+            sx: { cursor: 'pointer' },
+            endAdornment: (
+              <InputAdornment position="end">
+                <ChevronRightIcon sx={{ color: '#A9ADA5' }} />
+              </InputAdornment>
+            ),
+          }}
         />
         <TextField
           label="Số điện thoại"

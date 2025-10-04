@@ -12,6 +12,7 @@ import RegisterPhone from './pages/Auth/RegisterPhone';
 import RegisterEmail from './pages/Auth/RegisterEmail';
 import OTP from './pages/Auth/OTP';
 import ProfileRegister from "./pages/Auth/ProfileRegister";
+import AddAdress from "./pages/Auth/AddAdress";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
          <Route path="/profileRegister" element={<ProfileRegister />} />
+         <Route path="/address/add" element={<AddAdress />} />
          <Route path="*" element={<Navigate to="/customer/home" />} />
       </Routes>
   );
