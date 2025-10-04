@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
+import MobileAdminLayout from './components/layout/MobileAdminLayout';
 import Home from './pages/Customer/Home';
+import Discover from './pages/Customer/Discover';
 import Cart from './pages/Customer/Cart';
 import OrderHistory from './pages/Customer/OrderHistory';
 import Login from './pages/Auth/Login';
@@ -12,6 +14,7 @@ import RegisterPhone from './pages/Auth/RegisterPhone';
 import RegisterEmail from './pages/Auth/RegisterEmail';
 import OTP from './pages/Auth/OTP';
 import ProfileRegister from "./pages/Auth/ProfileRegister";
+import Dashboard from './pages/Admin/Dashboard';
 
 function App() {
   return (
@@ -26,7 +29,7 @@ function App() {
         <Route path="/otp" element={<OTP />} />
         <Route path="/customer/*" element={<MobileLayout />}>
           <Route path="home" element={<Home />} />
-          <Route path="discover" element={<div>Discover Page</div>} />
+          <Route path="discover" element={<Discover />} />
           <Route path="notifications" element={<div>Notifications Page</div>} />
           <Route path="profile" element={<div>Customer Profile</div>} />
         </Route>
@@ -35,6 +38,12 @@ function App() {
           <Route path="map" element={<div>Shipper Map</div>} />
           <Route path="notification" element={<div>Shipper Notifications</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
+        </Route>
+        <Route path="/admin/*" element={<MobileAdminLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="menu" element={<div>Menu Management</div>} />
+          <Route path="video" element={<div>Video Management</div>} />
+          <Route path="orders" element={<div>Order Management</div>} />
         </Route>
          <Route path="/profileRegister" element={<ProfileRegister />} />
          <Route path="*" element={<Navigate to="/customer/home" />} />

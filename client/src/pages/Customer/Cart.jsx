@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, List, ListItem, ListItemText, Button, IconButton, Divider, Card, CardContent } from '@mui/material';
 import { Delete } from '@mui/icons-material';
-import api from '../../services/api';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => (
@@ -29,49 +28,38 @@ const Cart = () => {
     fetchCart();
   }, []);
 
-  const fetchCart = async () => {
-    try {
-      const response = await api.get('/cart');
-      setCartItems(response.data);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      // Mock data
-      setCartItems([
-        { product: { id: 1, name: 'Pizza', price: 12.99 }, quantity: 2 },
-        { product: { id: 2, name: 'Burger', price: 8.99 }, quantity: 1 },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+  const fetchCart = () => {
+    // Mock data - không cần API
+    setCartItems([
+      { product: { id: 1, name: 'Pizza', price: 12.99 }, quantity: 2 },
+      { product: { id: 2, name: 'Burger', price: 8.99 }, quantity: 1 },
+      { product: { id: 3, name: 'Salad', price: 6.99 }, quantity: 1 },
+    ]);
+    setLoading(false);
   };
 
-  const updateQuantity = async (productId, newQuantity) => {
-    try {
-      await api.put(`/cart/${productId}`, { quantity: newQuantity });
-      fetchCart(); // Refresh cart
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-    }
+  const updateQuantity = (productId, newQuantity) => {
+    // Mock update - không cần API
+    setCartItems(prevItems => 
+      prevItems.map(item => 
+        item.product.id === productId 
+          ? { ...item, quantity: Math.max(1, newQuantity) }
+          : item
+      )
+    );
   };
 
-  const removeItem = async (productId) => {
-    try {
-      await api.delete(`/cart/${productId}`);
-      fetchCart();
-    } catch (error) {
-      console.error('Error removing item:', error);
-    }
+  const removeItem = (productId) => {
+    // Mock remove - không cần API
+    setCartItems(prevItems => 
+      prevItems.filter(item => item.product.id !== productId)
+    );
   };
 
-  const placeOrder = async () => {
-    try {
-      await api.post('/orders', { items: cartItems });
-      alert('Order placed successfully!');
-      setCartItems([]);
-    } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order');
-    }
+  const placeOrder = () => {
+    // Mock order placement - không cần API
+    alert('Order placed successfully!');
+    setCartItems([]);
   };
 
   const total = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);

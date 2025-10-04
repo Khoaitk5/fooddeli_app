@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, List, ListItem, ListItemText, Chip, Card, CardContent } from '@mui/material';
-import api from '../../services/api';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
 const OrderHistory = () => {
@@ -11,20 +10,14 @@ const OrderHistory = () => {
     fetchOrders();
   }, []);
 
-  const fetchOrders = async () => {
-    try {
-      const response = await api.get('/orders');
-      setOrders(response.data);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      // Mock data
-      setOrders([
-        { id: 1, status: 'Delivered', total: 21.98, date: '2025-09-28', items: ['Pizza', 'Burger'] },
-        { id: 2, status: 'In Progress', total: 12.99, date: '2025-09-27', items: ['Pizza'] },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+  const fetchOrders = () => {
+    // Mock data - không cần API
+    setOrders([
+      { id: 1, status: 'Delivered', total: 21.98, date: '2025-09-28', items: ['Pizza', 'Burger'] },
+      { id: 2, status: 'In Progress', total: 12.99, date: '2025-09-27', items: ['Pizza'] },
+      { id: 3, status: 'Cancelled', total: 15.50, date: '2025-09-26', items: ['Salad'] },
+    ]);
+    setLoading(false);
   };
 
   const getStatusColor = (status) => {
