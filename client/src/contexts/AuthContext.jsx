@@ -1,8 +1,6 @@
-import React, { createContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { AuthContext } from './AuthContext';
 import { STORAGE_KEYS, ROLES } from '../utils/constants';
-
-const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -18,26 +16,25 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token, user: userData } = response.data;
-      localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-      setUser(userData);
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Login failed' };
-    }
+  const login = async (email, _password) => { // eslint-disable-line no-unused-vars
+    // Mock login - luôn thành công
+    const mockUser = {
+      id: 1,
+      email: email,
+      name: 'Demo User',
+      role: ROLES.CUSTOMER
+    };
+    const mockToken = 'mock-token-' + Date.now();
+    
+    localStorage.setItem(STORAGE_KEYS.TOKEN, mockToken);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(mockUser));
+    setUser(mockUser);
+    return { success: true };
   };
 
-  const register = async (userData) => {
-    try {
-      await api.post('/auth/register', userData);
-      return { success: true, message: 'Registration successful' };
-    } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Registration failed' };
-    }
+  const register = async (_userData) => { // eslint-disable-line no-unused-vars
+    // Mock registration - luôn thành công
+    return { success: true, message: 'Registration successful' };
   };
 
   const logout = () => {
