@@ -11,6 +11,11 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import RestaurantMenuOutlinedIcon from '@mui/icons-material/RestaurantMenuOutlined';
+import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import { useAuth } from '@/hooks/useAuth';
 
 const MobileAdminLayout = () => {
@@ -21,10 +26,10 @@ const MobileAdminLayout = () => {
 
   // Menu items cho admin
   const navigationItems = useMemo(() => [
-    { id: 'dashboard', label: 'Tổng quan', icon: '📊', path: '/admin/dashboard', tab: 'dashboard' },
-    { id: 'menu', label: 'Món ăn', icon: '🍽️', path: '/admin/menu', tab: 'menu' },
-    { id: 'video', label: 'Video', icon: '🎥', path: '/admin/video', tab: 'video' },
-    { id: 'orders', label: 'Đơn hàng', icon: '📋', path: '/admin/orders', tab: 'orders' },
+    { id: 'dashboard', label: 'Tổng quan', icon: <HomeOutlinedIcon sx={{ fontSize: 20 }} />, path: '/shop/dashboard', tab: 'dashboard' },
+    { id: 'menu', label: 'Quản lý món ăn', icon: <RestaurantMenuOutlinedIcon sx={{ fontSize: 20 }} />, path: '/shop/menu', tab: 'menu' },
+    { id: 'video', label: 'Video Review', icon: <OndemandVideoOutlinedIcon sx={{ fontSize: 20 }} />, path: '/shop/video', tab: 'video' },
+    { id: 'orders', label: 'Quản lý đơn hàng', icon: <AssignmentOutlinedIcon sx={{ fontSize: 20 }} />, path: '/shop/orders', tab: 'orders' },
   ], []);
 
   // Xác định active tab dựa trên current path
@@ -97,7 +102,7 @@ const MobileAdminLayout = () => {
                 fontWeight: 500
               }}
             >
-              Admin Dashboard
+              Shop Management Dashboard
             </Typography>
           </Box>
         </Box>
@@ -193,9 +198,10 @@ const MobileAdminLayout = () => {
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              color: '#fff'
             }}>
-              <Typography sx={{ fontSize: '24px' }}>🍽️</Typography>
+              <RestaurantMenuOutlinedIcon sx={{ fontSize: 22 }} />
             </Box>
             <Box>
               <Typography sx={{
@@ -211,7 +217,7 @@ const MobileAdminLayout = () => {
                 color: '#717182',
                 fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
-                Admin Dashboard
+                Shop Management Dashboard
               </Typography>
             </Box>
           </Box>
@@ -235,8 +241,8 @@ const MobileAdminLayout = () => {
                   }
                 }}
               >
-                <ListItemIcon>
-                  <Typography sx={{ fontSize: '20px' }}>{item.icon}</Typography>
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  {item.icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={item.label}
@@ -272,7 +278,7 @@ const MobileAdminLayout = () => {
                 }
               }}
             >
-              <Typography sx={{ fontSize: '18px' }}>🚪</Typography>
+              <LogoutOutlinedIcon sx={{ fontSize: 20 }} />
               <Typography sx={{
                 fontSize: '14px',
                 color: '#000000',

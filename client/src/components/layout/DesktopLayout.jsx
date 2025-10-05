@@ -1,15 +1,14 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemText, Box, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemText, Box, IconButton, Button } from '@mui/material';
 import { Menu as MenuIcon, Dashboard, People, ShoppingCart } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { ROLES } from '../../utils/constants';
 
 const drawerWidth = 240;
 
 const DesktopLayout = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
@@ -17,9 +16,9 @@ const DesktopLayout = () => {
   };
 
   const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
-    { text: 'Users', icon: <People />, path: '/admin/users' },
-    { text: 'Orders', icon: <ShoppingCart />, path: '/admin/orders' },
+    { text: 'Shop Management Dashboard', icon: <Dashboard />, path: '/shop/dashboard' },
+    { text: 'Users', icon: <People />, path: '/shop/users' },
+    { text: 'Orders', icon: <ShoppingCart />, path: '/shop/orders' },
   ];
 
   const drawer = (
@@ -52,7 +51,7 @@ const DesktopLayout = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            FoodDeli - {user?.role === ROLES.ADMIN ? 'Admin' : 'Shop'}
+            FoodDeli - Shop Management Dashboard
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
           <Button color="inherit" onClick={logout}>Logout</Button>

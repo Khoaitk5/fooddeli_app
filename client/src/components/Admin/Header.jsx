@@ -32,7 +32,8 @@ const Header = ({ activeTab }) => {
       padding: '16px 24px',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between'
+      justifyContent: 'space-between',
+      marginLeft: '256px'
     }}>
       {/* Title */}
       <Typography sx={{
@@ -51,7 +52,7 @@ const Header = ({ activeTab }) => {
         color: '#000000',
         fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
       }}>
-        Xin chào, Admin
+        Xin chào, Shop Manager
       </Typography>
     </Box>
   );

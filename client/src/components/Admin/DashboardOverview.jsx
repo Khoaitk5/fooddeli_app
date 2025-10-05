@@ -4,131 +4,95 @@ import { Box, Typography, LinearProgress, useMediaQuery, useTheme } from '@mui/m
 const DashboardOverview = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // Asset icons từ Figma (node 44:342)
+  // Icon đúng theo Figma node 44:342
+  const STAT_ICON_DISHES = "https://www.figma.com/api/mcp/asset/a352638b-5df6-44a5-821b-cbcb1959faf2";
+  const STAT_ICON_VIDEO = "https://www.figma.com/api/mcp/asset/dc7974ac-832f-479b-a7c1-94acff5323c5";
+  const STAT_ICON_ORDERS = "https://www.figma.com/api/mcp/asset/a2d1713b-bbcd-405e-9582-45c2d5dcd200";
+  const STAT_ICON_REVENUE = "https://www.figma.com/api/mcp/asset/c9e04d37-31b0-42a2-883f-a23a8b69c502";
+
   const statsData = [
     {
       title: 'Tổng món ăn',
       value: '24',
       subtitle: 'Đang phục vụ',
-      icon: '🍽️',
+      iconImg: STAT_ICON_DISHES,
       iconBg: '#dbeafe' // blue-100
     },
     {
       title: 'Video Reviews',
       value: '18',
       subtitle: 'Video đã upload',
-      icon: '🎥',
+      iconImg: STAT_ICON_VIDEO,
       iconBg: '#e9d5ff' // purple-100
     },
     {
       title: 'Đơn hàng hôm nay',
       value: '42',
       subtitle: '+12% so với hôm qua',
-      icon: '📦',
+      iconImg: STAT_ICON_ORDERS,
       iconBg: '#dcfce7' // green-100
     },
     {
       title: 'Doanh thu',
       value: '1.2M đ',
       subtitle: 'Trong ngày',
-      icon: '💰',
+      iconImg: STAT_ICON_REVENUE,
       iconBg: '#ffedd4' // orange-100
     }
   ];
 
-  // Dữ liệu mẫu cho biểu đồ doanh thu theo tháng
-  const revenueData = [
-    { month: 'T1', revenue: 850000, orders: 120 },
-    { month: 'T2', revenue: 920000, orders: 135 },
-    { month: 'T3', revenue: 780000, orders: 98 },
-    { month: 'T4', revenue: 1100000, orders: 156 },
-    { month: 'T5', revenue: 1250000, orders: 178 },
-    { month: 'T6', revenue: 980000, orders: 142 },
-    { month: 'T7', revenue: 1350000, orders: 189 },
-    { month: 'T8', revenue: 1420000, orders: 201 },
-    { month: 'T9', revenue: 1180000, orders: 167 },
-    { month: 'T10', revenue: 1280000, orders: 183 },
-    { month: 'T11', revenue: 1450000, orders: 205 },
-    { month: 'T12', revenue: 1620000, orders: 228 }
-  ];
+  // Theo thiết kế Figma, không có biểu đồ doanh thu ở khu vực giữa
 
   // Dữ liệu mẫu cho đơn hàng gần đây
   const recentOrders = [
     {
-      id: '#FD001',
+      id: '#001',
       customer: 'Nguyễn Văn A',
-      items: 'Phở bò, Bánh mì',
-      total: '85,000 đ',
-      status: 'Đang giao',
-      time: '10 phút trước',
-      statusColor: '#4caf50'
+      items: 'Phở bò, Chả cá',
+      total: '-',
+      status: 'chờ',
+      time: '2 phút trước',
+      statusBg: '#fef9c2',
+      statusTextColor: '#894b00'
     },
     {
-      id: '#FD002',
+      id: '#002',
       customer: 'Trần Thị B',
-      items: 'Bún chả, Nước cam',
-      total: '65,000 đ',
-      status: 'Đã hoàn thành',
-      time: '25 phút trước',
-      statusColor: '#2196f3'
+      items: 'Bún bò Huế',
+      total: '-',
+      status: 'chế biến',
+      time: '5 phút trước',
+      statusBg: '#dbeafe',
+      statusTextColor: '#193cb8'
     },
     {
-      id: '#FD003',
+      id: '#003',
       customer: 'Lê Văn C',
-      items: 'Cơm tấm, Canh chua',
-      total: '75,000 đ',
-      status: 'Đang chuẩn bị',
-      time: '35 phút trước',
-      statusColor: '#ff9800'
+      items: 'Cơm tấm, Nước ngọt',
+      total: '-',
+      status: 'hoàn tất',
+      time: '10 phút trước',
+      statusBg: '#dcfce7',
+      statusTextColor: '#016630'
     },
     {
-      id: '#FD004',
+      id: '#004',
       customer: 'Phạm Thị D',
-      items: 'Bánh xèo, Nước dừa',
-      total: '95,000 đ',
-      status: 'Đang giao',
-      time: '45 phút trước',
-      statusColor: '#4caf50'
+      items: 'Bánh mì, Cà phê',
+      total: '-',
+      status: 'chờ',
+      time: '1 phút trước',
+      statusBg: '#fef9c2',
+      statusTextColor: '#894b00'
     },
-    {
-      id: '#FD005',
-      customer: 'Hoàng Văn E',
-      items: 'Chả cá, Bún',
-      total: '120,000 đ',
-      status: 'Đã hoàn thành',
-      time: '1 giờ trước',
-      statusColor: '#2196f3'
-    }
   ];
 
-  // Dữ liệu mẫu cho hiệu suất
-  const performanceData = [
-    {
-      metric: 'Tỷ lệ hoàn thành đơn hàng',
-      value: 94,
-      target: 95,
-      color: '#4caf50'
-    },
-    {
-      metric: 'Thời gian giao hàng trung bình',
-      value: 28,
-      target: 25,
-      unit: 'phút',
-      color: '#ff9800'
-    },
-    {
-      metric: 'Đánh giá khách hàng',
-      value: 4.7,
-      target: 4.5,
-      unit: '/5',
-      color: '#2196f3'
-    },
-    {
-      metric: 'Tỷ lệ đơn hàng hủy',
-      value: 3.2,
-      target: 5,
-      unit: '%',
-      color: '#f44336'
-    }
+  // Cấu hình hiệu suất bám sát Figma 44:342 (85% / 12% / 3%)
+  const performanceBars = [
+    { label: 'Đơn hoàn tất', percent: 85 },
+    { label: 'Đơn đang chế biến', percent: 12 },
+    { label: 'Đơn chờ xử lý', percent: 3 }
   ];
 
   return (
@@ -209,105 +173,17 @@ const DashboardOverview = () => {
               justifyContent: 'center',
               flexShrink: 0
             }}>
-              <Typography sx={{ fontSize: isMobile ? '18px' : '24px' }}>{stat.icon}</Typography>
+              {stat.iconImg ? (
+                <img src={stat.iconImg} alt="" style={{ width: isMobile ? 18 : 24, height: isMobile ? 18 : 24 }} />
+              ) : null}
             </Box>
           </Box>
         ))}
       </Box>
 
-      {/* Revenue Chart */}
-      <Box sx={{
-        backgroundColor: '#ffffff',
-        border: '0.8px solid rgba(0,0,0,0.1)',
-        borderRadius: '14px',
-        padding: isMobile ? '16px' : '24px',
-        height: isMobile ? '300px' : '400px'
-      }}>
-        <Typography sx={{
-          fontSize: isMobile ? '14px' : '16px',
-          fontWeight: 'normal',
-          color: '#000000',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
-          marginBottom: '6px'
-        }}>
-          Doanh thu theo tháng
-        </Typography>
-        <Typography sx={{
-          fontSize: isMobile ? '12px' : '16px',
-          fontWeight: 'normal',
-          color: '#717182',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
-          marginBottom: isMobile ? '16px' : '24px'
-        }}>
-          Tổng quan doanh thu 12 tháng trong năm
-        </Typography>
-        
-        {/* Revenue Chart */}
-        <Box sx={{
-          height: isMobile ? '200px' : '300px',
-          display: 'flex',
-          alignItems: 'end',
-          justifyContent: 'space-between',
-          padding: isMobile ? '12px 0' : '20px 0',
-          gap: isMobile ? '4px' : '8px'
-        }}>
-          {revenueData.map((data, index) => {
-            const maxRevenue = Math.max(...revenueData.map(d => d.revenue));
-            const height = (data.revenue / maxRevenue) * (isMobile ? 150 : 200);
-            
-            return (
-              <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                {/* Bar */}
-                <Box sx={{
-                  width: '100%',
-                  height: `${height}px`,
-                  backgroundColor: '#F9704B',
-                  borderRadius: '4px 4px 0 0',
-                  marginBottom: '8px',
-                  position: 'relative',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: '#fe724c',
-                    transform: 'scale(1.05)'
-                  }
-                }}>
-                  {/* Tooltip on hover */}
-                  <Box sx={{
-                    position: 'absolute',
-                    top: '-40px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: '#333',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    whiteSpace: 'nowrap',
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                    '&:hover': {
-                      opacity: 1
-                    }
-                  }}>
-                    {data.revenue.toLocaleString('vi-VN')} đ
-                  </Box>
-                </Box>
-                
-                {/* Month label */}
-                <Typography sx={{
-                  fontSize: isMobile ? '10px' : '12px',
-                  color: '#717182',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
-                }}>
-                  {data.month}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
+      {/* Bỏ khu vực biểu đồ theo thiết kế */}
 
-      {/* Bottom Row */}
+      {/* Bottom Row (Recent Orders + Performance) */}
       <Box sx={{
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
@@ -376,11 +252,11 @@ const DashboardOverview = () => {
                       {order.id}
                     </Typography>
                     <Box sx={{
-                      backgroundColor: order.statusColor,
-                      color: 'white',
+                      backgroundColor: order.statusBg,
+                      color: order.statusTextColor,
                       padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '10px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
                       fontWeight: '500',
                       fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
                     }}>
@@ -457,109 +333,39 @@ const DashboardOverview = () => {
           }}>
             Tỷ lệ hoàn thành đơn hàng
           </Typography>
-          
-          {/* Performance Metrics */}
-          <Box sx={{
-            height: isMobile ? '250px' : '300px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: isMobile ? '16px' : '20px'
-          }}>
-            {performanceData.map((metric, index) => (
-              <Box key={index}>
-                {/* Metric Header */}
-                <Box sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '8px'
-                }}>
-                  <Typography sx={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#000000',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
-                  }}>
-                    {metric.metric}
+          {/* Performance Metrics 1:1 */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {performanceBars.map((bar) => (
+              <Box key={bar.label}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <Typography sx={{ fontSize: '14px', color: '#000', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>
+                    {bar.label}
                   </Typography>
-                  
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Typography sx={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: metric.color,
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
-                    }}>
-                      {metric.value}{metric.unit || ''}
-                    </Typography>
-                    
-                    {metric.target && (
-                      <Typography sx={{
-                        fontSize: '12px',
-                        color: '#717182',
-                        fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
-                      }}>
-                        / {metric.target}{metric.unit || ''}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-
-                {/* Progress Bar */}
-                <Box sx={{
-                  width: '100%',
-                  height: '8px',
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <Box sx={{
-                    width: `${Math.min((metric.value / metric.target) * 100, 100)}%`,
-                    height: '100%',
-                    backgroundColor: metric.color,
-                    borderRadius: '4px',
-                    transition: 'width 0.3s ease'
-                  }} />
-                </Box>
-
-                {/* Status Indicator */}
-                <Box sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '4px'
-                }}>
-                  <Typography sx={{
-                    fontSize: '11px',
-                    color: '#aaaaae',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
-                  }}>
-                    {metric.value >= metric.target ? 'Đạt mục tiêu' : 'Chưa đạt mục tiêu'}
+                  <Typography sx={{ fontSize: '14px', color: '#000', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>
+                    {bar.percent}%
                   </Typography>
-                  
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    <Box sx={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: metric.value >= metric.target ? '#4caf50' : '#ff9800'
-                    }} />
-                    <Typography sx={{
-                      fontSize: '11px',
-                      color: metric.value >= metric.target ? '#4caf50' : '#ff9800',
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
-                      fontWeight: '500'
-                    }}>
-                      {metric.value >= metric.target ? 'Tốt' : 'Cần cải thiện'}
-                    </Typography>
-                  </Box>
+                </Box>
+                <Box sx={{ width: '100%', height: '8px', backgroundColor: 'rgba(3,2,19,0.2)', borderRadius: '26843500px', overflow: 'hidden' }}>
+                  <Box sx={{ width: `${bar.percent}%`, height: '100%', backgroundColor: '#030213' }} />
                 </Box>
               </Box>
             ))}
+
+            {/* Bottom counters */}
+            <Box sx={{ borderTop: '0.8px solid rgba(0,0,0,0.1)', pt: '16.8px', display: 'flex', justifyContent: 'space-between' }}>
+              <Box sx={{ textAlign: 'center', width: '33.33%' }}>
+                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#00a63e', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>36</Typography>
+                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Hoàn tất</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', width: '33.33%' }}>
+                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#155dfc', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>5</Typography>
+                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Đang chế biến</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', width: '33.33%' }}>
+                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#d08700', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>1</Typography>
+                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Chờ xử lý</Typography>
+              </Box>
+            </Box>
           </Box>
         </Box>
       </Box>

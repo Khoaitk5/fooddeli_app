@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 import Sidebar from '@/components/Admin/Sidebar';
 import Header from '@/components/Admin/Header';
 import DashboardOverview from '@/components/Admin/DashboardOverview';
@@ -11,6 +12,20 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const location = useLocation();
+
+  // Đồng bộ activeTab với URL để mobile/desktop cùng điều hướng theo route
+  useEffect(() => {
+    if (location.pathname.includes('/shop/menu')) {
+      setActiveTab('menu');
+    } else if (location.pathname.includes('/shop/video')) {
+      setActiveTab('video');
+    } else if (location.pathname.includes('/shop/orders')) {
+      setActiveTab('orders');
+    } else {
+      setActiveTab('dashboard');
+    }
+  }, [location.pathname]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -56,8 +71,7 @@ const Dashboard = () => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#f5f5f5',
-        marginLeft: '256px' // Account for fixed sidebar
+        backgroundColor: '#f5f5f5'
       }}>
         {/* Header */}
         <Header activeTab={activeTab} />
@@ -66,7 +80,8 @@ const Dashboard = () => {
         <Box sx={{
           flex: 1,
           padding: '24px',
-          overflow: 'auto'
+          overflow: 'auto',
+          marginLeft: '256px'
         }}>
           {renderContent()}
         </Box>

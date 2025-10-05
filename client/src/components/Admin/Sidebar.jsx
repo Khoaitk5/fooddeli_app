@@ -1,19 +1,43 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import RestaurantMenuOutlinedIcon from '@mui/icons-material/RestaurantMenuOutlined';
+import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 
 const Sidebar = ({ activeTab, onTabChange }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const menuItems = [
-    { id: 'dashboard', label: 'Tổng quan', icon: '📊' },
-    { id: 'menu', label: 'Quản lý món ăn', icon: '🍽️' },
-    { id: 'video', label: 'Video Review', icon: '🎥' },
-    { id: 'orders', label: 'Quản lý đơn hàng', icon: '📋' }
+    { id: 'dashboard', label: 'Tổng quan', icon: <HomeOutlinedIcon sx={{ fontSize: 20 }} /> },
+    { id: 'menu', label: 'Quản lý món ăn', icon: <RestaurantMenuOutlinedIcon sx={{ fontSize: 20 }} /> },
+    { id: 'video', label: 'Video Review', icon: <OndemandVideoOutlinedIcon sx={{ fontSize: 20 }} /> },
+    { id: 'orders', label: 'Quản lý đơn hàng', icon: <AssignmentOutlinedIcon sx={{ fontSize: 20 }} /> }
   ];
 
+  const pathById = {
+    dashboard: '/shop/dashboard',
+    menu: '/shop/menu',
+    video: '/shop/video',
+    orders: '/shop/orders'
+  };
+
+  const currentIdFromPath = () => {
+    if (location.pathname.includes('/shop/menu')) return 'menu';
+    if (location.pathname.includes('/shop/video')) return 'video';
+    if (location.pathname.includes('/shop/orders')) return 'orders';
+    return 'dashboard';
+  };
+
+  const resolvedActiveTab = activeTab || currentIdFromPath();
+
   const handleMenuClick = (itemId) => {
-    onTabChange(itemId);
+    if (onTabChange) onTabChange(itemId);
+    const path = pathById[itemId] || '/shop/dashboard';
+    navigate(path);
   };
 
   const handleLogout = () => {
@@ -26,8 +50,8 @@ const Sidebar = ({ activeTab, onTabChange }) => {
     <Box sx={{
       width: '256px',
       height: '100vh',
-      backgroundColor: '#f5f5f5',
-      borderRight: '0.8px solid #000000',
+      backgroundColor: '#ffffff',
+      borderRight: '0.8px solid rgba(0,0,0,0.1)',
       display: 'flex',
       flexDirection: 'column',
       position: 'fixed',
@@ -40,7 +64,8 @@ const Sidebar = ({ activeTab, onTabChange }) => {
         padding: '16px',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
+        gap: '8px',
+        borderBottom: '0.8px solid rgba(0,0,0,0.1)'
       }}>
         <Box sx={{
           width: '32px',
@@ -51,7 +76,7 @@ const Sidebar = ({ activeTab, onTabChange }) => {
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <Typography sx={{ fontSize: '20px' }}>🍽️</Typography>
+          <RestaurantMenuOutlinedIcon sx={{ color: '#fff', fontSize: 20 }} />
         </Box>
         <Typography sx={{
           fontSize: '20px',
@@ -71,34 +96,39 @@ const Sidebar = ({ activeTab, onTabChange }) => {
         flexDirection: 'column',
         gap: '4px'
       }}>
-        {menuItems.map((item) => (
-          <Box
-            key={item.id}
-            onClick={() => handleMenuClick(item.id)}
+        {menuItems.map((item) => {
+          const isActive = (resolvedActiveTab === item.id);
+          return (
+            <Box
+              key={item.id}
+              onClick={() => handleMenuClick(item.id)}
             sx={{
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === item.id ? '#e5e5e5' : 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background-color 0.2s',
-              '&:hover': {
-                backgroundColor: activeTab === item.id ? '#e5e5e5' : '#f0f0f0'
-              }
-            }}
-          >
-            <Typography sx={{ fontSize: '16px' }}>{item.icon}</Typography>
-            <Typography sx={{
-              fontSize: '14px',
-              color: activeTab === item.id ? '#000000' : '#000000',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
-            }}>
-              {item.label}
-            </Typography>
-          </Box>
-        ))}
+                height: '40px',
+                padding: '0 12px',
+                borderRadius: '12px',
+                backgroundColor: isActive ? '#f3f3f5' : 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'background-color 0.2s',
+                color: isActive ? '#030213' : '#0f172a',
+                '&:hover': {
+                  backgroundColor: isActive ? '#f3f3f5' : '#f8f8f8'
+                }
+              }}
+            >
+              <Box sx={{ color: isActive ? '#030213' : '#0f172a' }}>{item.icon}</Box>
+              <Typography sx={{
+                fontSize: '16px',
+                color: isActive ? '#030213' : '#0f172a',
+                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+              }}>
+                {item.label}
+              </Typography>
+            </Box>
+          );
+        })}
       </Box>
 
       {/* Logout Button */}
@@ -110,14 +140,14 @@ const Sidebar = ({ activeTab, onTabChange }) => {
           onClick={handleLogout}
           sx={{
             width: '100%',
-            height: '36px',
+            height: '44px',
             backgroundColor: '#ffffff',
             border: '0.8px solid rgba(0,0,0,0.1)',
-            borderRadius: '8px',
+            borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '0 12.8px',
+            gap: '10px',
+            padding: '0 16px',
             cursor: 'pointer',
             transition: 'background-color 0.2s',
             '&:hover': {
@@ -125,9 +155,9 @@ const Sidebar = ({ activeTab, onTabChange }) => {
             }
           }}
         >
-          <Typography sx={{ fontSize: '16px' }}>🚪</Typography>
+          <LogoutOutlinedIcon sx={{ fontSize: 20 }} />
           <Typography sx={{
-            fontSize: '14px',
+            fontSize: '16px',
             color: '#000000',
             fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
           }}>

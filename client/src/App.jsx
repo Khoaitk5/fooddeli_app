@@ -15,6 +15,7 @@ import RegisterEmail from './pages/Auth/RegisterEmail';
 import OTP from './pages/Auth/OTP';
 import ProfileRegister from "./pages/Auth/ProfileRegister";
 import Dashboard from './pages/Admin/Dashboard';
+import ShopLogin from './pages/Auth/ShopLogin';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/register/phone" element={<RegisterPhone />} />
         <Route path="/register/email" element={<RegisterEmail />} />
         <Route path="/otp" element={<OTP />} />
+        <Route path="/shop/login" element={<ShopLogin />} />
         <Route path="/customer/*" element={<MobileLayout />}>
           <Route path="home" element={<Home />} />
           <Route path="discover" element={<Discover />} />
@@ -39,12 +41,13 @@ function App() {
           <Route path="notification" element={<div>Shipper Notifications</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
-        <Route path="/admin/*" element={<MobileAdminLayout />}>
+        <Route path="/shop/*" element={<MobileAdminLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="menu" element={<div>Menu Management</div>} />
-          <Route path="video" element={<div>Video Management</div>} />
-          <Route path="orders" element={<div>Order Management</div>} />
+          <Route path="menu" element={<Dashboard />} />
+          <Route path="video" element={<Dashboard />} />
+          <Route path="orders" element={<Dashboard />} />
         </Route>
+        <Route path="/admin/*" element={<Navigate to="/shop/dashboard" replace />} />
          <Route path="/profileRegister" element={<ProfileRegister />} />
          <Route path="*" element={<Navigate to="/customer/home" />} />
       </Routes>
