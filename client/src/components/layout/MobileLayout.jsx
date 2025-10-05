@@ -36,6 +36,7 @@ const MobileLayout = () => {
       return [
         { label: 'Trang chủ', icon: <HomeIcon />, path: '/customer/home' },
         { label: 'Khám phá', icon: <DiscoverIcon />, path: '/customer/discover' },
+        { label: 'Đơn hàng', icon: <NotificationIcon />, path: '/customer/orders' },
         { label: 'Thông báo', icon: <NotificationIcon />, path: '/customer/notifications' },
         { label: 'Hồ sơ', icon: <ProfileIcon />, path: '/customer/profile' },
       ];
@@ -72,7 +73,7 @@ const MobileLayout = () => {
     left: 0,
     right: 0,
     width: '100%',
-    height: isXs ? '56px' : '64px',
+    height: '50px',
     flexShrink: 0,
     background: '#FFF',
     boxShadow: '0 -4.69px 23.47px 0 rgba(63, 76, 95, 0.12)',
@@ -152,23 +153,27 @@ const MobileLayout = () => {
       {/* Bottom Navigation */}
       <Paper sx={bottomNavStyles} elevation={0}>
         <BottomNavigation
-          showLabels={!isXs}
+          showLabels
           value={currentValue >= 0 ? currentValue : value}
           onChange={handleNavigation}
           sx={{
             '& .MuiBottomNavigationAction-root': {
-              color: '#95989f',
+              color: '#d3d1d8',
+              gap: '4px',
               '&.Mui-selected': {
                 color: '#fe724c'
               }
             },
             '& .MuiBottomNavigationAction-label': {
-              fontSize: { xs: '9px', sm: '10px' },
+              fontSize: '12px',
               fontWeight: 500,
               '&.Mui-selected': {
-                fontSize: { xs: '9px', sm: '10px' },
+                fontSize: '12px',
                 fontWeight: 600
               }
+            },
+            '& .MuiBottomNavigationAction-root .MuiSvgIcon-root': {
+              fontSize: '22px'
             }
           }}
         >

@@ -3,7 +3,13 @@ import MobileLayout from './components/layout/MobileLayout';
 import MobileAdminLayout from './components/layout/MobileAdminLayout';
 import Home from './pages/Customer/Home';
 import Discover from './pages/Customer/Discover';
+import Order from './pages/Customer/Order';
+import OrderTracking from './pages/Customer/OrderTracking';
+import OrderSummary from './pages/Customer/OrderSummary';
 import Cart from './pages/Customer/Cart';
+import Checkout from './pages/Customer/Checkout';
+import Payment from './pages/Customer/Payment';
+import AddCoupon from './pages/Customer/AddCoupon';
 import OrderHistory from './pages/Customer/OrderHistory';
 import Login from './pages/Auth/Login';
 import LoginPhone from './pages/Auth/LoginPhone';
@@ -32,6 +38,13 @@ function App() {
         <Route path="/customer/*" element={<MobileLayout />}>
           <Route path="home" element={<Home />} />
           <Route path="discover" element={<Discover />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="checkout" element={<Checkout />} />
+          <Route path="payment" element={<Payment />} />
+          <Route path="add-coupon" element={<AddCoupon />} />
+          <Route path="orders" element={<Order />} />
+          <Route path="order-tracking" element={<OrderTracking />} />
+          <Route path="order-summary" element={<OrderSummary />} />
           <Route path="notifications" element={<div>Notifications Page</div>} />
           <Route path="profile" element={<div>Customer Profile</div>} />
         </Route>
