@@ -1,5 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
+import DesktopLayout from './components/layout/DesktopLayout';
+import AdminDashboard from './pages/Admin/Dashboard';
+import Approvals from './pages/Admin/Approvals';
+import VideoReports from './pages/Admin/VideoReports';
+import Customers from './pages/Admin/Customers';
+import Shops from './pages/Admin/Shops';
+import Shippers from './pages/Admin/Shippers';
+import System from './pages/Admin/System';
 import Home from './pages/Customer/Home';
 import Cart from './pages/Customer/Cart';
 import OrderHistory from './pages/Customer/OrderHistory';
@@ -12,6 +20,7 @@ import RegisterPhone from './pages/Auth/RegisterPhone';
 import RegisterEmail from './pages/Auth/RegisterEmail';
 import OTP from './pages/Auth/OTP';
 import ProfileRegister from "./pages/Auth/ProfileRegister";
+import AddAdress from "./pages/Auth/AddAdress";
 
 function App() {
   return (
@@ -36,7 +45,18 @@ function App() {
           <Route path="notification" element={<div>Shipper Notifications</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
+        <Route path="/admin/*" element={<DesktopLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="system" element={<System />} />
+          <Route path="approvals" element={<Approvals />} />
+          <Route path="video-reports" element={<VideoReports />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="shops" element={<Shops />} />
+          <Route path="shippers" element={<Shippers />} />
+          <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+        </Route>
          <Route path="/profileRegister" element={<ProfileRegister />} />
+         <Route path="/address/add" element={<AddAdress />} />
          <Route path="*" element={<Navigate to="/customer/home" />} />
       </Routes>
   );
