@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemText, Box, IconButton, Button, Divider, ListSubheader, Avatar, Stack } from '@mui/material';
 import { Menu as MenuIcon, Dashboard, Settings, Verified, Report, People, Store, LocalShipping, BarChart, Timeline } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { ROLES } from '../../utils/constants';
 
 const drawerWidth = 240;
