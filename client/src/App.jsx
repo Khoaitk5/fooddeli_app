@@ -1,6 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
 import MobileAdminLayout from './components/layout/MobileAdminLayout';
+import DesktopLayout from './components/layout/DesktopLayout';
+import AdminDashboard from './pages/Admin/Dashboard';
+import Approvals from './pages/Admin/Approvals';
+import VideoReports from './pages/Admin/VideoReports';
+import Customers from './pages/Admin/Customers';
+import Shops from './pages/Admin/Shops';
+import Shippers from './pages/Admin/Shippers';
+import System from './pages/Admin/System';
 import Home from './pages/Customer/Home';
 import Discover from './pages/Customer/Discover';
 import Order from './pages/Customer/Order';
@@ -22,6 +30,7 @@ import OTP from './pages/Auth/OTP';
 import ProfileRegister from "./pages/Auth/ProfileRegister";
 import Dashboard from './pages/Admin/Dashboard';
 import ShopLogin from './pages/Auth/ShopLogin';
+import AddAdress from "./pages/Auth/AddAdress";
 
 function App() {
   return (
@@ -60,8 +69,18 @@ function App() {
           <Route path="video" element={<Dashboard />} />
           <Route path="orders" element={<Dashboard />} />
         </Route>
-        <Route path="/admin/*" element={<Navigate to="/shop/dashboard" replace />} />
+        <Route path="/admin/*" element={<DesktopLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="system" element={<System />} />
+          <Route path="approvals" element={<Approvals />} />
+          <Route path="video-reports" element={<VideoReports />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="shops" element={<Shops />} />
+          <Route path="shippers" element={<Shippers />} />
+          <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+        </Route>
          <Route path="/profileRegister" element={<ProfileRegister />} />
+         <Route path="/address/add" element={<AddAdress />} />
          <Route path="*" element={<Navigate to="/customer/home" />} />
       </Routes>
   );
