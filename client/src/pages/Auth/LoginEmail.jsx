@@ -5,7 +5,6 @@ import BackArrow from "@/components/shared/BackArrow";
 import OutlineBorder from "@/components/shared/OutlineBorder";
 import InputFrame from "@/components/shared/InputFrame";
 import BlackOutline from "@/components/shared/BlackOutline";
-import HelpPopup from "@/components/shared/HelpPopup"; // 👈 thêm popup trợ giúp
 import { auth } from "@/firebase/firebaseConfig";
 import { sendSignInLinkToEmail } from "firebase/auth";
 
@@ -13,7 +12,6 @@ const LoginEmail = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showHelpPopup, setShowHelpPopup] = useState(false); // 👈 state popup
   const navigate = useNavigate();
 
   // 📤 Gửi liên kết xác thực qua email
@@ -24,7 +22,6 @@ const LoginEmail = () => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // ✅ Kiểm tra email hợp lệ
     if (
       !normalizedEmail ||
       !(
@@ -38,7 +35,7 @@ const LoginEmail = () => {
     }
 
     const actionCodeSettings = {
-      url: "http://localhost:5173/finishSignIn", // ⚠️ đổi thành domain thật khi deploy
+      url: "http://localhost:5173/finishSignIn", // đổi thành domain thật khi deploy
       handleCodeInApp: true,
     };
 
@@ -279,40 +276,7 @@ const LoginEmail = () => {
             </div>
           </SubmitButton>
         </form>
-
-        {/* ❓ Trợ giúp đăng nhập */}
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "320px",
-            transform: "translateX(-50%)",
-            textAlign: "center",
-            display: "flex",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-          onClick={() => setShowHelpPopup(true)}
-        >
-          <span
-            style={{
-              color: "#EF5126",
-              fontSize: 14,
-              fontFamily: "TikTok Sans",
-              fontWeight: "500",
-              textDecoration: "underline",
-            }}
-          >
-            Bạn cần trợ giúp đăng nhập?
-          </span>
-        </div>
       </div>
-
-      {/* 📦 Popup trợ giúp */}
-      <HelpPopup
-        isOpen={showHelpPopup}
-        onClose={() => setShowHelpPopup(false)}
-      />
     </div>
   );
 };
