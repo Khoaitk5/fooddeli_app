@@ -1,11 +1,91 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/shared/Logo";
 import FooterBar from "@/components/shared/FooterBar";
-import BackArrow from "@/components/shared/BackArrow";
 
-const Register = () => {
+const RegisterEmail = () => {
   const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Gửi OTP qua backend
+  const sendOTP = async () => {
+    if (!email) {
+      alert("📧 Vui lòng nhập email.");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("⚠️ Email không hợp lệ.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:5000/api/auth/send-otp-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("📨 Mã OTP đã được gửi đến email của bạn!");
+      } else {
+        alert("❌ " + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Gửi OTP thất bại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Tự động xác minh OTP khi nhập đủ 6 số
+  const handleOtpChange = async (value) => {
+    setOtp(value);
+    if (value.length === 6) {
+      try {
+        setLoading(true);
+        const res = await fetch("http://localhost:5000/api/auth/verify-otp-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp: value }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setOtpVerified(true);
+          alert("✅ OTP hợp lệ! Bạn có thể đặt mật khẩu.");
+        } else {
+          alert("❌ Mã OTP không đúng hoặc đã hết hạn.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("❌ Xác minh OTP thất bại.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // ✅ Sang trang ProfileRegister
+  const handleNext = () => {
+    if (!otpVerified) {
+      alert("⚠️ Bạn cần xác minh OTP trước khi tiếp tục.");
+      return;
+    }
+    if (password.trim().length < 6) {
+      alert("🔑 Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
+    }
+
+    // 👉 Truyền email + password sang ProfileRegister (không có phone)
+    navigate("/ProfileRegister", { state: { email, password } });
+  };
 
   return (
     <div
@@ -56,7 +136,8 @@ const Register = () => {
         >
           Đăng ký
         </div>
-        {/* Phone Section */}
+
+        {/* Email Section */}
         <div
           style={{
             position: "absolute",
@@ -69,36 +150,32 @@ const Register = () => {
             justifyContent: "space-between",
           }}
         >
-          {/*Email*/}
           <div
             style={{
               color: "#161823",
               fontSize: 13,
               fontFamily: "TikTok Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
             }}
           >
             Email
           </div>
 
-          {/* Đăng ký bằng số điện thoại */}
           <div
             style={{
               color: "rgba(22, 24, 35, 0.75)",
               fontSize: 11,
               fontFamily: "IBM Plex Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
               cursor: "pointer",
             }}
-            onClick={() => navigate("/register/email")}
+            onClick={() => navigate("/register")}
           >
             Đăng ký bằng số điện thoại
           </div>
         </div>
 
-        {/* Phone Input Frame */}
+        {/* Email Input */}
         <div
           style={{
             position: "absolute",
@@ -115,8 +192,10 @@ const Register = () => {
           }}
         >
           <input
-            type="tel"
-            placeholder="Email"
+            type="email"
+            placeholder="Nhập email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             style={{
               width: "100%",
               border: "none",
@@ -128,7 +207,7 @@ const Register = () => {
           />
         </div>
 
-        {/* Password Section */}
+        {/* OTP Section */}
         <div
           style={{
             position: "absolute",
@@ -138,21 +217,18 @@ const Register = () => {
             width: "267px",
           }}
         >
-          {/*Mật khẩu*/}
           <div
             style={{
               color: "#161823",
               fontSize: 13,
               fontFamily: "TikTok Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
               marginBottom: "8px",
             }}
           >
-            Mật khẩu
+            Mã OTP
           </div>
 
-          {/* Password Input Frame */}
           <div
             style={{
               width: "232px",
@@ -165,11 +241,13 @@ const Register = () => {
               padding: 0,
             }}
           >
-            {/* Phần nhập mã */}
             <div style={{ width: "162px", paddingLeft: 12 }}>
               <input
                 type="text"
                 placeholder="Nhập mã"
+                value={otp}
+                onChange={(e) => handleOtpChange(e.target.value)}
+                maxLength={6}
                 style={{
                   width: "100%",
                   border: "none",
@@ -177,11 +255,10 @@ const Register = () => {
                   background: "transparent",
                   fontSize: 14,
                   fontFamily: "TikTok Sans",
-                  color: "black",
                 }}
               />
             </div>
-            {/* Thanh ngăn mờ */}
+
             <div
               style={{
                 width: 1,
@@ -191,36 +268,28 @@ const Register = () => {
                 margin: "0 4px",
               }}
             />
-            {/* Nút gửi mã */}
-            <div
+
+            <button
               style={{
+                background: "transparent",
+                border: "none",
+                color: "#EF5126",
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
+                fontFamily: "TikTok Sans",
                 width: "70px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
               }}
+              type="button"
+              onClick={sendOTP}
+              disabled={loading}
             >
-              <button
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#B0B0B0",
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: "pointer",
-                  fontFamily: "TikTok Sans",
-                  wrap: "nowrap",
-                }}
-                type="button"
-              >
-                Gửi mã
-              </button>
-            </div>
+              Gửi mã
+            </button>
           </div>
         </div>
 
-        {/* Confirm Password Section */}
+        {/* Password Section */}
         <div
           style={{
             position: "absolute",
@@ -230,26 +299,23 @@ const Register = () => {
             width: "267px",
           }}
         >
-          {/*Xác nhận mật khẩu*/}
           <div
             style={{
               color: "#161823",
               fontSize: 13,
               fontFamily: "TikTok Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
               marginBottom: "8px",
             }}
           >
             Nhập mật khẩu
           </div>
 
-          {/* Confirm Password Input Frame */}
           <div
             style={{
               width: "232px",
               height: "43px",
-              background: "#F2F2F2",
+              background: otpVerified ? "#F2F2F2" : "#E0E0E0",
               borderRadius: 12,
               display: "flex",
               alignItems: "center",
@@ -259,6 +325,9 @@ const Register = () => {
             <input
               type="password"
               placeholder="Nhập mật khẩu"
+              disabled={!otpVerified}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: "100%",
                 border: "none",
@@ -270,12 +339,13 @@ const Register = () => {
             />
           </div>
         </div>
+
         {/* Button Tiếp */}
         <div
           style={{
             position: "absolute",
             left: "50%",
-            top: "530px", // đặt top phù hợp ngay dưới ô nhập mật khẩu
+            top: "530px",
             transform: "translateX(-50%)",
             width: "232px",
             height: "43px",
@@ -288,17 +358,18 @@ const Register = () => {
             style={{
               width: "100%",
               height: "100%",
-              background: "#F2F2F2",
+              background: otpVerified ? "#EF5126" : "#F2F2F2",
               borderRadius: 28,
               border: "none",
-              color: "#B0B0B0",
+              color: otpVerified ? "white" : "#B0B0B0",
               fontWeight: 700,
               fontSize: 16,
-              cursor: "pointer",
+              cursor: otpVerified ? "pointer" : "not-allowed",
               fontFamily: "TikTok Sans",
             }}
             type="button"
-            onClick={() => navigate("/ProfileRegister")}
+            onClick={handleNext}
+            disabled={!otpVerified}
           >
             Tiếp
           </button>
@@ -314,4 +385,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default RegisterEmail;

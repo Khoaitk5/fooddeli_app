@@ -13,7 +13,7 @@ const ProfileDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Nhận dữ liệu từ RegisterPhone hoặc AddAdress
+  // ✅ Lấy state truyền từ RegisterPhone hoặc RegisterEmail
   const phoneFromState = location.state?.phone || "";
   const passwordFromState = location.state?.password || "";
   const addressFromState = location.state?.address || "";
@@ -27,10 +27,13 @@ const ProfileDetails = () => {
     email: emailFromState,
     address: addressFromState,
     phone: phoneFromState,
-    password: passwordFromState, // ✅ luôn giữ mật khẩu từ trang trước
+    password: passwordFromState,
   });
 
-  // ✅ Cập nhật form nếu state thay đổi (khi quay lại từ AddAddress)
+  // ✅ Kiểm tra có phải luồng đăng ký bằng số điện thoại hay không
+  const isPhoneFlow = !!phoneFromState;
+
+  // ✅ Cập nhật form nếu state thay đổi
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
@@ -54,12 +57,18 @@ const ProfileDetails = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ Submit form đăng ký bằng fetch
+  // ✅ Submit form đăng ký
   const handleSubmit = async () => {
     const { username, fullname, email, address, phone, password } = form;
 
-    // 🛠 Log ra toàn bộ dữ liệu để debug
-    console.log("📩 Dữ liệu gửi đi:", { username, fullname, email, address, phone, password });
+    console.log("📩 Dữ liệu gửi đi:", {
+      username,
+      fullname,
+      email,
+      address,
+      phone,
+      password,
+    });
 
     if (!username || !fullname || !email || !address || !phone || !password) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin!");
@@ -159,6 +168,9 @@ const ProfileDetails = () => {
           onChange={handleChange}
           fullWidth
           sx={{ mb: 2 }}
+          InputProps={{
+            readOnly: !isPhoneFlow, // ✅ chỉ cho nhập nếu là RegisterPhone
+          }}
         />
 
         {/* Địa chỉ */}
@@ -187,9 +199,13 @@ const ProfileDetails = () => {
           name="phone"
           type="tel"
           value={form.phone}
+          onChange={handleChange}
           fullWidth
+          required
           sx={{ mb: 3 }}
-          InputProps={{ readOnly: true }}
+          InputProps={{
+            readOnly: isPhoneFlow, // ✅ chỉ khóa nếu đi từ RegisterPhone
+          }}
         />
 
         <Button
