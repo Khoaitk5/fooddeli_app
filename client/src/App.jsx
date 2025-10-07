@@ -5,7 +5,7 @@ import { AuthProvider } from "./contexts/AuthContext.jsx";
 import MobileLayout from "./components/layout/MobileLayout";
 import DesktopAdminLayout from "./components/layout/DesktopAdminLayout";
 import MobileAdminLayout from "./components/layout/MobileAdminLayout";
-import ShipperLayout from "./components/layout/ShipperLayout";
+//
 
 // Pages - Admin
 import AdminDashboard from "./pages/Admin/Dashboard";
