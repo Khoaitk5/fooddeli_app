@@ -3,7 +3,7 @@ import { Box, Typography, TextField, Button, InputAdornment } from "@mui/materia
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useNavigate } from "react-router-dom";
 
-const ProfileDetails = () => {
+const ProfileRegister = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
@@ -127,4 +127,4 @@ const ProfileDetails = () => {
   );
 };
 
-export default ProfileDetails;
+export default ProfileRegister;
