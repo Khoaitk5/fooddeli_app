@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
-import MobileAdminLayout from './components/layout/MobileAdminLayout';
+import MobileShopLayout from './components/layout/MobileShopLayout';
 import DesktopLayout from './components/layout/DesktopLayout';
 import AdminDashboard from './pages/Admin/Dashboard';
 import Approvals from './pages/Admin/Approvals';
@@ -31,6 +31,11 @@ import ProfileRegister from "./pages/Auth/ProfileRegister";
 import Dashboard from './pages/Admin/Dashboard';
 import ShopLogin from './pages/Auth/ShopLogin';
 import AddAdress from "./pages/Auth/AddAdress";
+import ShopDashboard from './pages/Shop/Dashboard';
+import MenuManagement from './pages/Shop/Menu';
+import ShopVideo from './pages/Shop/Video';
+import ShopOrders from './pages/Shop/Orders';
+import ShopSettings from './pages/Shop/Settings';
 
 function App() {
   return (
@@ -63,11 +68,12 @@ function App() {
           <Route path="notification" element={<div>Shipper Notifications</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
-        <Route path="/shop/*" element={<MobileAdminLayout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="menu" element={<Dashboard />} />
-          <Route path="video" element={<Dashboard />} />
-          <Route path="orders" element={<Dashboard />} />
+        <Route path="/shop/*" element={<MobileShopLayout />}>
+          <Route path="dashboard" element={<ShopDashboard />} />
+          <Route path="menu" element={<MenuManagement />} />
+          <Route path="video" element={<ShopVideo />} />
+          <Route path="orders" element={<ShopOrders />} />
+          <Route path="settings" element={<ShopSettings />} />
         </Route>
         <Route path="/admin/*" element={<DesktopLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
