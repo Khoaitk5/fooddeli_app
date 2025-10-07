@@ -21,6 +21,9 @@ const theme = createTheme({
     },
   },
   shape: { borderRadius: 10 },
+  typography: {
+    fontFamily: "'Inter', 'Roboto', sans-serif",
+  },
 });
 
 createRoot(document.getElementById("root")).render(

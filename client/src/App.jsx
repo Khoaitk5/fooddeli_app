@@ -31,6 +31,7 @@ import ProfileRegister from "./pages/Auth/ProfileRegister";
 import Dashboard from './pages/Admin/Dashboard';
 import ShopLogin from './pages/Auth/ShopLogin';
 import AddAdress from "./pages/Auth/AddAdress";
+import Revenue from './pages/Admin/Revenue';
 
 function App() {
   return (
@@ -77,6 +78,7 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="shops" element={<Shops />} />
           <Route path="shippers" element={<Shippers />} />
+          <Route path="revenue" element={<Revenue />} />
           <Route path="*" element={<Navigate to="/admin/dashboard" />} />
         </Route>
          <Route path="/profileRegister" element={<ProfileRegister />} />
