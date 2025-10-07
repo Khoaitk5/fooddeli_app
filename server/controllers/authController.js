@@ -1,7 +1,17 @@
+console.log("📁 Đã load file authController.js từ:", __filename);
+
 const authService = require("../services/authService");
 const userService = require("../services/userService");
-const admin = require("../config/firebase");
 const jwt = require("jsonwebtoken");
+
+// ✅ Khởi tạo Firebase Admin toàn cục
+let admin;
+try {
+  admin = require("../config/firebase");
+  console.log("✅ Firebase admin loaded thành công");
+} catch (e) {
+  console.error("❌ Lỗi khi require firebase:", e);
+}
 
 /**
  * 📱 Bước 1 - xác thực số điện thoại và mật khẩu (chưa tạo user)
@@ -112,32 +122,62 @@ exports.login = async (req, res) => {
   }
 };
 
+/**
+ * 🔐 Tạo JWT cho user
+ */
 const generateJwt = (user) => {
   return jwt.sign(
-    { id: user._id, phone: user.phone },
+    { id: user.id || user._id, phone: user.phone },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
 };
 
+/**
+ * 📞 Xác thực số điện thoại bằng Firebase ID Token
+ */
 exports.verifyPhone = async (req, res) => {
   const { token } = req.body;
 
   try {
+    console.log("📩 Nhận request verify-phone:", req.body);
+
+    if (!admin) {
+      return res.status(500).json({
+        success: false,
+        error: "Firebase Admin chưa được khởi tạo. Kiểm tra cấu hình.",
+      });
+    }
+
+    // ✅ Xác thực token từ Firebase
     const decoded = await admin.auth().verifyIdToken(token);
     const phoneNumber = decoded.phone_number;
 
-    // ❌ Không tạo user mới nữa — chỉ tìm thôi
+    console.log("📞 Firebase xác thực thành công:", phoneNumber);
+
+    // ✅ Kiểm tra user tồn tại
     const user = await userService.getUserByPhone(phoneNumber);
     if (!user) {
-      return res.status(404).json({ error: "Tài khoản chưa tồn tại. Vui lòng đăng ký trước." });
+      return res.status(404).json({
+        success: false,
+        error: "📱 Tài khoản chưa tồn tại. Vui lòng đăng ký trước.",
+      });
     }
 
+    // ✅ Tạo JWT
     const jwtToken = generateJwt(user);
-    return res.status(200).json({ success: true, token: jwtToken, user });
+    return res.status(200).json({
+      success: true,
+      message: "📱 Xác thực thành công",
+      token: jwtToken,
+      user,
+    });
   } catch (error) {
     console.error("❌ Lỗi xác thực token:", error);
-    return res.status(401).json({ error: "Token không hợp lệ hoặc hết hạn" });
+    return res.status(401).json({
+      success: false,
+      error: "❌ Token không hợp lệ hoặc đã hết hạn",
+    });
   }
 };
 
@@ -157,3 +197,5 @@ exports.logout = async (req, res) => {
     });
   }
 };
+
+console.log("📦 Export keys của authController:", Object.keys(module.exports));
