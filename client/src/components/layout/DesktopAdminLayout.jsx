@@ -32,7 +32,7 @@ import { useAuth } from "../../hooks/useAuth";
 
 const drawerWidth = 230;
 
-const DesktopLayout = () => {
+const DesktopAdminLayout = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const auth = typeof useAuth === "function" ? useAuth() : undefined;
   const logout = auth?.logout;
@@ -253,4 +253,4 @@ const DesktopLayout = () => {
   );
 };
 
-export default DesktopLayout;
+export default DesktopAdminLayout;

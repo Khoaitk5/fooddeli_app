@@ -5,9 +5,13 @@
   "scripts": {
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
-    "app": "concurrently \"npm run client\" \"npm run server\""
+    "app": "concurrently \"npm run client\" \"npm run server\"",
+    "install": "npm install && cd client && npm install && cd ../server && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0"
   }
 }

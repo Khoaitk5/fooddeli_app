@@ -1,0 +1,41 @@
+# ===== Global Logs =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== Node Modules (root) =====
+node_modules/
+
+# ===== Build Artifacts =====
+dist/
+dist-ssr/
+build/
+
+# ===== Environment Files =====
+.env
+
+# ===== Editor Directories & Files =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== OS system files =====
+Thumbs.db
+
+# ===== Subprojects =====
+client/node_modules/
+client/dist/
+server/node_modules/
+server/build/
+server/.env
+client/.env

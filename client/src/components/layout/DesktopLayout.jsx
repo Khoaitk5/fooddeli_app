@@ -34,8 +34,7 @@ const drawerWidth = 230;
 
 const DesktopLayout = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const auth = typeof useAuth === "function" ? useAuth() : undefined;
-  const logout = auth?.logout;
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
