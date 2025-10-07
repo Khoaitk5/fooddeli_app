@@ -1,11 +1,92 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/shared/Logo";
 import FooterBar from "@/components/shared/FooterBar";
-import BackArrow from "@/components/shared/BackArrow";
+import { auth } from "@/firebase/firebaseConfig";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
 const RegisterPhone = () => {
   const navigate = useNavigate();
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Chuẩn hoá số điện thoại (+84)
+  const formatPhoneNumber = (raw) => {
+    const cleaned = raw.replace(/\s+/g, "");
+    if (cleaned.startsWith("0")) {
+      return "+84" + cleaned.substring(1);
+    }
+    return cleaned;
+  };
+
+  // ✅ Gửi OTP
+  const sendOTP = async () => {
+    if (!phone) {
+      alert("📱 Vui lòng nhập số điện thoại.");
+      return;
+    }
+    if (!/^0\d{9}$/.test(phone)) {
+      alert("⚠️ Số điện thoại không hợp lệ. Hãy nhập đủ 10 số và bắt đầu bằng 0.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+        });
+      }
+
+      const formattedPhone = formatPhoneNumber(phone);
+      const result = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+      setConfirmationResult(result);
+      alert("📨 Mã OTP đã được gửi về số điện thoại của bạn!");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Gửi OTP thất bại. Vui lòng kiểm tra số điện thoại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Tự động xác minh khi OTP đủ 6 số
+  const handleOtpChange = async (value) => {
+    setOtp(value);
+    if (value.length === 6 && confirmationResult) {
+      try {
+        setLoading(true);
+        const result = await confirmationResult.confirm(value);
+        console.log("✅ OTP xác minh thành công:", result.user);
+        setOtpVerified(true);
+        alert("✅ OTP hợp lệ! Bạn có thể đặt mật khẩu.");
+      } catch (err) {
+        console.error(err);
+        alert("❌ Mã OTP không đúng hoặc đã hết hạn.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // ✅ Sang trang tiếp theo
+const handleNext = () => {
+  if (!otpVerified) {
+    alert("⚠️ Bạn cần xác minh OTP trước khi tiếp tục.");
+    return;
+  }
+  if (password.trim().length < 6) {
+    alert("🔑 Mật khẩu phải có ít nhất 6 ký tự.");
+    return;
+  }
+
+  const formattedPhone = formatPhoneNumber(phone); // ✅ chuyển số sang +84 trước khi gửi
+  navigate("/ProfileRegister", { state: { phone: formattedPhone, password } });
+};
 
   return (
     <div
@@ -56,6 +137,7 @@ const RegisterPhone = () => {
         >
           Đăng ký
         </div>
+
         {/* Phone Section */}
         <div
           style={{
@@ -69,27 +151,23 @@ const RegisterPhone = () => {
             justifyContent: "space-between",
           }}
         >
-          {/*Số điện thoại*/}
           <div
             style={{
               color: "#161823",
               fontSize: 13,
               fontFamily: "TikTok Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
             }}
           >
             Số điện thoại
           </div>
 
-          {/* Đăng ký bằng email */}
           <div
             style={{
               color: "rgba(22, 24, 35, 0.75)",
               fontSize: 11,
               fontFamily: "IBM Plex Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
               cursor: "pointer",
             }}
             onClick={() => navigate("/register/email")}
@@ -98,7 +176,7 @@ const RegisterPhone = () => {
           </div>
         </div>
 
-        {/* Phone Input Frame */}
+        {/* Phone Input */}
         <div
           style={{
             position: "absolute",
@@ -116,7 +194,9 @@ const RegisterPhone = () => {
         >
           <input
             type="tel"
-            placeholder="Số điện thoại"
+            placeholder="Số điện thoại (vd: 090...)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             style={{
               width: "100%",
               border: "none",
@@ -128,7 +208,7 @@ const RegisterPhone = () => {
           />
         </div>
 
-        {/* Password Section */}
+        {/* OTP Section */}
         <div
           style={{
             position: "absolute",
@@ -138,21 +218,18 @@ const RegisterPhone = () => {
             width: "267px",
           }}
         >
-          {/*Mật khẩu*/}
           <div
             style={{
               color: "#161823",
               fontSize: 13,
               fontFamily: "TikTok Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
               marginBottom: "8px",
             }}
           >
-            Mật khẩu
+            Mã OTP
           </div>
 
-          {/* Password Input Frame */}
           <div
             style={{
               width: "232px",
@@ -165,11 +242,13 @@ const RegisterPhone = () => {
               padding: 0,
             }}
           >
-            {/* Phần nhập mã */}
             <div style={{ width: "162px", paddingLeft: 12 }}>
               <input
                 type="text"
                 placeholder="Nhập mã"
+                value={otp}
+                onChange={(e) => handleOtpChange(e.target.value)}
+                maxLength={6}
                 style={{
                   width: "100%",
                   border: "none",
@@ -177,11 +256,10 @@ const RegisterPhone = () => {
                   background: "transparent",
                   fontSize: 14,
                   fontFamily: "TikTok Sans",
-                  color: "black",
                 }}
               />
             </div>
-            {/* Thanh ngăn mờ */}
+
             <div
               style={{
                 width: 1,
@@ -191,36 +269,28 @@ const RegisterPhone = () => {
                 margin: "0 4px",
               }}
             />
-            {/* Nút gửi mã */}
-            <div
+
+            <button
               style={{
+                background: "transparent",
+                border: "none",
+                color: "#EF5126",
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
+                fontFamily: "TikTok Sans",
                 width: "70px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
               }}
+              type="button"
+              onClick={sendOTP}
+              disabled={loading}
             >
-              <button
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#B0B0B0",
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: "pointer",
-                  fontFamily: "TikTok Sans",
-                  wrap: "nowrap",
-                }}
-                type="button"
-              >
-                Gửi mã
-              </button>
-            </div>
+              Gửi mã
+            </button>
           </div>
         </div>
 
-        {/* Confirm Password Section */}
+        {/* Password Section */}
         <div
           style={{
             position: "absolute",
@@ -230,26 +300,23 @@ const RegisterPhone = () => {
             width: "267px",
           }}
         >
-          {/*Xác nhận mật khẩu*/}
           <div
             style={{
               color: "#161823",
               fontSize: 13,
               fontFamily: "TikTok Sans",
               fontWeight: "600",
-              wordWrap: "break-word",
               marginBottom: "8px",
             }}
           >
             Nhập mật khẩu
           </div>
 
-          {/* Confirm Password Input Frame */}
           <div
             style={{
               width: "232px",
               height: "43px",
-              background: "#F2F2F2",
+              background: otpVerified ? "#F2F2F2" : "#E0E0E0",
               borderRadius: 12,
               display: "flex",
               alignItems: "center",
@@ -259,6 +326,9 @@ const RegisterPhone = () => {
             <input
               type="password"
               placeholder="Nhập mật khẩu"
+              disabled={!otpVerified}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: "100%",
                 border: "none",
@@ -270,12 +340,13 @@ const RegisterPhone = () => {
             />
           </div>
         </div>
+
         {/* Button Tiếp */}
         <div
           style={{
             position: "absolute",
             left: "50%",
-            top: "530px", // đặt top phù hợp ngay dưới ô nhập mật khẩu
+            top: "530px",
             transform: "translateX(-50%)",
             width: "232px",
             height: "43px",
@@ -288,17 +359,18 @@ const RegisterPhone = () => {
             style={{
               width: "100%",
               height: "100%",
-              background: "#F2F2F2",
+              background: otpVerified ? "#EF5126" : "#F2F2F2",
               borderRadius: 28,
               border: "none",
-              color: "#B0B0B0",
+              color: otpVerified ? "white" : "#B0B0B0",
               fontWeight: 700,
               fontSize: 16,
-              cursor: "pointer",
+              cursor: otpVerified ? "pointer" : "not-allowed",
               fontFamily: "TikTok Sans",
             }}
             type="button"
-            onClick={() => navigate("/ProfileRegister")}
+            onClick={handleNext}
+            disabled={!otpVerified}
           >
             Tiếp
           </button>
@@ -310,6 +382,7 @@ const RegisterPhone = () => {
           onClick={() => navigate("/login")}
         />
       </div>
+      <div id="recaptcha-container"></div>
     </div>
   );
 };

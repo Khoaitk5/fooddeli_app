@@ -1,31 +1,105 @@
-import React, { useState } from "react";
-import { Box, Typography, TextField, Button, InputAdornment } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  InputAdornment,
+} from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const ProfileRegister = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ Nhận dữ liệu từ RegisterPhone hoặc AddAdress
+  const phoneFromState = location.state?.phone || "";
+  const passwordFromState = location.state?.password || "";
+  const addressFromState = location.state?.address || "";
+  const usernameFromState = location.state?.username || "";
+  const fullnameFromState = location.state?.fullname || "";
+  const emailFromState = location.state?.email || "";
+
   const [form, setForm] = useState({
-    username: "",
-    fullname: "",
-    email: "",
-    address: "",
+    username: usernameFromState,
+    fullname: fullnameFromState,
+    email: emailFromState,
+    address: addressFromState,
+    phone: phoneFromState,
+    password: passwordFromState, // ✅ luôn giữ mật khẩu từ trang trước
   });
+
+  // ✅ Cập nhật form nếu state thay đổi (khi quay lại từ AddAddress)
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      phone: phoneFromState || prev.phone,
+      address: addressFromState || prev.address,
+      username: usernameFromState || prev.username,
+      fullname: fullnameFromState || prev.fullname,
+      email: emailFromState || prev.email,
+      password: passwordFromState || prev.password,
+    }));
+  }, [
+    phoneFromState,
+    addressFromState,
+    usernameFromState,
+    fullnameFromState,
+    emailFromState,
+    passwordFromState,
+  ]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-    const { username, fullname, email, address } = form;
-    if (!username || !fullname || !email || !address) {
+  // ✅ Submit form đăng ký bằng fetch
+  const handleSubmit = async () => {
+    const { username, fullname, email, address, phone, password } = form;
+
+    // 🛠 Log ra toàn bộ dữ liệu để debug
+    console.log("📩 Dữ liệu gửi đi:", { username, fullname, email, address, phone, password });
+
+    if (!username || !fullname || !email || !address || !phone || !password) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin!");
       return;
     }
 
-    console.log("✅ Dữ liệu người dùng:", form);
-    alert("Đăng ký hoàn tất! 🎉");
-    navigate("/customer/home"); // Chuyển sang trang chính sau khi hoàn tất profile
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("📧 Email không hợp lệ!");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          fullname,
+          email,
+          address,
+          phone,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("📡 Phản hồi từ backend:", data);
+
+      if (!response.ok) {
+        throw new Error(data.message || "Đăng ký thất bại");
+      }
+
+      console.log("✅ Đăng ký thành công:", data);
+      alert("🎉 Tài khoản đã được tạo thành công!");
+      navigate("/customer/home");
+    } catch (err) {
+      console.error("❌ Lỗi đăng ký:", err.message);
+      alert(err.message || "Đăng ký thất bại. Vui lòng thử lại!");
+    }
   };
 
   return (
@@ -56,6 +130,7 @@ const ProfileRegister = () => {
           📝 Hoàn tất hồ sơ
         </Typography>
 
+        {/* Username */}
         <TextField
           label="Username"
           name="username"
@@ -64,6 +139,8 @@ const ProfileRegister = () => {
           fullWidth
           sx={{ mb: 2 }}
         />
+
+        {/* Họ và tên */}
         <TextField
           label="Họ và tên"
           name="fullname"
@@ -72,6 +149,8 @@ const ProfileRegister = () => {
           fullWidth
           sx={{ mb: 2 }}
         />
+
+        {/* Email */}
         <TextField
           label="Email"
           name="email"
@@ -81,6 +160,8 @@ const ProfileRegister = () => {
           fullWidth
           sx={{ mb: 2 }}
         />
+
+        {/* Địa chỉ */}
         <TextField
           label="Địa chỉ"
           name="address"
@@ -88,25 +169,27 @@ const ProfileRegister = () => {
           onChange={handleChange}
           fullWidth
           sx={{ mb: 3 }}
-          onClick={() => navigate('/address/add')}
+          onClick={() => navigate("/address/add", { state: { form } })}
           InputProps={{
             readOnly: true,
-            sx: { cursor: 'pointer' },
+            sx: { cursor: "pointer" },
             endAdornment: (
               <InputAdornment position="end">
-                <ChevronRightIcon sx={{ color: '#A9ADA5' }} />
+                <ChevronRightIcon sx={{ color: "#A9ADA5" }} />
               </InputAdornment>
             ),
           }}
         />
+
+        {/* Số điện thoại */}
         <TextField
           label="Số điện thoại"
           name="phone"
           type="tel"
           value={form.phone}
-          onChange={handleChange}
           fullWidth
           sx={{ mb: 3 }}
+          InputProps={{ readOnly: true }}
         />
 
         <Button
