@@ -28,8 +28,7 @@ import RegisterPhone from './pages/Auth/RegisterPhone';
 import RegisterEmail from './pages/Auth/RegisterEmail';
 import OTP from './pages/Auth/OTP';
 import ProfileRegister from "./pages/Auth/ProfileRegister";
-import Dashboard from './pages/Admin/Dashboard';
-import ShopLogin from './pages/Auth/ShopLogin';
+import ShopLogin from "./pages/Auth/ShopLogin";
 import AddAdress from "./pages/Auth/AddAdress";
 import ShopDashboard from './pages/Shop/Dashboard';
 import MenuManagement from './pages/Shop/Menu';
@@ -37,9 +36,13 @@ import ShopVideo from './pages/Shop/Video';
 import ShopOrders from './pages/Shop/Orders';
 import ShopSettings from './pages/Shop/Settings';
 
+// 🧠 App Component
 function App() {
   return (
+    // ✅ AuthProvider bao toàn bộ ứng dụng
+    <AuthProvider>
       <Routes>
+        {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/login/phone" element={<LoginPhone />} />
         <Route path="/login/email" element={<LoginEmail />} />
@@ -49,6 +52,10 @@ function App() {
         <Route path="/register/email" element={<RegisterEmail />} />
         <Route path="/otp" element={<OTP />} />
         <Route path="/shop/login" element={<ShopLogin />} />
+        <Route path="/profileRegister" element={<ProfileRegister />} />
+        <Route path="/address/add" element={<AddAdress />} />
+
+        {/* Customer Routes */}
         <Route path="/customer/*" element={<MobileLayout />}>
           <Route path="home" element={<Home />} />
           <Route path="discover" element={<Discover />} />
@@ -62,6 +69,8 @@ function App() {
           <Route path="notifications" element={<div>Notifications Page</div>} />
           <Route path="profile" element={<div>Customer Profile</div>} />
         </Route>
+
+        {/* Shipper Routes */}
         <Route path="/shipper/*" element={<MobileLayout />}>
           <Route path="orders" element={<div>Shipper Orders</div>} />
           <Route path="map" element={<div>Shipper Map</div>} />
@@ -75,7 +84,9 @@ function App() {
           <Route path="orders" element={<ShopOrders />} />
           <Route path="settings" element={<ShopSettings />} />
         </Route>
-        <Route path="/admin/*" element={<DesktopLayout />}>
+
+        {/* Desktop Admin Routes */}
+        <Route path="/admin/*" element={<DesktopAdminLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="system" element={<System />} />
           <Route path="approvals" element={<Approvals />} />
@@ -83,12 +94,14 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="shops" element={<Shops />} />
           <Route path="shippers" element={<Shippers />} />
+          <Route path="revenue" element={<Revenue />} />
           <Route path="*" element={<Navigate to="/admin/dashboard" />} />
         </Route>
-         <Route path="/profileRegister" element={<ProfileRegister />} />
-         <Route path="/address/add" element={<AddAdress />} />
-         <Route path="*" element={<Navigate to="/customer/home" />} />
+
+        {/* Default redirect */}
+        <Route path="*" element={<Navigate to="/customer/home" />} />
       </Routes>
+    </AuthProvider>
   );
 }
 

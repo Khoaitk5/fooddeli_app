@@ -1,33 +1,21 @@
-===== Node.js =====
+# ===== Node Modules =====
 node_modules/
-npm-debug.log
-yarn-error.log
 
-===== Build & Dist =====
-dist/
+# ===== Build Output =====
 build/
 
-===== Environment & Keys =====
+# ===== Environment =====
 .env
-server/.env
 
-
-===== Logs =====
+# ===== Logs =====
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-===== Editor =====
+# ===== Editor & OS =====
 .vscode/
 .idea/
-
-===== OS system files =====
 .DS_Store
 Thumbs.db
-
-===== Frontend (Vite / React) =====
-client/node_modules/
-client/dist/
-
-===== Backend =====
-server/node_modules/
-server/build/

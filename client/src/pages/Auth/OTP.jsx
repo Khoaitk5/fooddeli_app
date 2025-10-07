@@ -64,11 +64,15 @@ const OTP = () => {
       console.log("✅ Xác minh thành công:", user);
 
       const idToken = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/auth/verify-phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: idToken }),
-      });
+
+      const res = await fetch(
+        `http://localhost:5000/api/auth/verify-phone`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: idToken }),
+        }
+      );
 
       const data = await res.json();
       if (data.success) {
@@ -341,7 +345,6 @@ const OTP = () => {
           </div>
         </form>
 
-        
         <div id="recaptcha-container"></div>
       </div>
 
