@@ -4,7 +4,7 @@ import Logo from "@/components/shared/Logo";
 import FooterBar from "@/components/shared/FooterBar";
 import BackArrow from "@/components/shared/BackArrow";
 
-const Register = () => {
+const RegisterPhone = () => {
   const navigate = useNavigate();
 
   return (
@@ -314,4 +314,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default RegisterPhone;
