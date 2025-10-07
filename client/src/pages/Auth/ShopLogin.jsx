@@ -5,7 +5,7 @@ const ShopLogin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const imgIcon = "https://www.figma.com/api/mcp/asset/47d4d3ef-37b1-48d4-868c-fe561ddb00a3";
+  // Replaced remote icon with inline SVG to avoid CORS/404 issues
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -56,7 +56,17 @@ const ShopLogin = () => {
             }}
             aria-label="Login Icon"
           >
-            <img src={imgIcon} alt="" style={{ width: 32, height: 32 }} />
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="#ffffff"
+              aria-hidden="true"
+              focusable="false"
+              style={{ display: 'block' }}
+            >
+              <path d="M7 4a5 5 0 0 1 10 0h3a1 1 0 1 1 0 2h-1l-1.2 12.02A3 3 0 0 1 14.81 21H9.19a3 3 0 0 1-2.99-2.98L5 6H4a1 1 0 1 1 0-2h3zm2 0a3 3 0 1 1 6 0H9zm-1.02 4 1.04 10.02c.06.52.5.92 1.03.92h5.62c.53 0 .97-.4 1.03-.92L18.74 8H7.98z" />
+            </svg>
           </div>
           <div
             style={{ position: 'absolute', left: 24, top: 110, width: 398.4 }}

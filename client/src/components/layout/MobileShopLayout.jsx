@@ -11,7 +11,7 @@ import {
 import { Menu as MenuIcon } from '@mui/icons-material';
 import ShopSidebar from '@/components/Shop/ShopSidebar';
 
-const MobileAdminLayout = () => {
+const MobileShopLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -110,4 +110,6 @@ const MobileAdminLayout = () => {
   );
 };
 
-export default MobileAdminLayout;
+export default MobileShopLayout;
+
+
