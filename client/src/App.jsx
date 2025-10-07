@@ -1,40 +1,50 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import MobileLayout from './components/layout/MobileLayout';
-import MobileShopLayout from './components/layout/MobileShopLayout';
-import DesktopLayout from './components/layout/DesktopLayout';
-import AdminDashboard from './pages/Admin/Dashboard';
-import Approvals from './pages/Admin/Approvals';
-import VideoReports from './pages/Admin/VideoReports';
-import Customers from './pages/Admin/Customers';
-import Shops from './pages/Admin/Shops';
-import Shippers from './pages/Admin/Shippers';
-import System from './pages/Admin/System';
-import Home from './pages/Customer/Home';
-import Discover from './pages/Customer/Discover';
-import Order from './pages/Customer/Order';
-import OrderTracking from './pages/Customer/OrderTracking';
-import OrderSummary from './pages/Customer/OrderSummary';
-import Cart from './pages/Customer/Cart';
-import Checkout from './pages/Customer/Checkout';
-import Payment from './pages/Customer/Payment';
-import AddCoupon from './pages/Customer/AddCoupon';
-import OrderHistory from './pages/Customer/OrderHistory';
-import Login from './pages/Auth/Login';
-import LoginPhone from './pages/Auth/LoginPhone';
-import LoginEmail from './pages/Auth/LoginEmail';
-import LoginPassword from './pages/Auth/LoginPassword';
-import Register from './pages/Auth/Register';
-import RegisterPhone from './pages/Auth/RegisterPhone';
-import RegisterEmail from './pages/Auth/RegisterEmail';
-import OTP from './pages/Auth/OTP';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
+
+// Layouts
+import MobileLayout from "./components/layout/MobileLayout";
+import DesktopAdminLayout from "./components/layout/DesktopAdminLayout";
+import MobileAdminLayout from "./components/layout/MobileAdminLayout";
+import ShipperLayout from "./components/layout/ShipperLayout";
+
+// Pages - Admin
+import AdminDashboard from "./pages/Admin/Dashboard";
+import Approvals from "./pages/Admin/Approvals";
+import VideoReports from "./pages/Admin/VideoReports";
+import Customers from "./pages/Admin/Customers";
+import Shops from "./pages/Admin/Shops";
+import Shippers from "./pages/Admin/Shippers";
+import System from "./pages/Admin/System";
+import Revenue from "./pages/Admin/Revenue";
+
+// Pages - Customer
+import Home from "./pages/Customer/Home";
+import Discover from "./pages/Customer/Discover";
+import Order from "./pages/Customer/Order";
+import OrderTracking from "./pages/Customer/OrderTracking";
+import OrderSummary from "./pages/Customer/OrderSummary";
+import Cart from "./pages/Customer/Cart";
+import Checkout from "./pages/Customer/Checkout";
+import Payment from "./pages/Customer/Payment";
+import AddCoupon from "./pages/Customer/AddCoupon";
+import OrderHistory from "./pages/Customer/OrderHistory";
+
+// Pages - Auth
+import Login from "./pages/Auth/Login";
+import LoginPhone from "./pages/Auth/LoginPhone";
+import LoginEmail from "./pages/Auth/LoginEmail";
+import LoginPassword from "./pages/Auth/LoginPassword";
+import Register from "./pages/Auth/Register";
+import RegisterPhone from "./pages/Auth/RegisterPhone";
+import RegisterEmail from "./pages/Auth/RegisterEmail";
+import OTP from "./pages/Auth/OTP";
 import ProfileRegister from "./pages/Auth/ProfileRegister";
 import ShopLogin from "./pages/Auth/ShopLogin";
 import AddAdress from "./pages/Auth/AddAdress";
-import ShopDashboard from './pages/Shop/Dashboard';
-import MenuManagement from './pages/Shop/Menu';
-import ShopVideo from './pages/Shop/Video';
-import ShopOrders from './pages/Shop/Orders';
-import ShopSettings from './pages/Shop/Settings';
+
+// Pages - Shipper
+import HomePage from "./pages/Shipper/HomePage";
+
 
 // 🧠 App Component
 function App() {
@@ -71,18 +81,19 @@ function App() {
         </Route>
 
         {/* Shipper Routes */}
-        <Route path="/shipper/*" element={<MobileLayout />}>
+        <Route path="/shipper/*" element={<ShipperLayout />}>
+          <Route path="home" element={<HomePage />} />
           <Route path="orders" element={<div>Shipper Orders</div>} />
-          <Route path="map" element={<div>Shipper Map</div>} />
-          <Route path="notification" element={<div>Shipper Notifications</div>} />
+          <Route path="active" element={<div>Đơn hàng đang giao</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
-        <Route path="/shop/*" element={<MobileShopLayout />}>
-          <Route path="dashboard" element={<ShopDashboard />} />
-          <Route path="menu" element={<MenuManagement />} />
-          <Route path="video" element={<ShopVideo />} />
-          <Route path="orders" element={<ShopOrders />} />
-          <Route path="settings" element={<ShopSettings />} />
+
+        {/* Shop Admin Routes */}
+        <Route path="/shop/*" element={<MobileAdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="menu" element={<AdminDashboard />} />
+          <Route path="video" element={<AdminDashboard />} />
+          <Route path="orders" element={<AdminDashboard />} />
         </Route>
 
         {/* Desktop Admin Routes */}
@@ -97,6 +108,7 @@ function App() {
           <Route path="revenue" element={<Revenue />} />
           <Route path="*" element={<Navigate to="/admin/dashboard" />} />
         </Route>
+
 
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/customer/home" />} />
