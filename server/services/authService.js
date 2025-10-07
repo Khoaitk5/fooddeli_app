@@ -15,7 +15,21 @@ exports.login = async (phone, password) => {
 };
 
 exports.register = async (userData) => {
-  const { username, full_name, password, phone, email, address, role = "user" } = userData;
+  // 🧠 Nhận dữ liệu từ frontend
+  const {
+    username,
+    fullname,        // 📌 FE gửi là fullname (camelCase)
+    password,
+    phone,
+    email,
+    address,
+    role = "user",
+  } = userData;
+
+  // 📌 Kiểm tra bắt buộc: phải có password
+  if (!password) {
+    throw new Error("Mật khẩu là bắt buộc");
+  }
 
   // 📌 Kiểm tra: phải có ít nhất 1 trong 2 trường: phone hoặc email
   if (!phone && !email) {
@@ -46,7 +60,7 @@ exports.register = async (userData) => {
   // 📦 1️⃣ Tạo user mới trong DB
   const newUser = await userDao.create({
     username,
-    full_name,
+    full_name: fullname,          // 📌 ánh xạ fullname từ FE -> full_name trong DB
     password: hashedPassword,
     phone: phone || null,
     email: email || null,
@@ -56,12 +70,18 @@ exports.register = async (userData) => {
 
   // 🏡 2️⃣ Nếu có nhập địa chỉ -> tạo luôn địa chỉ mặc định
   if (address) {
-    await addressDao.addAddress({
-      user_id: newUser.id,            // 📌 khóa ngoại liên kết user
+    const addr = await addressDao.addAddress({
+      user_id: newUser.id,
       address_line: address,
-      is_default: true,               // 📍 địa chỉ đầu tiên mặc định
+      is_default: true,
     });
+
+    // 📌 Gán vào newUser để controller có thể trả về cho FE
+    newUser.address = addr.address_line;
   }
+
+  // 📌 Gán lại fullname cho newUser để controller trả ra đúng key FE mong đợi
+  newUser.fullname = fullname;
 
   return newUser;
 };

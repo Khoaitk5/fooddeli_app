@@ -1,6 +1,7 @@
 // dao/addressDao.js
 const GenericDao = require("./generic_dao");
 const Address = require("../models/address");
+const pool = require("../config/db"); // ✅ thêm dòng này
 
 class AddressDao extends GenericDao {
   constructor() {
@@ -18,7 +19,7 @@ class AddressDao extends GenericDao {
       WHERE user_id = $1
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]); // ✅ dùng pool thay cho this.db
     return result.rows;
   }
 
@@ -33,7 +34,7 @@ class AddressDao extends GenericDao {
       WHERE user_id = $1 AND is_default = TRUE
       LIMIT 1;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rows[0] || null;
   }
 
@@ -55,7 +56,7 @@ class AddressDao extends GenericDao {
       VALUES ($1, $2, $3)
       RETURNING *;
     `;
-    const result = await this.db.query(query, [user_id, address_line, is_default]);
+    const result = await pool.query(query, [user_id, address_line, is_default]);
     return result.rows[0];
   }
 
@@ -85,7 +86,7 @@ class AddressDao extends GenericDao {
       WHERE address_id = $3
       RETURNING *;
     `;
-    const result = await this.db.query(query, [address_line, is_default, addressId]);
+    const result = await pool.query(query, [address_line, is_default, addressId]);
     return result.rows[0];
   }
 
@@ -99,7 +100,7 @@ class AddressDao extends GenericDao {
       DELETE FROM addresses
       WHERE address_id = $1;
     `;
-    const result = await this.db.query(query, [addressId]);
+    const result = await pool.query(query, [addressId]);
     return result.rowCount > 0;
   }
 
@@ -114,7 +115,7 @@ class AddressDao extends GenericDao {
       SET is_default = FALSE
       WHERE user_id = $1 AND is_default = TRUE;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rowCount;
   }
 }
