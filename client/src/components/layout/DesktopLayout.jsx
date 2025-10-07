@@ -9,9 +9,7 @@ const drawerWidth = 240;
 
 const DesktopLayout = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const auth = (typeof useAuth === 'function') ? useAuth() : undefined;
-  const user = auth?.user;
-  const logout = auth?.logout;
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
