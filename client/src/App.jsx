@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
-import DesktopLayout from './components/layout/DesktopLayout';
+import DesktopAdminLayout from './components/layout/DesktopAdminLayout';
 import AdminDashboard from './pages/Admin/Dashboard';
 import Approvals from './pages/Admin/Approvals';
 import VideoReports from './pages/Admin/VideoReports';
@@ -46,7 +46,7 @@ function App() {
           <Route path="notification" element={<div>Shipper Notifications</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
         </Route>
-        <Route path="/admin/*" element={<DesktopLayout />}>
+        <Route path="/admin/*" element={<DesktopAdminLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="system" element={<System />} />
           <Route path="approvals" element={<Approvals />} />
