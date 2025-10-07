@@ -43,7 +43,7 @@ import ShopLogin from "./pages/Auth/ShopLogin";
 import AddAdress from "./pages/Auth/AddAdress";
 
 // Pages - Shipper
-import HomePage from "./pages/Shipper/HomePage";
+//import HomePage from "./pages/Shipper/HomePage";
 
 
 // 🧠 App Component
@@ -80,13 +80,13 @@ function App() {
           <Route path="profile" element={<div>Customer Profile</div>} />
         </Route>
 
-        {/* Shipper Routes */}
+        {/* Shipper Routes
         <Route path="/shipper/*" element={<ShipperLayout />}>
           <Route path="home" element={<HomePage />} />
           <Route path="orders" element={<div>Shipper Orders</div>} />
           <Route path="active" element={<div>Đơn hàng đang giao</div>} />
           <Route path="profile" element={<div>Shipper Profile</div>} />
-        </Route>
+        </Route> */}
 
         {/* Shop Admin Routes */}
         <Route path="/shop/*" element={<MobileAdminLayout />}>
