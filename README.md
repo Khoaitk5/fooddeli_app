@@ -35,7 +35,7 @@ fooddeli_app/
 ---
 
 ### Cài đặt toàn bộ modules từ package.json app/client/server
-npm run install
+npm run setup
 
 ### Chạy frontend (React) trong thư mục client
 npm run client
