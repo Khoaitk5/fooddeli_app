@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
 import MobileShopLayout from './components/layout/MobileShopLayout';
+import MobileShipperLayout from './components/layout/MobileShipperLayout';
 import DesktopLayout from './components/layout/DesktopLayout';
 import DesktopAdminLayout from './components/layout/DesktopAdminLayout';
 import { AuthProvider } from './contexts/AuthContext';
@@ -38,6 +39,15 @@ import MenuManagement from './pages/Shop/Menu';
 import ShopVideo from './pages/Shop/Video';
 import ShopOrders from './pages/Shop/Orders';
 import ShopSettings from './pages/Shop/Settings';
+import ShipperHome from './pages/Shipper/Home';
+import ShipperAvailable from './pages/Shipper/AvailableOrders';
+import ShipperMyRuns from './pages/Shipper/MyRuns';
+import ShipperOrderDetail from './pages/Shipper/OrderDetail';
+import ShipperNavigation from './pages/Shipper/Navigation';
+import ShipperEarnings from './pages/Shipper/Earnings';
+import ShipperHistory from './pages/Shipper/History';
+import ShipperProfile from './pages/Shipper/Profile';
+import ShipperSettings from './pages/Shipper/Settings';
 
 // 🧠 App Component
 function App() {
@@ -74,11 +84,17 @@ function App() {
         </Route>
 
         {/* Shipper Routes */}
-        <Route path="/shipper/*" element={<MobileLayout />}>
-          <Route path="orders" element={<div>Shipper Orders</div>} />
-          <Route path="map" element={<div>Shipper Map</div>} />
-          <Route path="notification" element={<div>Shipper Notifications</div>} />
-          <Route path="profile" element={<div>Shipper Profile</div>} />
+        <Route path="/shipper/*" element={<MobileShipperLayout />}>
+          <Route path="home" element={<ShipperHome />} />
+          <Route path="available" element={<ShipperAvailable />} />
+          <Route path="my-runs" element={<ShipperMyRuns />} />
+          <Route path="order/:id" element={<ShipperOrderDetail />} />
+          <Route path="navigation" element={<ShipperNavigation />} />
+          <Route path="earnings" element={<ShipperEarnings />} />
+          <Route path="history" element={<ShipperHistory />} />
+          <Route path="profile" element={<ShipperProfile />} />
+          <Route path="settings" element={<ShipperSettings />} />
+          <Route path="*" element={<Navigate to="/shipper/home" />} />
         </Route>
         <Route path="/shop/*" element={<MobileShopLayout />}>
           <Route path="dashboard" element={<ShopDashboard />} />
