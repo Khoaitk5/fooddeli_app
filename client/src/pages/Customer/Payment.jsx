@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { pxW, pxH } from '../../utils/scale.js';
+import '../../styles/customer-responsive.css';
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function Payment() {
 
   return (
     <div className="bg-white">
-      <div className="mx-auto max-w-[390px] px-5 pt-5 pb-28">
+      <div className={`mx-auto max-w-[${pxW(360)}] px-4 pt-5 pb-28`}>
         {/* Header */}
         <div className="mb-4 grid grid-cols-3 items-center">
           <button onClick={() => navigate(-1)} className="justify-self-start text-[#60635e]">←</button>
@@ -59,7 +61,7 @@ export default function Payment() {
 
       {/* Bottom Bar */}
       <div className="fixed left-0 right-0 bottom-0 w-full bg-white">
-        <div className="mx-auto max-w-[390px] px-5 py-4 flex items-center justify-between">
+        <div className={`mx-auto max-w-[${pxW(360)}] px-4 py-4 flex items-center justify-between`}>
           <div className="text-[23px] text-[#363a33] font-semibold">{total.toLocaleString('vi-VN')} ₫</div>
           <button className="h-[51px] px-6 rounded-[12px] bg-[#f9704b] text-white text-[14.5px]">
             Đặt hàng

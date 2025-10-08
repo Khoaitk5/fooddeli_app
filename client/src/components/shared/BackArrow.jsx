@@ -1,9 +1,17 @@
-import React from 'react';
-
-const BackArrow = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path d="M12 19L5 12L12 5" stroke="black" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M19 12H5" stroke="black" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+const BackArrow = ({ width = "0.9rem", height = "1.4rem" }) => (
+  <svg
+    viewBox="0 0 9 14"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ width, height }}
+  >
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M7.826 12.9174C8.0915 12.5994 8.048 12.1262 7.73 11.8614C6.49625 10.8287 3.63125 8.28993 2.6495 6.99993C3.64775 5.68818 6.4745 3.18618 7.73 2.13843C8.048 1.87368 8.0915 1.40043 7.826 1.08243C7.56125 0.763682 7.088 0.720932 6.76925 0.986432C5.39 2.13543 2.42 4.73118 1.36925 6.20943C1.205 6.44343 1.0625 6.70743 1.0625 6.99993C1.0625 7.29243 1.205 7.55643 1.36925 7.78968C2.399 9.23868 5.4185 11.8862 6.76925 13.0127L6.77 13.0134C7.088 13.2789 7.56125 13.2354 7.826 12.9174Z"
+      fill="#60635E"
+      stroke="#60635E"
+      stroke-width="0.4"
+    />
   </svg>
 );
 

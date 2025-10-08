@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 
 const SidebarActions = ({ avatarSrc, likeIcon, bookmarkIcon, shareIcon, sx }) => {
   return (
-    <Box sx={{ position: 'absolute', right: 7, top: 413, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', ...sx }}>
+    <Box sx={{ position: 'absolute', right: { xs: 8, sm: 12 }, bottom: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', ...sx }}>
       <Box sx={{ position: 'relative', width: 48, height: 57 }}>
         <Box component="img" src={avatarSrc} alt="avatar" referrerPolicy="no-referrer" sx={{ width: 48, height: 48, borderRadius: '50%' }} />
       </Box>

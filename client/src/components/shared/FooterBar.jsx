@@ -3,11 +3,11 @@ const FooterBar = ({ text1 = "Bạn không có tài khoản?", text2 = "Đăng k
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: 55,
+    height: "6.875vh",
   };
 
   const textStyle = {
-    fontSize: 14,
+    fontSize: "1.4rem",
     fontFamily: 'TikTok Sans',
   };
 
@@ -23,13 +23,15 @@ const FooterBar = ({ text1 = "Bạn không có tài khoản?", text2 = "Đăng k
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 1,
-        cursor: onClick ? 'pointer' : 'default'
-      }} onClick={onClick}>
+        zIndex: 1
+      }}>
         <span style={{...textStyle, color: 'black', fontWeight: '400'}}>
           {text1}
         </span>
-        <span style={{...textStyle, color: '#EF5126', fontWeight: '600', marginLeft: 5}}>
+        <span 
+          style={{...textStyle, color: '#EF5126', fontWeight: '600', marginLeft: 5, cursor: onClick ? 'pointer' : 'default'}}
+          onClick={onClick}
+        >
           {text2}
         </span>
       </div>

@@ -1,11 +1,13 @@
 import React from 'react';
+import { pxW, pxH } from '../../utils/scale.js';
+import '../../styles/customer-responsive.css';
 
 export default function OrderSummary() {
   return (
     <div className="bg-white">
       <div className="mx-auto max-w-[390px] pb-6">
         {/* Map placeholder and floating cards can be reused visually */}
-        <div className="relative h-[360px] bg-[#f2f2f2]" />
+        <div className={`relative h-[${pxH(360)}] bg-[#f2f2f2]`} />
 
         {/* Summary card (matches node 264:3227) */}
         <div className="mx-auto -mt-24 w-[346px] rounded-[16px] border border-[#e5eaf0] bg-white p-5 shadow">

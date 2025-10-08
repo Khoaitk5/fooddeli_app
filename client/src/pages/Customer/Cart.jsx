@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { pxW, pxH } from '../../utils/scale.js';
+import '../../styles/customer-responsive.css';
 
 const IMG_PRODUCT = 'https://www.figma.com/api/mcp/asset/aed9038a-7ff3-430a-935a-6859b95ae9a3';
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,\
@@ -20,8 +22,8 @@ export default function Cart() {
   const remove = () => setQuantity(0);
 
   return (
-    <div className="bg-white">
-      <div className="mx-auto max-w-[390px] px-5 pt-5 pb-28">
+    <div className={`h-[${pxH(800)}] w-[${pxW(360)}] overflow-hidden relative mx-auto bg-white`}>
+      <div className="h-full px-4 pt-5 pb-28">
         {/* Header */}
         <div className="mb-4 grid grid-cols-3 items-center">
           <div className="justify-self-start text-[#60635e]">←</div>
@@ -63,8 +65,8 @@ export default function Cart() {
       </div>
 
       {/* Bottom bar */}
-      <div className="fixed left-0 right-0 bottom-0 w-full bg-white">
-        <div className="mx-auto max-w-[390px] px-5 py-4 flex items-center justify-between">
+      <div className="absolute left-0 right-0 bottom-0 w-full bg-white border-t border-[#e8ebe6]">
+        <div className="px-4 py-4 flex items-center justify-between">
           <div className="text-[23px] text-[#363a33] font-semibold">{total.toLocaleString('vi-VN')} ₫</div>
           <a href="/customer/checkout" className="h-[51px] px-5 rounded-[12px] bg-[#f9704b] text-white text-[14.5px] shadow-[inset_0_-1px_0_#f9704b,inset_0_1px_0_#ffffff] grid place-items-center">
             Tiến hành thanh toán
