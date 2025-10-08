@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pxW, pxH } from '../../utils/scale.js';
-import '../../styles/customer-responsive.css';
 
 export default function Payment() {
   const navigate = useNavigate();

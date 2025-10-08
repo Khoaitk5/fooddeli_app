@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import '../../styles/customer-responsive.css';
 
 // Figma assets from node 14:342
 const imgCard1 = 'http://localhost:3845/assets/19f7681c284f44c0003cd59a3e52f8e817eed67d.png';

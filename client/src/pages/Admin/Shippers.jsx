@@ -1,6 +1,4 @@
 import React from "react";
-import { pxW, pxH } from '../../utils/scale.js';
-import '../../styles/customer-responsive.css';
 import {
   Box,
   Typography,

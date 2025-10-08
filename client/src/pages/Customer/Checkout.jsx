@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pxW, pxH } from '../../utils/scale.js';
-import '../../styles/customer-responsive.css';
 
 const IMG_PRODUCT = 'https://www.figma.com/api/mcp/asset/56e5d031-1b03-4cb4-a96e-b203c7d5682b';
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,\
