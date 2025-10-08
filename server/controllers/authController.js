@@ -14,42 +14,6 @@ try {
 }
 
 /**
- * 📱 Bước 1 - xác thực số điện thoại và mật khẩu (chưa tạo user)
- */
-exports.verifyResPhone = async (req, res) => {
-  try {
-    const { phone, password } = req.body;
-
-    if (!phone || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "⚠️ Vui lòng nhập đầy đủ số điện thoại và mật khẩu",
-      });
-    }
-
-    // ✅ Gọi service để kiểm tra tồn tại
-    const isPhoneTaken = await userService.getUserByPhone(phone);
-    if (isPhoneTaken) {
-      return res.status(400).json({
-        success: false,
-        message: "📱 Số điện thoại này đã tồn tại",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "✅ Số điện thoại hợp lệ, tiếp tục đăng ký bước 2",
-    });
-  } catch (err) {
-    console.error("❌ Lỗi verifyPhone:", err);
-    res.status(500).json({
-      success: false,
-      message: "❌ Lỗi server khi xác thực số điện thoại",
-    });
-  }
-};
-
-/**
  * 🆕 Đăng ký tài khoản mới
  */
 exports.register = async (req, res) => {
@@ -62,7 +26,7 @@ exports.register = async (req, res) => {
       user: {
         id: newUser.id,
         username: newUser.username,
-        full_name: newUser.full_name,
+        full_name: newUser.fullname,
         phone: newUser.phone,
         email: newUser.email,
         address: newUser.address,
@@ -198,4 +162,69 @@ exports.logout = async (req, res) => {
   }
 };
 
-console.log("📦 Export keys của authController:", Object.keys(module.exports));
+
+exports.sendOtpEmail = async (req, res) => {
+  const nodemailer = require("nodemailer");
+
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email là bắt buộc" });
+  }
+
+  // ✅ Sinh mã OTP 6 số
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // ✅ Lưu OTP tạm thời (5 phút) — production thì nên dùng DB hoặc Redis
+  if (!global.otpStore) global.otpStore = {};
+  global.otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000 };
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Xác thực tài khoản" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Mã OTP xác thực",
+      text: `Mã OTP của bạn là: ${otp}. Có hiệu lực trong 5 phút.`,
+    });
+
+    console.log(`✅ Gửi OTP ${otp} tới ${email}`);
+    return res.json({ success: true, message: "OTP đã được gửi tới email của bạn" });
+  } catch (error) {
+    console.error("❌ Lỗi gửi email:", error);
+    return res.status(500).json({ success: false, message: "Không gửi được OTP" });
+  }
+};
+
+// ✅ Xác minh OTP email
+exports.verifyOtpEmail = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: "Thiếu email hoặc OTP" });
+  }
+
+  const record = global.otpStore?.[email];
+  if (!record) {
+    return res.status(400).json({ success: false, message: "Không tìm thấy OTP cho email này" });
+  }
+
+  if (Date.now() > record.expires) {
+    delete global.otpStore[email];
+    return res.status(400).json({ success: false, message: "OTP đã hết hạn" });
+  }
+
+  if (record.otp !== otp) {
+    return res.status(400).json({ success: false, message: "OTP không chính xác" });
+  }
+
+  // ✅ OTP hợp lệ → xóa khỏi store
+  delete global.otpStore[email];
+  return res.json({ success: true, message: "OTP hợp lệ" });
+};
