@@ -139,6 +139,8 @@ exports.verifyPhone = async (req, res) => {
     }
 
     // ✅ Tạo JWT
+    createSession(req, user);
+
     const jwtToken = generateJwt(user);
     return res.status(200).json({
       success: true,
