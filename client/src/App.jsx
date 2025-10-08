@@ -3,9 +3,10 @@ import { AuthProvider } from "./contexts/AuthContext.jsx";
 
 // Layouts
 import MobileLayout from "./components/layout/MobileLayout";
+import MobileShopLayout from "./components/layout/MobileShopLayout";
+import DesktopLayout from "./components/layout/DesktopLayout";
 import DesktopAdminLayout from "./components/layout/DesktopAdminLayout";
 import MobileAdminLayout from "./components/layout/MobileAdminLayout";
-//
 
 // Pages - Admin
 import AdminDashboard from "./pages/Admin/Dashboard";
