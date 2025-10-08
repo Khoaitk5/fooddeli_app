@@ -9,7 +9,7 @@ const OTP = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(60);
-  const [showHelpPopup, setShowHelpPopup] = useState(false); // 👈 thêm state popup trợ giúp
+  const [showHelpPopup, setShowHelpPopup] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,11 +31,9 @@ const OTP = () => {
   // ✅ Khởi tạo reCAPTCHA
   useEffect(() => {
     if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        { size: "invisible" }
-      );
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+      });
       window.recaptchaVerifier.render();
     }
   }, []);
@@ -46,7 +44,6 @@ const OTP = () => {
     setError("");
 
     const otpCode = otp.join("");
-
     if (otpCode.length !== 6) {
       setError("Vui lòng nhập đủ 6 chữ số OTP");
       return;
@@ -64,15 +61,11 @@ const OTP = () => {
       console.log("✅ Xác minh thành công:", user);
 
       const idToken = await user.getIdToken();
-
-      const res = await fetch(
-        `http://localhost:5000/api/auth/verify-phone`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: idToken }),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/verify-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: idToken }),
+      });
 
       const data = await res.json();
       if (data.success) {
@@ -98,17 +91,41 @@ const OTP = () => {
     });
 
     if (digit && index < otp.length - 1) {
-      setTimeout(() => {
-        inputRefs.current[index + 1]?.focus();
-      }, 50);
+      setTimeout(() => inputRefs.current[index + 1]?.focus(), 50);
     }
   };
 
-  // ⌫ Backspace → focus lùi
+  // ⌫ Backspace thông minh
   const handleKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1].focus();
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      setOtp((prev) => {
+        const newOtp = [...prev];
+
+        if (newOtp[index] !== "") {
+          // Nếu ô hiện tại có số → xoá chính nó
+          newOtp[index] = "";
+          setTimeout(() => inputRefs.current[index]?.focus(), 0);
+        } else if (index > 0) {
+          // Nếu ô hiện tại trống → xoá ô trước
+          newOtp[index - 1] = "";
+          setTimeout(() => inputRefs.current[index - 1]?.focus(), 0);
+        } else {
+          // Nếu đang ở ô đầu → focus lại ô đầu
+          setTimeout(() => inputRefs.current[0]?.focus(), 0);
+        }
+
+        return newOtp;
+      });
     }
+  };
+
+  // 🚫 Ngăn người dùng focus tùy ý → luôn ở ô cuối cùng đã nhập hoặc tiếp theo
+  const handleFocus = (e) => {
+    const lastFilledIndex = otp.findLastIndex((digit) => digit !== "");
+    const nextIndex = lastFilledIndex === otp.length - 1 ? lastFilledIndex : lastFilledIndex + 1;
+    e.preventDefault();
+    inputRefs.current[nextIndex]?.focus();
   };
 
   // 🔁 Gửi lại OTP
@@ -119,11 +136,7 @@ const OTP = () => {
         ? phone.replace(/\s/g, "")
         : "+84" + phone.substring(1);
 
-      const confirmationResult = await signInWithPhoneNumber(
-        auth,
-        formattedPhone,
-        appVerifier
-      );
+      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       window.confirmationResult = confirmationResult;
       setCountdown(60);
       setError("");
@@ -133,6 +146,13 @@ const OTP = () => {
       setError("Không thể gửi lại OTP. Vui lòng thử lại.");
     }
   };
+
+  // 🔁 Auto focus ô cuối cùng mỗi khi otp thay đổi
+  useEffect(() => {
+    const lastFilledIndex = otp.findLastIndex((digit) => digit !== "");
+    const focusIndex = lastFilledIndex === -1 ? 0 : Math.min(lastFilledIndex + 1, otp.length - 1);
+    inputRefs.current[focusIndex]?.focus();
+  }, [otp]);
 
   return (
     <div
@@ -265,6 +285,7 @@ const OTP = () => {
                   value={otp[index] || ""}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
+                  onFocus={handleFocus} // ✅ ép focus đúng ô
                   maxLength={1}
                   style={{
                     width: "100%",
@@ -283,9 +304,7 @@ const OTP = () => {
             ))}
           </div>
 
-          {error && (
-            <div style={{ color: "red", marginBottom: "16px" }}>{error}</div>
-          )}
+          {error && <div style={{ color: "red", marginBottom: "16px" }}>{error}</div>}
 
           {/* 🔁 Gửi lại mã */}
           <div
@@ -297,14 +316,14 @@ const OTP = () => {
               fontFamily: "TikTok Sans",
               fontWeight: "500",
               cursor: countdown === 0 ? "pointer" : "default",
-              marginBottom: "24px", // 👈 tăng khoảng cách
+              marginBottom: "24px",
             }}
             onClick={countdown === 0 ? resendOtp : undefined}
           >
             Gửi lại mã{countdown > 0 ? ` ${countdown}s` : ""}
           </div>
 
-          {/* ✅ Nút xác minh - nhích xuống bằng marginTop */}
+          {/* ✅ Nút xác minh */}
           <button
             type="submit"
             style={{
@@ -322,10 +341,10 @@ const OTP = () => {
             Xác minh OTP
           </button>
 
-          {/* ❓ Trợ giúp đăng nhập – ĐƯA VÀO TRONG FORM */}
+          {/* ❓ Trợ giúp đăng nhập */}
           <div
             style={{
-              marginTop: "24px", // 👈 đặt dưới nút
+              marginTop: "24px",
               textAlign: "left",
               cursor: "pointer",
             }}
@@ -337,7 +356,6 @@ const OTP = () => {
                 fontSize: 14,
                 fontFamily: "TikTok Sans",
                 fontWeight: "600",
-                textDecoration: "none",
               }}
             >
               Bạn cần trợ giúp đăng nhập?
@@ -352,6 +370,7 @@ const OTP = () => {
       <HelpPopup
         isOpen={showHelpPopup}
         onClose={() => setShowHelpPopup(false)}
+        phone={phone} // ✅ truyền state phone để giữ khi chuyển sang mật khẩu
       />
     </div>
   );

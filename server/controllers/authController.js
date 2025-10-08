@@ -42,10 +42,8 @@ exports.register = async (req, res) => {
   }
 };
 
-/**
- * 🔑 Đăng nhập bằng số điện thoại
- */
-exports.login = async (req, res) => {
+
+exports.loginWithPassword = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
@@ -61,11 +59,19 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "❌ Sai số điện thoại hoặc mật khẩu",
+        message: "❌ Số điện thoại hoặc mật khẩu không chính xác",
       });
     }
 
-    res.status(200).json({
+    // ✅ Tạo JWT nếu muốn tự động đăng nhập
+    const jwt = require("jsonwebtoken");
+    const token = jwt.sign(
+      { id: user.id, phone: user.phone },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(200).json({
       success: true,
       message: "✅ Đăng nhập thành công",
       user: {
@@ -76,15 +82,17 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
       },
+      token,
     });
   } catch (err) {
     console.error("❌ Lỗi đăng nhập:", err.message);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: err.message || "Lỗi server",
+      message: "Lỗi server. Vui lòng thử lại sau.",
     });
   }
 };
+
 
 /**
  * 🔐 Tạo JWT cho user

@@ -7,7 +7,7 @@ const authController = require("../controllers/authController");
 router.post("/register", authController.register);
 
 // 🔑 Đăng nhập
-router.post("/login", authController.login);
+router.post("/login-password", authController.loginWithPassword);
 
 // 🔴 Đăng xuất (tuỳ chọn)
 router.post("/logout", authController.logout);

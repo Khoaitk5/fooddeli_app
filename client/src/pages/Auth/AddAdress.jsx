@@ -9,13 +9,17 @@ import {
   Grid,
   MenuItem,
   Select,
-  FormControl,  
+  FormControl,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { pxW, pxH } from "../../utils/scale.js";
 
 const AddAdress = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ Nhận lại dữ liệu form cũ từ ProfileRegister nếu có
+  const prevState = location.state || {};
 
   const [isDefault, setIsDefault] = useState(false);
   const [form, setForm] = useState({
@@ -26,13 +30,8 @@ const AddAdress = () => {
     city: "",
   });
 
-  // Demo data – replace with API data when available
-  const provinceOptions = [
-    "Hà Nội",
-    "Hồ Chí Minh",
-    "Đà Nẵng",
-    "Hải Phòng",
-  ];
+  // Demo data – replace with API when available
+  const provinceOptions = ["Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng"];
   const wardOptions = ["Phường 1", "Phường 2", "Phường 3", "Xã A"];
 
   const handleChange = (e) => {
@@ -46,10 +45,17 @@ const AddAdress = () => {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin bắt buộc!");
       return;
     }
+
     const payload = { ...form, isDefault };
     console.log("✅ Địa chỉ mới:", payload);
-    alert("Đã lưu địa chỉ!");
-    navigate(-1);
+
+    // ✅ Quay lại trang ProfileRegister và giữ nguyên state cũ + địa chỉ mới
+    navigate("/ProfileRegister", {
+      state: {
+        ...prevState, // giữ lại username, fullName, email, phone,...
+        address: payload, // gửi thêm địa chỉ
+      },
+    });
   };
 
   return (
@@ -81,16 +87,18 @@ const AddAdress = () => {
           Thêm địa chỉ
         </Typography>
 
-        <Box sx={{
-          background: "#F9FAF8",
-          borderRadius: 2,
-          px: 2,
-          py: 1,
-          mb: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}>
+        <Box
+          sx={{
+            background: "#F9FAF8",
+            borderRadius: 2,
+            px: 2,
+            py: 1,
+            mb: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Typography sx={{ fontSize: 17, color: "#000" }}>
             Đặt làm địa chỉ mặc định
           </Typography>
@@ -136,8 +144,11 @@ const AddAdress = () => {
         />
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6}>
-            <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
+          <Grid item xs={6}>
+            <FormControl
+              fullWidth
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            >
               <Select
                 name="ward"
                 value={form.ward}
@@ -146,13 +157,18 @@ const AddAdress = () => {
                 renderValue={(selected) => selected || "Xã/Phường"}
               >
                 {wardOptions.map((w) => (
-                  <MenuItem key={w} value={w}>{w}</MenuItem>
+                  <MenuItem key={w} value={w}>
+                    {w}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Grid>
           <Grid item xs={6}>
-            <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
+            <FormControl
+              fullWidth
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            >
               <Select
                 name="city"
                 value={form.city}
@@ -161,7 +177,9 @@ const AddAdress = () => {
                 renderValue={(selected) => selected || "Tỉnh/Thành Phố"}
               >
                 {provinceOptions.map((p) => (
-                  <MenuItem key={p} value={p}>{p}</MenuItem>
+                  <MenuItem key={p} value={p}>
+                    {p}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -189,5 +207,3 @@ const AddAdress = () => {
 };
 
 export default AddAdress;
-
-
