@@ -157,7 +157,7 @@ const ShopSidebar = ({ open, onClose }) => {
               color: '#000',
               lineHeight: 1.2
             }}>
-              Admin
+            Chủ cửa hàng
             </Typography>
             <Typography sx={{ 
               fontSize: '14px', 
@@ -165,7 +165,6 @@ const ShopSidebar = ({ open, onClose }) => {
               lineHeight: 1.2,
               mt: 0.5
             }}>
-              Quản trị viên
             </Typography>
           </Box>
         </Box>

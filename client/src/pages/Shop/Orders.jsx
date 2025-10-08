@@ -23,7 +23,7 @@ const STATUS = {
   DONE: 'Hoàn tất'
 };
 
-const sampleOrders = [
+const initialOrders = [
   {
     id: '#001',
     status: STATUS.PENDING,
@@ -136,7 +136,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const OrderCard = ({ order }) => {
+const OrderCard = ({ order, onAdvance }) => {
   const progressByStatus = (status) => {
     if (status === STATUS.PENDING) return { pct: 33, color: '#d08700' };
     if (status === STATUS.COOKING) return { pct: 66, color: '#155dfc' };
@@ -233,6 +233,7 @@ const OrderCard = ({ order }) => {
                 textTransform: 'none',
                 fontWeight: 600
               }}
+              onClick={() => onAdvance(order.id)}
             >
               Xác nhận đơn
             </Button>
@@ -250,6 +251,7 @@ const OrderCard = ({ order }) => {
                 textTransform: 'none',
                 fontWeight: 600
               }}
+              onClick={() => onAdvance(order.id)}
             >
               Hoàn tất
             </Button>
@@ -305,13 +307,14 @@ const TabsBar = ({ tabs, current, onChange }) => (
 
 const ShopOrders = () => {
   const [currentTab, setCurrentTab] = useState('all');
+  const [orders, setOrders] = useState(initialOrders);
 
   const counts = useMemo(() => {
-    const pending = sampleOrders.filter(o => o.status === STATUS.PENDING).length;
-    const cooking = sampleOrders.filter(o => o.status === STATUS.COOKING).length;
-    const done = sampleOrders.filter(o => o.status === STATUS.DONE).length;
-    return { all: sampleOrders.length, pending, cooking, done };
-  }, []);
+    const pending = orders.filter(o => o.status === STATUS.PENDING).length;
+    const cooking = orders.filter(o => o.status === STATUS.COOKING).length;
+    const done = orders.filter(o => o.status === STATUS.DONE).length;
+    return { all: orders.length, pending, cooking, done };
+  }, [orders]);
 
   const tabs = [
     { key: 'all', label: `Tất cả (${counts.all})` },
@@ -321,34 +324,45 @@ const ShopOrders = () => {
   ];
 
   const filtered = useMemo(() => {
-    if (currentTab === 'all') return sampleOrders;
-    if (currentTab === 'pending') return sampleOrders.filter(o => o.status === STATUS.PENDING);
-    if (currentTab === 'cooking') return sampleOrders.filter(o => o.status === STATUS.COOKING);
-    return sampleOrders.filter(o => o.status === STATUS.DONE);
-  }, [currentTab]);
+    if (currentTab === 'all') return orders;
+    if (currentTab === 'pending') return orders.filter(o => o.status === STATUS.PENDING);
+    if (currentTab === 'cooking') return orders.filter(o => o.status === STATUS.COOKING);
+    return orders.filter(o => o.status === STATUS.DONE);
+  }, [currentTab, orders]);
+
+  const handleAdvance = (id) => {
+    setOrders(prev => prev.map(o => {
+      if (o.id !== id) return o;
+      if (o.status === STATUS.PENDING) return { ...o, status: STATUS.COOKING };
+      if (o.status === STATUS.COOKING) return { ...o, status: STATUS.DONE };
+      return o;
+    }));
+  };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 } }}>
-      <Box sx={{ mb: 1.5 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, fontSize: 24, mb: 0.5 }}>Quản lý đơn hàng</Typography>
-        <Typography sx={{ color: '#717182', fontSize: 16 }}>Theo dõi và xử lý đơn hàng của khách</Typography>
-      </Box>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f9fafb', p: { xs: 2, sm: 3, md: 4 } }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: 24, mb: 0.5 }}>Quản lý đơn hàng</Typography>
+          <Typography sx={{ color: '#717182', fontSize: 16 }}>Theo dõi và xử lý đơn hàng của khách</Typography>
+        </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 2, mb: 2.5 }}>
-        <StatCard label="Chờ xác nhận" value={counts.pending} color="#d08700" icon={<ScheduleIcon sx={{ color: '#d08700' }} />} />
-        <StatCard label="Đang chế biến" value={counts.cooking} color="#155dfc" icon={<CookingIcon sx={{ color: '#155dfc' }} />} />
-        <StatCard label="Hoàn tất" value={counts.done} color="#00a63e" icon={<CheckCircleIcon sx={{ color: '#00a63e' }} />} />
-      </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: { xs: 2, sm: 3 }, mb: 2.5 }}>
+          <StatCard label="Chờ xác nhận" value={counts.pending} color="#d08700" icon={<ScheduleIcon sx={{ color: '#d08700' }} />} />
+          <StatCard label="Đang chế biến" value={counts.cooking} color="#155dfc" icon={<CookingIcon sx={{ color: '#155dfc' }} />} />
+          <StatCard label="Hoàn tất" value={counts.done} color="#00a63e" icon={<CheckCircleIcon sx={{ color: '#00a63e' }} />} />
+        </Box>
 
-      <Box sx={{ mb: 2 }}>
-        <TabsBar tabs={tabs} current={currentTab} onChange={setCurrentTab} />
-      </Box>
+        <Box sx={{ mb: 2 }}>
+          <TabsBar tabs={tabs} current={currentTab} onChange={setCurrentTab} />
+        </Box>
 
-      <Stack spacing={2.5}>
-        {filtered.map((o) => (
-          <OrderCard key={o.id} order={o} />
-        ))}
-      </Stack>
+        <Stack spacing={2.5}>
+          {filtered.map((o) => (
+            <OrderCard key={o.id} order={o} onAdvance={handleAdvance} />
+          ))}
+        </Stack>
+      </Box>
     </Box>
   );
 };
