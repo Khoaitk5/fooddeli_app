@@ -1,7 +1,6 @@
                                             import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pxW, pxH } from '../../utils/scale.js';
-import '../../styles/customer-responsive.css';
 
 const MAP_PLACEHOLDER = 'data:image/svg+xml;utf8,\
 <svg xmlns="http://www.w3.org/2000/svg" width="428" height="300">\

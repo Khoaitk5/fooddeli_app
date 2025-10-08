@@ -1,6 +1,5 @@
 import React from 'react';
 import ProductCart from '../../components/role-specific/Customer/ProductCart';
-import '../../styles/customer-responsive.css';
 
 const TestProductCart = () => {
   return (

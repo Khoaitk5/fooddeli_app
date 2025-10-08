@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, List, ListItem, ListItemText, Chip, Card, CardContent } from '@mui/material';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import '../../styles/customer-responsive.css';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);

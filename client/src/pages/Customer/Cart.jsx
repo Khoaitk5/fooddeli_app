@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { pxW, pxH } from '../../utils/scale.js';
-import '../../styles/customer-responsive.css';
 
 const IMG_PRODUCT = 'https://www.figma.com/api/mcp/asset/aed9038a-7ff3-430a-935a-6859b95ae9a3';
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,\

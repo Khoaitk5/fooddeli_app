@@ -6,7 +6,6 @@ import ShareIcon from '../../components/shared/ShareIcon';
 import SearchIcon from '../../components/shared/SearchIcon';
 import ProductCart from '../../components/role-specific/Customer/ProductCart';
 import { pxW, pxH } from '../../utils/scale.js';
-import '../../styles/customer-responsive.css';
 
 const Home = () => {
 
