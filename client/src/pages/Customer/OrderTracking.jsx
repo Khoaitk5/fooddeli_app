@@ -1,5 +1,7 @@
                                             import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { pxW, pxH } from '../../utils/scale.js';
+import '../../styles/customer-responsive.css';
 
 const MAP_PLACEHOLDER = 'data:image/svg+xml;utf8,\
 <svg xmlns="http://www.w3.org/2000/svg" width="428" height="300">\
@@ -14,7 +16,7 @@ export default function OrderTracking() {
     <div className="bg-white">
       <div className="mx-auto max-w-[390px] pb-6">
         {/* Map area */}
-        <div className="relative h-[360px] w-full overflow-hidden bg-[#f2f2f2]">
+        <div className={`relative h-[${pxH(360)}] w-full overflow-hidden bg-[#f2f2f2]`}>
           <img src={MAP_PLACEHOLDER} alt="map" className="absolute inset-0 w-full h-full object-cover" />
           {/* Location floating card */}
           <div className="absolute left-1/2 top-6 w-[346px] -translate-x-1/2 rounded-[16px] bg-white border border-[#e5eaf0] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">

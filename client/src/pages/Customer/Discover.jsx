@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import '../../styles/customer-responsive.css';
 
 // Figma assets from node 14:342
 const imgCard1 = 'http://localhost:3845/assets/19f7681c284f44c0003cd59a3e52f8e817eed67d.png';
@@ -41,7 +42,7 @@ function RatingPill({ rating, reviews }) {
 
 function FoodCard({ item }) {
   return (
-    <div className="relative w-[156px] h-[236px] shrink-0">
+    <div className="relative w-[140px] sm:w-[156px] h-[236px] shrink-0">
       <div className="absolute left-0 top-0 w-[154.43px] h-[235.893px] rounded-[15px] bg-white shadow-[0_4px_9.4px_rgba(0,0,0,0.08)]"></div>
       <div className="absolute left-0 top-0 h-[147.36px] w-[154.43px] overflow-hidden rounded-t-[15px]">
         <img src={item.img} alt="food" className="w-full h-full object-cover" />
@@ -91,7 +92,7 @@ export default function Discover() {
           ))}
         </div>
 
-        <div className="mt-4 w-full h-[184px] rounded-[13px] overflow-hidden">
+        <div className="mt-4 w-full h-[140px] sm:h-[184px] rounded-[13px] overflow-hidden">
           <img src={bannerImg} alt="promo" className="w-full h-full object-cover" />
         </div>
 

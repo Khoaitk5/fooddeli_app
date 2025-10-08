@@ -3,16 +3,17 @@ const SubmitButton = ({ children, onClick, style, ...props }) => (
     type="submit"
     onClick={onClick}
     style={{
-      width: 267,
-      height: 49.5,
+      width: "74.16vw",
+      height: "6.19vh",
       background: '#F9704B',
-      boxShadow: '0px -1px 33.70000076293945px rgba(0, 0, 0, 0.25)',
-      borderRadius: 9999,
+      borderRadius: 12,
       border: 'none',
       cursor: 'pointer',
       color: 'white',
-      fontSize: '16px',
-      fontWeight: 'bold',
+      fontSize: "1.5rem",
+      fontFamily: 'TikTok Sans',
+      fontWeight: '700',
+      wordWrap: 'break-word',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

@@ -6,7 +6,9 @@ import OutlineBorder from "@/components/shared/OutlineBorder";
 import InputFrame from "@/components/shared/InputFrame";
 import BlackOutline from "@/components/shared/BlackOutline";
 import { auth } from "@/firebase/firebaseConfig";
+import MiniLogo from "@/components/shared/MiniLogo";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { pxW, pxH } from "../../utils/scale.js";
 
 const LoginPhone = () => {
   const [phone, setPhone] = useState("");
@@ -14,24 +16,23 @@ const LoginPhone = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: (response) => {
-          console.log("✅ reCAPTCHA verified:", response);
-        },
-      }
-    );
-    window.recaptchaVerifier.render().then((widgetId) => {
-      window.recaptchaWidgetId = widgetId;
-      console.log("✅ reCAPTCHA widget ID:", widgetId);
-    });
-  }
-}, []);
-
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: (response) => {
+            console.log("✅ reCAPTCHA verified:", response);
+          },
+        }
+      );
+      window.recaptchaVerifier.render().then((widgetId) => {
+        window.recaptchaWidgetId = widgetId;
+        console.log("✅ reCAPTCHA widget ID:", widgetId);
+      });
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,211 +89,182 @@ const LoginPhone = () => {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f5f5f5",
-        padding: "20px",
+        width: pxW(360),
+        height: pxH(800),
+        position: "relative",
+        background: "white",
       }}
     >
+      {/* Logo */}
       <div
         style={{
-          width: "360px",
-          height: "800px",
-          position: "relative",
-          background: "white",
-          borderRadius: "12px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+          position: "absolute",
+          top: "7.09vh",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 10,
         }}
       >
-        {/* Title */}
+        <MiniLogo></MiniLogo>
+      </div>
+
+      {/* Back Arrow */}
+      <div
+        style={{
+          position: "absolute",
+          left: "5.85vw",
+          top: "7.85vh",
+          cursor: "pointer",
+        }}
+        onClick={() => navigate("/login")}
+      >
+        <BackArrow />
+      </div>
+
+      {/* Phone Label */}
+      <div
+        style={{
+          position: "absolute",
+          left: "19.72vw",
+          top: "12.98vh",
+        }}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            display: "flex",
+            flexDirection: "column",
+            color: "#868686",
+            fontSize: "1.4rem",
+            fontFamily: "TikTok Sans",
+            fontWeight: "500",
+            wordWrap: "break-word",
+          }}
+        >
+          Điện thoại
+        </div>
         <div
           style={{
             position: "absolute",
+            top: "3.02vh",
             left: "50%",
-            top: "44.5px",
             transform: "translateX(-50%)",
+            zIndex: 1,
+          }}
+        >
+          <BlackOutline />
+        </div>
+      </div>
+
+      {/* Email Label */}
+      <div
+        style={{
+          position: "absolute",
+          right: "19.86vw",
+          top: "12.98vh",
+          cursor: "pointer",
+        }}
+        onClick={() => navigate("/login/email")}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            display: "flex",
+            flexDirection: "column",
+            color: "#868686",
+            fontSize: "1.4rem",
+            fontFamily: "TikTok Sans",
+            fontWeight: "500",
+            wordWrap: "break-word",
+          }}
+        >
+          Email
+        </div>
+      </div>
+
+      {/* Outline Border */}
+      <div
+        style={{
+          position: "absolute",
+          top: "16vh",
+        }}
+      >
+        <OutlineBorder />
+      </div>
+
+      <div id="recaptcha-container" style={{ display: "none" }}></div>
+
+      {/* Form */}
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "18.75vh",
+          transform: "translateX(-50%)",
+        }}
+      >
+        <InputFrame>
+          <input
+            type="tel"
+            placeholder="Số điện thoại"
+            value={phone}
+            onChange={handlePhoneChange}
+            style={{
+              width: "100%",
+              border: "none",
+              outline: "none",
+              fontSize: "1.4rem",
+              fontWeight: "400",
+              fontFamily: "TikTok Sans",
+              color: "#aaaaae",
+              backgroundColor: "transparent",
+            }}
+          />
+        </InputFrame>
+        {error && (
+          <div
+            style={{
+              position: "absolute",
+              top: "185px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "267px",
+              color: "red",
+            }}
+          >
+            {error}
+          </div>
+        )}
+        <SubmitButton
+          style={{
+            background: buttonBackground,
+            marginTop: "64.625vh",
+            marginLeft: "auto",
+            marginRight: "auto",
           }}
         >
           <div
             style={{
               width: "100%",
               height: "100%",
-              justifyContent: "center",
-              display: "flex",
-            }}
-          >
-            <span
-              style={{
-                color: "black",
-                fontSize: 16,
-                fontFamily: "TikTok Sans",
-                fontWeight: "700",
-                wordWrap: "break-word",
-              }}
-            >
-              Đăng nhập
-            </span>
-          </div>
-        </div>
-
-        {/* Back Arrow */}
-        <div
-          style={{
-            position: "absolute",
-            left: "12px",
-            top: "43px",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/login")}
-        >
-          <BackArrow />
-        </div>
-
-        {/* Phone Label */}
-        <div
-          style={{
-            position: "absolute",
-            left: "71px",
-            top: "91px",
-          }}
-        >
-          <div
-            style={{
+              textAlign: "center",
               justifyContent: "center",
               display: "flex",
               flexDirection: "column",
-              color: "#868686",
-              fontSize: 14,
+              color: "white",
+              fontSize: "1.3rem",
               fontFamily: "TikTok Sans",
-              fontWeight: "500",
+              fontWeight: "600",
               wordWrap: "break-word",
             }}
           >
-            Điện thoại
+            Tiếp tục
           </div>
-        </div>
-
-        {/* Email Label */}
-        <div
-          style={{
-            position: "absolute",
-            right: "71.5px",
-            top: "91px",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/login/email")}
-        >
-          <div
-            style={{
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              color: "#868686",
-              fontSize: 14,
-              fontFamily: "TikTok Sans",
-              fontWeight: "500",
-              wordWrap: "break-word",
-            }}
-          >
-            Email
-          </div>
-        </div>
-
-        {/* Outline Border */}
-        <div
-          style={{
-            position: "absolute",
-            top: "115px",
-            left: 0,
-          }}
-        >
-          <OutlineBorder />
-        </div>
-
-        {/* Black Outline */}
-        <div
-          style={{
-            position: "absolute",
-            top: "115px",
-            left: "29px",
-          }}
-        >
-          <BlackOutline />
-        </div>
-
-        <div id="recaptcha-container"></div>
-
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "137px",
-            transform: "translateX(-50%)",
-            width: "267px",
-          }}
-        >
-          <InputFrame>
-            <input
-              type="tel"
-              placeholder="Số điện thoại"
-              value={phone}
-              onChange={handlePhoneChange}
-              style={{
-                width: "100%",
-                border: "none",
-                outline: "none",
-                fontSize: "14px",
-                fontWeight: "400",
-                fontFamily: "TikTok Sans",
-                color: "#aaaaae",
-                backgroundColor: "transparent",
-              }}
-            />
-          </InputFrame>
-          {error && (
-            <div
-              style={{
-                position: "absolute",
-                top: "185px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: "267px",
-                color: "red",
-              }}
-            >
-              {error}
-            </div>
-          )}
-          <SubmitButton
-            style={{ background: buttonBackground, marginTop: "565px" }}
-          >
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                textAlign: "center",
-                justifyContent: "center",
-                display: "flex",
-                flexDirection: "column",
-                color: "white",
-                fontSize: 13,
-                fontFamily: "TikTok Sans",
-                fontWeight: "600",
-                wordWrap: "break-word",
-              }}
-            >
-              Tiếp tục
-            </div>
-          </SubmitButton>
-        </form>
-      </div>
+        </SubmitButton>
+      </form>
     </div>
   );
 };
 
 export default LoginPhone;
-

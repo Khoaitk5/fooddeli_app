@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { pxW, pxH } from '../../utils/scale.js';
+import '../../styles/customer-responsive.css';
 
 const IMG_PRODUCT = 'https://www.figma.com/api/mcp/asset/56e5d031-1b03-4cb4-a96e-b203c7d5682b';
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,\
@@ -28,7 +30,7 @@ export default function Checkout() {
 
   return (
     <div className="bg-white">
-      <div className="mx-auto max-w-[390px] px-5 pt-5 pb-28">
+      <div className={`mx-auto max-w-[${pxW(360)}] px-4 pt-5 pb-28`}>
         {/* Header */}
         <div className="mb-4 grid grid-cols-3 items-center">
           <button onClick={() => navigate(-1)} className="justify-self-start text-[#60635e]">←</button>
@@ -97,7 +99,7 @@ export default function Checkout() {
 
       {/* Bottom Bar */}
       <div className="fixed left-0 right-0 bottom-0 w-full bg-white">
-        <div className="mx-auto max-w-[390px] px-5 py-4 flex items-center justify-between">
+        <div className={`mx-auto max-w-[${pxW(360)}] px-4 py-4 flex items-center justify-between`}>
           <div className="text-[23px] text-[#363a33] font-semibold">{total.toLocaleString('vi-VN')} ₫</div>
           <button onClick={() => navigate('/customer/payment')} className="h-[51px] px-6 rounded-[12px] bg-[#f9704b] text-white text-[14.5px] shadow-[inset_0_-1px_0_#f9704b,inset_0_1px_0_#ffffff]">
             Tiếp tục

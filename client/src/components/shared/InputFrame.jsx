@@ -1,9 +1,7 @@
-import React from 'react';
-
 const InputFrame = ({ children }) => (
   <div style={{
-    width: '267px',
-    height: '44px',
+    width: '83.89vw',
+    height: '5.5vh',
     background: '#F2F2F2',
     borderRadius: 12,
     display: 'flex',

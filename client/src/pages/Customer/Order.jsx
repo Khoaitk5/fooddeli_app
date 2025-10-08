@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../../styles/customer-responsive.css';
 
 const imgRectangle1994 = 'https://www.figma.com/api/mcp/asset/ac41a016-eaac-4e58-a801-bfecce5f5f2f';
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,\

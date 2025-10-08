@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import '../../styles/customer-responsive.css';
 import {
   Box,
   Typography,
@@ -177,7 +178,7 @@ const Profile = () => {
     >
       <Box
         sx={{
-          width: 400,
+          width: 360,
           background: "white",
           padding: 4,
           borderRadius: 4,

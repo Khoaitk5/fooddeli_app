@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { pxW, pxH } from '../../utils/scale.js';
 
 const HelpPopup = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
@@ -27,7 +28,7 @@ const HelpPopup = ({ isOpen, onClose }) => {
             <div style={{
                 backgroundColor: 'white',
                 borderRadius: '12px 12px 0 0',
-                width: '360px',
+                width: pxW(360),
                 maxWidth: '100vw',
                 height: '300px',
                 position: 'relative'
@@ -174,7 +175,7 @@ const HelpPopup = ({ isOpen, onClose }) => {
                     left: '50%',
                     bottom: '7px',
                     transform: 'translateX(-50%)',
-                    width: '360px',
+                    width: pxW(360),
                     height: '7px',
                     backgroundColor: '#f5f5f5'
                 }} />

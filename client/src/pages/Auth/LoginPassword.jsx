@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackArrow from '@/components/shared/BackArrow';
 import HelpPopup from '@/components/shared/HelpPopup';
+import { pxW, pxH } from '../../utils/scale.js';
 
 const LoginPassword = () => {
     const [password, setPassword] = useState('');
@@ -30,8 +31,8 @@ const LoginPassword = () => {
             padding: '20px'
         }}>
             <div style={{
-                width: '360px',
-                height: '800px',
+                width: pxW(360),
+                height: pxH(800),
                 position: 'relative',
                 background: 'white',
                 borderRadius: '12px',

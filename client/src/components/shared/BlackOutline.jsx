@@ -1,6 +1,6 @@
 import React from 'react';
 
-const BlackOutline = ({ width = '152px' }) => (
+const BlackOutline = ({ width = '42.22vw' }) => (
   <div style={{
     width,
     outline: '2px black solid',

@@ -3,16 +3,15 @@ const Button = ({ children, onClick, style, ...props }) => (
   <button
     onClick={onClick}
     style={{
-      width: 267,
-      height: 43,
+      width: "28.36vw",
+      height: "6.4vh",
       padding: 0,
-      boxSizing: 'border-box',
-      background: 'white',
+      boxSizing: "border-box",
+      background: "#ECF1E8",
       borderRadius: 12,
-      outline: '0.80px #D0D1D3 solid',
-      border: 'none',
-      cursor: 'pointer',
-      ...style
+      border: "none",
+      cursor: "pointer",
+      ...style,
     }}
     {...props}
   >

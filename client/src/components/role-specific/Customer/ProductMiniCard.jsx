@@ -14,7 +14,8 @@ const ProductMiniCard = ({
     <Box sx={{
       display: 'flex',
       alignItems: 'center',
-      width: 300,
+      width: { xs: '100%', sm: 300 },
+      maxWidth: 300,
       minHeight: 84,
       backgroundColor: '#ffffff',
       borderRadius: 8,
