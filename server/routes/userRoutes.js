@@ -6,14 +6,14 @@ const router = express.Router();
 let userController;
 try {
   userController = require("../controllers/userController");
-  console.log("✅ userController.js loaded!");
+  // console.log("✅ userController.js loaded!");
 } catch (err) {
   console.error("❌ Lỗi khi require userController.js:", err);
 }
 
 // 📦 Kiểm tra các hàm chính có tồn tại không
-console.log("📦 typeof getUserById:", typeof userController?.getUserById);
-console.log("📦 typeof updateUser:", typeof userController?.updateUser);
+// console.log("📦 typeof getUserById:", typeof userController?.getUserById);
+// console.log("📦 typeof updateUser:", typeof userController?.updateUser);
 
 // 📡 Route test – dùng để xác minh router có hoạt động
 router.get("/ping", (req, res) => {

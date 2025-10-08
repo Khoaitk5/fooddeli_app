@@ -11,6 +11,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ Thiết lập session: 30 ngày, rolling = true
+const { setupSession } = require("./services/sessionService");
+setupSession(app);
+
 // ✅ Xử lý preflight OPTIONS (cho CORS) – rất quan trọng khi frontend gọi API
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {
@@ -51,13 +55,13 @@ const PORT = process.env.PORT || 5000;
 // ✅ Hàm log danh sách route đã mount (tùy chọn – có thể xóa nếu muốn tối giản hơn)
 function logRoutes(prefix, router) {
   if (!router?.stack?.length) return;
-  console.log(`\n📜 Route từ ${prefix}:`);
+  // console.log(`\n📜 Route từ ${prefix}:`);
   router.stack.forEach((layer) => {
     if (layer.route) {
       const methods = Object.keys(layer.route.methods)
         .map((m) => m.toUpperCase())
         .join(", ");
-      console.log(`🔹 ${methods} ${prefix}${layer.route.path}`);
+      // console.log(`🔹 ${methods} ${prefix}${layer.route.path}`);
     }
   });
 }

@@ -1,8 +1,10 @@
-console.log("📁 Đã load file authController.js từ:", __filename);
+// console.log("📁 Đã load file authController.js từ:", __filename);
 
 const authService = require("../services/authService");
 const userService = require("../services/userService");
+const { getUserById, getUserByEmail, getUserByPhone } = require("../services/userService");
 const jwt = require("jsonwebtoken");
+const { createSession } = require("../services/sessionService");
 
 // ✅ Khởi tạo Firebase Admin toàn cục
 let admin;
@@ -128,7 +130,7 @@ exports.verifyPhone = async (req, res) => {
     console.log("📞 Firebase xác thực thành công:", phoneNumber);
 
     // ✅ Kiểm tra user tồn tại
-    const user = await userService.getUserByPhone(phoneNumber);
+    const user = await getUserByPhone(phoneNumber);
     if (!user) {
       return res.status(404).json({
         success: false,
