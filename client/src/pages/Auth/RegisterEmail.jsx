@@ -32,6 +32,9 @@ const RegisterEmail = () => {
       });
       const data = await res.json();
       if (data.success) {
+        // ✅ Reset OTP khi gửi mã mới
+        setOtp("");
+        setOtpVerified(false);
         alert("📨 Mã OTP đã được gửi đến email của bạn!");
       } else {
         alert("❌ " + data.message);
@@ -46,21 +49,26 @@ const RegisterEmail = () => {
 
   // ✅ Xác minh OTP khi nhập đủ 6 số
   const handleOtpChange = async (value) => {
-    setOtp(value);
-    if (value.length === 6) {
+    setOtp(value); // ✅ luôn cập nhật OTP nhập vào
+
+    if (value.length === 6 && !otpVerified) {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:5000/api/auth/verify-otp-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp: value }),
-        });
+        const res = await fetch(
+          "http://localhost:5000/api/auth/verify-otp-email",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, otp: value }),
+          }
+        );
         const data = await res.json();
         if (data.success) {
           setOtpVerified(true);
           alert("✅ OTP hợp lệ! Bạn có thể đặt mật khẩu.");
         } else {
           alert("❌ Mã OTP không đúng hoặc đã hết hạn.");
+          setOtpVerified(false);
         }
       } catch (err) {
         console.error(err);

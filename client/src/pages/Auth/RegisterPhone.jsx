@@ -30,21 +30,36 @@ const RegisterPhone = () => {
       return;
     }
     if (!/^0\d{9}$/.test(phone)) {
-      alert("⚠️ Số điện thoại không hợp lệ. Hãy nhập đủ 10 số và bắt đầu bằng 0.");
+      alert(
+        "⚠️ Số điện thoại không hợp lệ. Hãy nhập đủ 10 số và bắt đầu bằng 0."
+      );
       return;
     }
 
     try {
       setLoading(true);
       if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-        });
+        window.recaptchaVerifier = new RecaptchaVerifier(
+          auth,
+          "recaptcha-container",
+          {
+            size: "invisible",
+          }
+        );
       }
 
       const formattedPhone = formatPhoneNumber(phone);
-      const result = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+      const result = await signInWithPhoneNumber(
+        auth,
+        formattedPhone,
+        window.recaptchaVerifier
+      );
       setConfirmationResult(result);
+
+      // ✅ Reset OTP khi gửi mã mới
+      setOtp("");
+      setOtpVerified(false);
+
       alert("📨 Mã OTP đã được gửi về số điện thoại của bạn!");
     } catch (err) {
       console.error(err);
@@ -56,8 +71,9 @@ const RegisterPhone = () => {
 
   // ✅ Tự động xác minh khi OTP đủ 6 số
   const handleOtpChange = async (value) => {
-    setOtp(value);
-    if (value.length === 6 && confirmationResult) {
+    setOtp(value); // ✅ luôn cập nhật OTP nhập vào
+
+    if (value.length === 6 && confirmationResult && !otpVerified) {
       try {
         setLoading(true);
         const result = await confirmationResult.confirm(value);
