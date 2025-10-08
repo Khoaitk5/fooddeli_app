@@ -23,7 +23,7 @@ const RegisterPhone = () => {
     return cleaned;
   };
 
-  // ✅ Gửi OTP
+  // 📤 Gửi OTP
   const sendOTP = async () => {
     if (!phone) {
       alert("📱 Vui lòng nhập số điện thoại.");
@@ -67,26 +67,29 @@ const RegisterPhone = () => {
       } catch (err) {
         console.error(err);
         alert("❌ Mã OTP không đúng hoặc đã hết hạn.");
+        setOtpVerified(false);
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // ✅ Sang trang tiếp theo
-const handleNext = () => {
-  if (!otpVerified) {
-    alert("⚠️ Bạn cần xác minh OTP trước khi tiếp tục.");
-    return;
-  }
-  if (password.trim().length < 6) {
-    alert("🔑 Mật khẩu phải có ít nhất 6 ký tự.");
-    return;
-  }
+  // ✅ Điều hướng sang trang ProfileRegister
+  const handleNext = () => {
+    if (!otpVerified) {
+      alert("⚠️ Bạn cần xác minh OTP trước khi tiếp tục.");
+      return;
+    }
+    if (password.trim().length < 6) {
+      alert("🔑 Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
+    }
 
-  const formattedPhone = formatPhoneNumber(phone); // ✅ chuyển số sang +84 trước khi gửi
-  navigate("/ProfileRegister", { state: { phone: formattedPhone, password } });
-};
+    const formattedPhone = formatPhoneNumber(phone);
+    navigate("/ProfileRegister", {
+      state: { phone: formattedPhone, password },
+    });
+  };
 
   return (
     <div
@@ -109,7 +112,7 @@ const handleNext = () => {
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
-        {/* Logo */}
+        {/* 📱 Logo */}
         <div
           style={{
             position: "absolute",
@@ -122,7 +125,7 @@ const handleNext = () => {
           <Logo />
         </div>
 
-        {/* Title */}
+        {/* 📝 Tiêu đề */}
         <div
           style={{
             position: "absolute",
@@ -138,7 +141,7 @@ const handleNext = () => {
           Đăng ký
         </div>
 
-        {/* Phone Section */}
+        {/* 📞 Nhập số điện thoại */}
         <div
           style={{
             position: "absolute",
@@ -176,7 +179,7 @@ const handleNext = () => {
           </div>
         </div>
 
-        {/* Phone Input */}
+        {/* 📥 Ô nhập số điện thoại */}
         <div
           style={{
             position: "absolute",
@@ -208,7 +211,7 @@ const handleNext = () => {
           />
         </div>
 
-        {/* OTP Section */}
+        {/* 🔐 OTP Section */}
         <div
           style={{
             position: "absolute",
@@ -285,12 +288,12 @@ const handleNext = () => {
               onClick={sendOTP}
               disabled={loading}
             >
-              Gửi mã
+              {loading ? "..." : "Gửi mã"}
             </button>
           </div>
         </div>
 
-        {/* Password Section */}
+        {/* 🔑 Password Section */}
         <div
           style={{
             position: "absolute",
@@ -341,7 +344,7 @@ const handleNext = () => {
           </div>
         </div>
 
-        {/* Button Tiếp */}
+        {/* ▶️ Nút tiếp */}
         <div
           style={{
             position: "absolute",
@@ -382,6 +385,8 @@ const handleNext = () => {
           onClick={() => navigate("/login")}
         />
       </div>
+
+      {/* 📌 Bắt buộc có container cho reCAPTCHA */}
       <div id="recaptcha-container"></div>
     </div>
   );

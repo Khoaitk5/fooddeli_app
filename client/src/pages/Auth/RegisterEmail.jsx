@@ -5,7 +5,6 @@ import FooterBar from "@/components/shared/FooterBar";
 
 const RegisterEmail = () => {
   const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
@@ -45,7 +44,7 @@ const RegisterEmail = () => {
     }
   };
 
-  // ✅ Tự động xác minh OTP khi nhập đủ 6 số
+  // ✅ Xác minh OTP khi nhập đủ 6 số
   const handleOtpChange = async (value) => {
     setOtp(value);
     if (value.length === 6) {
@@ -72,7 +71,7 @@ const RegisterEmail = () => {
     }
   };
 
-  // ✅ Sang trang ProfileRegister
+  // ✅ Điều hướng sang ProfileRegister
   const handleNext = () => {
     if (!otpVerified) {
       alert("⚠️ Bạn cần xác minh OTP trước khi tiếp tục.");
@@ -83,7 +82,7 @@ const RegisterEmail = () => {
       return;
     }
 
-    // 👉 Truyền email + password sang ProfileRegister (không có phone)
+    // 👉 Truyền sang ProfileRegister để hoàn tất đăng ký
     navigate("/ProfileRegister", { state: { email, password } });
   };
 
@@ -137,7 +136,7 @@ const RegisterEmail = () => {
           Đăng ký
         </div>
 
-        {/* Email Section */}
+        {/* Email Label + Switch */}
         <div
           style={{
             position: "absolute",
@@ -169,7 +168,7 @@ const RegisterEmail = () => {
               fontWeight: "600",
               cursor: "pointer",
             }}
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/register/phone")}
           >
             Đăng ký bằng số điện thoại
           </div>

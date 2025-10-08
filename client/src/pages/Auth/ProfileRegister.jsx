@@ -13,7 +13,7 @@ const ProfileRegister = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Lấy state truyền từ RegisterPhone hoặc RegisterEmail
+  // ✅ Lấy dữ liệu từ RegisterPhone / RegisterEmail / AddAddress
   const phoneFromState = location.state?.phone || "";
   const passwordFromState = location.state?.password || "";
   const addressFromState = location.state?.address || "";
@@ -21,6 +21,7 @@ const ProfileRegister = () => {
   const fullnameFromState = location.state?.fullname || "";
   const emailFromState = location.state?.email || "";
 
+  // ✅ Khởi tạo form với dữ liệu từ state nếu có
   const [form, setForm] = useState({
     username: usernameFromState,
     fullname: fullnameFromState,
@@ -30,10 +31,10 @@ const ProfileRegister = () => {
     password: passwordFromState,
   });
 
-  // ✅ Kiểm tra có phải luồng đăng ký bằng số điện thoại hay không
+  // ✅ Kiểm tra luồng đăng ký (đi từ số điện thoại hay email)
   const isPhoneFlow = !!phoneFromState;
 
-  // ✅ Cập nhật form nếu state thay đổi
+  // ✅ Cập nhật form mỗi khi location.state thay đổi
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
@@ -53,22 +54,19 @@ const ProfileRegister = () => {
     passwordFromState,
   ]);
 
+  // 📥 Cập nhật khi nhập từng trường
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // ✅ Điều hướng sang trang thêm địa chỉ — truyền nguyên form để giữ lại khi quay về
+  const goToAddAddress = () => {
+    navigate("/address/add", { state: { ...form } });
   };
 
   // ✅ Submit form đăng ký
   const handleSubmit = async () => {
     const { username, fullname, email, address, phone, password } = form;
-
-    console.log("📩 Dữ liệu gửi đi:", {
-      username,
-      fullname,
-      email,
-      address,
-      phone,
-      password,
-    });
 
     if (!username || !fullname || !email || !address || !phone || !password) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin!");
@@ -102,7 +100,6 @@ const ProfileRegister = () => {
         throw new Error(data.message || "Đăng ký thất bại");
       }
 
-      console.log("✅ Đăng ký thành công:", data);
       alert("🎉 Tài khoản đã được tạo thành công!");
       navigate("/customer/home");
     } catch (err) {
@@ -169,7 +166,7 @@ const ProfileRegister = () => {
           fullWidth
           sx={{ mb: 2 }}
           InputProps={{
-            readOnly: !isPhoneFlow, // ✅ chỉ cho nhập nếu là RegisterPhone
+            readOnly: !isPhoneFlow, // ✅ nếu đi từ RegisterPhone thì được nhập email
           }}
         />
 
@@ -177,11 +174,21 @@ const ProfileRegister = () => {
         <TextField
           label="Địa chỉ"
           name="address"
-          value={form.address}
-          onChange={handleChange}
+          value={
+            typeof form.address === "object" && form.address !== null
+              ? `${form.address.detail || ""}${
+                  form.address.detail &&
+                  (form.address.ward || form.address.city)
+                    ? ", "
+                    : ""
+                }${form.address.ward || ""}${
+                  form.address.ward && form.address.city ? ", " : ""
+                }${form.address.city || ""}`
+              : form.address || ""
+          }
           fullWidth
           sx={{ mb: 3 }}
-          onClick={() => navigate("/address/add", { state: { form } })}
+          onClick={goToAddAddress}
           InputProps={{
             readOnly: true,
             sx: { cursor: "pointer" },
@@ -201,10 +208,9 @@ const ProfileRegister = () => {
           value={form.phone}
           onChange={handleChange}
           fullWidth
-          required
           sx={{ mb: 3 }}
           InputProps={{
-            readOnly: isPhoneFlow, // ✅ chỉ khóa nếu đi từ RegisterPhone
+            readOnly: isPhoneFlow, // ✅ nếu đi từ RegisterPhone thì khoá
           }}
         />
 
