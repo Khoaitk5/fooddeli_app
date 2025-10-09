@@ -125,6 +125,7 @@ function App() {
           <Route path="video" element={<ShopVideo />} />
           <Route path="orders" element={<ShopOrders />} />
           <Route path="settings" element={<ShopSettings />} />
+          <Route path="*" element={<Navigate to="/shop/dashboard" />} /> {/* Redirect */}
         </Route>
 
         {/* Admin Routes */}
