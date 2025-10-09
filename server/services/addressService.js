@@ -76,6 +76,38 @@ const addressService = {
     // Cập nhật địa chỉ thành mặc định
     return await addressDao.updateAddress(addressId, { is_default: true });
   },
+
+  /**
+   * 🆕 Cập nhật hoặc tạo mới địa chỉ mặc định cho người dùng
+   * @param {number} userId - ID người dùng
+   * @param {string} addressLine - Chuỗi địa chỉ chi tiết
+   * @returns {Promise<object>} - Địa chỉ mới hoặc được cập nhật
+   */
+  async setDefaultAddressByUser(userId, addressLine) {
+    if (!userId || !addressLine) {
+      throw new Error("Thiếu userId hoặc addressLine");
+    }
+
+    // Kiểm tra xem user đã có địa chỉ chưa
+    const existingAddresses = await addressDao.getAddressesByUserId(userId);
+
+    if (existingAddresses.length === 0) {
+      // 🆕 Nếu chưa có, thêm mới địa chỉ mặc định
+      return await addressDao.addAddress({
+        user_id: userId,
+        address_line: addressLine,
+        is_default: true,
+      });
+    } else {
+      // 🔄 Nếu có rồi, cập nhật lại địa chỉ mặc định
+      await addressDao.removeDefaultAddress(userId); // bỏ cờ mặc định cũ
+      return await addressDao.addAddress({
+        user_id: userId,
+        address_line: addressLine,
+        is_default: true,
+      });
+    }
+  },
 };
 
 module.exports = addressService;

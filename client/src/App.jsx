@@ -5,6 +5,8 @@ import MobileShipperLayout from './components/layout/MobileShipperLayout';
 import DesktopLayout from './components/layout/DesktopLayout';
 import DesktopAdminLayout from './components/layout/DesktopAdminLayout';
 import { AuthProvider } from './contexts/AuthContext';
+
+// Admin
 import AdminDashboard from './pages/Admin/Dashboard';
 import Approvals from './pages/Admin/Approvals';
 import VideoReports from './pages/Admin/VideoReports';
@@ -13,6 +15,8 @@ import Shops from './pages/Admin/Shops';
 import Shippers from './pages/Admin/Shippers';
 import System from './pages/Admin/System';
 import Revenue from './pages/Admin/Revenue';
+
+// Customer
 import Home from './pages/Customer/Home';
 import Discover from './pages/Customer/Discover';
 import Order from './pages/Customer/Order';
@@ -23,6 +27,14 @@ import Checkout from './pages/Customer/Checkout';
 import Payment from './pages/Customer/Payment';
 import AddCoupon from './pages/Customer/AddCoupon';
 import OrderHistory from './pages/Customer/OrderHistory';
+import DeliveryManCallScreen from './pages/Customer/DeliveryManCallScreen';
+import DeliveryManMessageScreen from './pages/Customer/DeliveryManMessageScreen';
+import OrderPlaced from './pages/Customer/OrderPlaced';
+import Notifications from './pages/Customer/Notifications';
+import RestaurantDetailPage from './pages/Customer/RestaurantDetailPage';
+import { UserProfile } from './pages/Customer/UserProfile';
+
+// Auth
 import Login from './pages/Auth/Login';
 import LoginPhone from './pages/Auth/LoginPhone';
 import LoginEmail from './pages/Auth/LoginEmail';
@@ -34,11 +46,15 @@ import OTP from './pages/Auth/OTP';
 import ProfileRegister from "./pages/Auth/ProfileRegister";
 import ShopLogin from "./pages/Auth/ShopLogin";
 import AddAdress from "./pages/Auth/AddAdress";
+
+// Shop
 import ShopDashboard from './pages/Shop/Dashboard';
 import MenuManagement from './pages/Shop/Menu';
 import ShopVideo from './pages/Shop/Video';
 import ShopOrders from './pages/Shop/Orders';
 import ShopSettings from './pages/Shop/Settings';
+
+// Shipper
 import ShipperHome from './pages/Shipper/Home';
 import ShipperActiveOrder from './pages/Shipper/ActiveOrder';
 import ShipperDelivering from './pages/Shipper/Delivering';
@@ -49,8 +65,8 @@ import ShipperWallet from './pages/Shipper/Wallet';
 
 // 🧠 App Component
 function App() {
+  console.log("🧠DEBUG: [App] Rendered!");
   return (
-    // ✅ AuthProvider bao toàn bộ ứng dụng
     <AuthProvider>
       <Routes>
         {/* Auth Routes */}
@@ -77,8 +93,13 @@ function App() {
           <Route path="orders" element={<Order />} />
           <Route path="order-tracking" element={<OrderTracking />} />
           <Route path="order-summary" element={<OrderSummary />} />
-          <Route path="notifications" element={<div>Notifications Page</div>} />
-          <Route path="profile" element={<div>Customer Profile</div>} />
+          <Route path="order-history" element={<OrderHistory />} />
+          <Route path="delivery-man-call" element={<DeliveryManCallScreen />} />
+          <Route path="delivery-man-message" element={<DeliveryManMessageScreen />} />
+          <Route path="order-placed" element={<OrderPlaced />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="restaurant/:id" element={<RestaurantDetailPage />} />
+          <Route path="profile" element={<UserProfile />} />
         </Route>
 
         {/* Shipper Routes */}
@@ -92,6 +113,8 @@ function App() {
           <Route path="wallet" element={<ShipperWallet />} />
           <Route path="*" element={<Navigate to="/shipper/home" />} />
         </Route>
+
+        {/* Shop Routes */}
         <Route path="/shop/*" element={<MobileShopLayout />}>
           <Route path="dashboard" element={<ShopDashboard />} />
           <Route path="menu" element={<MenuManagement />} />
@@ -100,7 +123,7 @@ function App() {
           <Route path="settings" element={<ShopSettings />} />
         </Route>
 
-        {/* Desktop Admin Routes */}
+        {/* Admin Routes */}
         <Route path="/admin/*" element={<DesktopAdminLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="system" element={<System />} />

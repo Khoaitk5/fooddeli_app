@@ -4,12 +4,55 @@ import GoogleButton from "@/components/shared/GoogleButton";
 import MessageButton from "@/components/shared/MessageButton";
 import PhoneButton from "@/components/shared/PhoneButton";
 import SubmitButton from "@/components/shared/SubmitButton";
-import logoMini from "/logo_mini.svg";
-import burgerBG from "/BurgerBG.svg";
+import MiniLogo from "@/components/shared/MiniLogo";
+import BurgerBG from "@/components/shared/BurgerBG";
 import { pxW, pxH } from "../../utils/scale.js";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/firebase/firebaseConfig";
 
 const Register = () => {
   const navigate = useNavigate();
+
+  // 🟢 Xử lý đăng ký bằng Google
+  const handleGoogleRegister = async () => {
+    try {
+      // 🔹 Mở popup Google
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // 🔹 Lấy ID Token Firebase
+      const idToken = await user.getIdToken();
+
+      // 🔹 Gửi token lên backend để đăng ký hoặc tạo session
+      const res = await fetch("http://localhost:5000/api/auth/google-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: idToken }),
+        credentials: "include", // ⚠️ quan trọng để cookie session hoạt động
+      });
+
+      const data = await res.json();
+      console.log("📩 Kết quả đăng ký Google:", data);
+
+      if (!data.success) {
+        alert(data.message || "❌ Đăng ký Google thất bại.");
+        return;
+      }
+
+      // 🔹 Lưu user tạm vào localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // 🔹 Nếu cần bổ sung thông tin → chuyển sang ProfileRegister
+      if (data.needAdditionalInfo) {
+        navigate("/profileRegister");
+      } else {
+        navigate("/customer/home");
+      }
+    } catch (error) {
+      console.error("❌ Lỗi đăng ký Google:", error);
+      alert("Đã xảy ra lỗi khi đăng ký bằng Google. Vui lòng thử lại!");
+    }
+  };
 
   return (
     <div
@@ -28,37 +71,37 @@ const Register = () => {
         overflow: "hidden",
       }}
     >
-      {/* Logo */}
+      {/* 🔹 Logo */}
       <div
         style={{
           position: "absolute",
-          top: "71px",
+          top: "8.875vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
         }}
       >
-        <img src={logoMini} alt="Logo Mini" />
+        <MiniLogo></MiniLogo>
       </div>
 
-      {/* Burger Background */}
+      {/* 🔹 Hình nền burger */}
       <div
         style={{
           position: "absolute",
-          top: "193px",
+          top: "21.37vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 5,
         }}
       >
-        <img src={burgerBG} alt="Burger Background" />
+        <BurgerBG></BurgerBG>
       </div>
 
-      {/* Submit Button */}
+      {/* 🔹 Nút “Tiếp tục với tư cách khách” */}
       <div
         style={{
           position: "absolute",
-          top: "577px",
+          top: "72.125vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -66,8 +109,8 @@ const Register = () => {
       >
         <SubmitButton
           style={{
-            width: "322px",
-            height: "51px",
+            width: "89.4vw",
+            height: "6.375vh",
           }}
           onClick={() => navigate("/customer/home")}
         >
@@ -75,57 +118,57 @@ const Register = () => {
         </SubmitButton>
       </div>
 
-      {/* Or Text */}
+      {/* 🔹 Chữ “hoặc” */}
       <div
         style={{
           position: "absolute",
-          top: "638px",
+          top: "79.75vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
-          justifyContent: "center",
           display: "flex",
           flexDirection: "column",
+          justifyContent: "center",
           color: "#70756B",
-          fontSize: 15,
+          fontSize: "1.5rem",
           fontFamily: "TikTok Sans",
           fontWeight: "600",
-          lineHeight: "25.50px",
+          lineHeight: "25.5px",
           wordWrap: "break-word",
         }}
       >
         hoặc
       </div>
 
-      {/* Google Login Button */}
+      {/* 🔹 Nút Google */}
       <div
         style={{
           position: "absolute",
-          top: "675px",
-          left: "19px",
+          top: "84.375vh",
+          left: "5.27vw",
           zIndex: 10,
         }}
       >
-        <GoogleButton />
+        <GoogleButton onClick={handleGoogleRegister} />
       </div>
 
-      {/* Message Button */}
+      {/* 🔹 Nút đăng ký bằng email */}
       <div
         style={{
           position: "absolute",
-          top: "675px",
-          right: "19px",
+          top: "84.375vh",
+          right: "5.27vw",
           zIndex: 10,
         }}
       >
-        <MessageButton onClick={() => navigate("/register/email")}/>
+        <MessageButton onClick={() => navigate("/register/email")} />
       </div>
 
-      {/* Phone Button */}
+      {/* 🔹 Nút đăng ký bằng số điện thoại */}
       <div
         style={{
           position: "absolute",
-          top: "675px",
+          top: "84.375vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -134,7 +177,7 @@ const Register = () => {
         <PhoneButton onClick={() => navigate("/register/phone")} />
       </div>
 
-      {/* Footer */}
+      {/* 🔹 Footer */}
       <FooterBar
         text1="Bạn đã có tài khoản?"
         text2="Đăng nhập"

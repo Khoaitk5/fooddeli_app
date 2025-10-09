@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/firebase/firebaseConfig";
 import FooterBar from "@/components/shared/FooterBar";
 import GoogleButton from "@/components/shared/GoogleButton";
 import MessageButton from "@/components/shared/MessageButton";
@@ -11,6 +13,43 @@ import "../../App.css";
 
 const Login = () => {
   const navigate = useNavigate();
+
+  const handleGoogleLogin = async () => {
+    try {
+      // 🔹 Mở popup đăng nhập Google
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      console.log("✅ Đăng nhập thành công:", user);
+
+      // 🔹 Lấy ID token của user từ Firebase
+      const idToken = await user.getIdToken();
+
+      // 🔹 Gửi token đó lên backend của bạn bằng fetch
+      const res = await fetch("http://localhost:5000/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: idToken }),
+      });
+
+      if (!res.ok) {
+        throw new Error("❌ Lỗi server khi xác minh token");
+      }
+
+      const data = await res.json();
+      console.log("✅ Server trả về:", data);
+
+      // 🔹 Lưu user và token (nếu backend trả về)
+      localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.token) localStorage.setItem("token", data.token);
+
+      // 🔹 Điều hướng tới trang chính
+      navigate("/customer/home");
+    } catch (error) {
+      console.error("❌ Lỗi đăng nhập Google:", error);
+    }
+  };
 
   return (
     <div
@@ -107,7 +146,7 @@ const Login = () => {
           zIndex: 10,
         }}
       >
-        <GoogleButton />
+        <GoogleButton onClick={handleGoogleLogin} />
       </div>
 
       {/* Message Button */}

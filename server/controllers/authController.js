@@ -161,6 +161,121 @@ exports.verifyPhone = async (req, res) => {
   }
 };
 
+
+/**
+ * 🌐 Đăng nhập bằng Google (Firebase)
+ */
+exports.loginWithGoogle = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    if (!admin) {
+      return res.status(500).json({
+        success: false,
+        message: "Firebase Admin chưa được khởi tạo.",
+      });
+    }
+
+    // ✅ Xác minh token từ Firebase
+    const decoded = await admin.auth().verifyIdToken(token);
+    const email = decoded.email;
+    const name = decoded.name;
+    const picture = decoded.picture;
+
+    console.log("✅ Firebase xác thực thành công:", { email, name });
+
+    // ✅ Kiểm tra user có tồn tại trong DB không
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ Tài khoản Google này chưa tồn tại trong hệ thống.",
+      });
+    }
+
+    // ✅ Tạo session như các loại login khác
+    createSession(req, user);
+
+    return res.status(200).json({
+      success: true,
+      message: "✅ Đăng nhập Google thành công",
+      user: {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        avatar: picture,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Lỗi đăng nhập Google:", error);
+    return res.status(401).json({
+      success: false,
+      message: "❌ Token Google không hợp lệ hoặc đã hết hạn.",
+    });
+  }
+};
+
+
+
+/**
+ * 🌱 Đăng ký tài khoản mới bằng Google
+ */
+exports.registerWithGoogle = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    if (!admin) {
+      return res.status(500).json({ success: false, message: "Firebase Admin chưa được khởi tạo." });
+    }
+
+    // ✅ Xác minh token từ Firebase
+    const decoded = await admin.auth().verifyIdToken(token);
+    const email = decoded.email;
+    const name = decoded.name;
+    const picture = decoded.picture;
+
+    // ✅ Kiểm tra user đã tồn tại chưa
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Tài khoản Google này đã tồn tại, hãy đăng nhập thay vì đăng ký.",
+      });
+    }
+
+    // ✅ Tạo user tạm (chưa có phone, address, v.v.)
+    const newUser = await userService.createUser({
+      username: email.split("@")[0],
+      full_name: name,
+      email,
+      password: Math.random().toString(36).slice(-8),
+      role: "user",
+    });
+
+    // ✅ Tạo session
+    createSession(req, newUser);
+
+    return res.status(201).json({
+      success: true,
+      message: "✅ Đăng ký Google thành công. Vui lòng nhập thêm thông tin.",
+      user: {
+        id: newUser.id,
+        full_name: name,
+        email,
+        avatar: picture,
+      },
+      needAdditionalInfo: true,
+    });
+  } catch (error) {
+    console.error("❌ Lỗi đăng ký Google:", error);
+    return res.status(401).json({ success: false, message: "Token Google không hợp lệ hoặc hết hạn." });
+  }
+};
+
+
+
 /**
  * 🔴 Đăng xuất (xóa JWT nếu có)
  */

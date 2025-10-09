@@ -1,192 +1,327 @@
-import Navbar from '../../components/shared/Navbar';
-import HeartIcon from '../../components/shared/HeartIcon';
-import CommentIcon from '../../components/shared/CommentIcon';
-import BookmarkIcon from '../../components/shared/BookmarkIcon';
-import ShareIcon from '../../components/shared/ShareIcon';
-import SearchIcon from '../../components/shared/SearchIcon';
-import ProductCart from '../../components/role-specific/Customer/ProductCart';
-import { pxW, pxH } from '../../utils/scale.js';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/shared/Navbar";
+import HeartIcon from "../../components/shared/HeartIcon";
+import CommentIcon from "../../components/shared/CommentIcon";
+import BookmarkIcon from "../../components/shared/BookmarkIcon";
+import ShareIcon from "../../components/shared/ShareIcon";
+import SearchIcon from "../../components/shared/SearchIcon";
+import ProductCart from "../../components/role-specific/Customer/ProductCart";
+import { pxW, pxH } from "../../utils/scale.js";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  "https://xyngruphcelumtjlmzud.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bmdydXBoY2VsdW10amxtenVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzIyOTUsImV4cCI6MjA3MzE0ODI5NX0.dOpfK9jEzARQJbBmzLjTZ4wtSENsz57Wmu13oP5A6og"
+);
 
 const Home = () => {
+  const navigate = useNavigate();
+  const [videos, setVideos] = useState([]);
+  const [loadingVideos, setLoadingVideos] = useState({});
+  const [likedVideos, setLikedVideos] = useState(new Set());
+  const [likeCounts, setLikeCounts] = useState({});
+  const [bookmarkedVideos, setBookmarkedVideos] = useState(new Set());
+  const [bookmarkCounts, setBookmarkCounts] = useState({});
+  const videoRefs = useRef([]);
 
+  useEffect(() => {
+    const fetchVideos = async () => {
+      const { data, error } = await supabase.storage
+        .from("videos")
+        .list("user-videos", {
+          sortBy: { column: "created_at", order: "desc" },
+        });
+      if (data) {
+        setVideos(data);
+      }
+    };
+    fetchVideos();
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          const index = videoRefs.current.indexOf(video);
+          if (entry.isIntersecting) {
+            // Pause all other videos
+            videoRefs.current.forEach((v, i) => {
+              if (v && i !== index) v.pause();
+            });
+            video.play().catch(() => {}); // Ignore play errors
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    videoRefs.current.forEach((video) => {
+      if (video) observer.observe(video);
+    });
+
+    return () => {
+      videoRefs.current.forEach((video) => {
+        if (video) observer.unobserve(video);
+      });
+    };
+  }, [videos]);
+
+  const statusStyle = {
+    justifyContent: "center",
+    display: "flex",
+    flexDirection: "column",
+    color: "white",
+    fontSize: "1.8rem",
+    fontFamily: "Proxima Nova",
+    fontWeight: "700",
+    wordWrap: "break-word",
+  };
+
+  const countStyle = {
+    textAlign: "center",
+    color: "white",
+    fontSize: "1.2rem",
+    fontFamily: "Proxima Nova",
+    fontWeight: "600",
+    wordWrap: "break-word",
+    textShadow: "1px 1px 1px rgba(0, 0, 0, 0.25)",
+  };
+
+  const handleHeartClick = (videoIndex, e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setLikedVideos(prev => {
+      const newLiked = new Set(prev);
+      const wasLiked = newLiked.has(videoIndex);
+      if (wasLiked) {
+        newLiked.delete(videoIndex);
+        setLikeCounts(prevCounts => ({ ...prevCounts, [videoIndex]: Math.max((prevCounts[videoIndex] || 0) - 1, 0) }));
+      } else {
+        newLiked.add(videoIndex);
+        setLikeCounts(prevCounts => ({ ...prevCounts, [videoIndex]: (prevCounts[videoIndex] || 0) + 1 }));
+      }
+      return newLiked;
+    });
+  };
+
+  const handleBookmarkClick = (videoIndex, e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setBookmarkedVideos(prev => {
+      const newBookmarked = new Set(prev);
+      const wasBookmarked = newBookmarked.has(videoIndex);
+      if (wasBookmarked) {
+        newBookmarked.delete(videoIndex);
+        setBookmarkCounts(prevCounts => ({ ...prevCounts, [videoIndex]: Math.max((prevCounts[videoIndex] || 0) - 1, 0) }));
+      } else {
+        newBookmarked.add(videoIndex);
+        setBookmarkCounts(prevCounts => ({ ...prevCounts, [videoIndex]: (prevCounts[videoIndex] || 0) + 1 }));
+      }
+      return newBookmarked;
+    });
+  };
+
+  const formatCount = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  };
 
   return (
-    <div className={`h-[${pxH(800)}] w-[${pxW(360)}] overflow-hidden relative mx-auto`}>
+    <div
+      className={`h-[${pxH(800)}] w-[${pxW(
+        360
+      )}] overflow-hidden relative mx-auto`}
+    >
       <div className="h-[93.75vh] overflow-y-auto snap-y snap-mandatory">
-        <section className="relative h-[93.75vh] w-full snap-start">
-          {/* Background video or image */}
-          <img
-            src="https://www.figma.com/api/mcp/asset/3030bcaa-cdb6-4d02-b0e6-a40d9b2fc9e8"
-            alt="KFC Việt Nam"
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {videos.map((video, index) => (
+          <section
+            key={index}
+            className="relative h-[93.75vh] w-full snap-start"
+            style={{ backgroundColor: "black" }}
+          >
+            <video
+              ref={(el) => (videoRefs.current[index] = el)}
+              src={
+                supabase.storage
+                  .from("videos")
+                  .getPublicUrl(`user-videos/${video.name}`).data.publicUrl
+              }
+              className="absolute inset-0 h-full w-full object-contain"
+              loop
+              playsInline
+              preload="metadata"
+              onLoadStart={() =>
+                setLoadingVideos((prev) => ({ ...prev, [index]: true }))
+              }
+              onCanPlay={() =>
+                setLoadingVideos((prev) => ({ ...prev, [index]: false }))
+              }
+              onClick={(e) => {
+                const video = e.target;
+                if (video.paused) {
+                  video.play();
+                } else {
+                  video.pause();
+                }
+              }}
+              onError={(e) => console.error("Video load error:", e)}
+            />
+            {loadingVideos[index] && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-          {/* Follow Status */}
-          <div className="absolute top-[6.25vh] left-[28.61vw]">
-            <div style={{
-              opacity: 0.70,
-              justifyContent: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              color: 'white',
-              fontSize: "1.8rem",
-              fontFamily: 'Proxima Nova',
-              fontWeight: '700',
-              wordWrap: 'break-word'
-            }}>
-              Đã follow
+            {/* Follow Status */}
+            <div className="absolute top-[6.25vh] left-[28.61vw]">
+              <div style={{ ...statusStyle, opacity: 0.7 }}>Đã follow</div>
             </div>
-          </div>
 
-          {/* Suggestions Status */}
-          <div className="absolute top-[6.25vh] right-[28.61vw]">
-            <div style={{
-              justifyContent: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              color: 'white',
-              fontSize: "1.8rem",
-              fontFamily: 'Proxima Nova',
-              fontWeight: '700',
-              wordWrap: 'break-word'
-            }}>
-              Đề xuất
+            {/* Suggestions Status */}
+            <div className="absolute top-[6.25vh] right-[28.61vw]">
+              <div style={statusStyle}>Đề xuất</div>
             </div>
-          </div>
 
-          {/* Search Icon */}
-          <div className="absolute top-[6.25vh] right-[4.8vw]">
-            <SearchIcon/>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="absolute top-[9.125vh] right-[33.33vw]">
-            <div style={{width: '8.06vw', height: '0.5vh', background: 'white'}} />
-          </div>
-
-          {/* Profile Image */}
-          <div className="absolute top-[51.625vh] right-[1.94vw]">
-            <img style={{width: '4.8rem', height: '4.8rem', borderRadius: 9999}} src="/KFC_logo.png" />
-          </div>
-
-          {/* Author Name */}
-          <div className="absolute top-[67.75vh] left-[2.78vw]">
-            <div style={{
-              width: '100%',
-              height: '100%',
-              justifyContent: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              color: 'white',
-              fontSize: '1.7rem',
-              fontFamily: 'TikTok Sans',
-              fontWeight: '600',
-              wordWrap: 'break-word'
-            }}>
-              KFC Việt Nam
+            {/* Search Icon */}
+            <div className="absolute top-[6.25vh] right-[4.8vw]">
+              <SearchIcon />
             </div>
-          </div>
 
-          {/* Caption */}
-          <div className="absolute left-[2.78vw] top-[71.5vh]">
-            <div style={{width: '259px', justifyContent: 'center', display: 'flex', flexDirection: 'column'}}>
-              <span style={{color: 'white', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>
-                Gà rán giòn tan, quyện thêm xốt mắm tỏi đậm đà, cay cay, ngọt ngọt, thơm nồng nàn từ tỏi và ớt. 😉
-                <br/>
-              </span>
-              <span style={{color: 'white', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '600', wordWrap: 'break-word'}}>
-                #fyp #kfc #gaxotmamtoi
-              </span>
+            {/* Progress Bar */}
+            <div className="absolute top-[9.125vh] right-[33.33vw]">
+              <div
+                style={{
+                  width: "8.06vw",
+                  height: "0.5vh",
+                  background: "white",
+                }}
+              />
             </div>
-          </div>
 
-          {/* Heart Icon */}
-          <div className="absolute top-[487px] right-[17px]">
-            <HeartIcon/>
-          </div>
-
-          {/* View Count */}
-          <div className="absolute top-[523px] right-[11.5px]">
-            <div style={{
-              textAlign: 'center',
-              color: 'white',
-              fontSize: 12,
-              fontFamily: 'Proxima Nova',
-              fontWeight: '600',
-              wordWrap: 'break-word',
-              textShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)'
-            }}>
-              250,5K
+            {/* Profile Image */}
+            <div className="absolute top-[51.625vh] right-[1.94vw]">
+              <img
+                style={{
+                  width: "4.8rem",
+                  height: "4.8rem",
+                  borderRadius: 9999,
+                  cursor: "pointer",
+                }}
+                src="/KFC_logo.png"
+                onClick={() => navigate('/customer/restaurant/kfc')}
+                alt="Restaurant profile"
+              />
             </div>
-          </div>
 
-          {/* Comment Icon */}
-          <div className="absolute top-[552px] right-[17px]">
-            <CommentIcon width="27" height="26" />
-          </div>
-
-          {/* Comment Count */}
-          <div className="absolute top-[588px] right-[17.5px]">
-            <div style={{
-              textAlign: 'center',
-              color: 'white',
-              fontSize: 12,
-              fontFamily: 'Proxima Nova',
-              fontWeight: '600',
-              wordWrap: 'break-word',
-              textShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)'
-            }}>
-              100K
+            {/* Author Name */}
+            <div className="absolute top-[67.75vh] left-[2.78vw]">
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  justifyContent: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  color: "white",
+                  fontSize: "1.7rem",
+                  fontFamily: "TikTok Sans",
+                  fontWeight: "600",
+                  wordWrap: "break-word",
+                }}
+              >
+                KFC Việt Nam
+              </div>
             </div>
-          </div>
 
-          {/* Bookmark Icon */}
-          <div className="absolute top-[618px] right-[20px]">
-            <BookmarkIcon width="22" height="24" />
-          </div>
-
-          {/* Bookmark Count */}
-          <div className="absolute top-[653px] right-[20px]">
-            <div style={{
-              textAlign: 'center',
-              color: 'white',
-              fontSize: 12,
-              fontFamily: 'Proxima Nova',
-              fontWeight: '600',
-              wordWrap: 'break-word',
-              textShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)'
-            }}>
-              89K
+            {/* Caption */}
+            <div className="absolute left-[2.78vw] top-[71.5vh]">
+              <div
+                style={{
+                  width: "71.94vw",
+                  justifyContent: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <span
+                  style={{
+                    color: "white",
+                    fontSize: "1.5rem",
+                    fontFamily: "TikTok Sans",
+                    fontWeight: "400",
+                    wordWrap: "break-word",
+                  }}
+                >
+                  Gà rán giòn tan, quyện thêm xốt mắm tỏi đậm đà, cay cay, ngọt
+                  ngọt, thơm nồng nàn từ tỏi và ớt. 😉
+                  <br />
+                </span>
+                <span
+                  style={{
+                    color: "white",
+                    fontSize: "1.5rem",
+                    fontFamily: "TikTok Sans",
+                    fontWeight: "600",
+                    wordWrap: "break-word",
+                  }}
+                >
+                  #fyp #kfc #gaxotmamtoi
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Share Icon */}
-          <div className="absolute top-[681px] right-[17px]">
-            <ShareIcon width="27" height="26" />
-          </div>
-
-          {/* Share Count */}
-          <div className="absolute top-[718px] right-[13px]">
-            <div style={{
-              textAlign: 'center',
-              color: 'white',
-              fontSize: 12,
-              fontFamily: 'Proxima Nova',
-              fontWeight: '600',
-              wordWrap: 'break-word',
-              textShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)'
-            }}>
-              132,5K
+            {/* Heart Icon and Count */}
+            <div className="absolute top-[60.875vh] right-[4.72vw] flex flex-col items-center" style={{ gap: "1.25vh" }}>
+              <HeartIcon
+                fill={likedVideos.has(index) ? "#FF3E5B" : "white"}
+                onClick={(e) => handleHeartClick(index, e)}
+                style={{ cursor: "pointer" }}
+              />
+              <div style={countStyle}>{formatCount(likeCounts[index] || 0)}</div>
             </div>
-          </div>
 
-          {/* Product Cart */}
-          <div className="absolute top-[660px] left-[10px]">
-            <ProductCart />
-          </div>
-        </section>
+            {/* Comment Icon */}
+            <div className="absolute top-[69vh] right-[4.72vw]">
+              <CommentIcon />
+            </div>
+
+            {/* Comment Count */}
+            <div className="absolute top-[73.5vh] right-[4.86vw]">
+              <div style={countStyle}>100K</div>
+            </div>
+
+            {/* Bookmark Icon and Count */}
+            <div className="absolute top-[77.25vh] right-[5.56vw] flex flex-col items-center" style={{ gap: "1.25vh" }}>
+              <BookmarkIcon
+                fill={bookmarkedVideos.has(index) ? "#F9CE13" : "white"}
+                onClick={(e) => handleBookmarkClick(index, e)}
+                style={{ cursor: "pointer" }}
+              />
+              <div style={countStyle}>{formatCount(bookmarkCounts[index] || 0)}</div>
+            </div>
+
+            {/* Share Icon */}
+            <div className="absolute top-[85.125vh] right-[4.72vw]">
+              <ShareIcon />
+            </div>
+
+            {/* Share Count */}
+            <div className="absolute top-[89.75vh] right-[3.61vw]">
+              <div style={countStyle}>132,5K</div>
+            </div>
+
+            {/* Product Cart */}
+            <div className="absolute top-[82.5vh] left-[2.78vw]">
+              <ProductCart />
+            </div>
+          </section>
+        ))}
       </div>
       <Navbar />
     </div>
