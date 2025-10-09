@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, SlidersHorizontal } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import FoodCard from './FoodCard';
 import RestaurantCard from './RestaurantCard';
 import theme from '../../../styles/theme';
