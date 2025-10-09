@@ -1,6 +1,6 @@
 // client/src/firebase/firebaseConfig.js
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVADTRyha6lV5MbF9epUO6ubVNjQGIA80",
@@ -12,11 +12,13 @@ const firebaseConfig = {
   measurementId: "G-THRB97DEF3",
 };
 
-// ✅ Khởi tạo Firebase App
+// ✅ Khởi tạo Firebase
 const app = initializeApp(firebaseConfig);
 
-// ✅ Lấy instance Auth để dùng cho OTP
+// ✅ Lấy instance Auth
 const auth = getAuth(app);
 
-export { auth };
+// ✅ Khởi tạo provider cho Google Login
+const googleProvider = new GoogleAuthProvider();
 
+export { auth, googleProvider };

@@ -7,10 +7,52 @@ import SubmitButton from "@/components/shared/SubmitButton";
 import MiniLogo from "@/components/shared/MiniLogo";
 import BurgerBG from "@/components/shared/BurgerBG";
 import { pxW, pxH } from "../../utils/scale.js";
-import "../../App.css";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/firebase/firebaseConfig";
 
 const Register = () => {
   const navigate = useNavigate();
+
+  // 🟢 Xử lý đăng ký bằng Google
+  const handleGoogleRegister = async () => {
+    try {
+      // 🔹 Mở popup Google
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // 🔹 Lấy ID Token Firebase
+      const idToken = await user.getIdToken();
+
+      // 🔹 Gửi token lên backend để đăng ký hoặc tạo session
+      const res = await fetch("http://localhost:5000/api/auth/google-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: idToken }),
+        credentials: "include", // ⚠️ quan trọng để cookie session hoạt động
+      });
+
+      const data = await res.json();
+      console.log("📩 Kết quả đăng ký Google:", data);
+
+      if (!data.success) {
+        alert(data.message || "❌ Đăng ký Google thất bại.");
+        return;
+      }
+
+      // 🔹 Lưu user tạm vào localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // 🔹 Nếu cần bổ sung thông tin → chuyển sang ProfileRegister
+      if (data.needAdditionalInfo) {
+        navigate("/profileRegister");
+      } else {
+        navigate("/customer/home");
+      }
+    } catch (error) {
+      console.error("❌ Lỗi đăng ký Google:", error);
+      alert("Đã xảy ra lỗi khi đăng ký bằng Google. Vui lòng thử lại!");
+    }
+  };
 
   return (
     <div
@@ -29,7 +71,7 @@ const Register = () => {
         overflow: "hidden",
       }}
     >
-      {/* Logo */}
+      {/* 🔹 Logo */}
       <div
         style={{
           position: "absolute",
@@ -42,7 +84,7 @@ const Register = () => {
         <MiniLogo></MiniLogo>
       </div>
 
-      {/* Burger Background */}
+      {/* 🔹 Hình nền burger */}
       <div
         style={{
           position: "absolute",
@@ -55,7 +97,7 @@ const Register = () => {
         <BurgerBG></BurgerBG>
       </div>
 
-      {/* Submit Button */}
+      {/* 🔹 Nút “Tiếp tục với tư cách khách” */}
       <div
         style={{
           position: "absolute",
@@ -76,7 +118,7 @@ const Register = () => {
         </SubmitButton>
       </div>
 
-      {/* Or Text */}
+      {/* 🔹 Chữ “hoặc” */}
       <div
         style={{
           position: "absolute",
@@ -90,15 +132,15 @@ const Register = () => {
           color: "#70756B",
           fontSize: "1.5rem",
           fontFamily: "TikTok Sans",
-          fontWeight: 600,
-          lineHeight: "2.55rem",
+          fontWeight: "600",
+          lineHeight: "25.5px",
           wordWrap: "break-word",
         }}
       >
         hoặc
       </div>
 
-      {/* Google Login Button */}
+      {/* 🔹 Nút Google */}
       <div
         style={{
           position: "absolute",
@@ -107,10 +149,10 @@ const Register = () => {
           zIndex: 10,
         }}
       >
-        <GoogleButton />
+        <GoogleButton onClick={handleGoogleRegister} />
       </div>
 
-      {/* Message Button */}
+      {/* 🔹 Nút đăng ký bằng email */}
       <div
         style={{
           position: "absolute",
@@ -119,10 +161,10 @@ const Register = () => {
           zIndex: 10,
         }}
       >
-        <MessageButton onClick={() => navigate("/register/email")}/>
+        <MessageButton onClick={() => navigate("/register/email")} />
       </div>
 
-      {/* Phone Button */}
+      {/* 🔹 Nút đăng ký bằng số điện thoại */}
       <div
         style={{
           position: "absolute",
@@ -135,7 +177,7 @@ const Register = () => {
         <PhoneButton onClick={() => navigate("/register/phone")} />
       </div>
 
-      {/* Footer */}
+      {/* 🔹 Footer */}
       <FooterBar
         text1="Bạn đã có tài khoản?"
         text2="Đăng nhập"
