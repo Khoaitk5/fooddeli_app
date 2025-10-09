@@ -4,8 +4,8 @@ import GoogleButton from "@/components/shared/GoogleButton";
 import MessageButton from "@/components/shared/MessageButton";
 import PhoneButton from "@/components/shared/PhoneButton";
 import SubmitButton from "@/components/shared/SubmitButton";
-import logoMini from "/logo_mini.svg";
-import burgerBG from "/BurgerBG.svg";
+import MiniLogo from "@/components/shared/MiniLogo";
+import BurgerBG from "@/components/shared/BurgerBG";
 import { pxW, pxH } from "../../utils/scale.js";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/firebase/firebaseConfig";
@@ -75,33 +75,33 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "71px",
+          top: "8.875vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
         }}
       >
-        <img src={logoMini} alt="Logo Mini" />
+        <MiniLogo></MiniLogo>
       </div>
 
       {/* 🔹 Hình nền burger */}
       <div
         style={{
           position: "absolute",
-          top: "193px",
+          top: "21.37vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 5,
         }}
       >
-        <img src={burgerBG} alt="Burger Background" />
+        <BurgerBG></BurgerBG>
       </div>
 
       {/* 🔹 Nút “Tiếp tục với tư cách khách” */}
       <div
         style={{
           position: "absolute",
-          top: "577px",
+          top: "72.125vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -109,8 +109,8 @@ const Register = () => {
       >
         <SubmitButton
           style={{
-            width: "322px",
-            height: "51px",
+            width: "89.4vw",
+            height: "6.375vh",
           }}
           onClick={() => navigate("/customer/home")}
         >
@@ -122,15 +122,15 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "638px",
+          top: "79.75vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
-          justifyContent: "center",
           display: "flex",
           flexDirection: "column",
+          justifyContent: "center",
           color: "#70756B",
-          fontSize: 15,
+          fontSize: "1.5rem",
           fontFamily: "TikTok Sans",
           fontWeight: "600",
           lineHeight: "25.5px",
@@ -144,8 +144,8 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "675px",
-          left: "19px",
+          top: "84.375vh",
+          left: "5.27vw",
           zIndex: 10,
         }}
       >
@@ -156,8 +156,8 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "675px",
-          right: "19px",
+          top: "84.375vh",
+          right: "5.27vw",
           zIndex: 10,
         }}
       >
@@ -168,7 +168,7 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "675px",
+          top: "84.375vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,

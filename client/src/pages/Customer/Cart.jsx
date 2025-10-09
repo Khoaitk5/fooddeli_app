@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
-import { pxW, pxH } from '../../utils/scale.js';
-
-const IMG_PRODUCT = 'https://www.figma.com/api/mcp/asset/aed9038a-7ff3-430a-935a-6859b95ae9a3';
-const FALLBACK_IMG = 'data:image/svg+xml;utf8,\
-<svg xmlns="http://www.w3.org/2000/svg" width="96" height="81" viewBox="0 0 96 81">\
-  <rect width="100%" height="100%" rx="12" fill="%23f4f4f5"/>\
-  <g fill="%23c0c4d0">\
-    <circle cx="48" cy="36" r="14"/>\
-    <rect x="24" y="61" width="48" height="8" rx="4"/>\
-  </g>\
-</svg>';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import BackArrow from "../../components/shared/BackArrow";
+import BinIcon from "../../components/shared/BinIcon";
 
 export default function Cart() {
   const [quantity, setQuantity] = useState(1);
+  const navigate = useNavigate();
   const unitPrice = 69000;
   const total = unitPrice * quantity;
 
@@ -20,54 +13,248 @@ export default function Cart() {
   const dec = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
   const remove = () => setQuantity(0);
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className={`h-[${pxH(800)}] w-[${pxW(360)}] overflow-hidden relative mx-auto bg-white`}>
-      <div className="h-full px-4 pt-5 pb-28">
+    <div className="h-screen overflow-hidden relative mx-auto bg-white">
+      <div className="absolute top-[7.125vh] left-[5.28vw]">
+        <button 
+          onClick={handleBack}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer'
+          }}
+        >
+          <BackArrow />
+        </button>
+      </div>
+      <div>
         {/* Header */}
-        <div className="mb-4 grid grid-cols-3 items-center">
-          <div className="justify-self-start text-[#60635e]">←</div>
-          <div className="text-center text-[17px] text-[#363a33] font-bold">Giỏ hàng</div>
-          <div className="justify-self-end" />
+        <div
+          style={{
+            position: "absolute",
+            top: "6.625vh",
+            left: "50%",
+            transform: "translateX(-50%)",
+            justifyContent: "center",
+            display: "flex",
+            flexDirection: "column",
+            color: "var(--Colors-Typography-500, #363A33)",
+            fontSize: "1.7rem",
+            fontFamily: "TikTok Sans",
+            fontWeight: "700",
+            wordWrap: "break-word",
+          }}
+        >
+          Giỏ hàng
         </div>
 
         {/* Cart item card */}
         {quantity > 0 ? (
-          <div className="rounded-[16px] border border-[#f4f7f2] p-3 flex items-center gap-3">
+          <div
+            style={{
+              width: "89.44vw",
+              height: "11.125vh",
+              background: "white",
+              borderRadius: 16,
+              border: "1px #F4F7F2 solid",
+              marginTop: "12.375vh",
+              position: "relative",
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
             <img
-              src={IMG_PRODUCT}
+              style={{
+                width: "26.67vw",
+                height: "10.125vh",
+                borderTopLeftRadius: 12,
+                borderTopRightRadius: 4,
+                borderBottomRightRadius: 4,
+                borderBottomLeftRadius: 12,
+                border: "1px rgba(145, 149, 142, 0.06) solid",
+                position: "absolute",
+                left: "1.11vw",
+                objectFit: "cover",
+              }}
+              src="/burger_b_c_m_kim_chi.png"
               alt="product"
-              className="w-[96px] h-[81px] rounded-tl-[12px] rounded-tr-[4px] rounded-bl-[12px] rounded-br-[4px] object-cover border border-[rgba(145,149,142,0.06)]"
-              onError={(e) => { e.currentTarget.src = FALLBACK_IMG; e.currentTarget.onerror = null; }}
               loading="lazy"
             />
-            <div className="flex-1 min-w-0">
-              <div className="text-[15px] text-[#60655c] truncate">Burger Bò Cơm kim chi</div>
-              <div className="mt-2 text-[15px] text-[#363a33] font-semibold">{unitPrice.toLocaleString('vi-VN')} ₫</div>
+            <div
+              style={{
+                justifyContent: "center",
+                display: "flex",
+                flexDirection: "column",
+                color: "var(--Colors-Typography-400, #60655C)",
+                fontSize: "1.5rem",
+                fontFamily: "TikTok Sans",
+                fontWeight: "400",
+                wordWrap: "break-word",
+                position: "absolute",
+                top: "1.5vh",
+                left: "32vw",
+              }}
+            >
+              Burger Bò Cơm kim chi
             </div>
-            <div className="flex items-center gap-2 text-[#60655c]">
-              <button aria-label="Giảm" onClick={dec} className="w-8 h-8 rounded-full bg-[#f6f6f6] grid place-items-center">-</button>
-              <span className="w-6 text-center text-[15px]">{quantity}</span>
-              <button aria-label="Tăng" onClick={inc} className="w-8 h-8 rounded-full bg-[#f6f6f6] grid place-items-center">+</button>
-              <button aria-label="Xóa món" onClick={remove} className="ml-2 w-8 h-8 grid place-items-center rounded-full bg-[#fff] border border-[#e8ebe6] text-[#60655c]">
-                {/* Trash icon */}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 6h18" stroke="#60655c" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="#60655c" strokeWidth="1.5"/>
-                  <path d="M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14" stroke="#60655c" strokeWidth="1.5"/>
+            <div
+              style={{
+                justifyContent: "center",
+                display: "flex",
+                flexDirection: "column",
+                color: "var(--Colors-Typography-500, #363A33)",
+                fontSize: "1.5rem",
+                fontFamily: "TikTok Sans",
+                fontWeight: "600",
+                wordWrap: "break-word",
+                position: "absolute",
+                top: "6.625vh",
+                left: "32vw",
+              }}
+            >
+              {unitPrice.toLocaleString("vi-VN")} ₫
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                bottom: "1.5vh",
+                right: "3.33vw",
+                display: "flex",
+                alignItems: "center",
+                gap: "2.22rem",
+                color: "#60655c",
+              }}
+            >
+              <button
+                aria-label={quantity > 1 ? "Giảm" : "Xóa"}
+                onClick={quantity > 1 ? dec : remove}
+                style={{
+                  width: "8.89vw",
+                  height: "4vh",
+                  background: "#F4F7F2",
+                  borderRadius: 9999,
+                  display: "grid",
+                  placeItems: "center",
+                  border: "none",
+                  color: "#60655c",
+                }}
+              >
+                {quantity > 1 ? (
+                  <svg
+                    width="1rem"
+                    height="0.2rem"
+                    viewBox="0 0 10 2"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M8.66852 0.285835C9.0432 0.312598 9.3335 0.624367 9.3335 1C9.3335 1.37563 9.0432 1.6874 8.66852 1.71416L4.99931 1.97625C4.77794 1.99206 4.55572 1.99206 4.33434 1.97625L0.665132 1.71416C0.290454 1.6874 0.000159919 1.37563 0.000159935 0.999999C0.000159952 0.624366 0.290454 0.312597 0.665132 0.285835L4.33434 0.0237487C4.55572 0.00793624 4.77794 0.00793626 4.99931 0.0237488L8.66852 0.285835Z"
+                      fill="#60635E"
+                    />
+                  </svg>
+                ) : (
+                  <BinIcon />
+                )}
+              </button>
+              <div
+                style={{
+                  width: "100%",
+                  textBoxTrim: "trim-both",
+                  textBoxEdge: "cap alphabetic",
+                  justifyContent: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  color: "#60655C",
+                  fontSize: "1.5rem",
+                  fontFamily: "TikTok Sans",
+                  fontWeight: "500",
+                  wordWrap: "break-word",
+                }}
+              >
+                {quantity}
+              </div>
+              <button
+                aria-label="Tăng"
+                onClick={inc}
+                style={{
+                  width: "8.89vw",
+                  height: "4vh",
+                  background: "#F4F7F2",
+                  borderRadius: 9999,
+                  display: "grid",
+                  placeItems: "center",
+                  border: "none",
+                  color: "#60655c",
+                }}
+              >
+                <svg
+                  width="1rem"
+                  height="1rem"
+                  viewBox="0 0 10 10"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M4.66699 0C5.04248 0.000164651 5.3541 0.290467 5.38086 0.665039L5.59961 3.73242L8.66797 3.95215C9.04265 3.97891 9.33301 4.29136 9.33301 4.66699C9.33284 5.04248 9.04254 5.3541 8.66797 5.38086L5.59961 5.59961L5.38086 8.66797C5.3541 9.04254 5.04248 9.33284 4.66699 9.33301C4.29136 9.33301 3.97891 9.04265 3.95215 8.66797L3.73242 5.59961L0.665039 5.38086C0.290469 5.3541 0.000167321 5.04248 0 4.66699C1.64194e-08 4.29136 0.290361 3.97891 0.665039 3.95215L3.73242 3.73242L3.95215 0.665039C3.97891 0.290361 4.29136 0 4.66699 0Z"
+                    fill="#60635E"
+                  />
                 </svg>
               </button>
             </div>
           </div>
         ) : (
-          <div className="rounded-[12px] border border-dashed border-[#e8ebe6] p-6 text-center text-[#91958e]">Giỏ hàng trống</div>
+          <div className="rounded-[12px] border border-dashed border-[#e8ebe6] p-6 text-center text-[#91958e]">
+            Giỏ hàng trống
+          </div>
         )}
       </div>
 
       {/* Bottom bar */}
-      <div className="absolute left-0 right-0 bottom-0 w-full bg-white border-t border-[#e8ebe6]">
-        <div className="px-4 py-4 flex items-center justify-between">
-          <div className="text-[23px] text-[#363a33] font-semibold">{total.toLocaleString('vi-VN')} ₫</div>
-          <a href="/customer/checkout" className="h-[51px] px-5 rounded-[12px] bg-[#f9704b] text-white text-[14.5px] shadow-[inset_0_-1px_0_#f9704b,inset_0_1px_0_#ffffff] grid place-items-center">
+      <div>
+        <div className="flex items-center justify-between">
+          <div
+            style={{
+              justifyContent: "center",
+              display: "flex",
+              flexDirection: "column",
+              color: "#363A33",
+              fontSize: "2.3rem",
+              fontFamily: "TikTok Sans",
+              fontWeight: "600",
+              wordWrap: "break-word",
+              position: "absolute",
+              left: "5.28vw",
+              top: "94.45vh",
+              transform: "translateY(-50%)",
+            }}
+          >
+            {total.toLocaleString("vi-VN")} ₫
+          </div>
+          <a
+            href="/customer/checkout"
+            style={{
+              width: "59.72vw",
+              height: "6.4vh",
+              background: "linear-gradient(0deg, #F9704B 0%, #F9704B 100%)",
+              boxShadow: "0px 1px 0px white inset",
+              borderRadius: 12,
+              position: "absolute",
+              top: "91.25vh",
+              right: "5.28vw",
+              display: "grid",
+              placeItems: "center",
+              color: "white",
+              fontSize: "1.5rem",
+              textDecoration: "none",
+              fontFamily: "TikTok Sans",
+              fontWeight: "700",
+            }}
+          >
             Tiến hành thanh toán
           </a>
         </div>

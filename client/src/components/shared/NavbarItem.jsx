@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NavbarItem = ({ icon: Icon, label, isActive = false }) => {
+const NavbarItem = ({ icon: Icon, label, isActive = false, onClick }) => {
   return (
     <div style={{
       display: 'flex',
@@ -10,19 +10,15 @@ const NavbarItem = ({ icon: Icon, label, isActive = false }) => {
       cursor: 'pointer',
       padding: '4px',
       borderRadius: '8px',
-      transition: 'all 0.2s ease',
-      ...(isActive && {
-        backgroundColor: '#FE724C',
-        color: 'white'
-      })
-    }}>
-      <Icon width="20" height="20" />
+      transition: 'all 0.2s ease'
+    }} onClick={onClick}>
+      <Icon width="2rem" height="2rem" fill={isActive ? '#FE724C' : '#D3D1D8'} />
       <div style={{
         justifyContent: 'center',
         display: 'flex',
         flexDirection: 'column',
-        color: isActive ? 'white' : '#D3D1D8',
-        fontSize: 9,
+        color: isActive ? '#FE724C' : '#D3D1D8',
+        fontSize: "0.9rem",
         fontFamily: 'TikTok Sans',
         fontWeight: '700',
         wordWrap: 'break-word',

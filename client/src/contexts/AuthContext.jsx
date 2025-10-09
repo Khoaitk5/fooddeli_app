@@ -1,61 +1,49 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { STORAGE_KEYS, ROLES } from '../utils/constants';
+import React, { createContext, useState, useEffect } from "react";
+import { getCurrentUser } from "../api/userApi";
+import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext();
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Load user từ localStorage khi app khởi động
+  console.log("🌀 [AuthContext] Provider mounted or re-rendered");
+
   useEffect(() => {
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    console.log("🚀 [AuthContext] useEffect: Bắt đầu fetch user từ session...");
+
+    const fetchUser = async () => {
+      try {
+        const res = await getCurrentUser();
+        console.log("📥DEBUG: [AuthContext] API Response:", res);
+
+        if (res.success) {
+          console.log("✅DEBUG: [AuthContext] User được lấy thành công:", res.user);
+          setUser(res.user);
+        } else {
+          console.warn("⚠️DEBUG: [AuthContext] Không có user trong session");
+        }
+      } catch (error) {
+        console.error("❌DEBUG: [AuthContext] Lỗi khi fetch user:", error);
+      } finally {
+        setLoading(false);
+        console.log("⏹️DEBUG: [AuthContext] Kết thúc fetch user");
+      }
+    };
+
+    fetchUser();
   }, []);
 
-  const login = async (email, _password) => { // eslint-disable-line no-unused-vars
-    // Mock login - luôn thành công
-    const mockUser = {
-      id: 1,
-      email: email,
-      name: 'Demo User',
-      role: ROLES.CUSTOMER
-    };
-    const mockToken = 'mock-token-' + Date.now();
-    
-    localStorage.setItem(STORAGE_KEYS.TOKEN, mockToken);
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(mockUser));
-    setUser(mockUser);
-    return { success: true };
-  };
-
-  const register = async (_userData) => { // eslint-disable-line no-unused-vars
-    // Mock registration - luôn thành công
-    return { success: true, message: 'Registration successful' };
-  };
-
   const logout = () => {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.USER);
+    console.log("👋 [AuthContext] User logout được gọi");
     setUser(null);
+    navigate("/login");
   };
-
-  const isAuthenticated = () => !!user;
-  const hasRole = (role) => user?.role === role;
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      register,
-      logout,
-      isAuthenticated,
-      hasRole,
-      loading,
-    }}>
+    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
