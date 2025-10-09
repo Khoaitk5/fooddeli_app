@@ -47,12 +47,17 @@ const userService = {
       throw new Error("Người dùng không tồn tại");
     }
 
+    // ⚠️ Nếu không có gì để cập nhật thì bỏ qua
+    if (!updateData || Object.keys(updateData).length === 0) {
+      throw new Error("Không có dữ liệu để cập nhật");
+    }
+
     // Nếu có cập nhật mật khẩu → hash lại
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
     }
 
-    return await userDao.update(userId, updateData);
+    return await userDao.update("id", userId, updateData);
   },
 
   /**
@@ -122,7 +127,6 @@ const userService = {
   async getUsersByRole(role) {
     return await userDao.getUsersByRole(role);
   },
-
 };
 
 module.exports = userService;
