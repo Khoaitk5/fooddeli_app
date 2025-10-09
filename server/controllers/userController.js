@@ -1,4 +1,5 @@
 const userService = require("../services/userService");
+const addressService = require("../services/addressService");
 
 // 📌 Lấy toàn bộ người dùng (chỉ nên dùng cho admin)
 const getAllUsers = async (req, res) => {
@@ -58,39 +59,91 @@ const updateCurrentUser = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
     if (!sessionUser) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
-        });
-    }
-
-    const updatedUser = await userService.updateUser(sessionUser.id, req.body);
-    if (!updatedUser) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "❌ Không tìm thấy người dùng để cập nhật.",
-        });
-    }
-
-    const { password, ...safeUser } = updatedUser;
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "✅ Cập nhật thành công",
-        user: safeUser,
+      return res.status(401).json({
+        success: false,
+        message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
       });
+    }
+
+    const userId = sessionUser.id;
+
+    // FE gửi: fullname (camelCase)
+    const { username, fullname, email, phone, address } = req.body;
+
+    // 🧩 Chuẩn hóa dữ liệu để phù hợp với DB
+    const updatePayload = {};
+    if (username) updatePayload.username = username;
+    if (fullname) updatePayload.full_name = fullname; // ánh xạ sang snake_case
+    if (email) updatePayload.email = email;
+    if (phone) updatePayload.phone = phone;
+
+    // 🛡️ Nếu không có trường nào để cập nhật, thì không cần query DB
+    let updatedUser = await userService.getUserById(userId);
+    if (Object.keys(updatePayload).length > 0) {
+      updatedUser = await userService.updateUser(userId, updatePayload);
+    }
+
+    // 2️⃣ Nếu có địa chỉ mới → kiểm tra xem user đã có địa chỉ chưa
+    let addedAddress = null;
+    if (address) {
+      const addressLine =
+        typeof address === "object"
+          ? `${address.detail || ""}${
+              address.ward || address.city ? ", " : ""
+            }${address.ward || ""}${
+              address.ward && address.city ? ", " : ""
+            }${address.city || ""}`
+          : address;
+
+      const existingAddresses = await addressService.getUserAddresses(userId);
+
+      if (existingAddresses.length === 0) {
+        // 🆕 user chưa có địa chỉ → thêm mới mặc định
+        addedAddress = await addressService.addAddress({
+          user_id: userId,
+          address_line: addressLine,
+          is_default: true,
+        });
+      } else {
+        // 🔄 Nếu đã có → update địa chỉ mặc định hiện tại
+        const defaultAddr = await addressService.getDefaultAddress(userId);
+        if (defaultAddr) {
+          addedAddress = await addressService.updateAddress(defaultAddr.address_id, {
+            address_line: addressLine,
+          });
+        } else {
+          addedAddress = await addressService.addAddress({
+            user_id: userId,
+            address_line: addressLine,
+            is_default: true,
+          });
+        }
+      }
+    }
+
+    // 3️⃣ Cập nhật lại session
+    req.session.user = updatedUser;
+    req.session.save();
+
+    // 4️⃣ Trả kết quả cho FE
+    return res.status(200).json({
+      success: true,
+      message: "✅ Hồ sơ đã hoàn tất!",
+      user: {
+        ...updatedUser,
+        address: addedAddress ? addedAddress.address_line : null,
+      },
+    });
   } catch (error) {
     console.error("⚠️ Lỗi updateCurrentUser:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Lỗi server khi cập nhật người dùng." });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi hoàn tất hồ sơ người dùng.",
+    });
   }
 };
+
+
 
 // 📌 Xoá tài khoản user hiện tại
 const deleteCurrentUser = async (req, res) => {

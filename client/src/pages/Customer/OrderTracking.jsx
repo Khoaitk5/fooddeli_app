@@ -1,97 +1,138 @@
-                                            import React from 'react';
+import { ArrowLeft, MapPin } from 'lucide-react';
+import { OrderStatusTimeline } from '@/components/role-specific/Customer/OrderStatusTimeline';
+import { DeliveryPersonCard } from '@/components/role-specific/Customer/DeliveryPersonCard';
+import { OrderDetailsCard } from '@/components/role-specific/Customer/OrderDetailsCard';
+import { DeliveryAddressCard } from '@/components/role-specific/Customer/DeliveryAddressCard';
 import { useNavigate } from 'react-router-dom';
-import { pxW, pxH } from '../../utils/scale.js';
-
-const MAP_PLACEHOLDER = 'data:image/svg+xml;utf8,\
-<svg xmlns="http://www.w3.org/2000/svg" width="428" height="300">\
-  <rect width="100%" height="100%" fill="%23f2f2f2"/>\
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23bdbdbd" font-size="16">Map</text>\
-</svg>';
+import '../../styles/OrderTrackingResponsive.css';
 
 export default function OrderTracking() {
-  useNavigate();
+  const navigate = useNavigate();
+  // Mock data
+  const driverData = {
+    name: 'Nguyễn Văn A',
+    rating: 4.9,
+    vehicle: 'Xe máy',
+    avatar: 'https://images.unsplash.com/photo-1587215255721-e7e21e059732?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhc2lhbiUyMGRlbGl2ZXJ5JTIwZHJpdmVyJTIwcG9ydHJhaXR8ZW58MXx8fHwxNzU5OTkyOTMwfDA&ixlib=rb-4.1.0&q=80&w=1080'
+  };
+
+  const orderData = {
+    orderId: '2024100912345',
+    restaurant: 'Quán Phở Ngon',
+    items: [
+      {
+        name: 'Phở bò tái',
+        quantity: 2,
+        price: 80000,
+        note: 'Ít hành',
+        image: 'https://images.unsplash.com/photo-1656945843375-207bb6e47750?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aWV0bmFtZXNlJTIwZm9vZCUyMG5vb2RsZXN8ZW58MXx8fHwxNzU5OTkyOTMwfDA&ixlib=rb-4.1.0&q=80&w=1080'
+      },
+      {
+        name: 'Gỏi cuốn tôm thịt',
+        quantity: 1,
+        price: 30000,
+        image: 'https://images.unsplash.com/photo-1595238734477-ae7f8a79ce02?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcHJpbmclMjByb2xscyUyMHZpZXRuYW1lc2V8ZW58MXx8fHwxNzU5OTkyNzI5fDA&ixlib=rb-4.1.0&q=80&w=1080'
+      },
+      {
+        name: 'Trà sữa trân châu',
+        quantity: 1,
+        price: 35000,
+        image: 'https://images.unsplash.com/photo-1670468642364-6cacadfb7bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidWJibGUlMjB0ZWElMjBkcmlua3xlbnwxfHx8fDE3NTk5MDE2OTF8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      }
+    ],
+    total: 145000
+  };
 
   return (
-    <div className="bg-white">
-      <div className="mx-auto max-w-[390px] pb-6">
-        {/* Map area */}
-        <div className={`relative h-[${pxH(360)}] w-full overflow-hidden bg-[#f2f2f2]`}>
-          <img src={MAP_PLACEHOLDER} alt="map" className="absolute inset-0 w-full h-full object-cover" />
-          {/* Location floating card */}
-          <div className="absolute left-1/2 top-6 w-[346px] -translate-x-1/2 rounded-[16px] bg-white border border-[#e5eaf0] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center gap-3 text-[18px] text-[#1a1a1a]">
-              <span className="text-[#49a2cb]">•</span>
-              <span className="truncate">Lotte Mart, 06 Nại Nam,....</span>
-            </div>
-            <div className="mt-2 flex items-center gap-3 text-[18px] text-[#1a1a1a]">
-              <span className="text-[#ed6c66]">•</span>
-              <span className="truncate">Lê Đức Thọ, Điện Bàn Đông</span>
-            </div>
-          </div>
-          {/* Map pin */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="w-[16px] h-[16px] bg-[#02b150] rounded-full border-4 border-white shadow-[0_4px_10px_rgba(0,0,0,0.12)]" />
-          </div>
-        </div>
-
-        {/* Processing card */}
-        <div className="mx-auto mt-4 w-[346px] rounded-[16px] border border-[#e5eaf0] bg-white p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-[28px] text-[#1a1a1a] font-semibold">Đang xử lí</div>
-              <span className="text-[22px]">🔥</span>
-            </div>
-            <button className="text-[18px] text-[#3478f6]">Hủy</button>
-          </div>
-          <div className="mt-2 text-[18px] text-[#505050]">Đang gửi đơn...</div>
-
-          {/* Progress icons (grab -> cook -> bike -> house) */}
-          <div className="mt-5 grid grid-cols-4 items-center gap-6">
-            <div className="flex items-center gap-3 col-span-4">
-              <div className="text-[22px] text-[#02b150]">G</div>
-              <div className="flex-1 h-[6px] rounded-full bg-[#e6f3ea]" />
-              <div className="text-[22px] text-[#02b150]">🍳</div>
-              <div className="flex-1 h-[6px] rounded-full bg-[#e6f3ea]" />
-              <div className="text-[22px] text-[#02b150]">🏍️</div>
-              <div className="flex-1 h-[6px] rounded-full bg-[#e6f3ea]" />
-              <div className="text-[22px] opacity-50">🏠</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Driver/summary card */}
-        <div className="mx-auto mt-4 w-[346px] rounded-[16px] border border-[#e5eaf0] bg-white p-5">
-          <div className="flex items-center gap-3">
-            {/* Avatar theo node 264:2750 (Foto Restoran) */}
-            <div className="relative shrink-0 rounded-full overflow-hidden w-[48px] h-[48px]">
-              <div className="absolute top-0 left-[-12px] h-[48px] w-[70px]">
-                <img src="https://www.figma.com/api/mcp/asset/d0edd5bd-f470-4754-ad90-8b43d82f6d95" alt="store" className="absolute top-0 left-[15.71%] h-full w-[68.57%] max-w-none" />
-              </div>
-            </div>
-            <div className="text-[18px] text-[#1a1a1a] font-semibold flex-1">Lotteria</div>
-          </div>
-          <div className="mt-5 flex items-start justify-between text-[18px] text-[#1a1a1a]">
-            <span>Tổng cộng</span>
-            <div className="text-right">
-              <div className="font-semibold">69.000 ₫</div>
-              <div className="text-[14px] text-[#7b7b7b] line-through">75.000 ₫</div>
-            </div>
-          </div>
-          <div className="mt-4 flex items-start justify-between text-[18px] text-[#1a1a1a]">
-            <span>Phương thức thanh toán</span>
-            <div className="font-semibold">69.000 ₫</div>
-          </div>
-          <hr className="my-5 border-[#e5eaf0]" />
-          <div className="flex items-center justify-between">
-            <a href="/customer/order-summary" className="text-[18px] text-[#3478f6]">Xem tóm tắt đơn hàng</a>
-            <div className="w-6 h-6 rounded-full bg-[#e5eaf0] grid place-items-center rotate-180">
-              <span className="block w-3 h-0.5 bg-[#1a1a1a]" />
-            </div>
+    <div style={{
+      width: '100vw',
+      height: '100vh',
+      background: '#f5f5f5',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      maxWidth: '500px',
+      margin: '0 auto',
+      boxShadow: '0 0 2rem rgba(0,0,0,0.1)'
+    }} className="order-tracking-container">
+      {/* Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
+        padding: '2rem 1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1.5rem',
+        boxShadow: '0 0.125rem 0.5rem rgba(238, 77, 45, 0.3)',
+        position: 'relative',
+        zIndex: 10
+      }} className="order-tracking-header">
+        <button style={{
+          width: '4rem',
+          height: '4rem',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.2)',
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          backdropFilter: 'blur(10px)'
+        }} className="order-tracking-back-btn" onClick={() => navigate('/customer/orders')}>
+          <ArrowLeft size={32} color="#fff" strokeWidth={2.5} />
+        </button>
+        <div>
+          <h1 style={{
+            margin: 0,
+            color: '#fff',
+            fontSize: '1.75rem',
+            fontWeight: '700'
+          }} className="order-tracking-title">
+            Đơn hàng đang giao
+          </h1>
+          <div style={{
+            fontSize: '1.125rem',
+            color: 'rgba(255, 255, 255, 0.9)',
+            marginTop: '0.375rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }} className="order-tracking-subtitle">
+            <MapPin size={20} />
+            <span>Cách bạn 2.5 km</span>
           </div>
         </div>
+      </div>
+
+      {/* Content */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch'
+      }}>
+        {/* Status Timeline */}
+        <div style={{
+          background: '#fff',
+          marginBottom: '1rem'
+        }}>
+          <OrderStatusTimeline currentStatus="delivering" />
+        </div>
+
+        {/* Delivery Person Card */}
+        <DeliveryPersonCard driver={driverData} />
+
+        {/* Delivery Address */}
+        <DeliveryAddressCard 
+          pickup="Quán Phở Ngon, 123 Nguyễn Huệ, Quận 1"
+          delivery="Số 456 Lê Lợi, Quận 1, TP. Hồ Chí Minh"
+          estimatedTime="14:30"
+        />
+
+        {/* Order Details */}
+        <OrderDetailsCard order={orderData} />
+
+        {/* Spacer for bottom padding */}
+        <div style={{ height: '1rem' }} />
       </div>
     </div>
   );
 }
-
-

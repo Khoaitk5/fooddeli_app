@@ -42,6 +42,8 @@ function createSession(req, user) {
         role: user.role,
         ongoingRole: 'user'
     };
+
+    console.log("✅ DEBUG: Session created:", req.session.user);
 }
 
 /**

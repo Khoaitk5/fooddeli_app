@@ -1,0 +1,224 @@
+@media (max-width: 480px) {
+  .order-tracking-container {
+    max-width: 100vw !important;
+    box-shadow: none !important;
+  }
+
+  .order-tracking-header {
+    padding: 2.5rem 1.5rem !important;
+  }
+
+  .order-tracking-back-btn {
+    width: 4.5rem !important;
+    height: 4.5rem !important;
+  }
+
+  .order-tracking-title {
+    font-size: 2rem !important;
+  }
+
+  .order-tracking-subtitle {
+    font-size: 1.25rem !important;
+  }
+
+  .delivery-person-card {
+    margin: 0 1.5rem !important;
+    padding: 1.75rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  .delivery-person-avatar {
+    width: 6rem !important;
+    height: 6rem !important;
+  }
+
+  .delivery-person-name {
+    font-size: 1.5rem !important;
+  }
+
+  .delivery-person-rating,
+  .delivery-person-vehicle {
+    font-size: 1.125rem !important;
+  }
+
+  .delivery-person-btn {
+    width: 4rem !important;
+    height: 4rem !important;
+  }
+
+  .order-details-card {
+    margin: 0 1.5rem !important;
+    padding: 1.75rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  .order-details-restaurant-icon {
+    width: 4rem !important;
+    height: 4rem !important;
+  }
+
+  .order-details-restaurant-name {
+    font-size: 1.5rem !important;
+  }
+
+  .order-details-order-id {
+    font-size: 1.125rem !important;
+  }
+
+  .order-details-item-image {
+    width: 6rem !important;
+    height: 6rem !important;
+  }
+
+  .order-details-item-name {
+    font-size: 1.25rem !important;
+  }
+
+  .order-details-item-price {
+    font-size: 1.25rem !important;
+  }
+
+  .order-details-total {
+    font-size: 1.75rem !important;
+  }
+
+  .delivery-address-card {
+    margin: 0 1.5rem !important;
+    padding: 1.75rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  .delivery-address-icon {
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+  }
+
+  .delivery-address-text {
+    font-size: 1.25rem !important;
+  }
+
+  .order-status-timeline {
+    padding: 3rem 1.75rem !important;
+  }
+
+  .order-status-icon-circle {
+    width: 4rem !important;
+    height: 4rem !important;
+  }
+
+  .order-status-label {
+    font-size: 1.125rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .order-tracking-container {
+    max-width: 700px !important;
+  }
+
+  .order-tracking-header {
+    padding: 3rem 2.5rem !important;
+  }
+
+  .order-tracking-back-btn {
+    width: 5rem !important;
+    height: 5rem !important;
+  }
+
+  .order-tracking-title {
+    font-size: 2.25rem !important;
+  }
+
+  .order-tracking-subtitle {
+    font-size: 1.375rem !important;
+  }
+
+  .delivery-person-card {
+    margin: 0 2.5rem !important;
+    padding: 2.5rem !important;
+    margin-bottom: 2.5rem !important;
+  }
+
+  .delivery-person-avatar {
+    width: 7rem !important;
+    height: 7rem !important;
+  }
+
+  .delivery-person-name {
+    font-size: 1.75rem !important;
+  }
+
+  .delivery-person-rating,
+  .delivery-person-vehicle {
+    font-size: 1.25rem !important;
+  }
+
+  .delivery-person-btn {
+    width: 4.5rem !important;
+    height: 4.5rem !important;
+  }
+
+  .order-details-card {
+    margin: 0 2.5rem !important;
+    padding: 2.5rem !important;
+    margin-bottom: 2.5rem !important;
+  }
+
+  .order-details-restaurant-icon {
+    width: 5rem !important;
+    height: 5rem !important;
+  }
+
+  .order-details-restaurant-name {
+    font-size: 1.75rem !important;
+  }
+
+  .order-details-order-id {
+    font-size: 1.25rem !important;
+  }
+
+  .order-details-item-image {
+    width: 7rem !important;
+    height: 7rem !important;
+  }
+
+  .order-details-item-name {
+    font-size: 1.5rem !important;
+  }
+
+  .order-details-item-price {
+    font-size: 1.5rem !important;
+  }
+
+  .order-details-total {
+    font-size: 2rem !important;
+  }
+
+  .delivery-address-card {
+    margin: 0 2.5rem !important;
+    padding: 2.5rem !important;
+    margin-bottom: 2.5rem !important;
+  }
+
+  .delivery-address-icon {
+    width: 4rem !important;
+    height: 4rem !important;
+  }
+
+  .delivery-address-text {
+    font-size: 1.5rem !important;
+  }
+
+  .order-status-timeline {
+    padding: 4rem 2.5rem !important;
+  }
+
+  .order-status-icon-circle {
+    width: 5rem !important;
+    height: 5rem !important;
+  }
+
+  .order-status-label {
+    font-size: 1.25rem !important;
+  }
+}
