@@ -6,27 +6,29 @@ const dotenv = require("dotenv");
 // ✅ Load biến môi trường
 dotenv.config();
 
-// ✅ Khởi tạo ứng dụng Express
 const app = express();
-app.use(cors());
+
+// ✅ CORS cấu hình chuẩn để gửi cookie session
+app.use(
+  cors({
+    origin: "http://localhost:5173", // ⚠️ domain FE chính xác
+    credentials: true, // ⚠️ bắt buộc để cookie đi kèm
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// ✅ Phải bật JSON body parser
 app.use(express.json());
 
-// ✅ Thiết lập session: 30 ngày, rolling = true
+// ✅ Thiết lập session sau CORS và trước routes
 const { setupSession } = require("./services/sessionService");
 setupSession(app);
 
-// ✅ Xử lý preflight OPTIONS (cho CORS) – rất quan trọng khi frontend gọi API
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    return res.sendStatus(200);
-  }
-  next();
-});
+// ❌ XOÁ đoạn setHeader thủ công kia đi (đừng set "*" nữa)
+// Không cần middleware OPTIONS tự chế nếu dùng cors() chuẩn ở trên
 
-// ✅ Log request để dễ debug API (giữ lại 1 dòng duy nhất)
+// ✅ Log request để debug
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.originalUrl}`);
   next();
@@ -51,26 +53,22 @@ app.get("/", (req, res) => {
 
 // ✅ PORT
 const PORT = process.env.PORT || 5000;
-
-// ✅ Hàm log danh sách route đã mount (tùy chọn – có thể xóa nếu muốn tối giản hơn)
 function logRoutes(prefix, router) {
   if (!router?.stack?.length) return;
-  // console.log(`\n📜 Route từ ${prefix}:`);
+   console.log(`\n📜 Route từ ${prefix}:`);
   router.stack.forEach((layer) => {
     if (layer.route) {
       const methods = Object.keys(layer.route.methods)
         .map((m) => m.toUpperCase())
         .join(", ");
-      // console.log(`🔹 ${methods} ${prefix}${layer.route.path}`);
+       console.log(`🔹 ${methods} ${prefix}${layer.route.path}`);
     }
   });
 }
 
-// ✅ Khởi động server
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
 
-  // In route để xác nhận (có thể bỏ nếu muốn yên lặng hơn)
   logRoutes("/api/auth", authRoutes);
   logRoutes("/api/users", userRoutes);
 });

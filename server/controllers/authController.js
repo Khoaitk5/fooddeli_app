@@ -21,6 +21,8 @@ try {
 exports.register = async (req, res) => {
   try {
     const newUser = await authService.register(req.body);
+    // Tạo session
+    createSession(req, newUser);
 
     res.status(201).json({
       success: true,
@@ -57,6 +59,8 @@ exports.loginWithPassword = async (req, res) => {
     }
 
     const user = await authService.login(phone, password);
+    // Tạo session
+    createSession(req, user);
 
     if (!user) {
       return res.status(401).json({
@@ -138,9 +142,9 @@ exports.verifyPhone = async (req, res) => {
       });
     }
 
-    // ✅ Tạo JWT
+    // Tạo session
     createSession(req, user);
-
+    // ✅ Tạo JWT
     const jwtToken = generateJwt(user);
     return res.status(200).json({
       success: true,

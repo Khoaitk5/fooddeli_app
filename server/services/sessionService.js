@@ -13,10 +13,10 @@
  * - Lấy thông tin người dùng từ session (`getSessionUser`)
  * 
  * Lưu ý:
- * - `user.role` là vai trò đặc biệt từ DB (ví dụ: 'admin', 'shop', 'shipper').
+ * - `user.role` là vai trò đặc biệt từ DB (ví dụ: 'admin', 'shop', 'shipper', 'user').
  * - `ongoingRole` là vai trò đang hoạt động trong phiên đăng nhập, lưu trong session.
- * - Người dùng có thể chuyển giữa `'customer'` và `user.role` nếu `user.role` khác `'customer'`.
- * - Nếu `user.role === 'customer'` → không thể chuyển `ongoingRole`.
+ * - Người dùng có thể chuyển giữa `'user'` và `user.role` nếu `user.role` khác `'user'`.
+ * - Nếu `user.role === 'user'` → không thể chuyển `ongoingRole`.
  */
 
 /**
@@ -25,8 +25,8 @@
  * Tạo session cho người dùng sau khi đăng nhập.
  * 
  * - Lưu `user.id` và `user.role` vào session để định danh người dùng.
- * - Khởi tạo `ongoingRole` mặc định là `'customer'`.
- * - Nếu `user.role` là `'customer'`, họ sẽ không thể chuyển vai trò.
+ * - Khởi tạo `ongoingRole` mặc định là `'user'`.
+ * - Nếu `user.role` là `'user'`, họ sẽ không thể chuyển vai trò.
  * 
  * @param {Object} req - Đối tượng request của Express.
  * @param {Object} user - Thông tin người dùng từ DB.
@@ -40,21 +40,21 @@ function createSession(req, user) {
     req.session.user = {
         id: user.id,
         role: user.role,
-        ongoingRole: 'customer'
+        ongoingRole: 'user'
     };
 }
 
 /**
  * @function switchRole
  * @description 
- * Chuyển đổi `ongoingRole` giữa `'customer'` và role đặc biệt.
+ * Chuyển đổi `ongoingRole` giữa `'user'` và role đặc biệt.
  * 
  * - Cho phép người dùng chuyển vai trò hoạt động trong phiên đăng nhập.
- * - Nếu `user.role` là `'customer'` → không thể chuyển vai trò.
- * - Nếu `newRole` không phải `'customer'` hoặc không trùng với `user.role` → không hợp lệ.
+ * - Nếu `user.role` là `'user'` → không thể chuyển vai trò.
+ * - Nếu `newRole` không phải `'user'` hoặc không trùng với `user.role` → không hợp lệ.
  * 
  * @param {Object} req - Đối tượng request của Express.
- * @param {string} newRole - Vai trò muốn chuyển sang (phải là `'customer'` hoặc `user.role`).
+ * @param {string} newRole - Vai trò muốn chuyển sang (phải là `'user'` hoặc `user.role`).
  * @throws {Error} Nếu người dùng chưa đăng nhập, không có quyền chuyển hoặc `newRole` không hợp lệ.
  * 
  * @example
@@ -65,12 +65,12 @@ function switchRole(req, newRole) {
     if (!sessionUser) throw new Error('User not logged in');
 
     // Nếu user không có role đặc biệt thì không được phép chuyển
-    if (sessionUser.role === 'customer') {
+    if (sessionUser.role === 'user') {
         throw new Error('This user has no alternative role to switch');
     }
 
     // Kiểm tra vai trò hợp lệ
-    const validRoles = ['customer', sessionUser.role];
+    const validRoles = ['user', sessionUser.role];
     if (!validRoles.includes(newRole)) {
         throw new Error('Invalid role');
     }
@@ -88,7 +88,7 @@ function switchRole(req, newRole) {
  * - Giá trị này có thể thay đổi nếu họ dùng `switchRole()`.
  * 
  * @param {Object} req - Đối tượng request của Express.
- * @returns {string|null} Vai trò đang hoạt động (`'customer'` hoặc role đặc biệt), hoặc `null` nếu chưa đăng nhập.
+ * @returns {string|null} Vai trò đang hoạt động (`'user'` hoặc role đặc biệt), hoặc `null` nếu chưa đăng nhập.
  * 
  * @example
  * const currentRole = getOngoingRole(req);
@@ -191,16 +191,13 @@ function setupSession(app) {
             rolling: true,
             cookie: {
                 maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ngày
-                httpOnly: true, // cookie không thể bị truy cập từ JS (chống XSS)
-                sameSite: 'lax', // chống CSRF cơ bản
-                secure: process.env.NODE_ENV === 'production', // true khi chạy trên HTTPS
+                httpOnly: true,
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
             },
         })
     );
 }
-
-module.exports = { setupSession };
-
 
 module.exports = {
     createSession,
