@@ -14,23 +14,25 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { pxW, pxH } from "../../utils/scale.js";
 
-const AddAdress = () => {
+const AddAddress = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Nhận lại dữ liệu form cũ từ ProfileRegister nếu có
+  // ✅ Nhận dữ liệu từ ProfileRegister nếu có
   const prevState = location.state || {};
 
-  const [isDefault, setIsDefault] = useState(false);
+  // ✅ State form
   const [form, setForm] = useState({
-    addressType: "",
-    note: "",
+    address_type: "", // 🏷️ loại địa chỉ: nhà, cơ quan, khác...
+    note: "", // 📝 ghi chú giao hàng
     detail: "",
     ward: "",
     city: "",
   });
 
-  // Demo data – replace with API when available
+  const [isDefault, setIsDefault] = useState(false);
+
+  // Demo dữ liệu (sẽ thay bằng API sau)
   const provinceOptions = ["Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng"];
   const wardOptions = ["Phường 1", "Phường 2", "Phường 3", "Xã A"];
 
@@ -40,20 +42,30 @@ const AddAdress = () => {
   };
 
   const handleSubmit = () => {
-    const { addressType, detail, ward, city } = form;
-    if (!addressType || !detail || !ward || !city) {
+    const { address_type, detail, ward, city } = form;
+
+    if (!address_type || !detail || !ward || !city) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin bắt buộc!");
       return;
     }
 
-    const payload = { ...form, isDefault };
+    // ✅ Dữ liệu đầy đủ để gửi về FE hoặc backend
+    const payload = {
+      addressType: address_type,
+      note: form.note,
+      detail,
+      ward,
+      city,
+      isDefault,
+    };
+
     console.log("✅ Địa chỉ mới:", payload);
 
-    // ✅ Quay lại trang ProfileRegister và giữ nguyên state cũ + địa chỉ mới
-    navigate("/ProfileRegister", {
+    // ✅ Quay lại trang ProfileRegister, giữ nguyên state cũ + thêm địa chỉ mới
+    navigate("/profileRegister", {
       state: {
-        ...prevState, // giữ lại username, fullName, email, phone,...
-        address: payload, // gửi thêm địa chỉ
+        ...prevState,
+        address: payload,
       },
     });
   };
@@ -87,6 +99,7 @@ const AddAdress = () => {
           Thêm địa chỉ
         </Typography>
 
+        {/* 🔹 Đặt làm địa chỉ mặc định */}
         <Box
           sx={{
             background: "#F9FAF8",
@@ -111,9 +124,10 @@ const AddAdress = () => {
 
         <Divider sx={{ mb: 2 }} />
 
+        {/* 🔹 Loại địa chỉ */}
         <TextField
-          name="addressType"
-          value={form.addressType}
+          name="address_type"
+          value={form.address_type}
           onChange={handleChange}
           placeholder="Loại địa chỉ (nhà, cơ quan, khác,...)"
           fullWidth
@@ -121,6 +135,7 @@ const AddAdress = () => {
           InputProps={{ sx: { borderRadius: 2 } }}
         />
 
+        {/* 🔹 Ghi chú */}
         <TextField
           name="note"
           value={form.note}
@@ -133,6 +148,7 @@ const AddAdress = () => {
 
         <Divider sx={{ mb: 2 }} />
 
+        {/* 🔹 Địa chỉ chi tiết */}
         <TextField
           name="detail"
           value={form.detail}
@@ -143,6 +159,7 @@ const AddAdress = () => {
           InputProps={{ sx: { borderRadius: 2 } }}
         />
 
+        {/* 🔹 Phường + Thành phố */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={6}>
             <FormControl
@@ -164,6 +181,7 @@ const AddAdress = () => {
               </Select>
             </FormControl>
           </Grid>
+
           <Grid item xs={6}>
             <FormControl
               fullWidth
@@ -186,6 +204,7 @@ const AddAdress = () => {
           </Grid>
         </Grid>
 
+        {/* 🔹 Nút tiếp tục */}
         <Button
           fullWidth
           variant="contained"
@@ -206,4 +225,4 @@ const AddAdress = () => {
   );
 };
 
-export default AddAdress;
+export default AddAddress;

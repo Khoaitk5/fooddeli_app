@@ -18,11 +18,13 @@ exports.register = async (userData) => {
   // 🧠 Nhận dữ liệu từ frontend
   const {
     username,
-    fullname,        // 📌 FE gửi là fullname (camelCase)
+    fullname, // 📌 FE gửi là fullname (camelCase)
     password,
     phone,
     email,
-    address,
+    address, // 🏠 Có thể là string hoặc object
+    note,
+    address_type,
     role = "user",
   } = userData;
 
@@ -60,7 +62,7 @@ exports.register = async (userData) => {
   // 📦 1️⃣ Tạo user mới trong DB
   const newUser = await userDao.create({
     username,
-    full_name: fullname,          // 📌 ánh xạ fullname từ FE -> full_name trong DB
+    full_name: fullname, // 📌 ánh xạ fullname từ FE -> full_name trong DB
     password: hashedPassword,
     phone: phone || null,
     email: email || null,
@@ -68,16 +70,39 @@ exports.register = async (userData) => {
     status: "active",
   });
 
-  // 🏡 2️⃣ Nếu có nhập địa chỉ -> tạo luôn địa chỉ mặc định
+  // 🏡 2️⃣ Nếu có nhập địa chỉ → xử lý và tạo địa chỉ mặc định
   if (address) {
+    // 🧩 Trường hợp FE gửi address là object
+    let addressLine = address;
+    let addressNote = note || "";
+    let addressType = address_type || "Nhà";
+
+    if (typeof address === "object" && address !== null) {
+      const { detail, ward, city, note: noteFromFE, address_type: typeFromFE } = address;
+
+      // Chuẩn hóa thành text hiển thị
+      addressLine = `${detail || ""}${
+        ward || city ? ", " : ""
+      }${ward || ""}${ward && city ? ", " : ""}${city || ""}`;
+      addressNote = noteFromFE || note || "";
+      addressType = typeFromFE || address_type || "Nhà";
+    }
+
+    // ✅ Tạo địa chỉ mặc định cho user
     const addr = await addressDao.addAddress({
       user_id: newUser.id,
-      address_line: address,
+      address_line: addressLine,
+      note: addressNote,
+      address_type: addressType,
       is_default: true,
     });
 
     // 📌 Gán vào newUser để controller có thể trả về cho FE
-    newUser.address = addr.address_line;
+    newUser.address = {
+      address_line: addr.address_line,
+      note: addr.note,
+      address_type: addr.address_type,
+    };
   }
 
   // 📌 Gán lại fullname cho newUser để controller trả ra đúng key FE mong đợi

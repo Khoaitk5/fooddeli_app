@@ -2,7 +2,11 @@
 
 const authService = require("../services/authService");
 const userService = require("../services/userService");
-const { getUserById, getUserByEmail, getUserByPhone } = require("../services/userService");
+const {
+  getUserById,
+  getUserByEmail,
+  getUserByPhone,
+} = require("../services/userService");
 const jwt = require("jsonwebtoken");
 const { createSession } = require("../services/sessionService");
 
@@ -20,8 +24,24 @@ try {
  */
 exports.register = async (req, res) => {
   try {
-    const newUser = await authService.register(req.body);
-    // Tạo session
+    const body = { ...req.body };
+
+    // 🧩 Chuẩn hóa address nếu là object
+    if (typeof body.address === "object" && body.address !== null) {
+      const { detail, ward, city, note, address_type } = body.address;
+
+      body.address = `${detail || ""}${ward || city ? ", " : ""}${ward || ""}${
+        ward && city ? ", " : ""
+      }${city || ""}`;
+
+      // 🗒️ Gộp thêm note và loại địa chỉ vào body để service xử lý
+      body.note = note || "";
+      body.address_type = address_type || "Nhà";
+    }
+
+    const newUser = await authService.register(body);
+
+    // ✅ Tạo session
     createSession(req, newUser);
 
     res.status(201).json({
@@ -45,7 +65,6 @@ exports.register = async (req, res) => {
     });
   }
 };
-
 
 exports.loginWithPassword = async (req, res) => {
   try {
@@ -98,7 +117,6 @@ exports.loginWithPassword = async (req, res) => {
     });
   }
 };
-
 
 /**
  * 🔐 Tạo JWT cho user
@@ -161,7 +179,6 @@ exports.verifyPhone = async (req, res) => {
   }
 };
 
-
 /**
  * 🌐 Đăng nhập bằng Google (Firebase)
  */
@@ -217,8 +234,6 @@ exports.loginWithGoogle = async (req, res) => {
   }
 };
 
-
-
 /**
  * 🌱 Đăng ký tài khoản mới bằng Google
  */
@@ -227,7 +242,12 @@ exports.registerWithGoogle = async (req, res) => {
 
   try {
     if (!admin) {
-      return res.status(500).json({ success: false, message: "Firebase Admin chưa được khởi tạo." });
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message: "Firebase Admin chưa được khởi tạo.",
+        });
     }
 
     // ✅ Xác minh token từ Firebase
@@ -241,14 +261,15 @@ exports.registerWithGoogle = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Tài khoản Google này đã tồn tại, hãy đăng nhập thay vì đăng ký.",
+        message:
+          "Tài khoản Google này đã tồn tại, hãy đăng nhập thay vì đăng ký.",
       });
     }
 
     // ✅ Tạo user tạm (chưa có phone, address, v.v.)
-    const newUser = await userService.createUser({
+    const newUser = await authService.register({
       username: email.split("@")[0],
-      full_name: name,
+      fullname: name,
       email,
       password: Math.random().toString(36).slice(-8),
       role: "user",
@@ -270,25 +291,39 @@ exports.registerWithGoogle = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Lỗi đăng ký Google:", error);
-    return res.status(401).json({ success: false, message: "Token Google không hợp lệ hoặc hết hạn." });
+    return res
+      .status(401)
+      .json({
+        success: false,
+        message: "Token Google không hợp lệ hoặc hết hạn.",
+      });
   }
 };
-
-
 
 /**
  * 🔴 Đăng xuất (xóa JWT nếu có)
  */
 exports.logout = async (req, res) => {
   try {
-    res.status(200).json({
-      success: true,
-      message: "👋 Đăng xuất thành công",
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("❌ Lỗi khi xóa session:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Lỗi khi đăng xuất",
+        });
+      }
+      res.clearCookie("connect.sid"); // nếu dùng express-session
+      return res.status(200).json({
+        success: true,
+        message: "👋 Đăng xuất thành công",
+      });
     });
   } catch (err) {
+    console.error("❌ Lỗi logout:", err);
     res.status(500).json({
       success: false,
-      message: err.message || "Lỗi khi đăng xuất",
+      message: "Lỗi khi đăng xuất",
     });
   }
 };
@@ -299,7 +334,9 @@ exports.sendOtpEmail = async (req, res) => {
 
   const { email } = req.body;
   if (!email) {
-    return res.status(400).json({ success: false, message: "Email là bắt buộc" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Email là bắt buộc" });
   }
 
   // ✅ Sinh mã OTP 6 số
@@ -326,10 +363,15 @@ exports.sendOtpEmail = async (req, res) => {
     });
 
     console.log(`✅ Gửi OTP ${otp} tới ${email}`);
-    return res.json({ success: true, message: "OTP đã được gửi tới email của bạn" });
+    return res.json({
+      success: true,
+      message: "OTP đã được gửi tới email của bạn",
+    });
   } catch (error) {
     console.error("❌ Lỗi gửi email:", error);
-    return res.status(500).json({ success: false, message: "Không gửi được OTP" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Không gửi được OTP" });
   }
 };
 
@@ -338,12 +380,16 @@ exports.verifyOtpEmail = async (req, res) => {
   const { email, otp } = req.body;
 
   if (!email || !otp) {
-    return res.status(400).json({ success: false, message: "Thiếu email hoặc OTP" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Thiếu email hoặc OTP" });
   }
 
   const record = global.otpStore?.[email];
   if (!record) {
-    return res.status(400).json({ success: false, message: "Không tìm thấy OTP cho email này" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Không tìm thấy OTP cho email này" });
   }
 
   if (Date.now() > record.expires) {
@@ -352,7 +398,9 @@ exports.verifyOtpEmail = async (req, res) => {
   }
 
   if (record.otp !== otp) {
-    return res.status(400).json({ success: false, message: "OTP không chính xác" });
+    return res
+      .status(400)
+      .json({ success: false, message: "OTP không chính xác" });
   }
 
   // ✅ OTP hợp lệ → xóa khỏi store

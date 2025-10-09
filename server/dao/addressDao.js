@@ -1,7 +1,7 @@
 // dao/addressDao.js
 const GenericDao = require("./generic_dao");
 const Address = require("../models/address");
-const pool = require("../config/db"); // ✅ thêm dòng này
+const pool = require("../config/db");
 
 class AddressDao extends GenericDao {
   constructor() {
@@ -19,8 +19,8 @@ class AddressDao extends GenericDao {
       WHERE user_id = $1
       ORDER BY created_at DESC;
     `;
-    const result = await pool.query(query, [userId]); // ✅ dùng pool thay cho this.db
-    return result.rows;
+    const result = await pool.query(query, [userId]);
+    return result.rows.map(row => new Address(row));
   }
 
   /**
@@ -35,16 +35,22 @@ class AddressDao extends GenericDao {
       LIMIT 1;
     `;
     const result = await pool.query(query, [userId]);
-    return result.rows[0] || null;
+    return result.rows[0] ? new Address(result.rows[0]) : null;
   }
 
   /**
-   * 🏡 Thêm địa chỉ mới cho user (có thể đặt mặc định hoặc không)
-   * @param {object} addressData - dữ liệu địa chỉ: { user_id, address_line, is_default }
+   * 🏡 Thêm địa chỉ mới cho user
+   * @param {object} addressData - { user_id, address_line, note, address_type, is_default }
    * @returns {Promise<object>} - Địa chỉ mới tạo
    */
   async addAddress(addressData) {
-    const { user_id, address_line, is_default = false } = addressData;
+    const {
+      user_id,
+      address_line,
+      note = "",
+      address_type = "Nhà",
+      is_default = false,
+    } = addressData;
 
     // Nếu thêm địa chỉ mặc định → bỏ mặc định của địa chỉ cũ
     if (is_default) {
@@ -52,22 +58,29 @@ class AddressDao extends GenericDao {
     }
 
     const query = `
-      INSERT INTO addresses (user_id, address_line, is_default)
-      VALUES ($1, $2, $3)
+      INSERT INTO addresses (user_id, address_line, note, address_type, is_default)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *;
     `;
-    const result = await pool.query(query, [user_id, address_line, is_default]);
-    return result.rows[0];
+    const result = await pool.query(query, [
+      user_id,
+      address_line,
+      note,
+      address_type,
+      is_default,
+    ]);
+
+    return new Address(result.rows[0]);
   }
 
   /**
    * ✏️ Cập nhật địa chỉ
    * @param {number} addressId - ID địa chỉ
-   * @param {object} updateData - dữ liệu cập nhật: { address_line?, is_default? }
+   * @param {object} updateData - { address_line?, note?, address_type?, is_default? }
    * @returns {Promise<object>} - Địa chỉ sau khi cập nhật
    */
   async updateAddress(addressId, updateData) {
-    const { address_line, is_default } = updateData;
+    const { address_line, note, address_type, is_default } = updateData;
 
     // Nếu cập nhật sang mặc định → bỏ mặc định của địa chỉ cũ
     if (is_default) {
@@ -81,13 +94,22 @@ class AddressDao extends GenericDao {
       UPDATE addresses
       SET 
         address_line = COALESCE($1, address_line),
-        is_default = COALESCE($2, is_default),
+        note = COALESCE($2, note),
+        address_type = COALESCE($3, address_type),
+        is_default = COALESCE($4, is_default),
         updated_at = NOW()
-      WHERE address_id = $3
+      WHERE address_id = $5
       RETURNING *;
     `;
-    const result = await pool.query(query, [address_line, is_default, addressId]);
-    return result.rows[0];
+    const result = await pool.query(query, [
+      address_line,
+      note,
+      address_type,
+      is_default,
+      addressId,
+    ]);
+
+    return result.rows[0] ? new Address(result.rows[0]) : null;
   }
 
   /**
