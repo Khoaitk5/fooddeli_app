@@ -39,45 +39,52 @@ const OTP = () => {
   }, []);
 
   // 📤 Xác minh OTP
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    const otpCode = otp.join("");
-    if (otpCode.length !== 6) {
-      setError("Vui lòng nhập đủ 6 chữ số OTP");
-      return;
+  const otpCode = otp.join("");
+  if (otpCode.length !== 6) {
+    setError("Vui lòng nhập đủ 6 chữ số OTP");
+    return;
+  }
+
+  if (!window.confirmationResult) {
+    setError("Phiên OTP đã hết hạn. Vui lòng gửi lại mã.");
+    return;
+  }
+
+  try {
+    const result = await window.confirmationResult.confirm(otpCode);
+    const user = result.user;
+
+    console.log("✅ Xác minh thành công:", user);
+
+    // 🔑 Lưu session vào localStorage nếu muốn dùng sau
+    const idToken = await user.getIdToken();
+    localStorage.setItem("authToken", idToken);
+
+    // 🧠 Tùy chọn: gửi token lên backend xác thực
+    const res = await fetch("http://localhost:5000/api/auth/verify-phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: idToken }),
+      credentials: "include", // ⚠️ bắt buộc để cookie lưu về
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      navigate("/customer/home");
+    } else {
+      setError("Xác minh thất bại. Vui lòng thử lại.");
     }
+  } catch (err) {
+    console.error("❌ Lỗi xác minh OTP:", err.code, err.message);
+    setError(err.message || "OTP không chính xác hoặc đã hết hạn.");
+  }
+};
 
-    if (!window.confirmationResult) {
-      setError("Phiên OTP đã hết hạn. Vui lòng gửi lại mã.");
-      return;
-    }
 
-    try {
-      const result = await window.confirmationResult.confirm(otpCode);
-      const user = result.user;
-
-      console.log("✅ Xác minh thành công:", user);
-
-      const idToken = await user.getIdToken();
-      const res = await fetch("http://localhost:5000/api/auth/verify-phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: idToken }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        navigate("/customer/home");
-      } else {
-        setError("Xác minh thất bại. Vui lòng thử lại.");
-      }
-    } catch (err) {
-      console.error("❌ Lỗi xác minh OTP:", err.code, err.message);
-      setError(err.message || "OTP không chính xác hoặc đã hết hạn.");
-    }
-  };
 
   // 📥 Nhập OTP từng ô
   const handleOtpChange = (index, rawValue) => {

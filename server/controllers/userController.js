@@ -1,155 +1,251 @@
-// server/controllers/userController.js
 const userService = require("../services/userService");
 
-// 📌 Lấy thông tin user theo ID
-const getUserById = async (req, res) => {
-  try {
-    const userId = req.params.id || 4; // mặc định là 4 nếu không truyền
-    const user = await userService.getUserById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "❌ Không tìm thấy người dùng!" });
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error("⚠️ Lỗi getUserById:", error);
-    res.status(500).json({ message: "Lỗi server khi lấy dữ liệu người dùng." });
-  }
-};
+// 📌 Lấy toàn bộ người dùng (chỉ nên dùng cho admin)
 const getAllUsers = async (req, res) => {
   try {
     const users = await userService.getAllUsers();
-    res.status(200).json(users);
+    return res.status(200).json({ success: true, users });
   } catch (error) {
     console.error("⚠️ Lỗi getAllUsers:", error);
-    res.status(500).json({ message: "Lỗi server khi lấy danh sách người dùng." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi server khi lấy danh sách người dùng.",
+      });
   }
 };
-// 📌 Cập nhật thông tin user
-const updateUser = async (req, res) => {
+
+// 📌 Lấy thông tin user hiện tại từ session
+const getCurrentUser = async (req, res) => {
   try {
-    const userId = req.params.id || 4;
-    const updateData = req.body;
+    const sessionUser = req.session?.user;
+    console.log("📥 Cookie gửi lên:", req.headers.cookie);
+    console.log("📥 Toàn bộ session server lưu:", req.sessionStore.sessions);
+    console.log("📥 Session hiện tại tìm thấy:", req.session);
 
-    const updatedUser = await userService.updateUser(userId, updateData);
+    if (!sessionUser) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+        });
+    }
 
+    const user = await userService.getUserById(sessionUser.id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "❌ Không tìm thấy người dùng." });
+    }
+
+    const { password, ...safeUser } = user; // xoá password nếu có
+    return res.status(200).json({ success: true, user: safeUser });
+  } catch (error) {
+    console.error("⚠️ Lỗi getCurrentUser:", error);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi server khi lấy thông tin người dùng.",
+      });
+  }
+};
+
+// 📌 Cập nhật thông tin user hiện tại
+const updateCurrentUser = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+        });
+    }
+
+    const updatedUser = await userService.updateUser(sessionUser.id, req.body);
     if (!updatedUser) {
-      return res.status(404).json({ message: "❌ Không thể cập nhật - Người dùng không tồn tại!" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "❌ Không tìm thấy người dùng để cập nhật.",
+        });
     }
 
-    res.status(200).json({
-      message: "✅ Cập nhật thông tin thành công!",
-      user: updatedUser,
-    });
+    const { password, ...safeUser } = updatedUser;
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "✅ Cập nhật thành công",
+        user: safeUser,
+      });
   } catch (error) {
-    console.error("⚠️ Lỗi updateUser:", error);
-    res.status(500).json({ message: "Lỗi server khi cập nhật thông tin người dùng." });
+    console.error("⚠️ Lỗi updateCurrentUser:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi cập nhật người dùng." });
   }
 };
 
-const deleteUser = async (req, res) => {
+// 📌 Xoá tài khoản user hiện tại
+const deleteCurrentUser = async (req, res) => {
   try {
-    const userId = req.params.id;
-    const deletedUser = await userService.deleteUser(userId);
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+        });
+    }
 
+    const deletedUser = await userService.deleteUser(sessionUser.id);
     if (!deletedUser) {
-      return res.status(404).json({ message: "❌ Người dùng không tồn tại!" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "❌ Không tìm thấy người dùng để xoá.",
+        });
     }
 
-    res.status(200).json({
-      message: "✅ Đã xóa người dùng thành công!",
-      user: deletedUser,
-    });
+    return res
+      .status(200)
+      .json({ success: true, message: "✅ Tài khoản đã được xoá thành công." });
   } catch (error) {
-    console.error("⚠️ Lỗi deleteUser:", error);
-    res.status(500).json({ message: "Lỗi server khi xóa người dùng." });
+    console.error("⚠️ Lỗi deleteCurrentUser:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi xoá người dùng." });
   }
 };
 
-/**
- * 🔐 Khóa tài khoản người dùng
- */
-const lockUserAccount = async (req, res) => {
+// 📌 Khoá tài khoản user hiện tại
+const lockCurrentUser = async (req, res) => {
   try {
-    const userId = req.params.id;
-    const lockedUser = await userService.lockUserAccount(userId);
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+        });
+    }
 
-    res.status(200).json({
-      message: "🔐 Tài khoản đã bị khóa thành công!",
-      user: lockedUser,
-    });
+    const lockedUser = await userService.lockUserAccount(sessionUser.id);
+    if (!lockedUser) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "❌ Không tìm thấy người dùng để khoá.",
+        });
+    }
+
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "🔐 Tài khoản đã bị khoá thành công.",
+        user: lockedUser,
+      });
   } catch (error) {
-    console.error("⚠️ Lỗi lockUserAccount:", error);
-    res.status(400).json({ message: error.message });
+    console.error("⚠️ Lỗi lockCurrentUser:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi khoá tài khoản." });
   }
 };
 
-/**
- * 🔍 Tìm người dùng theo username
- */
+// 📌 Tìm người dùng theo username
 const getUserByUsername = async (req, res) => {
   try {
     const { username } = req.params;
     const user = await userService.getUserByUsername(username);
-
     if (!user) {
-      return res.status(404).json({ message: "❌ Không tìm thấy người dùng với username này!" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "❌ Không tìm thấy người dùng với username này!",
+        });
     }
-
-    res.status(200).json(user);
+    return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByUsername:", error);
-    res.status(500).json({ message: "Lỗi server khi tìm người dùng theo username." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi server khi tìm người dùng theo username.",
+      });
   }
 };
 
-/**
- * 🔍 Tìm người dùng theo email
- */
+// 📌 Tìm người dùng theo email
 const getUserByEmail = async (req, res) => {
   try {
     const { email } = req.params;
     const user = await userService.getUserByEmail(email);
-
     if (!user) {
-      return res.status(404).json({ message: "❌ Không tìm thấy người dùng với email này!" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "❌ Không tìm thấy người dùng với email này!",
+        });
     }
-
-    res.status(200).json(user);
+    return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByEmail:", error);
-    res.status(500).json({ message: "Lỗi server khi tìm người dùng theo email." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi server khi tìm người dùng theo email.",
+      });
   }
 };
 
-/**
- * 🔍 Tìm người dùng theo số điện thoại
- */
+// 📌 Tìm người dùng theo số điện thoại
 const getUserByPhone = async (req, res) => {
   try {
     const { phone } = req.params;
     const user = await userService.getUserByPhone(phone);
-
     if (!user) {
-      return res.status(404).json({ message: "❌ Không tìm thấy người dùng với số điện thoại này!" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "❌ Không tìm thấy người dùng với số điện thoại này!",
+        });
     }
-
-    res.status(200).json(user);
+    return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByPhone:", error);
-    res.status(500).json({ message: "Lỗi server khi tìm người dùng theo số điện thoại." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi server khi tìm người dùng theo số điện thoại.",
+      });
   }
 };
 
 module.exports = {
   getAllUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-  lockUserAccount,
+  getCurrentUser,
+  updateCurrentUser,
+  deleteCurrentUser,
+  lockCurrentUser,
   getUserByUsername,
   getUserByEmail,
   getUserByPhone,
 };
-

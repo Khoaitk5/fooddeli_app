@@ -39,7 +39,7 @@ class UserDao extends GenericDao {
    * @returns {Promise<object|null>}
    */
   async findById(id) {
-    return await super.findById(id); // Gọi hàm gốc từ GenericDao
+    return await super.findById("id", id); // Gọi hàm gốc từ GenericDao
   }
 
   /**
