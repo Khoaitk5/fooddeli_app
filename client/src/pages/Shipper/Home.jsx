@@ -5,11 +5,13 @@ import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
 import CloseIcon from '@mui/icons-material/Close';
+import { useShipper } from '@/hooks/useShipper';
 
 // Trang Home Shipper theo thiết kế Figma: nền lưới + thẻ trạng thái + nút bật kết nối
 const Home = () => {
   const navigate = useNavigate();
-  const [online, setOnline] = React.useState(false);
+  const { isOnline, setIsOnline, resetAvailableOrders } = useShipper();
+  const online = isOnline;
   const [showIncomingOrder, setShowIncomingOrder] = React.useState(false);
   const [rippleActive, setRippleActive] = React.useState(false);
   const [visibleIcons, setVisibleIcons] = React.useState(0);
@@ -122,7 +124,11 @@ const Home = () => {
       if (timersRef.current.respawn) clearTimeout(timersRef.current.respawn);
       const delay = 5000 + Math.floor(Math.random() * 5000); // 5s .. 10s
       timersRef.current.respawn = setTimeout(() => {
-        setShowIncomingOrder(true);
+          setShowIncomingOrder(true);
+          // tự reset danh sách đơn sau 10s nếu vẫn online (giả lập quét)
+          timersRef.current.respawn = setTimeout(() => {
+            if (online) resetAvailableOrders();
+          }, 10000);
       }, delay);
     } else {
       if (timersRef.current.respawn) {
@@ -136,7 +142,7 @@ const Home = () => {
         timersRef.current.respawn = null;
       }
     };
-  }, [online, showIncomingOrder, iconsDone]);
+  }, [online, showIncomingOrder, iconsDone, resetAvailableOrders]);
 
   // Sinh ngẫu nhiên các điểm icon trên "bản đồ" theo phần trăm, tránh trùng nút kết nối ở đáy giữa
   const generateRandomPoints = (count) => {
@@ -342,7 +348,7 @@ const Home = () => {
       >
         <Button
           onClick={() => {
-            setOnline((v) => !v);
+            setIsOnline(!online);
           }}
           startIcon={<PowerSettingsNewIcon />}
           sx={{
@@ -480,7 +486,16 @@ const Home = () => {
                 <Button variant="outlined" color="inherit" onClick={() => setShowIncomingOrder(false)} sx={{ flex: 1, height: 48, borderRadius: 1.75 }}>
                   Không nhận
                 </Button>
-                <Button onClick={() => { setShowIncomingOrder(false); navigate('/shipper/available'); }} sx={{ flex: 1, height: 48, background: '#ff6b35', color: '#fff', borderRadius: 1.75, '&:hover': { background: '#f0602e' } }}>
+                <Button onClick={() => {
+                  // Đóng popup trước, đảm bảo có đơn rồi điều hướng sang trang nhận đơn
+                  setShowIncomingOrder(false);
+                  // Nếu danh sách đơn rỗng (trường hợp vừa hết), reset lại để tránh lỗi
+                  setTimeout(() => {
+                    if (!online) setIsOnline(true);
+                    resetAvailableOrders();
+                    navigate('/shipper/available');
+                  }, 50);
+                }} sx={{ flex: 1, height: 48, background: '#ff6b35', color: '#fff', borderRadius: 1.75, '&:hover': { background: '#f0602e' } }}>
                   Xem chi tiết đơn hàng
                 </Button>
               </Box>

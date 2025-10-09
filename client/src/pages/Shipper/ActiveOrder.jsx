@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Stack, Typography, Chip, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useShipper } from '@/hooks/useShipper';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
 import PlaceIcon from '@mui/icons-material/Place';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -42,7 +43,7 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
       setTimeout(() => {
         resetDrag();
         if (onAccepted) onAccepted(order);
-        navigate(`/shipper/order/${order.id}`);
+        navigate(`/shipper/delivering`);
       }, 220);
       return;
     }
@@ -190,25 +191,30 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
   );
 };
 
-// Trang Đơn hàng khả dụng (theo thiết kế từ Figma)
-const AvailableOrders = () => {
-  const orders = React.useMemo(() => ([
-    { id: 1, pickupName: 'Nhà hàng Phở 24', pickupAddr: '123 Nguyễn Huệ, Q.1', dropName: 'Nguyễn Văn A', dropAddr: '456 Lê Lợi, Q.3', distance: 3.5, eta: '15–20 phút', weight: '2kg', cod: 45000, bonus: 5000 },
-    { id: 2, pickupName: 'Bún Chả Hà Nội', pickupAddr: '45 Trần Hưng Đạo, Q.1', dropName: 'Trần B', dropAddr: '12 Hai Bà Trưng, Q.1', distance: 2.2, eta: '10–15 phút', weight: '1.5kg', cod: 38000, bonus: 4000 },
-    { id: 3, pickupName: 'Cơm Tấm 68', pickupAddr: '68 Lê Lai, Q.1', dropName: 'Lê C', dropAddr: '200 Nguyễn Thị Minh Khai, Q.3', distance: 4.1, eta: '18–25 phút', weight: '3kg', cod: 52000, bonus: 6000 },
-    { id: 4, pickupName: 'Trà sữa Gấu', pickupAddr: '99 Pasteur, Q.3', dropName: 'Phạm D', dropAddr: '15 Nguyễn Trãi, Q.5', distance: 3.0, eta: '12–18 phút', weight: '1kg', cod: 30000, bonus: 3000 },
-    { id: 5, pickupName: 'Pizza 4U', pickupAddr: '12 Đinh Tiên Hoàng, Q.1', dropName: 'Đỗ E', dropAddr: '88 Võ Văn Tần, Q.3', distance: 5.0, eta: '20–28 phút', weight: '2.3kg', cod: 65000, bonus: 7000 },
-  ]), []);
+// Trang Đơn hàng đang hoạt động (đổi tên từ AvailableOrders)
+const ActiveOrder = () => {
+  const { availableOrders, setAvailableOrders, setCurrentOrder } = useShipper();
+  const navigate = useNavigate();
 
-  const [queue, setQueue] = React.useState(orders);
+  const queue = availableOrders;
 
   const handleRejected = () => {
-    setQueue((q) => q.slice(1));
+    setAvailableOrders((q) => q.slice(1));
   };
 
-  const handleAccepted = () => {
-    // Khi nhận đơn, ta không pop ở đây vì đã điều hướng sang chi tiết
+  const handleAccepted = (order) => {
+    // Đánh dấu đơn hiện tại và loại khỏi hàng đợi để không xuất hiện lại
+    setCurrentOrder(order);
+    setAvailableOrders((q) => q.filter((o) => o.id !== order.id));
   };
+
+  // Khi hết đơn, tự chuyển về home sau 300ms (hiển thị thông báo ngắn)
+  React.useEffect(() => {
+    if (queue.length === 0) {
+      const t = setTimeout(() => navigate('/shipper/home'), 300);
+      return () => clearTimeout(t);
+    }
+  }, [queue.length, navigate]);
 
   return (
     <Box sx={{ pb: 3 }}>
@@ -228,7 +234,7 @@ const AvailableOrders = () => {
           }}
         >
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-    <Box>
+            <Box>
               <Typography sx={{ fontSize: 14, opacity: 0.85 }}>Xin chào 👋</Typography>
               <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Đơn hàng khả dụng</Typography>
             </Box>
@@ -236,17 +242,22 @@ const AvailableOrders = () => {
               <Typography sx={{ fontSize: 12, opacity: 0.85 }}>Còn lại</Typography>
               <Typography sx={{ fontSize: 16, fontWeight: 700 }}>5 đơn</Typography>
             </Box>
-      </Stack>
+          </Stack>
         </Box>
       </Box>
 
       {/* Chỉ hiển thị 1 thẻ đầu hàng đợi. Sau khi vuốt hủy, hiển thị thẻ kế tiếp */}
-      {queue.length > 0 && (
+      {queue.length > 0 ? (
         <SwipeOrderCard order={queue[0]} onRejected={handleRejected} onAccepted={handleAccepted} />
+      ) : (
+        <Box sx={{ maxWidth: 390, mx: 'auto', mt: 4, textAlign: 'center', color: '#6B7280' }}>
+          <Typography>Hiện chưa có đơn mới. Đang chuyển về Trang chủ để quét...</Typography>
+        </Box>
       )}
     </Box>
   );
 };
 
-export default AvailableOrders;
+export default ActiveOrder;
+
 
