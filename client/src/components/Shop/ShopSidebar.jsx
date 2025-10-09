@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { 
   Box, 
   Drawer, 
@@ -24,12 +24,16 @@ import {
   Logout as LogoutIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useContext } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
+
 
 const ShopSidebar = ({ open, onClose }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useContext(AuthContext);
 
   const menuItems = [
     {
@@ -157,7 +161,7 @@ const ShopSidebar = ({ open, onClose }) => {
               color: '#000',
               lineHeight: 1.2
             }}>
-            Chủ cửa hàng
+             Chủ cửa hàng {user ? `#${user.id}` : ''}
             </Typography>
             <Typography sx={{ 
               fontSize: '14px', 

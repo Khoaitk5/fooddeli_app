@@ -51,6 +51,7 @@ import ShipperSettings from './pages/Shipper/Settings';
 
 // 🧠 App Component
 function App() {
+  console.log("🧠DEBUG: [App] Rendered!");
   return (
     // ✅ AuthProvider bao toàn bộ ứng dụng
     <AuthProvider>
