@@ -21,7 +21,11 @@ const ProfileRegister = () => {
   const fullnameFromState = location.state?.fullname || "";
   const emailFromState = location.state?.email || "";
 
-  // ✅ Khởi tạo form với dữ liệu từ state nếu có
+  // ✅ Xác định luồng
+  const isPhoneFlow = !!phoneFromState;
+  const isGoogleFlow = !phoneFromState && !passwordFromState;
+
+  // ✅ State form
   const [form, setForm] = useState({
     username: usernameFromState,
     fullname: fullnameFromState,
@@ -31,79 +35,77 @@ const ProfileRegister = () => {
     password: passwordFromState,
   });
 
-  // ✅ Kiểm tra luồng đăng ký (đi từ số điện thoại hay email)
-  const isPhoneFlow = !!phoneFromState;
-
-  // ✅ Cập nhật form mỗi khi location.state thay đổi
+  // ✅ Nếu là Google, lấy user từ localStorage
   useEffect(() => {
-    setForm((prev) => ({
-      ...prev,
-      phone: phoneFromState || prev.phone,
-      address: addressFromState || prev.address,
-      username: usernameFromState || prev.username,
-      fullname: fullnameFromState || prev.fullname,
-      email: emailFromState || prev.email,
-      password: passwordFromState || prev.password,
-    }));
-  }, [
-    phoneFromState,
-    addressFromState,
-    usernameFromState,
-    fullnameFromState,
-    emailFromState,
-    passwordFromState,
-  ]);
+    if (isGoogleFlow) {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setForm((prev) => ({
+          ...prev,
+          email: user.email || prev.email,
+          fullname: user.full_name || prev.fullname,
+          username: user.username || user.email?.split("@")[0] || "",
+        }));
+      }
+    }
+  }, [isGoogleFlow]);
 
-  // 📥 Cập nhật khi nhập từng trường
+  // ✅ Cập nhật khi nhập
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ Điều hướng sang trang thêm địa chỉ — truyền nguyên form để giữ lại khi quay về
+  // ✅ Điều hướng sang thêm địa chỉ
   const goToAddAddress = () => {
     navigate("/address/add", { state: { ...form } });
   };
 
-  // ✅ Submit form đăng ký
+  // ✅ Submit form
   const handleSubmit = async () => {
     const { username, fullname, email, address, phone, password } = form;
 
-    if (!username || !fullname || !email || !address || !phone || !password) {
+    if (!username || !fullname || !email || !address || !phone) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin!");
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      alert("📧 Email không hợp lệ!");
-      return;
-    }
-
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username,
-          fullname,
-          email,
-          address,
-          phone,
-          password,
-        }),
-      });
+      let response;
+
+      if (isGoogleFlow) {
+        // 🔹 Google user: cập nhật hồ sơ hiện tại
+        response = await fetch("http://localhost:5000/api/users/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ username, fullname, email, address, phone }),
+        });
+      } else {
+        // 🔹 Đăng ký mới bằng email/số điện thoại
+        response = await fetch("http://localhost:5000/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username,
+            fullname,
+            email,
+            address,
+            phone,
+            password,
+          }),
+        });
+      }
 
       const data = await response.json();
       console.log("📡 Phản hồi từ backend:", data);
 
-      if (!response.ok) {
-        throw new Error(data.message || "Đăng ký thất bại");
-      }
+      if (!response.ok) throw new Error(data.message || "Đăng ký thất bại");
 
-      alert("🎉 Tài khoản đã được tạo thành công!");
+      alert("🎉 Hồ sơ đã được hoàn tất!");
       navigate("/customer/home");
     } catch (err) {
-      console.error("❌ Lỗi đăng ký:", err.message);
+      console.error("❌ Lỗi:", err.message);
       alert(err.message || "Đăng ký thất bại. Vui lòng thử lại!");
     }
   };
@@ -166,7 +168,7 @@ const ProfileRegister = () => {
           fullWidth
           sx={{ mb: 2 }}
           InputProps={{
-            readOnly: !isPhoneFlow, // ✅ nếu đi từ RegisterPhone thì được nhập email
+            readOnly: isGoogleFlow || !isPhoneFlow,
           }}
         />
 
@@ -210,10 +212,11 @@ const ProfileRegister = () => {
           fullWidth
           sx={{ mb: 3 }}
           InputProps={{
-            readOnly: isPhoneFlow, // ✅ nếu đi từ RegisterPhone thì khoá
+            readOnly: isPhoneFlow,
           }}
         />
 
+        {/* Nút hoàn tất */}
         <Button
           fullWidth
           variant="contained"

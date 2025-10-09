@@ -22,4 +22,9 @@ router.post("/send-otp-email", authController.sendOtpEmail);
 // ✅ Xác minh OTP email
 router.post("/verify-otp-email", authController.verifyOtpEmail);
 
+router.post("/google", authController.loginWithGoogle);
+
+router.post("/google-register", authController.registerWithGoogle);
+
+
 module.exports = router;
