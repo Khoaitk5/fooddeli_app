@@ -33,57 +33,191 @@ export default function AddCoupon() {
       <div className="mx-auto max-w-[390px] px-5 pt-5 pb-10">
         {/* Header */}
         <div className="mb-4 grid grid-cols-3 items-center">
-          <button onClick={cancel} className="justify-self-start text-[15px] text-[#60655c]">Hủy</button>
-          <div className="text-center text-[17px] text-[#363a33] font-bold">Thêm mã giảm giá</div>
-          <button onClick={save} className="justify-self-end text-[15px] text-[#f9704b]">Lưu</button>
+          <div
+            onClick={cancel}
+            style={{
+              position: 'absolute',
+              left: '5.28vw',
+              top: '6.625vh',
+              justifyContent: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              color: 'var(--Colors-Typography-400, #60655C)',
+              fontSize: '1.5rem',
+              fontFamily: 'TikTok Sans',
+              fontWeight: '700',
+              wordWrap: 'break-word',
+              cursor: 'pointer'
+            }}
+          >
+            Hủy
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              top: '6.5vh',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              justifyContent: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              color: 'var(--Colors-Typography-500, #363A33)',
+              fontSize: '1.7rem',
+              fontFamily: 'TikTok Sans',
+              fontWeight: '700',
+              wordWrap: 'break-word'
+            }}
+          >
+            Thêm mã giảm giá
+          </div>
+          <div
+            onClick={save}
+            style={{
+              position: 'absolute',
+              top: '6.625vh',
+              right: '5.28vw',
+              textAlign: 'right',
+              justifyContent: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              color: '#F9704B',
+              fontSize: '1.5rem',
+              fontFamily: 'TikTok Sans',
+              fontWeight: '700',
+              wordWrap: 'break-word',
+              cursor: 'pointer'
+            }}
+          >
+            Lưu
+          </div>
         </div>
 
         {/* Constrain inner content to 322px like Figma */}
         <div className="mx-auto w-[322px]">
           {/* Manual code */}
-          <div className="flex gap-3">
-            <input
-              className="flex-1 h-[47px] rounded-[12px] border border-[#e8ebe6] px-3 text-[15px] placeholder-[#91958e] outline-none"
-              placeholder="Nhập mã giảm giá"
-              value={manual}
-              onChange={(e) => setManual(e.target.value)}
-            />
-            <button
-              onClick={addManual}
-              disabled={!canAdd}
-              className={`h-[47px] w-[61px] rounded-[8px] text-[15px] transition-colors ${canAdd ? 'bg-[#f9704b] text-white border border-[#f9704b]' : 'bg-transparent text-[#b6b8b6] border border-[#e8ebe6]'}`}
+          <div className="flex" style={{position: 'absolute', top: '12.375vh', justifyContent: 'flex-end', gap: '2.5vw'}}>
+            <div style={{position: 'relative'}}>
+              <input
+                style={{
+                  width: '70vw',
+                  height: '5.875vh',
+                  background: 'white',
+                  borderRadius: 12,
+                  border: '1px #E8EBE6 solid',
+                  paddingLeft: '4.17vw',
+                  paddingRight: '1vw',
+                  fontSize: '1.5rem',
+                  color: '#363A33',
+                  outline: 'none',
+                  fontWeight: '400',
+                  fontFamily: 'TikTok Sans'
+                }}
+                value={manual}
+                onChange={(e) => setManual(e.target.value)}
+              />
+              {!manual && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '4.17vw',
+                    transform: 'translateY(-50%)',
+                    justifyContent: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    color: 'var(--Colors-Typography-200, #91958E)',
+                    fontSize: '1.5rem',
+                    fontFamily: 'TikTok Sans',
+                    fontWeight: '400',
+                    wordWrap: 'break-word',
+                    pointerEvents: 'none'
+                  }}
+                >
+                  Nhập mã giảm giá
+                </div>
+              )}
+            </div>
+            <div
+              onClick={canAdd ? addManual : undefined}
+              style={{
+                width: '16.94vw',
+                height: '5.875vh',
+                background: canAdd ? '#F9704B' : '#E8EBE6',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: canAdd ? 'white' : '#B6B8B6',
+                fontSize: '1.5rem',
+                fontFamily: 'TikTok Sans',
+                fontWeight: '700',
+                cursor: canAdd ? 'pointer' : 'not-allowed',
+                marginRight: '5.28vw'
+              }}
             >
               Thêm
-            </button>
+            </div>
           </div>
 
-          <hr className="mt-4 border-[#e8ebe6]" />
+          <div style={{position: 'absolute', top: '21.125vh'}}>
+            <div style={{width: '89.44vw', outline: '1px var(--Colors-Grey-200, #E8EBE6) solid', outlineOffset: '-0.50px'}}></div>
 
-          <div className="mt-5 text-[12px] text-[#70756b]">Chọn một voucher</div>
+          <div style={{position: 'absolute', top: '2.875vh', left: '7.5vw', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-300, #70756B)', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '600', wordWrap: 'break-word', whiteSpace: 'nowrap', zIndex: 10}}>Chọn một voucher</div>
 
-          <div className="mt-2 space-y-3">
-            {COUPONS.map((c) => (
-              <div
-                key={c.code}
-                className={"w-[322px] h-[69px] rounded-[8px] bg-[#f9faf8] px-4 flex items-center"}
-              >
-                <div className="flex items-center justify-between gap-3 w-full">
-                  <div className="min-w-0">
-                    <div className="text-[12px] text-[#60655c] tracking-wide uppercase">{c.code}</div>
-                    <div className="text-[15px] text-[#363a33] mt-1 truncate">{c.description}</div>
+            <div style={{position: 'absolute', top: '6.25vh', display: 'flex', flexDirection: 'column', gap: '1.875vh'}}>
+              {COUPONS.map((c) => (
+                <div
+                  key={c.code}
+                  style={{
+                    width: '89.44vw',
+                    height: '8.625vh',
+                    background: '#F9FAF8',
+                    borderRadius: 8,
+                    paddingLeft: '16px',
+                    paddingRight: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    position: 'relative'
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="min-w-0">
+                      <div style={{position: 'absolute', top: '2vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>{c.code}</div>
+                      <div style={{position: 'absolute', top: '4.125vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>{c.description}</div>
+                    </div>
+                    <div
+                      onClick={() => setSelected(selected === c.code ? '' : c.code)}
+                      aria-label={`Chọn mã ${c.code}`}
+                      data-selected={selected === c.code ? "True" : "False"}
+                      data-type="Default"
+                      style={{
+                        width: '6.67vw',
+                        height: '3vh',
+                        position: 'relative',
+                        background: 'var(--Colors-Grey-100, #F4F7F2)',
+                        borderRadius: 24,
+                        border: '1px var(--Colors-Grey-200, #E8EBE6) solid',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        outline: selected === c.code ? '2px #F9704B solid' : 'none',
+                        outlineOffset: selected === c.code ? '-2px' : '0'
+                      }}
+                    >
+                      {selected === c.code ? (
+                        <div style={{
+                          width: '3.33vw',
+                          height: '1.5vh',
+                          background: '#F9704B',
+                          borderRadius: 9999
+                        }} />
+                      ) : null}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setSelected(c.code)}
-                    aria-label={`Chọn mã ${c.code}`}
-                    className={`relative grid place-items-center w-6 h-6 rounded-full flex-shrink-0 ${selected === c.code ? 'border-2 border-[#f9704b]' : 'border border-[#e8ebe6] bg-[#f4f7f2]'}`}
-                  >
-                    {selected === c.code ? (
-                      <span className="block w-3 h-3 rounded-full bg-[#f9704b]"></span>
-                    ) : null}
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
