@@ -56,14 +56,12 @@ import ShopSettings from './pages/Shop/Settings';
 
 // Shipper
 import ShipperHome from './pages/Shipper/Home';
-import ShipperAvailable from './pages/Shipper/AvailableOrders';
-import ShipperMyRuns from './pages/Shipper/MyRuns';
-import ShipperOrderDetail from './pages/Shipper/OrderDetail';
-import ShipperNavigation from './pages/Shipper/Navigation';
-import ShipperEarnings from './pages/Shipper/Earnings';
-import ShipperHistory from './pages/Shipper/History';
+import ShipperActiveOrder from './pages/Shipper/ActiveOrder';
+import ShipperDelivering from './pages/Shipper/Delivering';
+// Đã loại bỏ MyRuns, Earnings, History và OrderDetail
 import ShipperProfile from './pages/Shipper/Profile';
-import ShipperSettings from './pages/Shipper/Settings';
+import EditProfile from './pages/Shipper/EditProfile';
+import ShipperWallet from './pages/Shipper/Wallet';
 
 // 🧠 App Component
 function App() {
@@ -107,14 +105,12 @@ function App() {
         {/* Shipper Routes */}
         <Route path="/shipper/*" element={<MobileShipperLayout />}>
           <Route path="home" element={<ShipperHome />} />
-          <Route path="available" element={<ShipperAvailable />} />
-          <Route path="my-runs" element={<ShipperMyRuns />} />
-          <Route path="order/:id" element={<ShipperOrderDetail />} />
-          <Route path="navigation" element={<ShipperNavigation />} />
-          <Route path="earnings" element={<ShipperEarnings />} />
-          <Route path="history" element={<ShipperHistory />} />
+          <Route path="available" element={<ShipperActiveOrder />} />
+          <Route path="delivering" element={<ShipperDelivering />} />
+          {/* Chỉ còn 4 trang: home, available, navigation, profile */}
           <Route path="profile" element={<ShipperProfile />} />
-          <Route path="settings" element={<ShipperSettings />} />
+          <Route path="profile/edit" element={<EditProfile />} />
+          <Route path="wallet" element={<ShipperWallet />} />
           <Route path="*" element={<Navigate to="/shipper/home" />} />
         </Route>
 
