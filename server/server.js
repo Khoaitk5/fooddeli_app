@@ -55,13 +55,13 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 5000;
 function logRoutes(prefix, router) {
   if (!router?.stack?.length) return;
-   console.log(`\n📜 Route từ ${prefix}:`);
+  //  console.log(`\n📜 Route từ ${prefix}:`);
   router.stack.forEach((layer) => {
     if (layer.route) {
       const methods = Object.keys(layer.route.methods)
         .map((m) => m.toUpperCase())
         .join(", ");
-       console.log(`🔹 ${methods} ${prefix}${layer.route.path}`);
+      //  console.log(`🔹 ${methods} ${prefix}${layer.route.path}`);
     }
   });
 }
