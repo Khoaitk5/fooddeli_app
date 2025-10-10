@@ -1,5 +1,3 @@
-// models/OrderDetail.js
-
 class OrderDetail {
   constructor({
     id,
