@@ -28,22 +28,28 @@ exports.register = async (req, res) => {
 
     // 🧩 Chuẩn hóa address nếu là object
     if (typeof body.address === "object" && body.address !== null) {
-      const { detail, ward, city, note, address_type } = body.address;
+      // FE gửi addressType, BE fallback sang address_type nếu có
+      const { detail, ward, city, note, addressType, address_type } =
+        body.address;
 
+      // Ghép địa chỉ lại thành 1 chuỗi
       body.address = `${detail || ""}${ward || city ? ", " : ""}${ward || ""}${
         ward && city ? ", " : ""
       }${city || ""}`;
 
-      // 🗒️ Gộp thêm note và loại địa chỉ vào body để service xử lý
+      // Gộp note và loại địa chỉ
       body.note = note || "";
-      body.address_type = address_type || "Nhà";
+      body.address_type = addressType || address_type || "Nhà";
     }
 
+    console.log("🧩 [DEBUG] Body gửi sang service:", JSON.stringify(body, null, 2));
+    // 🧩 Gọi service xử lý đăng ký
     const newUser = await authService.register(body);
 
     // ✅ Tạo session
     createSession(req, newUser);
 
+    // ✅ Trả kết quả về cho FE
     res.status(201).json({
       success: true,
       message: "✅ Đăng ký tài khoản thành công",
@@ -242,12 +248,10 @@ exports.registerWithGoogle = async (req, res) => {
 
   try {
     if (!admin) {
-      return res
-        .status(500)
-        .json({
-          success: false,
-          message: "Firebase Admin chưa được khởi tạo.",
-        });
+      return res.status(500).json({
+        success: false,
+        message: "Firebase Admin chưa được khởi tạo.",
+      });
     }
 
     // ✅ Xác minh token từ Firebase
@@ -291,12 +295,10 @@ exports.registerWithGoogle = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Lỗi đăng ký Google:", error);
-    return res
-      .status(401)
-      .json({
-        success: false,
-        message: "Token Google không hợp lệ hoặc hết hạn.",
-      });
+    return res.status(401).json({
+      success: false,
+      message: "Token Google không hợp lệ hoặc hết hạn.",
+    });
   }
 };
 
@@ -327,7 +329,6 @@ exports.logout = async (req, res) => {
     });
   }
 };
-
 
 exports.sendOtpEmail = async (req, res) => {
   const nodemailer = require("nodemailer");
