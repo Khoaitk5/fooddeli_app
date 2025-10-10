@@ -1,4 +1,3 @@
-// models/User.js
 class User {
   constructor({
     id,

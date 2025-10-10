@@ -1,9 +1,8 @@
-// models/ShopProfile.js
 const User = require("./user");
 
 class ShopProfile extends User {
   constructor({
-    id, // id in shop_profiles
+    id,
     user_id,
     username,
     password,
@@ -17,17 +16,12 @@ class ShopProfile extends User {
     created_at,
     updated_at,
     shop_name,
-    address,
-    latitude,
-    longitude,
+    shop_address_id,
     description,
     open_hours,
-    shop_status,
-    shop_created_at,
-    shop_updated_at,
-    total_sales // ✅ new field
+    closed_hours,
+    status_shop,
   }) {
-    // Call User constructor
     super({
       id: user_id,
       username,
@@ -43,20 +37,13 @@ class ShopProfile extends User {
       updated_at,
     });
 
-    // shop_profiles specific properties
     this.shop_profile_id = id;
     this.shop_name = shop_name;
-    this.address = address;
-    this.latitude = latitude;
-    this.longitude = longitude;
+    this.shop_address_id = shop_address_id;
     this.description = description;
     this.open_hours = open_hours;
-    this.shop_status = shop_status;
-    this.shop_created_at = shop_created_at;
-    this.shop_updated_at = shop_updated_at;
-
-    // ✅ New property: total number of sales
-    this.total_sales = total_sales ?? 0; // default 0 if not provided
+    this.closed_hours = closed_hours;
+    this.status = status_shop;
   }
 }
 

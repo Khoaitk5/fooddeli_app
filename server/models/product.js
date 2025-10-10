@@ -1,4 +1,3 @@
-// models/Product.js
 class Product {
   constructor({
     product_id,

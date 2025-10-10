@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { 
-  Paper, 
-  Box, 
+import React, { useState, useEffect, useContext } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import {
+  Paper,
+  Box,
   Typography,
   IconButton,
   useTheme,
@@ -10,11 +10,41 @@ import {
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import ShopSidebar from '@/components/Shop/ShopSidebar';
+import { AuthContext } from "../../contexts/AuthContext";
 
 const MobileShopLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  // ✅ Kiểm tra user role mỗi khi truy cập /shop/*
+  useEffect(() => {
+    if (loading) return; // chờ context load xong user
+    console.log("DEBUG: Navigated to /shop/* route:", location.pathname);
+    console.log("DEBUG: Current user:", user);
+
+    if (!user) {
+      console.log("DEBUG: No user → redirect to /customer");
+      navigate("/customer/home");
+      return;
+    }
+
+    if (user.role !== "shop") {
+      console.log(`DEBUG: Invalid role (${user.role}) → redirect to /customer/home`);
+      navigate("/customer/home");
+    }
+  }, [user, loading, location.pathname, navigate]);
+
+  // ✅ Loading state
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <Typography>Đang tải...</Typography>
+      </Box>
+    );
+  }
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -28,9 +58,9 @@ const MobileShopLayout = () => {
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
       {/* Sidebar */}
       <ShopSidebar open={sidebarOpen} onClose={handleSidebarClose} />
-      
+
       {/* Main Content Area */}
-      <Box sx={{ 
+      <Box sx={{
         marginLeft: isMobile ? 0 : '280px',
         minHeight: '100vh',
         transition: 'margin-left 0.3s ease-in-out'
@@ -52,9 +82,9 @@ const MobileShopLayout = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {isMobile && (
-              <IconButton 
+              <IconButton
                 onClick={handleSidebarToggle}
-                sx={{ 
+                sx={{
                   color: '#F9704B',
                   p: 1,
                   '&:hover': {
@@ -100,7 +130,7 @@ const MobileShopLayout = () => {
             </Box>
           </Box>
         </Box>
-      
+
         {/* Main Content */}
         <Box sx={{ pb: 2 }}>
           <Outlet />
