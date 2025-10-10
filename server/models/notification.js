@@ -1,13 +1,5 @@
-// models/Notification.js
 class Notification {
-  constructor({
-    id,
-    user_id,
-    title,
-    body,
-    is_read,
-    created_at,
-  }) {
+  constructor({ id, user_id, title, body, is_read, created_at }) {
     this.id = id;
     this.user_id = user_id;
     this.title = title;

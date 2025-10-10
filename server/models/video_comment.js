@@ -1,5 +1,3 @@
-// models/videoCommentModel.js
-
 class VideoComment {
   constructor({ comment_id, video_id, user_id, content, created_at }) {
     this.comment_id = comment_id;
