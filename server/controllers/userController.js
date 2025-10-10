@@ -106,7 +106,7 @@ const updateCurrentUser = async (req, res) => {
           : address;
 
       const note = address.note || "";
-      const addressType = address.address_type || "Nhà";
+      const addressType = address.addressType || address.address_type || "Nhà";
       const isDefault = address.isDefault ?? true;
 
       // 📬 Kiểm tra địa chỉ hiện có

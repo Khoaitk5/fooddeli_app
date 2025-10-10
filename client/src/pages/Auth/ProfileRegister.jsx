@@ -83,6 +83,7 @@ const ProfileRegister = () => {
         });
       } else {
         // 🔹 Đăng ký mới bằng email/số điện thoại
+        console.log("Địa chỉ gửi lên:", address);
         response = await fetch("http://localhost:5000/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
