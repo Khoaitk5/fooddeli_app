@@ -21,9 +21,9 @@ const getAllUsers = async (req, res) => {
 const getCurrentUser = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
-    console.log("📥 Cookie gửi lên:", req.headers.cookie);
-    console.log("📥 Toàn bộ session server lưu:", req.sessionStore.sessions);
-    console.log("📥 Session hiện tại tìm thấy:", req.session);
+    // console.log("📥 Cookie gửi lên:", req.headers.cookie);
+    // console.log("📥 Toàn bộ session server lưu:", req.sessionStore.sessions);
+    // console.log("📥 Session hiện tại tìm thấy:", req.session);
 
     if (!sessionUser) {
       return res
@@ -66,26 +66,36 @@ const updateCurrentUser = async (req, res) => {
     }
 
     const userId = sessionUser.id;
-
-    // FE gửi: fullname (camelCase)
     const { username, fullname, email, phone, address } = req.body;
 
-    // 🧩 Chuẩn hóa dữ liệu để phù hợp với DB
+    // 🧩 Chuẩn hóa dữ liệu người dùng để phù hợp DB
     const updatePayload = {};
-    if (username) updatePayload.username = username;
-    if (fullname) updatePayload.full_name = fullname; // ánh xạ sang snake_case
-    if (email) updatePayload.email = email;
-    if (phone) updatePayload.phone = phone;
 
-    // 🛡️ Nếu không có trường nào để cập nhật, thì không cần query DB
+    if (username) updatePayload.username = username.trim();
+    if (fullname) updatePayload.full_name = fullname.trim();
+    if (email) updatePayload.email = email.trim();
+
+    // ☎️ Chuẩn hóa số điện thoại về dạng +84
+    if (phone) {
+      let normalizedPhone = phone.trim();
+      if (normalizedPhone.startsWith("0")) {
+        normalizedPhone = "+84" + normalizedPhone.slice(1);
+      } else if (!normalizedPhone.startsWith("+84")) {
+        normalizedPhone = "+84" + normalizedPhone;
+      }
+      updatePayload.phone = normalizedPhone;
+    }
+
+    // 🔄 Nếu có thông tin cần cập nhật → cập nhật user trong DB
     let updatedUser = await userService.getUserById(userId);
     if (Object.keys(updatePayload).length > 0) {
       updatedUser = await userService.updateUser(userId, updatePayload);
     }
 
-    // 2️⃣ Nếu có địa chỉ mới → kiểm tra xem user đã có địa chỉ chưa
+    // 🏡 Xử lý địa chỉ nếu có FE gửi lên
     let addedAddress = null;
     if (address) {
+      // 🧩 FE gửi object có dạng { detail, ward, city, note, address_type, isDefault }
       const addressLine =
         typeof address === "object"
           ? `${address.detail || ""}${
@@ -95,43 +105,60 @@ const updateCurrentUser = async (req, res) => {
             }${address.city || ""}`
           : address;
 
-      const existingAddresses = await addressService.getUserAddresses(userId);
+      const note = address.note || "";
+      const addressType = address.addressType || address.address_type || "Nhà";
+      const isDefault = address.isDefault ?? true;
 
-      if (existingAddresses.length === 0) {
-        // 🆕 user chưa có địa chỉ → thêm mới mặc định
+      // 📬 Kiểm tra địa chỉ hiện có
+      const existingAddresses = await addressService.getUserAddresses(userId);
+      const defaultAddr = await addressService.getDefaultAddress(userId);
+
+      if (!existingAddresses.length) {
+        // 🆕 User chưa có địa chỉ → tạo mới
         addedAddress = await addressService.addAddress({
           user_id: userId,
           address_line: addressLine,
-          is_default: true,
+          note,
+          address_type: addressType,
+          is_default: isDefault,
+        });
+      } else if (defaultAddr) {
+        // 🔄 Đã có default → cập nhật lại
+        addedAddress = await addressService.updateAddress(defaultAddr.address_id, {
+          address_line: addressLine,
+          note,
+          address_type: addressType,
+          is_default: isDefault,
         });
       } else {
-        // 🔄 Nếu đã có → update địa chỉ mặc định hiện tại
-        const defaultAddr = await addressService.getDefaultAddress(userId);
-        if (defaultAddr) {
-          addedAddress = await addressService.updateAddress(defaultAddr.address_id, {
-            address_line: addressLine,
-          });
-        } else {
-          addedAddress = await addressService.addAddress({
-            user_id: userId,
-            address_line: addressLine,
-            is_default: true,
-          });
-        }
+        // 🆕 Có địa chỉ nhưng chưa có default → thêm mới và đặt mặc định
+        addedAddress = await addressService.addAddress({
+          user_id: userId,
+          address_line: addressLine,
+          note,
+          address_type: addressType,
+          is_default: true,
+        });
       }
     }
 
-    // 3️⃣ Cập nhật lại session
+    // 🔁 Cập nhật lại session
     req.session.user = updatedUser;
-    req.session.save();
+    await req.session.save();
 
-    // 4️⃣ Trả kết quả cho FE
+    // ✅ Trả kết quả về FE
     return res.status(200).json({
       success: true,
-      message: "✅ Hồ sơ đã hoàn tất!",
+      message: "✅ Hồ sơ đã được cập nhật thành công!",
       user: {
         ...updatedUser,
-        address: addedAddress ? addedAddress.address_line : null,
+        address: addedAddress
+          ? {
+              address_line: addedAddress.address_line,
+              note: addedAddress.note,
+              address_type: addedAddress.address_type,
+            }
+          : null,
       },
     });
   } catch (error) {
@@ -142,7 +169,6 @@ const updateCurrentUser = async (req, res) => {
     });
   }
 };
-
 
 
 // 📌 Xoá tài khoản user hiện tại

@@ -1,5 +1,3 @@
-// models/orderVoucherModel.js
-
 class OrderVoucher {
   constructor({ order_id, voucher_id }) {
     this.order_id = order_id;

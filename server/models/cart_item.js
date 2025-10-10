@@ -1,4 +1,3 @@
-// models/CartItem.js
 class CartItem {
   constructor({
     id,
