@@ -1,8 +1,13 @@
-const BackArrow = ({ width = "0.9rem", height = "1.4rem" }) => (
+const BackArrow = ({ width = "0.9rem", height = "1.4rem", onClick }) => (
   <svg
     viewBox="0 0 9 14"
     xmlns="http://www.w3.org/2000/svg"
-    style={{ width, height }}
+    style={{
+      width,
+      height,
+      cursor: onClick ? 'pointer' : 'default'
+    }}
+    onClick={onClick}
   >
     <path
       fillRule="evenodd"

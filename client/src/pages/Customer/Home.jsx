@@ -6,9 +6,10 @@ import CommentIcon from "../../components/shared/CommentIcon";
 import BookmarkIcon from "../../components/shared/BookmarkIcon";
 import ShareIcon from "../../components/shared/ShareIcon";
 import SearchIcon from "../../components/shared/SearchIcon";
-import ProductCart from "../../components/role-specific/Customer/ProductCart";
+import ProductCart from "../../components/role-specific/Customer/ProductCardForVideo.jsx";
 import { pxW, pxH } from "../../utils/scale.js";
 import { createClient } from "@supabase/supabase-js";
+import TabItem from "../../components/role-specific/Customer/TabItem.jsx";
 
 const supabase = createClient(
   "https://xyngruphcelumtjlmzud.supabase.co",
@@ -24,6 +25,7 @@ const Home = () => {
   const [bookmarkedVideos, setBookmarkedVideos] = useState(new Set());
   const [bookmarkCounts, setBookmarkCounts] = useState({});
   const videoRefs = useRef([]);
+  const [activeTab, setActiveTab] = useState("suggestion");
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -71,9 +73,6 @@ const Home = () => {
   }, [videos]);
 
   const statusStyle = {
-    justifyContent: "center",
-    display: "flex",
-    flexDirection: "column",
     color: "white",
     fontSize: "1.8rem",
     fontFamily: "Proxima Nova",
@@ -94,15 +93,21 @@ const Home = () => {
   const handleHeartClick = (videoIndex, e) => {
     e.stopPropagation();
     e.preventDefault();
-    setLikedVideos(prev => {
+    setLikedVideos((prev) => {
       const newLiked = new Set(prev);
       const wasLiked = newLiked.has(videoIndex);
       if (wasLiked) {
         newLiked.delete(videoIndex);
-        setLikeCounts(prevCounts => ({ ...prevCounts, [videoIndex]: Math.max((prevCounts[videoIndex] || 0) - 1, 0) }));
+        setLikeCounts((prevCounts) => ({
+          ...prevCounts,
+          [videoIndex]: Math.max((prevCounts[videoIndex] || 0) - 1, 0),
+        }));
       } else {
         newLiked.add(videoIndex);
-        setLikeCounts(prevCounts => ({ ...prevCounts, [videoIndex]: (prevCounts[videoIndex] || 0) + 1 }));
+        setLikeCounts((prevCounts) => ({
+          ...prevCounts,
+          [videoIndex]: (prevCounts[videoIndex] || 0) + 1,
+        }));
       }
       return newLiked;
     });
@@ -111,23 +116,29 @@ const Home = () => {
   const handleBookmarkClick = (videoIndex, e) => {
     e.stopPropagation();
     e.preventDefault();
-    setBookmarkedVideos(prev => {
+    setBookmarkedVideos((prev) => {
       const newBookmarked = new Set(prev);
       const wasBookmarked = newBookmarked.has(videoIndex);
       if (wasBookmarked) {
         newBookmarked.delete(videoIndex);
-        setBookmarkCounts(prevCounts => ({ ...prevCounts, [videoIndex]: Math.max((prevCounts[videoIndex] || 0) - 1, 0) }));
+        setBookmarkCounts((prevCounts) => ({
+          ...prevCounts,
+          [videoIndex]: Math.max((prevCounts[videoIndex] || 0) - 1, 0),
+        }));
       } else {
         newBookmarked.add(videoIndex);
-        setBookmarkCounts(prevCounts => ({ ...prevCounts, [videoIndex]: (prevCounts[videoIndex] || 0) + 1 }));
+        setBookmarkCounts((prevCounts) => ({
+          ...prevCounts,
+          [videoIndex]: (prevCounts[videoIndex] || 0) + 1,
+        }));
       }
       return newBookmarked;
     });
   };
 
   const formatCount = (num) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toString();
   };
 
@@ -151,7 +162,7 @@ const Home = () => {
                   .from("videos")
                   .getPublicUrl(`user-videos/${video.name}`).data.publicUrl
               }
-              className="absolute inset-0 h-full w-full object-contain"
+              className="absolute inset-0 h-full w-full object-cover" // 👈 đổi contain -> cover
               loop
               playsInline
               preload="metadata"
@@ -178,30 +189,25 @@ const Home = () => {
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-            {/* Follow Status */}
-            <div className="absolute top-[6.25vh] left-[28.61vw]">
-              <div style={{ ...statusStyle, opacity: 0.7 }}>Đã follow</div>
-            </div>
-
-            {/* Suggestions Status */}
-            <div className="absolute top-[6.25vh] right-[28.61vw]">
-              <div style={statusStyle}>Đề xuất</div>
+            {/* Follow & Suggestions Tabs */}
+            <div className="absolute top-[6.25vh] w-full flex justify-center gap-[15px]">
+              <TabItem
+                label="Đã follow"
+                isActive={activeTab === "follow"}
+                onClick={() => setActiveTab("follow")}
+                statusStyle={statusStyle}
+              />
+              <TabItem
+                label="Đề xuất"
+                isActive={activeTab === "suggestion"}
+                onClick={() => setActiveTab("suggestion")}
+                statusStyle={statusStyle}
+              />
             </div>
 
             {/* Search Icon */}
             <div className="absolute top-[6.25vh] right-[4.8vw]">
-              <SearchIcon />
-            </div>
-
-            {/* Progress Bar */}
-            <div className="absolute top-[9.125vh] right-[33.33vw]">
-              <div
-                style={{
-                  width: "8.06vw",
-                  height: "0.5vh",
-                  background: "white",
-                }}
-              />
+              <SearchIcon onClick={() => navigate('/customer/search')} />
             </div>
 
             {/* Profile Image */}
@@ -214,7 +220,7 @@ const Home = () => {
                   cursor: "pointer",
                 }}
                 src="/KFC_logo.png"
-                onClick={() => navigate('/customer/restaurant/kfc')}
+                onClick={() => navigate("/customer/restaurant/kfc")}
                 alt="Restaurant profile"
               />
             </div>
@@ -277,13 +283,18 @@ const Home = () => {
             </div>
 
             {/* Heart Icon and Count */}
-            <div className="absolute top-[60.875vh] right-[4.72vw] flex flex-col items-center" style={{ gap: "1.25vh" }}>
+            <div
+              className="absolute top-[60.875vh] right-[4.72vw] flex flex-col items-center"
+              style={{ gap: "1.25vh" }}
+            >
               <HeartIcon
                 fill={likedVideos.has(index) ? "#FF3E5B" : "white"}
                 onClick={(e) => handleHeartClick(index, e)}
                 style={{ cursor: "pointer" }}
               />
-              <div style={countStyle}>{formatCount(likeCounts[index] || 0)}</div>
+              <div style={countStyle}>
+                {formatCount(likeCounts[index] || 0)}
+              </div>
             </div>
 
             {/* Comment Icon */}
@@ -297,13 +308,18 @@ const Home = () => {
             </div>
 
             {/* Bookmark Icon and Count */}
-            <div className="absolute top-[77.25vh] right-[5.56vw] flex flex-col items-center" style={{ gap: "1.25vh" }}>
+            <div
+              className="absolute top-[77.25vh] right-[5.56vw] flex flex-col items-center"
+              style={{ gap: "1.25vh" }}
+            >
               <BookmarkIcon
                 fill={bookmarkedVideos.has(index) ? "#F9CE13" : "white"}
                 onClick={(e) => handleBookmarkClick(index, e)}
                 style={{ cursor: "pointer" }}
               />
-              <div style={countStyle}>{formatCount(bookmarkCounts[index] || 0)}</div>
+              <div style={countStyle}>
+                {formatCount(bookmarkCounts[index] || 0)}
+              </div>
             </div>
 
             {/* Share Icon */}
