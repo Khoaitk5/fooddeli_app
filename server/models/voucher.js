@@ -1,5 +1,3 @@
-// models/voucherModel.js
-
 class Voucher {
   constructor({
     voucher_id,

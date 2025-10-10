@@ -1,5 +1,3 @@
-// models/orderModel.js
-
 class Order {
   constructor({
     order_id,

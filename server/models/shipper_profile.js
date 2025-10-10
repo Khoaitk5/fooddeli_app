@@ -1,9 +1,8 @@
-// models/ShipperProfile.js
 const User = require("./user");
 
 class ShipperProfile extends User {
   constructor({
-    id, // id trong shipper_profiles
+    id,
     user_id,
     username,
     password,
@@ -19,14 +18,9 @@ class ShipperProfile extends User {
     vehicle_type,
     vehicle_number,
     identity_card,
-    shipper_status,
+    status_shipper,
     online_status,
-    latitude,
-    longitude,
-    shipper_created_at,
-    shipper_updated_at,
   }) {
-    // gọi constructor User
     super({
       id: user_id,
       username,
@@ -42,17 +36,12 @@ class ShipperProfile extends User {
       updated_at,
     });
 
-    // thuộc tính riêng của shipper_profiles
     this.shipper_profile_id = id;
     this.vehicle_type = vehicle_type;
     this.vehicle_number = vehicle_number;
     this.identity_card = identity_card;
-    this.shipper_status = shipper_status;
+    this.status = status_shipper;
     this.online_status = online_status;
-    this.latitude = latitude;
-    this.longitude = longitude;
-    this.shipper_created_at = shipper_created_at;
-    this.shipper_updated_at = shipper_updated_at;
   }
 }
 

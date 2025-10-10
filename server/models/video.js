@@ -1,10 +1,7 @@
-// models/videoModel.js
-
 class Video {
   constructor({
     video_id,
     shop_id,
-    // product_id,
     title,
     description,
     video_url,
@@ -19,7 +16,6 @@ class Video {
   }) {
     this.video_id = video_id;
     this.shop_id = shop_id;
-    // this.product_id = product_id;
     this.title = title;
     this.description = description;
     this.video_url = video_url;

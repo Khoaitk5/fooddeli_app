@@ -1,120 +1,94 @@
-// dao/userDao.js
-const pool = require("../config/db");
 const GenericDao = require("./generic_dao");
 const User = require("../models/user");
+const pool = require("../config/db");
 
+/**
+ * @class UserDao
+ * @extends GenericDao
+ * @description Data Access Object cho bảng `users`
+ */
 class UserDao extends GenericDao {
   constructor() {
     super("users", User);
   }
 
   /**
-   * 🔐 Khóa tài khoản người dùng (chuyển status từ 'active' sang 'inactive')
-   * @param {number} userId - ID người dùng cần khóa
-   * @returns {Promise<object>} - User sau khi cập nhật
-   * @throws {Error} - Nếu user không tồn tại hoặc không ở trạng thái 'active'
-   */
-  async lockUserAccount(userId) {
-    const user = await this.findById(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    if (user.status !== "active") {
-      throw new Error("Only active users can be locked");
-    }
-
-    const query = `
-      UPDATE users
-      SET status = 'inactive', updated_at = NOW()
-      WHERE id = $1
-      RETURNING *;
-    `;
-    const result = await pool.query(query, [userId]);
-    return new User(result.rows[0]);
-  }
-
-  /**
-   * 🔍 Tìm user theo ID
-   * @param {number} id - ID người dùng
-   * @returns {Promise<object|null>}
-   */
-  async findById(id) {
-    return await super.findById("id", id); // Gọi hàm gốc từ GenericDao
-  }
-
-  /**
-   * 🔍 Tìm user theo username
-   * @param {string} username - tên đăng nhập
-   * @returns {Promise<object|null>}
+   * @async
+   * @function findByUsername
+   * @description Tìm user theo username
+   * @param {string} username - Tên đăng nhập của user
+   * @returns {Promise<User|null>} User hoặc null nếu không tìm thấy
    */
   async findByUsername(username) {
-    const res = await pool.query(
-      `SELECT * FROM users WHERE username = $1`,
-      [username]
-    );
+    const res = await pool.query(`SELECT * FROM users WHERE username = $1`, [username]);
     return res.rows[0] ? new User(res.rows[0]) : null;
   }
 
   /**
-   * 🔍 Tìm user theo email
-   * @param {string} email
-   * @returns {Promise<object|null>}
-   */
-  async findByEmail(email) {
-    const res = await pool.query(
-      `SELECT * FROM users WHERE email = $1`,
-      [email]
-    );
-    return res.rows[0] ? new User(res.rows[0]) : null;
-  }
-
-  /**
-   * 🔍 Tìm user theo số điện thoại
-   * @param {string} phone
-   * @returns {Promise<object|null>}
+   * @async
+   * @function findByPhone
+   * @description Tìm user theo số điện thoại
+   * @param {string} phone - Số điện thoại của user
+   * @returns {Promise<User|null>} User hoặc null nếu không tìm thấy
    */
   async findByPhone(phone) {
+    const res = await pool.query(`SELECT * FROM users WHERE phone = $1`, [phone]);
+    return res.rows[0] ? new User(res.rows[0]) : null;
+  }
+
+  /**
+   * @async
+   * @function findById
+   * @description Ghi đè hàm findById từ GenericDao để dùng trực tiếp id của bảng users
+   * @param {number} id - ID của user
+   * @returns {Promise<User|null>} User hoặc null nếu không tồn tại
+   */
+  async findById(id) {
+    const res = await pool.query(`SELECT * FROM users WHERE id = $1`, [id]);
+    return res.rows[0] ? new User(res.rows[0]) : null;
+  }
+
+  /**
+   * @async
+   * @function lockUserAccount
+   * @description Đổi trạng thái của user từ 'active' sang 'inactive'
+   * @param {number} id - ID của user cần khóa
+   * @returns {Promise<User|null>} User đã cập nhật hoặc null nếu không tồn tại
+   */
+  async lockUserAccount(id) {
     const res = await pool.query(
-      `SELECT * FROM users WHERE phone = $1`,
-      [phone]
+      `UPDATE users SET status = 'inactive', updated_at = NOW() WHERE id = $1 AND status = 'active' RETURNING *`,
+      [id]
     );
     return res.rows[0] ? new User(res.rows[0]) : null;
   }
 
   /**
-   * 📊 Cập nhật điểm đánh giá trung bình (rating)
-   * @param {number} userId - ID người dùng
-   * @param {number} newRating - điểm rating trung bình mới
-   * @returns {Promise<object>} - User sau khi cập nhật
+   * @async
+   * @function updateRating
+   * @description Cập nhật điểm đánh giá (rating) của user
+   * @param {number} id - ID của user
+   * @param {number} rating - Điểm đánh giá mới (0–5)
+   * @returns {Promise<User|null>} User đã cập nhật hoặc null nếu không tồn tại
    */
-  async updateRating(userId, newRating) {
-    if (newRating < 0 || newRating > 5) {
-      throw new Error("Rating must be between 0 and 5");
-    }
-
-    const query = `
-      UPDATE users
-      SET rating = $1, updated_at = NOW()
-      WHERE id = $2
-      RETURNING *;
-    `;
-    const result = await pool.query(query, [newRating, userId]);
-    return new User(result.rows[0]);
+  async updateRating(id, rating) {
+    const res = await pool.query(
+      `UPDATE users SET rating = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [rating, id]
+    );
+    return res.rows[0] ? new User(res.rows[0]) : null;
   }
 
   /**
-   * 📜 Lấy danh sách người dùng theo vai trò
-   * @param {"user"|"shop"|"shipper"|"admin"} role - Vai trò
-   * @returns {Promise<object[]>} - Danh sách user
+   * @async
+   * @function getRoleById
+   * @description Lấy vai trò (role) của user theo id
+   * @param {number} id - ID của user
+   * @returns {Promise<string|null>} Vai trò ('user','shop','shipper','admin') hoặc null
    */
-  async getUsersByRole(role) {
-    const query = `
-      SELECT * FROM users
-      WHERE role = $1
-      ORDER BY created_at DESC;
-    `;
-    const result = await pool.query(query, [role]);
-    return result.rows.map(row => new User(row));
+  async getRoleById(id) {
+    const res = await pool.query(`SELECT role FROM users WHERE id = $1`, [id]);
+    return res.rows[0] ? res.rows[0].role : null;
   }
 }
 
