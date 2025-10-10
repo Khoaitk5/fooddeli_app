@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -14,46 +14,88 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { pxW, pxH } from "../../utils/scale.js";
 
-const AddAdress = () => {
+const AddAddress = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // ✅ Nhận lại dữ liệu form cũ từ ProfileRegister nếu có
   const prevState = location.state || {};
 
-  const [isDefault, setIsDefault] = useState(false);
   const [form, setForm] = useState({
-    addressType: "",
+    address_type: "",
     note: "",
     detail: "",
     ward: "",
     city: "",
   });
 
-  // Demo data – replace with API when available
-  const provinceOptions = ["Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng"];
-  const wardOptions = ["Phường 1", "Phường 2", "Phường 3", "Xã A"];
+  const [isDefault, setIsDefault] = useState(false);
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  // ✅ 1. Lấy danh sách TỈNH/THÀNH khi load
+  useEffect(() => {
+    fetch("https://provinces.open-api.vn/api/p/")
+      .then((res) => res.json())
+      .then((data) => setProvinces(data))
+      .catch((err) => console.error("Lỗi tải tỉnh:", err));
+  }, []);
+
+  // ✅ 2. Khi chọn TỈNH → Lấy danh sách HUYỆN
+  const handleProvinceChange = (e) => {
+    const provinceCode = e.target.value;
+    const province = provinces.find((p) => p.code === provinceCode);
+    setForm((prev) => ({ ...prev, city: province.name, ward: "" }));
+    setWards([]);
+    setDistricts([]);
+
+    fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
+      .then((res) => res.json())
+      .then((data) => {
+        setDistricts(data.districts);
+      })
+      .catch((err) => console.error("Lỗi tải quận:", err));
+  };
+
+  // ✅ 3. Khi chọn HUYỆN → Lấy danh sách XÃ
+  const handleDistrictChange = (e) => {
+    const districtCode = e.target.value;
+    
+    fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
+      .then((res) => res.json())
+      .then((data) => {
+        setWards(data.wards);
+      })
+      .catch((err) => console.error("Lỗi tải xã:", err));
+  };
+
+  const handleWardChange = (e) => {
+    const wardCode = e.target.value;
+    const ward = wards.find((w) => w.code === wardCode);
+    setForm((prev) => ({ ...prev, ward: ward.name }));
   };
 
   const handleSubmit = () => {
-    const { addressType, detail, ward, city } = form;
-    if (!addressType || !detail || !ward || !city) {
+    const { address_type, detail, ward, city } = form;
+    if (!address_type || !detail || !ward || !city) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin bắt buộc!");
       return;
     }
 
-    const payload = { ...form, isDefault };
+    const payload = {
+      addressType: address_type,
+      note: form.note,
+      detail,
+      ward,
+      city,
+      isDefault,
+    };
+
     console.log("✅ Địa chỉ mới:", payload);
 
-    // ✅ Quay lại trang ProfileRegister và giữ nguyên state cũ + địa chỉ mới
-    navigate("/ProfileRegister", {
+    navigate("/profileRegister", {
       state: {
-        ...prevState, // giữ lại username, fullName, email, phone,...
-        address: payload, // gửi thêm địa chỉ
+        ...prevState,
+        address: payload,
       },
     });
   };
@@ -112,9 +154,11 @@ const AddAdress = () => {
         <Divider sx={{ mb: 2 }} />
 
         <TextField
-          name="addressType"
-          value={form.addressType}
-          onChange={handleChange}
+          name="address_type"
+          value={form.address_type}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, address_type: e.target.value }))
+          }
           placeholder="Loại địa chỉ (nhà, cơ quan, khác,...)"
           fullWidth
           sx={{ mb: 2 }}
@@ -124,7 +168,9 @@ const AddAdress = () => {
         <TextField
           name="note"
           value={form.note}
-          onChange={handleChange}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, note: e.target.value }))
+          }
           placeholder="Ghi chú giao hàng (tuỳ chọn)"
           fullWidth
           sx={{ mb: 2 }}
@@ -136,7 +182,9 @@ const AddAdress = () => {
         <TextField
           name="detail"
           value={form.detail}
-          onChange={handleChange}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, detail: e.target.value }))
+          }
           placeholder="Địa chỉ chi tiết"
           fullWidth
           sx={{ mb: 2 }}
@@ -144,41 +192,75 @@ const AddAdress = () => {
         />
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
+          {/* 🔹 Tỉnh/Thành */}
           <Grid item xs={6}>
             <FormControl
               fullWidth
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             >
               <Select
-                name="ward"
-                value={form.ward}
-                onChange={handleChange}
+                value={
+                  provinces.find((p) => p.name === form.city)?.code || ""
+                }
+                onChange={handleProvinceChange}
                 displayEmpty
-                renderValue={(selected) => selected || "Xã/Phường"}
+                renderValue={(selected) =>
+                  selected
+                    ? provinces.find((p) => p.code === selected)?.name
+                    : "Tỉnh/Thành phố"
+                }
               >
-                {wardOptions.map((w) => (
-                  <MenuItem key={w} value={w}>
-                    {w}
+                {provinces.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Grid>
+
+          {/* 🔹 Huyện */}
           <Grid item xs={6}>
             <FormControl
               fullWidth
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             >
               <Select
-                name="city"
-                value={form.city}
-                onChange={handleChange}
+                onChange={handleDistrictChange}
                 displayEmpty
-                renderValue={(selected) => selected || "Tỉnh/Thành Phố"}
+                renderValue={(selected) =>
+                  selected
+                    ? districts.find((d) => d.code === selected)?.name
+                    : "Quận/Huyện"
+                }
               >
-                {provinceOptions.map((p) => (
-                  <MenuItem key={p} value={p}>
-                    {p}
+                {districts.map((d) => (
+                  <MenuItem key={d.code} value={d.code}>
+                    {d.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* 🔹 Xã/Phường */}
+          <Grid item xs={12}>
+            <FormControl
+              fullWidth
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            >
+              <Select
+                onChange={handleWardChange}
+                displayEmpty
+                renderValue={(selected) =>
+                  selected
+                    ? wards.find((w) => w.code === selected)?.name
+                    : "Xã/Phường"
+                }
+              >
+                {wards.map((w) => (
+                  <MenuItem key={w.code} value={w.code}>
+                    {w.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -206,4 +288,4 @@ const AddAdress = () => {
   );
 };
 
-export default AddAdress;
+export default AddAddress;

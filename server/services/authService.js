@@ -15,52 +15,33 @@ exports.login = async (phone, password) => {
 };
 
 exports.register = async (userData) => {
-  // 🧠 Nhận dữ liệu từ frontend
+  console.log("📩 [DEBUG] userData nhận vào từ controller:", userData);
   const {
     username,
-    fullname,        // 📌 FE gửi là fullname (camelCase)
+    fullname,
     password,
     phone,
     email,
     address,
+    note,
+    address_type,
     role = "user",
   } = userData;
 
-  // 📌 Kiểm tra bắt buộc: phải có password
-  if (!password) {
-    throw new Error("Mật khẩu là bắt buộc");
-  }
+  if (!password) throw new Error("Mật khẩu là bắt buộc");
+  if (!phone && !email) throw new Error("Phải cung cấp ít nhất số điện thoại hoặc email");
 
-  // 📌 Kiểm tra: phải có ít nhất 1 trong 2 trường: phone hoặc email
-  if (!phone && !email) {
-    throw new Error("Phải cung cấp ít nhất số điện thoại hoặc email");
-  }
+  // 🧩 Kiểm tra trùng username, phone, email
+  if (username && (await userDao.findByUsername(username))) throw new Error("Tên đăng nhập đã tồn tại");
+  if (phone && (await userDao.findByPhone(phone))) throw new Error("Số điện thoại đã được sử dụng");
+  if (email && (await userDao.findByEmail(email))) throw new Error("Email đã được sử dụng");
 
-  // 📌 Kiểm tra trùng username
-  if (username) {
-    const existingUsername = await userDao.findByUsername(username);
-    if (existingUsername) throw new Error("Tên đăng nhập đã tồn tại");
-  }
-
-  // 📌 Kiểm tra trùng số điện thoại
-  if (phone) {
-    const existingPhone = await userDao.findByPhone(phone);
-    if (existingPhone) throw new Error("Số điện thoại đã được sử dụng");
-  }
-
-  // 📌 Kiểm tra trùng email
-  if (email) {
-    const existingEmail = await userDao.findByEmail(email);
-    if (existingEmail) throw new Error("Email đã được sử dụng");
-  }
-
-  // 🔐 Hash mật khẩu
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 📦 1️⃣ Tạo user mới trong DB
+  // 1️⃣ Tạo user mới
   const newUser = await userDao.create({
     username,
-    full_name: fullname,          // 📌 ánh xạ fullname từ FE -> full_name trong DB
+    full_name: fullname,
     password: hashedPassword,
     phone: phone || null,
     email: email || null,
@@ -68,20 +49,48 @@ exports.register = async (userData) => {
     status: "active",
   });
 
-  // 🏡 2️⃣ Nếu có nhập địa chỉ -> tạo luôn địa chỉ mặc định
+  // 2️⃣ Xử lý địa chỉ nếu có
   if (address) {
-    const addr = await addressDao.addAddress({
-      user_id: newUser.id,
-      address_line: address,
-      is_default: true,
-    });
+  let addressLine = "";
+  let addressNote = "";
+  let addressType = "Nhà";
 
-    // 📌 Gán vào newUser để controller có thể trả về cho FE
-    newUser.address = addr.address_line;
+  if (typeof address === "object" && address !== null) {
+    const {
+      detail,
+      ward,
+      city,
+      note: noteFromFE,
+      addressType: addressTypeFromFE,
+      address_type: addressTypeSnake,
+    } = address;
+
+    addressLine = `${detail || ""}${ward || city ? ", " : ""}${ward || ""}${
+      ward && city ? ", " : ""
+    }${city || ""}`;
+
+    addressNote = noteFromFE || note || "";
+    addressType = addressTypeFromFE || addressTypeSnake || "Nhà";
+  } else if (typeof address === "string") {
+    // 🧩 Thêm đoạn này 👇
+    addressLine = address;
+    addressNote = note || ""; // ✅ lấy từ userData
+    addressType = address_type || "Nhà"; // ✅ lấy từ userData
   }
 
-  // 📌 Gán lại fullname cho newUser để controller trả ra đúng key FE mong đợi
-  newUser.fullname = fullname;
+  console.log("✅ [DEBUG] Sau khi xử lý:", { addressLine, addressNote, addressType });
 
+  const addr = await addressDao.addAddress({
+    user_id: newUser.id,
+    address_line: addressLine,
+    note: addressNote,
+    address_type: addressType,
+    is_default: true,
+  });
+}
+
+
+  newUser.fullname = fullname;
   return newUser;
 };
+
