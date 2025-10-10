@@ -1,12 +1,17 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, Fade } from '@mui/material';
 import BottomActionBar from '@/components/Shipper/BottomActionBar';
 import ShipperProvider from '@/contexts/ShipperContext.jsx';
 
 const MobileShipperLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Xác định key active cho BottomActionBar dựa trên path
   const getActiveKey = () => {
@@ -39,24 +44,43 @@ const MobileShipperLayout = () => {
 
   return (
     <ShipperProvider>
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        height: '100vh',
-        backgroundColor: '#f8fafc'
-      }}>
-        {/* Main Content */}
+      <Fade in={mounted} timeout={600}>
         <Box sx={{ 
-          flex: 1, 
-          overflow: 'auto',
-          paddingBottom: '80px' // Chừa chỗ cho bottom navigation
+          display: 'flex', 
+          flexDirection: 'column', 
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
+          position: 'relative',
         }}>
-          <Outlet />
-        </Box>
+          {/* Main Content với smooth scrolling */}
+          <Box sx={{ 
+            flex: 1, 
+            overflow: 'auto',
+            overflowX: 'hidden',
+            paddingBottom: '90px', // Chừa chỗ cho bottom navigation
+            scrollBehavior: 'smooth',
+            WebkitOverflowScrolling: 'touch',
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '3px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(0,0,0,0.3)',
+            },
+          }}>
+            <Outlet />
+          </Box>
 
-        {/* Bottom Action Bar */}
-        <BottomActionBar active={getActiveKey()} onNavigate={handleNavigate} />
-      </Box>
+          {/* Bottom Action Bar */}
+          <BottomActionBar active={getActiveKey()} onNavigate={handleNavigate} />
+        </Box>
+      </Fade>
     </ShipperProvider>
   );
 };

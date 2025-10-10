@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Stack, Typography, Chip, Paper } from '@mui/material';
+import { Box, Stack, Typography, Chip, Paper, Fade, Slide } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useShipper } from '@/hooks/useShipper';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
@@ -8,6 +8,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ScaleIcon from '@mui/icons-material/Scale';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 // Thẻ đơn hàng có thao tác vuốt
 const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
@@ -60,134 +62,416 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
   };
 
   return (
-    <>
-      <Paper
-        elevation={8}
-        sx={{
-          maxWidth: 390,
-          mx: 'auto',
-          mt: 2,
-          borderRadius: 2,
-          overflow: 'hidden',
-          position: 'relative',
-          '&:before': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            background: dragX > 0 ? 'linear-gradient(90deg, rgba(16,185,129,0.08), transparent 40%)' : dragX < 0 ? 'linear-gradient(270deg, rgba(239,68,68,0.08), transparent 40%)' : 'transparent',
-            pointerEvents: 'none',
-          },
-        }}
-      >
-        <Box
-          onMouseDown={handlePointerDown}
-          onMouseMove={handlePointerMove}
-          onMouseUp={handlePointerUp}
-          onMouseLeave={handlePointerUp}
-          onTouchStart={handlePointerDown}
-          onTouchMove={handlePointerMove}
-          onTouchEnd={handlePointerUp}
-          sx={{
-            position: 'relative',
-            transform: `translateX(${dragX}px) rotate(${Math.max(-8, Math.min(8, dragX / 12))}deg)`,
-            transition: isDragging ? 'none' : 'transform 200ms ease',
-            willChange: 'transform',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            userSelect: 'none',
-            touchAction: 'pan-y',
-          }}
-        >
-          {/* Overlay tint */}
-          <Box sx={{ position: 'absolute', inset: 0, borderRadius: 2, background: dragX > 10 ? 'rgba(16,185,129,0.12)' : dragX < -10 ? 'rgba(239,68,68,0.12)' : 'transparent', transition: 'background 150ms ease', pointerEvents: 'none' }} />
-          {/* Header */}
-          <Box sx={{ background: 'linear-gradient(90deg, #fff7ed, #ffffff)', borderBottom: '1px solid rgba(0,0,0,0.06)', p: 2 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Stack direction="row" alignItems="center" spacing={1.25}>
-                <Box sx={{ width: 28, height: 28, borderRadius: '50%', background: '#fff1e9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <LocalMallIcon sx={{ color: '#ff6b35', fontSize: 16 }} />
-                </Box>
-                <Box>
-                  <Typography sx={{ fontSize: 12, color: '#6a7282' }}>Mã đơn</Typography>
-                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#ff6b35' }}>#DH{String(order.id).padStart(3, '0')}</Typography>
-                </Box>
-              </Stack>
-              <Stack direction="row" spacing={1}>
-                <Chip size="small" label="Gấp" sx={{ background: '#ffe2e2', color: '#c10007', fontWeight: 600 }} />
-                <Chip size="small" label={`+${order.bonus.toLocaleString()}đ`} sx={{ background: '#e7f7ee', color: '#008236', fontWeight: 700 }} />
-              </Stack>
-            </Stack>
-
-            {(Math.abs(dragX) > 60) && (
-              <Box sx={{ position: 'absolute', left: '50%', top: '50%', transform: `translate(-50%, -50%) rotate(${Math.max(-6, Math.min(6, dragX / 18))}deg)`, background: dragX > 0 ? '#22c55e' : '#fb2c36', color: '#fff', borderRadius: 2, px: 2, py: 1.25, boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-                {dragX > 0 ? <CheckRoundedIcon sx={{ fontSize: 36 }} /> : <CloseRoundedIcon sx={{ fontSize: 36 }} />}
-              </Box>
-            )}
+    <Fade in timeout={500}>
+      <Box sx={{ position: 'relative', maxWidth: 440, mx: 'auto', px: 2 }}>
+        {/* Background indicators khi swipe */}
+        <Box sx={{
+          position: 'absolute',
+          inset: '0 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}>
+          {/* Left indicator - Từ chối */}
+          <Box sx={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: dragX < -30 ? Math.min(1, Math.abs(dragX) / 100) : 0,
+            transform: `scale(${dragX < -30 ? Math.min(1.2, Math.abs(dragX) / 100 + 0.5) : 0.5})`,
+            transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 8px 24px rgba(239,68,68,0.4)',
+          }}>
+            <CloseRoundedIcon sx={{ fontSize: 40, color: '#fff' }} />
           </Box>
 
-          {/* Body */}
-          <Box sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 1.75 }}>
-              <Box sx={{ width: 12, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: '#2b7fff', boxShadow: '0 0 0 4px #dbeafe' }} />
-                <Box sx={{ width: 2, flex: 1, mt: 1, background: 'linear-gradient(#bedbff, #e5e7eb 50%, #ffd6a7)' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6a7282' }}>Lấy hàng tại</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{order.pickupName}</Typography>
-                <Typography sx={{ fontSize: 14, color: '#4a5565' }}>{order.pickupAddr}</Typography>
-              </Box>
-            </Box>
-
-            <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: 2 }}>
-              <PlaceIcon sx={{ color: '#ed6c66' }} fontSize="small" />
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6a7282' }}>Giao đến</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{order.dropName}</Typography>
-                <Typography sx={{ fontSize: 14, color: '#4a5565' }}>{order.dropAddr}</Typography>
-              </Box>
-            </Stack>
-
-            <Stack direction="row" spacing={1} sx={{ borderTop: '1px solid rgba(0,0,0,0.06)', pt: 1.5, mb: 2 }}>
-              <Box sx={{ flex: 1, background: '#ffffff', border: '1px solid #eef2f7', borderRadius: 2, px: 1, py: 1.25, textAlign: 'center' }}>
-                <Box sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                  <PlaceIcon sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: 12 }}>Khoảng cách</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 14, color: '#111827', fontWeight: 700 }}>{order.distance} km</Typography>
-              </Box>
-              <Box sx={{ flex: 1, background: '#ffffff', border: '1px solid #eef2f7', borderRadius: 2, px: 1, py: 1.25, textAlign: 'center' }}>
-                <Box sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                  <AccessTimeIcon sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: 12 }}>Thời gian</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 14, color: '#111827', fontWeight: 700 }}>{order.eta}</Typography>
-              </Box>
-              <Box sx={{ flex: 1, background: '#ffffff', border: '1px solid #eef2f7', borderRadius: 2, px: 1, py: 1.25, textAlign: 'center' }}>
-                <Box sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                  <ScaleIcon sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: 12 }}>Khối lượng</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 14, color: '#111827', fontWeight: 700 }}>{order.weight}</Typography>
-              </Box>
-            </Stack>
-
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ background: '#fff1e9', borderRadius: 2, px: 1.75, py: 1.75 }}>
-              <Typography sx={{ color: '#ff6b35', fontWeight: 800, fontSize: 18 }}>$ {order.cod.toLocaleString()}đ</Typography>
-              <Typography sx={{ color: '#00a63e', fontWeight: 700 }}>+{order.bonus.toLocaleString()}đ</Typography>
-            </Stack>
+          {/* Right indicator - Chấp nhận */}
+          <Box sx={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: dragX > 30 ? Math.min(1, dragX / 100) : 0,
+            transform: `scale(${dragX > 30 ? Math.min(1.2, dragX / 100 + 0.5) : 0.5})`,
+            transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 8px 24px rgba(34,197,94,0.4)',
+          }}>
+            <CheckRoundedIcon sx={{ fontSize: 40, color: '#fff' }} />
           </Box>
         </Box>
-      </Paper>
 
-      <Box sx={{ maxWidth: 390, mx: 'auto', mt: 1.25, textAlign: 'center' }}>
-        <Typography sx={{ color: '#99a1af', fontWeight: 600 }}>Vuốt để chọn đơn hàng</Typography>
-        <Stack direction="row" alignItems="center" justifyContent="center" spacing={3} sx={{ mt: 1 }}>
-          <Typography sx={{ color: '#fb2c36', fontWeight: 600 }}>✗ Bỏ qua</Typography>
-          <Box sx={{ width: 72, height: 6, borderRadius: 9999, background: '#e5e7eb' }} />
-          <Typography sx={{ color: '#00c950', fontWeight: 700 }}>Nhận đơn ✓</Typography>
-        </Stack>
+        {/* Card chính */}
+        <Paper
+          elevation={12}
+          sx={{
+            borderRadius: 5,
+            overflow: 'hidden',
+            position: 'relative',
+            zIndex: 1,
+            background: '#fff',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
+          }}
+        >
+          <Box
+            onMouseDown={handlePointerDown}
+            onMouseMove={handlePointerMove}
+            onMouseUp={handlePointerUp}
+            onMouseLeave={handlePointerUp}
+            onTouchStart={handlePointerDown}
+            onTouchMove={handlePointerMove}
+            onTouchEnd={handlePointerUp}
+            sx={{
+              position: 'relative',
+              transform: `translateX(${dragX}px) rotate(${Math.max(-6, Math.min(6, dragX / 15))}deg)`,
+              transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              willChange: 'transform',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              userSelect: 'none',
+              touchAction: 'pan-y',
+            }}
+          >
+            {/* Overlay tint động */}
+            <Box sx={{ 
+              position: 'absolute', 
+              inset: 0, 
+              background: dragX > 10 
+                ? `linear-gradient(90deg, rgba(34,197,94,${Math.min(0.15, dragX / 600)}) 0%, transparent 100%)`
+                : dragX < -10 
+                  ? `linear-gradient(270deg, rgba(239,68,68,${Math.min(0.15, Math.abs(dragX) / 600)}) 0%, transparent 100%)`
+                  : 'transparent',
+              transition: 'background 0.2s ease',
+              pointerEvents: 'none',
+              borderRadius: 5,
+            }} />
+
+            {/* Header gradient đẹp */}
+            <Box sx={{ 
+              background: 'linear-gradient(135deg, #fff7ed 0%, #ffffff 100%)', 
+              borderBottom: '1.5px solid rgba(255,107,53,0.1)', 
+              p: 2.5,
+              position: 'relative'
+            }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Box sx={{ 
+                    width: 48, 
+                    height: 48, 
+                    borderRadius: 3, 
+                    background: 'linear-gradient(135deg, #fff1e9 0%, #ffe4d6 100%)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(255,107,53,0.15)'
+                  }}>
+                    <LocalShippingIcon sx={{ color: '#ff6b35', fontSize: 24 }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
+                      Mã đơn hàng
+                    </Typography>
+                    <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#ff6b35', letterSpacing: '0.5px' }}>
+                      #DH{String(order.id).padStart(3, '0')}
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Chip 
+                    label="Gấp 🔥" 
+                    sx={{ 
+                      background: 'linear-gradient(135deg, #fef3c7 0%, #fde047 100%)',
+                      color: '#92400e',
+                      fontWeight: 700,
+                      fontSize: 12,
+                      height: 32,
+                      borderRadius: 2,
+                      boxShadow: '0 2px 8px rgba(253,224,71,0.3)'
+                    }} 
+                  />
+                  <Chip 
+                    label={`+${order.bonus.toLocaleString()}đ`} 
+                    sx={{ 
+                      background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
+                      color: '#166534',
+                      fontWeight: 800,
+                      fontSize: 12,
+                      height: 32,
+                      borderRadius: 2,
+                      boxShadow: '0 2px 8px rgba(34,197,94,0.2)'
+                    }} 
+                  />
+                </Stack>
+              </Stack>
+
+              {/* Swipe action overlay khi kéo mạnh */}
+              {(Math.abs(dragX) > 80) && (
+                <Box sx={{ 
+                  position: 'absolute', 
+                  left: '50%', 
+                  top: '50%', 
+                  transform: `translate(-50%, -50%) rotate(${Math.max(-12, Math.min(12, dragX / 10))}deg) scale(${Math.min(1.2, Math.abs(dragX) / 100)})`, 
+                  background: dragX > 0 
+                    ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' 
+                    : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', 
+                  color: '#fff', 
+                  borderRadius: 4, 
+                  px: 3, 
+                  py: 2, 
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  fontWeight: 700,
+                  fontSize: 16,
+                  animation: 'pulse 0.5s ease-in-out infinite'
+                }}>
+                  {dragX > 0 ? (
+                    <>
+                      <CheckRoundedIcon sx={{ fontSize: 32 }} />
+                      <Typography sx={{ fontWeight: 700, fontSize: 16 }}>NHẬN ĐƠN</Typography>
+                    </>
+                  ) : (
+                    <>
+                      <CloseRoundedIcon sx={{ fontSize: 32 }} />
+                      <Typography sx={{ fontWeight: 700, fontSize: 16 }}>BỎ QUA</Typography>
+                    </>
+                  )}
+                </Box>
+              )}
+            </Box>
+
+            {/* Body - Chi tiết đơn hàng */}
+            <Box sx={{ p: 3 }}>
+              {/* Điểm lấy hàng */}
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mb: 2.5, position: 'relative' }}>
+                <Box sx={{ 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(59,130,246,0.2)'
+                }}>
+                  <LocalMallIcon sx={{ color: '#1d4ed8', fontSize: 20 }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{ fontSize: 13, color: '#6b7280', fontWeight: 500, mb: 0.5 }}>
+                    Lấy hàng tại
+                  </Typography>
+                  <Typography sx={{ fontSize: 17, fontWeight: 700, color: '#111827', mb: 0.5 }}>
+                    {order.pickupName}
+                  </Typography>
+                  <Typography sx={{ fontSize: 14, color: '#6b7280', lineHeight: 1.5 }}>
+                    {order.pickupAddr}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Đường kết nối */}
+              <Box sx={{ 
+                width: 3, 
+                height: 24, 
+                background: 'linear-gradient(180deg, #3b82f6 0%, #ff6b35 100%)',
+                ml: 2.6,
+                mb: 1.5,
+                borderRadius: 2
+              }} />
+
+              {/* Điểm giao hàng */}
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mb: 3 }}>
+                <Box sx={{ 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(255,107,53,0.2)'
+                }}>
+                  <PlaceIcon sx={{ color: '#c2410c', fontSize: 22 }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{ fontSize: 13, color: '#6b7280', fontWeight: 500, mb: 0.5 }}>
+                    Giao đến
+                  </Typography>
+                  <Typography sx={{ fontSize: 17, fontWeight: 700, color: '#111827', mb: 0.5 }}>
+                    {order.dropName}
+                  </Typography>
+                  <Typography sx={{ fontSize: 14, color: '#6b7280', lineHeight: 1.5 }}>
+                    {order.dropAddr}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Stats cards đẹp hơn */}
+              <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+                {[
+                  { icon: <PlaceIcon />, label: 'Khoảng cách', value: `${order.distance} km`, color: '#3b82f6' },
+                  { icon: <AccessTimeIcon />, label: 'Thời gian', value: order.eta, color: '#8b5cf6' },
+                  { icon: <ScaleIcon />, label: 'Khối lượng', value: order.weight, color: '#06b6d4' },
+                ].map((item, idx) => (
+                  <Box 
+                    key={idx}
+                    sx={{ 
+                      flex: 1, 
+                      background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
+                      border: '1px solid rgba(0,0,0,0.06)',
+                      borderRadius: 3,
+                      px: 1.5,
+                      py: 2,
+                      textAlign: 'center',
+                      transition: 'all 0.2s ease',
+                      '&:hover': { 
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                      }
+                    }}
+                  >
+                    <Box sx={{ 
+                      color: item.color, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      mb: 0.75 
+                    }}>
+                      {React.cloneElement(item.icon, { sx: { fontSize: 20 } })}
+                    </Box>
+                    <Typography sx={{ fontSize: 11, color: '#6b7280', fontWeight: 500, mb: 0.5 }}>
+                      {item.label}
+                    </Typography>
+                    <Typography sx={{ fontSize: 15, color: '#111827', fontWeight: 800 }}>
+                      {item.value}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+
+              {/* Thu hộ - highlight */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)',
+                borderRadius: 4,
+                px: 3,
+                py: 2.5,
+                border: '2px solid rgba(255,107,53,0.2)',
+                boxShadow: '0 4px 16px rgba(255,107,53,0.15)'
+              }}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Box sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(255,107,53,0.3)'
+                  }}>
+                    <AttachMoneyIcon sx={{ color: '#fff', fontSize: 22 }} />
+                  </Box>
+                  <Typography sx={{ fontSize: 15, color: '#c2410c', fontWeight: 600 }}>
+                    Thu hộ
+                  </Typography>
+                </Stack>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography sx={{ fontSize: 24, color: '#c2410c', fontWeight: 900, lineHeight: 1 }}>
+                    {order.cod.toLocaleString()}đ
+                  </Typography>
+                  <Typography sx={{ fontSize: 13, color: '#16a34a', fontWeight: 700, mt: 0.5 }}>
+                    +{order.bonus.toLocaleString()}đ thưởng
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Hướng dẫn swipe */}
+        <Box sx={{ textAlign: 'center', mt: 2, px: 2 }}>
+          <Typography sx={{ 
+            color: '#9ca3af', 
+            fontWeight: 600,
+            fontSize: 15,
+            mb: 1.5,
+            letterSpacing: '0.5px'
+          }}>
+            👆 Vuốt để chọn đơn hàng
+          </Typography>
+          <Stack direction="row" alignItems="center" justifyContent="center" spacing={2}>
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <Box sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(239,68,68,0.3)'
+              }}>
+                <CloseRoundedIcon sx={{ color: '#fff', fontSize: 18 }} />
+              </Box>
+              <Typography sx={{ color: '#ef4444', fontWeight: 700, fontSize: 14 }}>
+                Bỏ qua
+              </Typography>
+            </Stack>
+
+            <Box sx={{ 
+              width: 80, 
+              height: 8, 
+              borderRadius: 4,
+              background: 'linear-gradient(90deg, #ef4444 0%, #e5e7eb 50%, #22c55e 100%)',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                background: '#fff',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }
+            }} />
+
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <Typography sx={{ color: '#22c55e', fontWeight: 700, fontSize: 14 }}>
+                Nhận đơn
+              </Typography>
+              <Box sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(34,197,94,0.3)'
+              }}>
+                <CheckRoundedIcon sx={{ color: '#fff', fontSize: 18 }} />
+              </Box>
+            </Stack>
+          </Stack>
+        </Box>
       </Box>
-    </>
+    </Fade>
   );
 };
 
@@ -217,43 +501,147 @@ const ActiveOrder = () => {
   }, [queue.length, navigate]);
 
   return (
-    <Box sx={{ pb: 3 }}>
-      {/* Header gradient */}
-      <Box sx={{ background: 'linear-gradient(90deg, #ff6b35, #f54900)' }}>
-        <Box
-          sx={{
-            maxWidth: 390,
-            mx: 'auto',
-            borderBottomLeftRadius: 28,
-            borderBottomRightRadius: 28,
-            color: '#fff',
-            px: 2.5,
-            pt: 2,
-            pb: 1.75,
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.10), 0px 4px 6px -4px rgba(0,0,0,0.10)'
-          }}
-        >
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Box>
-              <Typography sx={{ fontSize: 14, opacity: 0.85 }}>Xin chào 👋</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Đơn hàng khả dụng</Typography>
-            </Box>
-            <Box sx={{ background: 'rgba(255,255,255,0.20)', borderRadius: 2, px: 2, py: 1 }}>
-              <Typography sx={{ fontSize: 12, opacity: 0.85 }}>Còn lại</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 700 }}>5 đơn</Typography>
-            </Box>
-          </Stack>
-        </Box>
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #fff5f2 0%, #f0f9ff 50%, #fef3c7 100%)',
+      pb: 12
+    }}>
+      {/* Header đẹp hơn */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.1)',
+          transform: 'translate(30%, -30%)'
+        }
+      }}>
+        <Fade in timeout={600}>
+          <Box
+            sx={{
+              maxWidth: 480,
+              mx: 'auto',
+              borderBottomLeftRadius: 32,
+              borderBottomRightRadius: 32,
+              color: '#fff',
+              px: 3,
+              pt: 3,
+              pb: 3,
+              boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+              position: 'relative',
+              zIndex: 1
+            }}
+          >
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography sx={{ 
+                  fontSize: 15, 
+                  opacity: 0.9,
+                  fontWeight: 500,
+                  mb: 0.5,
+                  letterSpacing: '0.5px'
+                }}>
+                  Xin chào 👋
+                </Typography>
+                <Typography sx={{ 
+                  fontSize: 24, 
+                  fontWeight: 800,
+                  letterSpacing: '0.5px'
+                }}>
+                  Đơn hàng khả dụng
+                </Typography>
+              </Box>
+              <Box sx={{ 
+                background: 'rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: 3,
+                px: 2.5,
+                py: 1.5,
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                <Typography sx={{ fontSize: 12, opacity: 0.9, fontWeight: 500, mb: 0.25 }}>
+                  Còn lại
+                </Typography>
+                <Typography sx={{ fontSize: 22, fontWeight: 800, letterSpacing: '1px' }}>
+                  {queue.length} đơn
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+        </Fade>
       </Box>
 
-      {/* Chỉ hiển thị 1 thẻ đầu hàng đợi. Sau khi vuốt hủy, hiển thị thẻ kế tiếp */}
-      {queue.length > 0 ? (
-        <SwipeOrderCard order={queue[0]} onRejected={handleRejected} onAccepted={handleAccepted} />
-      ) : (
-        <Box sx={{ maxWidth: 390, mx: 'auto', mt: 4, textAlign: 'center', color: '#6B7280' }}>
-          <Typography>Hiện chưa có đơn mới. Đang chuyển về Trang chủ để quét...</Typography>
-        </Box>
-      )}
+      {/* Content area */}
+      <Box sx={{ mt: -4, position: 'relative', zIndex: 2 }}>
+        {queue.length > 0 ? (
+          <Box sx={{ mt: 6 }}>
+            <SwipeOrderCard order={queue[0]} onRejected={handleRejected} onAccepted={handleAccepted} />
+          </Box>
+        ) : (
+          <Fade in timeout={600}>
+            <Box sx={{ 
+              maxWidth: 400, 
+              mx: 'auto', 
+              mt: 12,
+              px: 3, 
+              textAlign: 'center'
+            }}>
+              <Box sx={{
+                width: 120,
+                height: 120,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                fontSize: 48,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
+              }}>
+                📦
+              </Box>
+              <Typography sx={{ 
+                fontSize: 20, 
+                fontWeight: 700, 
+                color: '#374151',
+                mb: 1.5
+              }}>
+                Đã hết đơn hàng khả dụng
+              </Typography>
+              <Typography sx={{ 
+                fontSize: 15, 
+                color: '#6b7280',
+                lineHeight: 1.6,
+                mb: 2
+              }}>
+                Đang chuyển về Trang chủ để quét đơn mới...
+              </Typography>
+              <Box sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                border: '3px solid #e5e7eb',
+                borderTopColor: '#ff6b35',
+                animation: 'spin 1s linear infinite',
+                mx: 'auto',
+                '@keyframes spin': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '100%': { transform: 'rotate(360deg)' }
+                }
+              }} />
+            </Box>
+          </Fade>
+        )}
+      </Box>
     </Box>
   );
 };

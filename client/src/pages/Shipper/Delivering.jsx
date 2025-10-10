@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Stack, Typography, Paper, Chip, Button, LinearProgress } from '@mui/material';
+import { Box, Stack, Typography, Paper, Chip, Button, Fade, Slide, Zoom } from '@mui/material';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PersonIcon from '@mui/icons-material/Person';
@@ -9,6 +9,7 @@ import RoomIcon from '@mui/icons-material/Room';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import InfoIcon from '@mui/icons-material/Info';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useShipper } from '@/hooks/useShipper';
 
 // Trang Đang giao (Delivering) - Thiết kế mới từ Figma
@@ -85,54 +86,77 @@ const Delivering = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, rgba(255,247,237,0.2) 0%, #ffffff 100%)',
-      pb: 10
+      background: 'linear-gradient(135deg, #fff5f2 0%, #f0f9ff 100%)',
+      pb: 12
     }}>
-      {/* Header với progress */}
-      <Box sx={{ 
-        background: 'linear-gradient(90deg, #ff6b35 0%, #ff6900 100%)',
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-        pt: 2.5,
-        pb: 3,
-        px: 2.5,
-        boxShadow: '0px 25px 50px -12px rgba(0,0,0,0.25)'
-      }}>
-        <Stack spacing={3}>
-          {/* Mã đơn hàng */}
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography sx={{ 
-              fontSize: 12, 
-              color: 'rgba(255,255,255,0.7)',
-              textTransform: 'uppercase',
-              letterSpacing: '1.2px',
-              mb: 1
-            }}>
-              Đơn hàng
-            </Typography>
-            <Typography sx={{ 
-              fontSize: 30, 
-              fontWeight: 700,
-              color: '#fff',
-              mb: 1
-            }}>
-              {displayCode}
-            </Typography>
-            <Chip 
-              label={order.status === 'picking' ? 'Đang đến lấy hàng' : 'Đang giao hàng'}
-              sx={{ 
-                background: 'rgba(255,255,255,0.25)',
-                color: '#fff',
-                fontWeight: 500,
-                fontSize: 12,
-                height: 32,
-                borderRadius: 2
-              }}
-            />
-          </Box>
+      {/* Header với progress - Cải thiện responsive */}
+      <Slide direction="down" in timeout={600}>
+        <Box sx={{ 
+          background: 'linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)',
+          borderBottomLeftRadius: 32,
+          borderBottomRightRadius: 32,
+          pt: 3,
+          pb: 3.5,
+          px: 3,
+          boxShadow: '0 16px 48px rgba(255,107,53,0.25)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: 250,
+            height: 250,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)',
+            transform: 'translate(30%, -30%)'
+          }
+        }}>
+          <Stack spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
+            {/* Mã đơn hàng - Cải thiện responsive */}
+            <Fade in timeout={800}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography sx={{ 
+                  fontSize: 13, 
+                  color: 'rgba(255,255,255,0.85)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.5px',
+                  fontWeight: 600,
+                  mb: 1
+                }}>
+                  ĐƠN HÀNG ĐANG GIAO
+                </Typography>
+                <Typography sx={{ 
+                  fontSize: 32, 
+                  fontWeight: 900,
+                  color: '#fff',
+                  mb: 1.5,
+                  letterSpacing: '1px',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                }}>
+                  {displayCode}
+                </Typography>
+                <Chip 
+                  label={order.status === 'picking' ? '📦 Đang đến lấy hàng' : '🚚 Đang giao hàng'}
+                  sx={{ 
+                    background: 'rgba(255,255,255,0.25)',
+                    backdropFilter: 'blur(10px)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    height: 36,
+                    borderRadius: 3,
+                    px: 2,
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                />
+              </Box>
+            </Fade>
 
-          {/* Progress bar */}
-          <Stack direction="row" spacing={0} alignItems="center" justifyContent="center">
+            {/* Progress bar - Cải thiện animations */}
+            <Stack direction="row" spacing={0} alignItems="center" justifyContent="center">
             {/* Bước 1: Lấy hàng */}
             <Stack alignItems="center" spacing={1.5} sx={{ width: 64 }}>
               <Box sx={{
@@ -248,8 +272,9 @@ const Delivering = () => {
               </Typography>
             </Stack>
           </Stack>
-        </Stack>
-      </Box>
+          </Stack>
+        </Box>
+      </Slide>
 
       {/* Bản đồ placeholder */}
       <Box sx={{ px: 2, mt: -6, position: 'relative', zIndex: 1 }}>
