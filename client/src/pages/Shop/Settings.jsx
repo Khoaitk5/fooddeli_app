@@ -182,68 +182,74 @@ const ShopSettings = () => {
           </Grid>
         </Grid>
 
-{/* THÔNG BÁO + BẢO MẬT */}
-<Grid container spacing={3} sx={{ mt: 2 }}>
-  {[
-    {
-      icon: <NotificationsIcon sx={{ color: "#F9704B", fontSize: 30, mb: 1 }} />,
-      title: "Thông báo",
-      desc: "Quản lý loại thông báo bạn muốn nhận.",
-      button: "Chỉnh sửa",
-      action: () => setOpenNotification(true),
-    },
-    {
-      icon: <SecurityIcon sx={{ color: "#F9704B", fontSize: 30, mb: 1 }} />,
-      title: "Bảo mật",
-      desc: "Quản lý mật khẩu tài khoản của bạn.",
-      button: "Đổi mật khẩu",
-      action: () => setOpenPassword(true),
-    },
-  ].map((item, i) => (
-    <Grid item xs={12} md={6} key={i}>
-      <Paper
-        elevation={2}
-        sx={{
-          p: 3,
-          borderRadius: 3,
-          textAlign: "center",
-          height: "100%",
-          transition: "all 0.3s ease",
-          "&:hover": { boxShadow: "0 6px 18px rgba(0,0,0,0.06)" },
-        }}
-      >
-        {item.icon}
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 600, color: "#1E293B", mb: 1 }}
-        >
-          {item.title}
-        </Typography>
-        <Typography sx={{ color: "#6B7280", mb: 2 }}>{item.desc}</Typography>
-
-        <Button
-          variant="outlined"
-          fullWidth
-          onClick={item.action}
-          sx={{
-            borderColor: "#F9704B",
-            color: "#F9704B",
-            fontWeight: 600,
-            textTransform: "none",
-            "&:hover": {
-              borderColor: "#e55a3a",
-              backgroundColor: "rgba(249, 112, 75, 0.04)",
+        {/* THÔNG BÁO + BẢO MẬT */}
+        <Grid container spacing={3} sx={{ mt: 2 }}>
+          {[
+            {
+              icon: (
+                <NotificationsIcon
+                  sx={{ color: "#F9704B", fontSize: 30, mb: 1 }}
+                />
+              ),
+              title: "Thông báo",
+              desc: "Quản lý loại thông báo bạn muốn nhận.",
+              button: "Chỉnh sửa",
+              action: () => setOpenNotification(true),
             },
-          }}
-        >
-          {item.button}
-        </Button>
-      </Paper>
-    </Grid>
-  ))}
-</Grid>
+            {
+              icon: (
+                <SecurityIcon sx={{ color: "#F9704B", fontSize: 30, mb: 1 }} />
+              ),
+              title: "Bảo mật",
+              desc: "Quản lý mật khẩu tài khoản của bạn.",
+              button: "Đổi mật khẩu",
+              action: () => setOpenPassword(true),
+            },
+          ].map((item, i) => (
+            <Grid item xs={12} md={6} key={i}>
+              <Paper
+                elevation={2}
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  textAlign: "center",
+                  height: "100%",
+                  transition: "all 0.3s ease",
+                  "&:hover": { boxShadow: "0 6px 18px rgba(0,0,0,0.06)" },
+                }}
+              >
+                {item.icon}
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "#1E293B", mb: 1 }}
+                >
+                  {item.title}
+                </Typography>
+                <Typography sx={{ color: "#6B7280", mb: 2 }}>
+                  {item.desc}
+                </Typography>
 
-
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={item.action}
+                  sx={{
+                    borderColor: "#F9704B",
+                    color: "#F9704B",
+                    fontWeight: 600,
+                    textTransform: "none",
+                    "&:hover": {
+                      borderColor: "#e55a3a",
+                      backgroundColor: "rgba(249, 112, 75, 0.04)",
+                    },
+                  }}
+                >
+                  {item.button}
+                </Button>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
 
         {/* Divider */}
         <Divider sx={{ my: 4 }} />
@@ -280,15 +286,30 @@ const ShopSettings = () => {
         </Typography>
 
         {/* Dialog - Thông báo */}
-        <Dialog open={openNotification} onClose={() => setOpenNotification(false)}>
+        <Dialog
+          open={openNotification}
+          onClose={() => setOpenNotification(false)}
+        >
           <DialogTitle sx={{ fontWeight: 700, color: "#F9704B" }}>
             Cài đặt thông báo
           </DialogTitle>
           <DialogContent>
-            <FormControlLabel control={<Switch defaultChecked />} label="Thông báo đơn hàng mới" />
-            <FormControlLabel control={<Switch defaultChecked />} label="Thông báo đánh giá" />
-            <FormControlLabel control={<Switch />} label="Thông báo khuyến mãi" />
-            <FormControlLabel control={<Switch defaultChecked />} label="Thông báo hệ thống" />
+            <FormControlLabel
+              control={<Switch defaultChecked />}
+              label="Thông báo đơn hàng mới"
+            />
+            <FormControlLabel
+              control={<Switch defaultChecked />}
+              label="Thông báo đánh giá"
+            />
+            <FormControlLabel
+              control={<Switch />}
+              label="Thông báo khuyến mãi"
+            />
+            <FormControlLabel
+              control={<Switch defaultChecked />}
+              label="Thông báo hệ thống"
+            />
           </DialogContent>
           <DialogActions sx={{ pr: 3, pb: 2 }}>
             <Button onClick={() => setOpenNotification(false)}>Hủy</Button>
@@ -318,8 +339,17 @@ const ShopSettings = () => {
               type="password"
               sx={{ mt: 1.5, mb: 2 }}
             />
-            <TextField fullWidth label="Mật khẩu mới" type="password" sx={{ mb: 2 }} />
-            <TextField fullWidth label="Xác nhận mật khẩu mới" type="password" />
+            <TextField
+              fullWidth
+              label="Mật khẩu mới"
+              type="password"
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Xác nhận mật khẩu mới"
+              type="password"
+            />
           </DialogContent>
           <DialogActions sx={{ pr: 3, pb: 2 }}>
             <Button onClick={() => setOpenPassword(false)}>Hủy</Button>

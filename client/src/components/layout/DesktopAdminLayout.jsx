@@ -27,6 +27,7 @@ import {
   Store,
   LocalShipping,
   BarChart,
+  AccountBalanceWallet as WalletIcon, // 💰 thêm icon ví
 } from "@mui/icons-material";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -41,9 +42,11 @@ const DesktopAdminLayout = () => {
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
+  // 🟢 Nhóm Dashboard — thêm mục "Ví hệ thống"
   const dashboardItems = [
     { text: "Tổng quan", icon: <Dashboard fontSize="small" />, path: "/admin/dashboard" },
     { text: "Thống kê doanh thu", icon: <BarChart fontSize="small" />, path: "/admin/revenue" },
+
   ];
 
   const manageItems = [
@@ -55,9 +58,11 @@ const DesktopAdminLayout = () => {
 
   const systemItems = [
     { text: "Duyệt đăng ký", icon: <Verified fontSize="small" />, path: "/admin/approvals" },
+    { text: "Ví hệ thống", icon: <WalletIcon fontSize="small" />, path: "/admin/wallet" }, // 🪙 Thêm mới
     { text: "Cài đặt hệ thống", icon: <Settings fontSize="small" />, path: "/admin/system" },
   ];
 
+  // 🧱 Render danh sách menu nhóm
   const renderMenuGroup = (title, items) => (
     <List
       subheader={
@@ -105,7 +110,7 @@ const DesktopAdminLayout = () => {
                   ml: 1,
                   "& .MuiListItemText-primary": {
                     fontWeight: selected ? 600 : 400,
-                    fontSize: "0.88rem", // ✅ chữ nhỏ gọn hơn
+                    fontSize: "0.88rem",
                   },
                 }}
               />
@@ -116,6 +121,7 @@ const DesktopAdminLayout = () => {
     </List>
   );
 
+  // 🧱 Nội dung Drawer
   const drawer = (
     <Box
       sx={{
@@ -127,6 +133,7 @@ const DesktopAdminLayout = () => {
         borderColor: "divider",
       }}
     >
+      {/* Header */}
       <Toolbar sx={{ px: 2, py: 1.5 }}>
         <Stack direction="row" spacing={1.2} alignItems="center">
           <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32, fontSize: "0.9rem" }}>FD</Avatar>
@@ -143,11 +150,11 @@ const DesktopAdminLayout = () => {
 
       <Divider />
 
-      {/* ✅ Sidebar Menu - không còn scroll */}
+      {/* Sidebar Menu */}
       <Box
         sx={{
           flex: 1,
-          overflow: "hidden", // ❌ bỏ thanh cuộn
+          overflow: "hidden",
           mt: 0.5,
           "& svg": { fontSize: "1.1rem" },
         }}
@@ -159,7 +166,7 @@ const DesktopAdminLayout = () => {
 
       <Divider />
 
-      {/* ✅ Footer Admin */}
+      {/* Footer */}
       <Box sx={{ p: 2 }}>
         <Stack direction="row" spacing={1.2} alignItems="center">
           <Avatar sx={{ bgcolor: "primary.light", width: 30, height: 30, fontSize: "0.85rem" }}>AD</Avatar>
@@ -176,8 +183,10 @@ const DesktopAdminLayout = () => {
     </Box>
   );
 
+  // 🧱 Layout chính
   return (
     <Box sx={{ display: "flex" }}>
+      {/* Header */}
       <AppBar
         color="inherit"
         position="fixed"
@@ -211,8 +220,9 @@ const DesktopAdminLayout = () => {
         </Toolbar>
       </AppBar>
 
-      {/* 📂 Sidebar */}
+      {/* Sidebar Drawer */}
       <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+        {/* Drawer mobile */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -226,6 +236,7 @@ const DesktopAdminLayout = () => {
           {drawer}
         </Drawer>
 
+        {/* Drawer desktop */}
         <Drawer
           variant="permanent"
           sx={{
@@ -235,7 +246,7 @@ const DesktopAdminLayout = () => {
               width: drawerWidth,
               borderRight: "1px solid",
               borderColor: "divider",
-              overflow: "hidden", // ✅ không scroll
+              overflow: "hidden",
             },
           }}
           open
@@ -244,7 +255,7 @@ const DesktopAdminLayout = () => {
         </Drawer>
       </Box>
 
-      {/* 📊 Nội dung */}
+      {/* Nội dung chính */}
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}>
         <Toolbar />
         <Outlet />
