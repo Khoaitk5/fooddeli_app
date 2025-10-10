@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, List, ListItemButton, ListItemIcon, ListItemText, Divider, Avatar, Card, CardActionArea, CardContent, Stack, Grid, Button, IconButton } from '@mui/material';
+import { Box, Typography, List, ListItemButton, ListItemIcon, ListItemText, Avatar, Card, CardActionArea, CardContent, Stack, Grid, Button, IconButton, Paper, Chip } from '@mui/material';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -10,6 +10,8 @@ import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import SouthWestOutlinedIcon from '@mui/icons-material/SouthWestOutlined';
 import NorthEastOutlinedIcon from '@mui/icons-material/NorthEastOutlined';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import { useShipper } from '@/hooks/useShipper';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIosNewOutlinedIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
@@ -22,171 +24,372 @@ const Wallet = () => {
   const cashBalance = shipper.wallet?.cash ?? 405; // VND (mock)
   const creditBalance = shipper.wallet?.credit ?? 310864; // VND (mock)
 
-  return (
-    <Box sx={{ maxWidth: 420, mx: 'auto', p: 2.5 }}>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-        <IconButton onClick={() => navigate(-1)} size="small" sx={{ mr: 0.5 }}>
-          <ArrowBackIosNewOutlinedIcon />
-        </IconButton>
-        <Typography sx={{ fontSize: 20, fontWeight: 800 }}>Ví</Typography>
-      </Stack>
+  const actionButtons = [
+    { icon: <NorthEastOutlinedIcon />, label: 'Nạp tiền', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+    { icon: <SouthWestOutlinedIcon />, label: 'Rút tiền', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+    { icon: <LinkOutlinedIcon />, label: 'Liên kết', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+    { icon: <HistoryOutlinedIcon />, label: 'Lịch sử', gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
+  ];
 
-      {/* Thẻ tổng quan số dư nổi bật */}
-      <Box sx={{
-        borderRadius: 3,
-        p: 2,
-        background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-        color: '#fff',
-        boxShadow: '0 12px 30px rgba(22,163,74,0.35)',
+  return (
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)',
+      pb: 4
+    }}>
+      {/* Header */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        pt: 2,
+        pb: 8,
+        px: 2.5,
         position: 'relative',
-        overflow: 'hidden',
-        mb: 2
+        overflow: 'hidden'
       }}>
-        <Box sx={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', right: -40, top: -30 }} />
-        <Box sx={{ position: 'absolute', width: 90, height: 90, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', right: 10, bottom: -25 }} />
-        <Stack direction="row" alignItems="center" spacing={1.5}>
-          <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.65)', width: 44, height: 44 }}>
-            <AccountBalanceWalletOutlinedIcon />
-          </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ opacity: 0.9 }}>Tổng số dư</Typography>
-            <Typography sx={{ fontSize: 28, fontWeight: 900 }}>đ {(cashBalance + creditBalance).toLocaleString()}</Typography>
-          </Box>
+        {/* Decorative circles */}
+        <Box sx={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', right: -50, top: -80 }} />
+        <Box sx={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', left: -40, top: 50 }} />
+        
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ position: 'relative', zIndex: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <IconButton 
+              onClick={() => navigate(-1)} 
+              size="small" 
+              sx={{ 
+                color: '#fff',
+                bgcolor: 'rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(10px)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
+              }}
+            >
+              <ArrowBackIosNewOutlinedIcon fontSize="small" />
+            </IconButton>
+            <Typography sx={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>Ví của tôi</Typography>
+          </Stack>
+          <Chip 
+            icon={<StarRoundedIcon sx={{ color: '#fbbf24 !important' }} />}
+            label="VIP" 
+            size="small"
+            sx={{ 
+              bgcolor: 'rgba(255,255,255,0.95)',
+              color: '#10b981',
+              fontWeight: 700,
+              fontSize: 11
+            }} 
+          />
+        </Stack>
+      </Box>
+
+      <Box sx={{ maxWidth: 420, mx: 'auto', px: 2.5, mt: -6, position: 'relative', zIndex: 2 }}>
+        {/* Main Balance Card - Glassmorphism */}
+        <Paper sx={{
+          borderRadius: 4,
+          p: 3,
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.8)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.05)',
+          position: 'relative',
+          overflow: 'hidden',
+          mb: 3
+        }}>
+          {/* Subtle gradient overlay */}
+          <Box sx={{ 
+            position: 'absolute', 
+            top: 0, 
+            right: 0, 
+            width: '50%', 
+            height: '100%',
+            background: 'linear-gradient(135deg, transparent 0%, rgba(16,185,129,0.08) 100%)',
+            pointerEvents: 'none'
+          }} />
+          
+          <Stack spacing={2.5} sx={{ position: 'relative', zIndex: 1 }}>
+            <Box>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                <Typography sx={{ fontSize: 13, color: '#6B7280', fontWeight: 600, letterSpacing: 0.5 }}>
+                  TỔNG SỐ DÒ KHẢ DỤNG
+                </Typography>
+                <TrendingUpIcon sx={{ fontSize: 16, color: '#10b981' }} />
+              </Stack>
+              <Typography sx={{ 
+                fontSize: 38, 
+                fontWeight: 900, 
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: -1
+              }}>
+                ₫{(cashBalance + creditBalance).toLocaleString()}
+              </Typography>
+            </Box>
+
+            {/* Action Buttons Grid */}
+            <Grid container spacing={1.5}>
+              {actionButtons.map((action, index) => (
+                <Grid item xs={3} key={index}>
+                  <Stack alignItems="center" spacing={0.8}>
+                    <IconButton sx={{
+                      width: 56,
+                      height: 56,
+                      background: action.gradient,
+                      color: '#fff',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': { 
+                        transform: 'translateY(-4px) scale(1.05)',
+                        boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                      }
+                    }}>
+                      {action.icon}
+                    </IconButton>
+                    <Typography sx={{ 
+                      fontSize: 12, 
+                      fontWeight: 600, 
+                      color: '#374151',
+                      textAlign: 'center'
+                    }}>
+                      {action.label}
+                    </Typography>
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+          </Stack>
+        </Paper>
+
+        {/* Wallet Types */}
+        <Typography sx={{ mb: 2, fontWeight: 800, fontSize: 18, color: '#111827' }}>
+          Tài khoản
+        </Typography>
+        
+        <Stack spacing={2} sx={{ mb: 3 }}>
+          {/* Cash Wallet */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              borderRadius: 3,
+              overflow: 'hidden',
+              border: '2px solid #f0fdf4',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: '#10b981',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.15)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            <ListItemButton sx={{ p: 2.5 }}>
+              <ListItemIcon>
+                <Box sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 2.5,
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 20px rgba(16,185,129,0.3)'
+                }}>
+                  <AccountBalanceWalletOutlinedIcon sx={{ color: '#fff', fontSize: 28 }} />
+                </Box>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5, color: '#111827' }}>
+                    Ví tiền mặt
+                  </Typography>
+                }
+                secondary={
+                  <Typography sx={{ fontWeight: 700, fontSize: 18, color: '#10b981' }}>
+                    ₫{cashBalance.toLocaleString()}
+                  </Typography>
+                }
+              />
+              <ChevronRightIcon sx={{ color: '#9CA3AF' }} />
+            </ListItemButton>
+          </Paper>
+
+          {/* Credit Wallet */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              borderRadius: 3,
+              overflow: 'hidden',
+              border: '2px solid #f0fdf4',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: '#10b981',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.15)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            <ListItemButton sx={{ p: 2.5 }}>
+              <ListItemIcon>
+                <Box sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 2.5,
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 20px rgba(59,130,246,0.3)'
+                }}>
+                  <CreditCardOutlinedIcon sx={{ color: '#fff', fontSize: 28 }} />
+                </Box>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5, color: '#111827' }}>
+                    Ví tín dụng
+                  </Typography>
+                }
+                secondary={
+                  <Typography sx={{ fontWeight: 700, fontSize: 18, color: '#3b82f6' }}>
+                    ₫{creditBalance.toLocaleString()}
+                  </Typography>
+                }
+              />
+              <ChevronRightIcon sx={{ color: '#9CA3AF' }} />
+            </ListItemButton>
+          </Paper>
         </Stack>
 
-        {/* Hành động chính */}
-        <Grid container spacing={1.25} sx={{ mt: 1 }}>
-          <Grid item xs={3}>
-            <Button fullWidth variant="contained" sx={{
-              height: 44,
-              borderRadius: 2,
-              textTransform: 'none',
-              background: '#ffffff',
-              color: '#16a34a',
-              '&:hover': { background: '#f0fdf4' }
-            }}>
-              <NorthEastOutlinedIcon />
-            </Button>
-            <Typography sx={{ textAlign: 'center', fontSize: 12, mt: 0.5, color: '#e5e7eb' }}>Nạp</Typography>
-          </Grid>
-          <Grid item xs={3}>
-            <Button fullWidth variant="contained" sx={{
-              height: 44,
-              borderRadius: 2,
-              textTransform: 'none',
-              background: '#ffffff',
-              color: '#16a34a',
-              '&:hover': { background: '#f0fdf4' }
-            }}>
-              <SouthWestOutlinedIcon />
-            </Button>
-            <Typography sx={{ textAlign: 'center', fontSize: 12, mt: 0.5, color: '#e5e7eb' }}>Rút</Typography>
-          </Grid>
-          <Grid item xs={3}>
-            <Button fullWidth variant="contained" sx={{
-              height: 44,
-              borderRadius: 2,
-              textTransform: 'none',
-              background: '#ffffff',
-              color: '#16a34a',
-              '&:hover': { background: '#f0fdf4' }
-            }}>
-              <LinkOutlinedIcon />
-            </Button>
-            <Typography sx={{ textAlign: 'center', fontSize: 12, mt: 0.5, color: '#e5e7eb' }}>Liên kết</Typography>
-          </Grid>
-          <Grid item xs={3}>
-            <Button fullWidth variant="contained" sx={{
-              height: 44,
-              borderRadius: 2,
-              textTransform: 'none',
-              background: '#ffffff',
-              color: '#16a34a',
-              '&:hover': { background: '#f0fdf4' }
-            }}>
-              <HistoryOutlinedIcon />
-            </Button>
-            <Typography sx={{ textAlign: 'center', fontSize: 12, mt: 0.5, color: '#e5e7eb' }}>Lịch sử</Typography>
-          </Grid>
-        </Grid>
+        {/* Features Section */}
+        <Typography sx={{ mb: 2, fontWeight: 800, fontSize: 18, color: '#111827' }}>
+          Dịch vụ & Tiện ích
+        </Typography>
+
+        <Stack spacing={2}>
+          <Card 
+            elevation={0} 
+            sx={{ 
+              borderRadius: 3,
+              border: '1px solid #f3f4f6',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: '#10b981',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.12)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            <CardActionArea>
+              <CardContent sx={{ p: 2.5 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2.5,
+                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 20px rgba(251,191,36,0.3)'
+                  }}>
+                    <BoltOutlinedIcon sx={{ color: '#fff', fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.5, color: '#111827' }}>
+                      Nạp tiền nhanh
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>
+                      Nạp tiền ngay để nhận thêm nhiều đơn hàng hấp dẫn
+                    </Typography>
+                  </Box>
+                  <ChevronRightIcon sx={{ color: '#D1D5DB' }} />
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+
+          <Card 
+            elevation={0} 
+            sx={{ 
+              borderRadius: 3,
+              border: '1px solid #f3f4f6',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: '#10b981',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.12)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            <CardActionArea>
+              <CardContent sx={{ p: 2.5 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2.5,
+                    background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 20px rgba(236,72,153,0.3)'
+                  }}>
+                    <UmbrellaOutlinedIcon sx={{ color: '#fff', fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.5, color: '#111827' }}>
+                      Bảo hiểm tài xế
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>
+                      Bảo vệ toàn diện cho bạn và gia đình
+                    </Typography>
+                  </Box>
+                  <ChevronRightIcon sx={{ color: '#D1D5DB' }} />
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+
+          <Card 
+            elevation={0} 
+            sx={{ 
+              borderRadius: 3,
+              border: '1px solid #f3f4f6',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: '#10b981',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.12)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            <CardActionArea>
+              <CardContent sx={{ p: 2.5 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2.5,
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 20px rgba(139,92,246,0.3)'
+                  }}>
+                    <SavingsOutlinedIcon sx={{ color: '#fff', fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.5, color: '#111827' }}>
+                      Vay vốn & Tài chính
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>
+                      Giải pháp tài chính linh hoạt cho tài xế
+                    </Typography>
+                  </Box>
+                  <ChevronRightIcon sx={{ color: '#D1D5DB' }} />
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        </Stack>
       </Box>
-
-      {/* Danh sách ví tách riêng */}
-      <Box sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: '#fff' }}>
-        <List disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <Avatar sx={{ bgcolor: '#10b981' }}>
-                <AccountBalanceWalletOutlinedIcon />
-              </Avatar>
-            </ListItemIcon>
-            <ListItemText
-              primary={<Typography sx={{ fontWeight: 700 }}>Ví tiền mặt</Typography>}
-              secondary={<Typography sx={{ color: '#6B7280' }}>đ {cashBalance.toLocaleString()}</Typography>}
-            />
-            <ChevronRightIcon sx={{ color: '#9CA3AF' }} />
-          </ListItemButton>
-          <Divider />
-          <ListItemButton>
-            <ListItemIcon>
-              <Avatar sx={{ bgcolor: '#22c55e' }}>
-                <CreditCardOutlinedIcon />
-              </Avatar>
-            </ListItemIcon>
-            <ListItemText
-              primary={<Typography sx={{ fontWeight: 700 }}>Ví tín dụng</Typography>}
-              secondary={<Typography sx={{ color: '#6B7280' }}>đ {creditBalance.toLocaleString()}</Typography>}
-            />
-            <ChevronRightIcon sx={{ color: '#9CA3AF' }} />
-          </ListItemButton>
-        </List>
-      </Box>
-
-      <Typography sx={{ mt: 3, mb: 1.5, fontWeight: 800 }}>Nhiều tiện ích khác cùng Ví</Typography>
-
-      <Stack spacing={1.25}>
-        <Card elevation={1} sx={{ borderRadius: 2 }}>
-          <CardActionArea>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: '#22c55e' }}>
-                <BoltOutlinedIcon />
-              </Avatar>
-              <Box>
-                <Typography sx={{ fontWeight: 700 }}>Nạp tiền</Typography>
-                <Typography sx={{ color: '#6B7280' }}>Nạp tiền vào Ví tài khoản của bạn để nhận cuốc xe mới nhanh hơn!</Typography>
-              </Box>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-
-        <Card elevation={1} sx={{ borderRadius: 2 }}>
-          <CardActionArea>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: '#10b981' }}>
-                <UmbrellaOutlinedIcon />
-              </Avatar>
-              <Box>
-                <Typography sx={{ fontWeight: 700 }}>Bảo hiểm</Typography>
-                <Typography sx={{ color: '#6B7280' }}>Bảo vệ bạn và người thân với dịch vụ bảo hiểm</Typography>
-              </Box>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-
-        <Card elevation={1} sx={{ borderRadius: 2 }}>
-          <CardActionArea>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: '#059669' }}>
-                <SavingsOutlinedIcon />
-              </Avatar>
-              <Box>
-                <Typography sx={{ fontWeight: 700 }}>Hỗ trợ tài chính</Typography>
-                <Typography sx={{ color: '#6B7280' }}>Khám phá các hỗ trợ tài chính khác!</Typography>
-              </Box>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-      </Stack>
     </Box>
   );
 };

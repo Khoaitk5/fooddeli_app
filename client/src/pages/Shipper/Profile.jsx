@@ -1,244 +1,358 @@
-import React from 'react';
-import { Box, Typography, Stack, Paper, Divider, Button, Chip, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import PhoneIphoneOutlinedIcon from '@mui/icons-material/PhoneIphoneOutlined';
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-import TwoWheelerOutlinedIcon from '@mui/icons-material/TwoWheelerOutlined';
-import { useShipper } from '@/hooks/useShipper';
-import { useNavigate } from 'react-router-dom';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
-import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import StarRateRoundedIcon from '@mui/icons-material/StarRateRounded';
-import MonetizationOnRoundedIcon from '@mui/icons-material/MonetizationOnRounded';
-import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded';
-import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
+import React from "react";
+import {
+  Box,
+  Typography,
+  Stack,
+  Card,
+  LinearProgress,
+  Button,
+} from "@mui/material";
+import {
+  Star,
+  Phone,
+  Email,
+  LocationOn,
+  LocalShipping,
+  MonetizationOn,
+  Insights,
+  Settings,
+  SwapHoriz,
+  Logout,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
-  const { shipper: shipperRaw } = useShipper();
   const navigate = useNavigate();
-  const shipper = shipperRaw ?? {};
-
-  const items = [
-    { icon: <EditOutlinedIcon sx={{ color: '#6B7280' }} />, title: 'Chỉnh sửa hồ sơ', subtitle: 'Tên, ảnh đại diện, biển số' },
-    { icon: <VerifiedUserOutlinedIcon sx={{ color: '#6B7280' }} />, title: 'Xác minh tài khoản', subtitle: 'Giấy tờ & trạng thái' },
-    { icon: <CreditCardOutlinedIcon sx={{ color: '#6B7280' }} />, title: 'Phương thức thanh toán', subtitle: 'Ví/Ngân hàng' },
-    { icon: <HistoryOutlinedIcon sx={{ color: '#6B7280' }} />, title: 'Lịch sử hoạt động', subtitle: 'Đơn đã giao' },
-  ];
-
-  // Số liệu tổng quan (fallback nếu thiếu)
-  const completedOrders = shipper.completedOrders ?? 126;
-  const rating = shipper.rating ?? 4.9;
-  const earnings = shipper.earnings ?? 1250000; // VND
-  const cancelRate = shipper.cancelRate ?? 0.8; // %
+  
+  const shipper = {
+    name: "Nguyễn Văn Shipper",
+    joinDate: "Tháng 3, 2023",
+    phone: "0901234567",
+    email: "shipper@example.com",
+    location: "Quận 1, TP.HCM",
+    rating: 4.8,
+    rank: "Kim Cương",
+    todayOrders: 12,
+    todayIncome: "285Kđ",
+    avgRating: 4.8,
+    completionRate: "98.5%",
+    progress: 75,
+    nextRank: "Huyền Thoại",
+    totalOrders: 1247,
+    totalIncome: "45.8Mđ",
+    fiveStars: 856,
+  };
 
   return (
-    <Box sx={{ pb: 3 }}>
-      {/* Header gradient theo style chung shipper */}
-      <Box sx={{ background: 'linear-gradient(135deg, #ff7a18 0%, #ff3d00 100%)' }}>
-        <Box
+    <Box sx={{ p: 2, backgroundColor: "#F8F9FB", minHeight: "100vh" }}>
+      {/* Header */}
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #FF7C4B, #FF3B3B)",
+          borderRadius: 3,
+          color: "#fff",
+          p: 2.5,
+          mb: 3,
+          boxShadow: "0 6px 12px rgba(255, 124, 75, 0.25)",
+        }}
+      >
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Box
+            component="img"
+            src="https://cdn-icons-png.flaticon.com/512/201/201818.png"
+            alt="avatar"
+            sx={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              background: "#fff3",
+              border: "2px solid rgba(255,255,255,0.3)",
+              objectFit: "cover",
+            }}
+          />
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              {shipper.name}
+            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Star sx={{ fontSize: 16, color: "#FFD700" }} />
+              <Typography sx={{ fontWeight: 600 }}>{shipper.rating}</Typography>
+              <Typography
+                sx={{
+                  background: "#FFD70022",
+                  color: "#FFD700",
+                  fontSize: 12,
+                  px: 1,
+                  py: 0.2,
+                  borderRadius: 1,
+                  fontWeight: 600,
+                }}
+              >
+                {shipper.rank}
+              </Typography>
+            </Stack>
+            <Typography sx={{ fontSize: 12, opacity: 0.9 }}>
+              Tham gia {shipper.joinDate}
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Stack sx={{ mt: 2.5 }} spacing={0.8}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Phone fontSize="small" /> <Typography>{shipper.phone}</Typography>
+          </Stack>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Email fontSize="small" /> <Typography>{shipper.email}</Typography>
+          </Stack>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <LocationOn fontSize="small" />{" "}
+            <Typography>{shipper.location}</Typography>
+          </Stack>
+        </Stack>
+      </Box>
+
+      {/* --- Thống kê nhanh --- */}
+      <Stack direction="row" spacing={2} mb={2}>
+        <Card
           sx={{
-            maxWidth: 390,
-            mx: 'auto',
-            borderBottomLeftRadius: 28,
-            borderBottomRightRadius: 28,
-            color: '#fff',
-            px: 2.5,
-            pt: 2,
-            pb: 2,
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.10), 0px 4px 6px -4px rgba(0,0,0,0.10)'
+            flex: 1,
+            p: 2,
+            borderRadius: 3,
+            background: "#EAF3FF",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
           }}
         >
-          {/* decorative blobs */}
-          <Box sx={{ position: 'absolute', width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', right: -60, top: -40 }} />
-          <Box sx={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', right: 20, bottom: -30 }} />
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Box sx={{ width: 74, height: 74, borderRadius: '50%', background: 'linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(0,0,0,0.15)' }}>
-              <Box sx={{ width: 66, height: 66, borderRadius: '50%', overflow: 'hidden', background: '#ffffff20', border: '2px solid rgba(255,255,255,0.65)' }}>
-                {shipper.avatar ? (
-                  <img src={shipper.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography sx={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>{shipper.name?.[0] || 'S'}</Typography>
-                  </Box>
-                )}
-              </Box>
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: 20, fontWeight: 900, letterSpacing: 0.2 }}>{shipper.name || 'Shipper'}</Typography>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75, flexWrap: 'wrap' }}>
-                <Chip
-                  label={`${(shipper.rating ?? 4.8).toFixed(1)}`}
-                  size="small"
-                  icon={<StarRateRoundedIcon sx={{ color: '#fff !important' }} />}
-                  sx={{
-                    height: 26,
-                    color: '#fff',
-                    background: 'linear-gradient(90deg, #f59e0b, #f97316)',
-                    '& .MuiChip-icon': { color: '#fff' },
-                    fontWeight: 700
-                  }}
-                />
-                <Chip
-                  label="Kim Cương"
-                  size="small"
-                  icon={<WorkspacePremiumOutlinedIcon />}
-                  sx={{
-                    height: 26,
-                    color: '#0369a1',
-                    background: '#e0f2fe',
-                    '& .MuiChip-icon': { color: '#0284c7' },
-                    fontWeight: 700
-                  }}
-                />
-              </Stack>
-              <Typography sx={{ fontSize: 12.5, opacity: 0.95, mt: 0.75 }}>Tham gia Tháng 3, 2023</Typography>
-            </Box>
-          </Stack>
-        </Box>
-      </Box>
+          <Typography sx={{ fontSize: 13, color: "#5A6C7D" }}>
+            Đơn hôm nay
+          </Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: 20, color: "#1E293B" }}>
+            {shipper.todayOrders}
+          </Typography>
+        </Card>
 
-      <Box sx={{ maxWidth: 390, mx: 'auto', px: 2.5, mt: 2 }}>
-        {/* Thông tin liên hệ hiện đại */}
-        <Paper elevation={2} sx={{ borderRadius: 2, p: 2, mb: 2 }}>
-          <Typography sx={{ fontWeight: 700, mb: 1 }}>Thông tin liên hệ</Typography>
-          <Stack spacing={1.25}>
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <PhoneIphoneOutlinedIcon sx={{ color: '#4f46e5' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Số điện thoại</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{shipper.phone || '0901234567'}</Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <EmailOutlinedIcon sx={{ color: '#0284c7' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Email</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{shipper.email || 'shipper@example.com'}</Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: '#ecfeff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <LocationOnOutlinedIcon sx={{ color: '#06b6d4' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Khu vực hoạt động</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{shipper.address?.district && shipper.address?.city ? `${shipper.address.district}, ${shipper.address.city}` : 'Quận 1, TP.HCM'}</Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: '#fdf2f8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <TwoWheelerOutlinedIcon sx={{ color: '#db2777' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Biển số xe</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{shipper.vehicle?.plate || '51A-12345'}</Typography>
-              </Box>
-            </Stack>
-          </Stack>
-        </Paper>
+        <Card
+          sx={{
+            flex: 1,
+            p: 2,
+            borderRadius: 3,
+            background: "#E8FFF2",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+          }}
+        >
+          <Typography sx={{ fontSize: 13, color: "#5A6C7D" }}>
+            Thu nhập hôm nay
+          </Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: 20, color: "#1E293B" }}>
+            {shipper.todayIncome}
+          </Typography>
+        </Card>
+      </Stack>
 
-        {/* Thống kê tổng quan */}
-        <Box sx={{ mb: 2 }}>
-          <Typography sx={{ fontWeight: 700, mb: 1 }}>Thống kê tổng quan</Typography>
-          <Box
+      {/* --- Đánh giá & Hoàn thành --- */}
+      <Stack direction="row" spacing={2} mb={2}>
+        <Card
+          sx={{
+            flex: 1,
+            p: 2,
+            borderRadius: 3,
+            background: "#FFF7E6",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+          }}
+        >
+          <Typography sx={{ fontSize: 13, color: "#5A6C7D" }}>
+            Đánh giá TB
+          </Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: 20, color: "#1E293B" }}>
+            {shipper.avgRating}
+          </Typography>
+        </Card>
+        <Card
+          sx={{
+            flex: 1,
+            p: 2,
+            borderRadius: 3,
+            background: "#FFF3F2",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+          }}
+        >
+          <Typography sx={{ fontSize: 13, color: "#5A6C7D" }}>
+            Hoàn thành
+          </Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: 20, color: "#1E293B" }}>
+            {shipper.completionRate}
+          </Typography>
+        </Card>
+      </Stack>
+
+      {/* --- Cấp độ --- */}
+      <Card
+        sx={{
+          p: 2,
+          borderRadius: 3,
+          mb: 2,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <Typography sx={{ fontWeight: 600, mb: 1, color: "#FF6B3D" }}>
+          Cấp độ Shipper
+        </Typography>
+        <Stack direction="row" justifyContent="space-between">
+          <Typography sx={{ fontSize: 13 }}>{shipper.rank}</Typography>
+          <Typography sx={{ fontSize: 13 }}>{shipper.nextRank}</Typography>
+        </Stack>
+        <LinearProgress
+          variant="determinate"
+          value={shipper.progress}
+          sx={{
+            height: 8,
+            borderRadius: 4,
+            my: 1,
+            background: "#F2F2F2",
+            "& .MuiLinearProgress-bar": {
+              backgroundColor: "#FF7C4B",
+            },
+          }}
+        />
+        <Typography sx={{ fontSize: 12, color: "#888" }}>
+          Hoàn thành thêm 25 đơn để lên cấp
+        </Typography>
+      </Card>
+
+      {/* --- Thành tích nổi bật --- */}
+      <Card
+        sx={{
+          p: 2,
+          borderRadius: 3,
+          mb: 2,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <Typography sx={{ fontWeight: 600, mb: 1, color: "#FF6B3D" }}>
+          Thành tích nổi bật
+        </Typography>
+        <Stack direction="row" justifyContent="space-around" sx={{ mt: 1 }}>
+          <Box textAlign="center">
+            <Typography sx={{ fontSize: 28 }}>🏆</Typography>
+            <Typography sx={{ fontSize: 13 }}>Top Shipper</Typography>
+          </Box>
+          <Box textAlign="center">
+            <Typography sx={{ fontSize: 28 }}>⚡</Typography>
+            <Typography sx={{ fontSize: 13 }}>Giao nhanh</Typography>
+          </Box>
+          <Box textAlign="center">
+            <Typography sx={{ fontSize: 28 }}>💎</Typography>
+            <Typography sx={{ fontSize: 13 }}>1000+ đơn</Typography>
+          </Box>
+        </Stack>
+      </Card>
+
+      {/* --- Thống kê tổng quan --- */}
+      <Card
+        sx={{
+          p: 2,
+          borderRadius: 3,
+          mb: 3,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <Typography sx={{ fontWeight: 600, mb: 1, color: "#FF6B3D" }}>
+          Thống kê tổng quan
+        </Typography>
+
+        <Stack spacing={1}>
+          <Typography sx={{ fontSize: 13 }}>
+            Tổng đơn hàng:{" "}
+            <strong style={{ color: "#FF6B3D" }}>{shipper.totalOrders}</strong>
+          </Typography>
+          <Typography sx={{ fontSize: 13 }}>
+            Tổng thu nhập:{" "}
+            <strong style={{ color: "#2ECC71" }}>{shipper.totalIncome}</strong>
+          </Typography>
+          <Typography sx={{ fontSize: 13 }}>
+            Đánh giá 5 sao:{" "}
+            <strong style={{ color: "#FFB700" }}>{shipper.fiveStars}</strong>
+          </Typography>
+        </Stack>
+      </Card>
+
+      {/* --- Các nút điều hướng --- */}
+      <Stack spacing={1.3}>
+        {[
+          { label: "Lịch sử giao hàng", icon: <LocalShipping />, route: "/shipper/history" },
+          { label: "Thu nhập & Rút tiền", icon: <MonetizationOn />, route: "/shipper/wallet" },
+          { label: "Thống kê hiệu suất", icon: <Insights />, route: "/shipper/earnings" },
+          { label: "Cài đặt tài khoản", icon: <Settings />, route: "/shipper/settings" },
+        ].map((item, index) => (
+          <Button
+            key={index}
+            variant="outlined"
+            fullWidth
+            onClick={() => item.route && navigate(item.route)}
             sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 1,
+              justifyContent: "flex-start",
+              textTransform: "none",
+              borderColor: "#E0E0E0",
+              color: "#333",
+              background: "#fff",
+              borderRadius: 3,
+              fontWeight: 600,
+              py: 1.2,
+              px: 2,
+              gap: 1.5,
+              boxShadow: "0 3px 6px rgba(0,0,0,0.03)",
+              "&:hover": { background: "#FFF7F3" },
             }}
           >
-            <Paper elevation={2} sx={{ borderRadius: 2, p: 1.25, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircleRoundedIcon sx={{ color: '#16a34a' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Hoàn thành</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>{completedOrders}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={2} sx={{ borderRadius: 2, p: 1.25, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: 'linear-gradient(135deg, #fee2e2, #fecaca)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <StarRateRoundedIcon sx={{ color: '#f59e0b' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Đánh giá</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>{rating.toFixed(1)}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={2} sx={{ borderRadius: 2, p: 1.25, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: 'linear-gradient(135deg, #e0f2fe, #bae6fd)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <MonetizationOnRoundedIcon sx={{ color: '#0284c7' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Thu nhập</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>{earnings.toLocaleString()}đ</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={2} sx={{ borderRadius: 2, p: 1.25, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: 'linear-gradient(135deg, #ffe4e6, #fecdd3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HighlightOffRoundedIcon sx={{ color: '#ef4444' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>Tỉ lệ hủy</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>{cancelRate}%</Typography>
-              </Box>
-            </Paper>
-          </Box>
-        </Box>
+            {item.icon}
+            {item.label}
+          </Button>
+        ))}
 
-        {/* Danh sách mục cấu hình/hành động */}
-        <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-          <List disablePadding>
-            {items.map((item, idx) => (
-              <ListItemButton key={item.title} dense sx={{ py: 1.25 }} onClick={() => {
-                if (item.title === 'Chỉnh sửa hồ sơ') navigate('/shipper/profile/edit');
-                if (item.title === 'Phương thức thanh toán') navigate('/shipper/wallet');
-              }}>
-                <ListItemIcon sx={{ minWidth: 44 }}>
-                  <Box sx={{ width: 36, height: 36, borderRadius: 1.25, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {item.icon}
-                  </Box>
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
-                      {item.title}
-                    </Typography>
-                  }
-                  secondary={
-                    <Typography sx={{ fontSize: 12, color: '#6B7280', mt: 0.25 }}>
-                      {item.subtitle}
-                    </Typography>
-                  }
-                />
-                <ChevronRightIcon sx={{ color: '#9CA3AF' }} />
-                {idx < items.length - 1 && (
-                  <Divider sx={{ position: 'absolute', left: 72, right: 0, bottom: 0 }} />
-                )}
-              </ListItemButton>
-            ))}
-          </List>
-        </Paper>
+        {/* Nút chuyển sang Customer */}
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<SwapHoriz />}
+          sx={{
+            mt: 1,
+            background: "#F2ECFF",
+            borderColor: "#C9B6FF",
+            borderWidth: 1.5,
+            borderRadius: 3,
+            color: "#5E3EC8",
+            fontWeight: 700,
+            textTransform: "none",
+            py: 1.3,
+            "&:hover": {
+              background: "#E5DFFF",
+            },
+          }}
+        >
+          Chuyển sang Customer
+        </Button>
 
         {/* Nút đăng xuất */}
-        <Button startIcon={<LogoutOutlinedIcon />} variant="outlined" color="inherit" sx={{ mt: 2, width: '100%', height: 44, borderRadius: 1.5 }}>
+        <Button
+          fullWidth
+          variant="text"
+          startIcon={<Logout />}
+          sx={{
+            color: "#FF3B3B",
+            fontWeight: 700,
+            textTransform: "none",
+            mt: 1,
+            "&:hover": { background: "#FFF0F0" },
+          }}
+        >
           Đăng xuất
         </Button>
-      </Box>
+
+        <Typography align="center" sx={{ color: "#aaa", fontSize: 12, mt: 1 }}>
+          Shipper App v1.0.0
+        </Typography>
+      </Stack>
     </Box>
   );
 };
 
 export default Profile;
-

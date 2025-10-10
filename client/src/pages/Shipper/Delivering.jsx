@@ -1,204 +1,788 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Stack, Typography, Paper, Chip, Button, Divider } from '@mui/material';
-import LocalMallIcon from '@mui/icons-material/LocalMall';
-import PlaceIcon from '@mui/icons-material/Place';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ScaleIcon from '@mui/icons-material/Scale';
-import PhoneInTalkIcon from '@mui/icons-material/PhoneInTalk';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import { Box, Stack, Typography, Paper, Chip, Button, LinearProgress } from '@mui/material';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PersonIcon from '@mui/icons-material/Person';
+import PhoneIcon from '@mui/icons-material/Phone';
+import RoomIcon from '@mui/icons-material/Room';
 import NavigationIcon from '@mui/icons-material/Navigation';
+import InfoIcon from '@mui/icons-material/Info';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { useShipper } from '@/hooks/useShipper';
 
-// Trang Đang giao (Delivering) theo bố cục Figma
+// Trang Đang giao (Delivering) - Thiết kế mới từ Figma
 const Delivering = () => {
   const navigate = useNavigate();
   const { currentOrder, setCurrentOrder } = useShipper();
 
+  // State để quản lý trạng thái đơn hàng
+  const [orderStatus, setOrderStatus] = React.useState('picking'); // picking | delivering | completed
+
   // Mock dữ liệu đơn đang giao
-  const order = React.useMemo(() => currentOrder || ({
-    code: 'DH000',
-    urgent: true,
-    pickupName: 'Đang lấy...',
-    pickupAddr: '---',
-    dropName: '---',
-    dropAddr: '---',
-    distance: 0,
-    eta: '---',
-    weight: '---',
-    cod: 0,
-  }), [currentOrder]);
+  const order = React.useMemo(() => {
+    const baseOrder = currentOrder || {
+      code: '001',
+      pickupName: 'Nhà hàng Phở 24',
+      pickupAddr: '123 Nguyễn Huệ, Q.1, TP.HCM',
+      pickupContact: 'Nguyễn Văn A',
+      pickupPhone: '0901234567',
+      dropName: 'Nguyễn Thị B',
+      dropAddr: '456 Lê Lợi, Q.3, TP.HCM',
+      dropContact: 'Trần Thị B',
+      dropPhone: '0907654321',
+      distance: '3.5',
+      weight: '2kg',
+      cod: 45000,
+      note: 'Gọi trước 10 phút khi đến. Không giao sau 9 giờ tối.',
+    };
+    
+    return {
+      ...baseOrder,
+      status: orderStatus
+    };
+  }, [currentOrder, orderStatus]);
 
-  const displayCode = React.useMemo(() => {
-    if (order.code) return order.code;
-    if (order.id != null) return `DH${String(order.id).padStart(3, '0')}`;
-    return 'DH---';
-  }, [order]);
+  const displayCode = `#DH${String(order.code).padStart(3, '0')}`;
 
-  const handleCall = () => {
-    console.log('call receiver');
+  const handleCallPickup = () => {
+    window.location.href = `tel:${order.pickupPhone}`;
   };
-  const handleChat = () => {
-    console.log('open chat');
+
+  const handleCallDrop = () => {
+    window.location.href = `tel:${order.dropPhone}`;
   };
-  const handleComplete = () => {
-    // Sau khi hoàn thành chuyển tới trang nhận đơn để tiếp tục nhận
-    setCurrentOrder(null);
-    navigate('/shipper/available');
+
+  const handleNavigatePickup = () => {
+    const destination = encodeURIComponent(order.pickupAddr);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`, '_blank');
   };
-  const handleOpenNavigation = () => {
-    const origin = encodeURIComponent(order.pickupAddr);
+
+  const handleNavigateDrop = () => {
     const destination = encodeURIComponent(order.dropAddr);
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-    window.open(url, '_blank');
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`, '_blank');
+  };
+
+  const handlePickedUp = () => {
+    // Chuyển sang trạng thái đang giao
+    setOrderStatus('delivering');
+    // Cập nhật trong context nếu cần
+    if (currentOrder) {
+      setCurrentOrder({ ...currentOrder, status: 'delivering' });
+    }
+  };
+
+  const handleCompleted = () => {
+    // Hoàn thành đơn hàng
+    setOrderStatus('completed');
+    // Sau 1 giây chuyển về trang available
+    setTimeout(() => {
+      setCurrentOrder(null);
+      navigate('/shipper/available');
+    }, 1000);
   };
 
   return (
-    <Box sx={{ pb: 3 }}>
-      {/* Header trạng thái */}
-      <Box sx={{ background: 'linear-gradient(90deg, #ff6b35, #f54900)' }}>
-        <Box
-          sx={{
-            maxWidth: 390,
-            mx: 'auto',
-            borderBottomLeftRadius: 28,
-            borderBottomRightRadius: 28,
-            color: '#fff',
-            px: 2.5,
-            pt: 2,
-            pb: 1.75,
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.10), 0px 4px 6px -4px rgba(0,0,0,0.10)'
-          }}
-        >
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" spacing={1.25}>
-              <Box sx={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <LocalMallIcon sx={{ color: '#fff', fontSize: 16 }} />
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(180deg, rgba(255,247,237,0.2) 0%, #ffffff 100%)',
+      pb: 10
+    }}>
+      {/* Header với progress */}
+      <Box sx={{ 
+        background: 'linear-gradient(90deg, #ff6b35 0%, #ff6900 100%)',
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        pt: 2.5,
+        pb: 3,
+        px: 2.5,
+        boxShadow: '0px 25px 50px -12px rgba(0,0,0,0.25)'
+      }}>
+        <Stack spacing={3}>
+          {/* Mã đơn hàng */}
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography sx={{ 
+              fontSize: 12, 
+              color: 'rgba(255,255,255,0.7)',
+              textTransform: 'uppercase',
+              letterSpacing: '1.2px',
+              mb: 1
+            }}>
+              Đơn hàng
+            </Typography>
+            <Typography sx={{ 
+              fontSize: 30, 
+              fontWeight: 700,
+              color: '#fff',
+              mb: 1
+            }}>
+              {displayCode}
+            </Typography>
+            <Chip 
+              label={order.status === 'picking' ? 'Đang đến lấy hàng' : 'Đang giao hàng'}
+              sx={{ 
+                background: 'rgba(255,255,255,0.25)',
+                color: '#fff',
+                fontWeight: 500,
+                fontSize: 12,
+                height: 32,
+                borderRadius: 2
+              }}
+            />
+          </Box>
+
+          {/* Progress bar */}
+          <Stack direction="row" spacing={0} alignItems="center" justifyContent="center">
+            {/* Bước 1: Lấy hàng */}
+            <Stack alignItems="center" spacing={1.5} sx={{ width: 64 }}>
+              <Box sx={{
+                width: 64,
+                height: 64,
+                borderRadius: 4,
+                background: order.status === 'picking' ? '#fff' : 'rgba(255,255,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: order.status === 'picking' ? '0px 25px 50px -12px rgba(0,0,0,0.25)' : 'none'
+              }}>
+                <RoomIcon sx={{ 
+                  fontSize: 28, 
+                  color: order.status === 'picking' ? '#ff6b35' : 'rgba(255,255,255,0.5)' 
+                }} />
               </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, opacity: 0.85 }}>Đang giao</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>#{displayCode}</Typography>
-              </Box>
+              <Typography sx={{ 
+                fontSize: 12, 
+                color: order.status === 'picking' ? '#fff' : 'rgba(255,255,255,0.5)'
+              }}>
+                Lấy hàng
+              </Typography>
             </Stack>
-            <Stack direction="row" spacing={1}>
-              {order.urgent && (
-                <Chip size="small" label="Gấp" sx={{ background: '#fdc700', color: '#733e0a', fontWeight: 700 }} />
-              )}
-              <Chip size="small" icon={<AccessTimeIcon sx={{ color: '#fff' }} fontSize="small" />} label={order.eta} sx={{ background: 'rgba(255,255,255,0.22)', color: '#fff' }} />
+
+            {/* Đường kẻ giữa */}
+            <Box sx={{ 
+              width: 48, 
+              height: 6, 
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: 3,
+              mx: 1,
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <Box sx={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: '100%',
+                width: order.status === 'delivering' || order.status === 'completed' ? '100%' : '0%',
+                background: '#fff',
+                transition: 'width 0.3s ease'
+              }} />
+            </Box>
+
+            {/* Bước 2: Đang giao */}
+            <Stack alignItems="center" spacing={1.5} sx={{ width: 64 }}>
+              <Box sx={{
+                width: 60.8,
+                height: 60.8,
+                borderRadius: 4,
+                background: order.status === 'delivering' ? '#fff' : 'rgba(255,255,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <LocalShippingIcon sx={{ 
+                  fontSize: 26.6, 
+                  color: order.status === 'delivering' ? '#ff6b35' : 'rgba(255,255,255,0.5)' 
+                }} />
+              </Box>
+              <Typography sx={{ 
+                fontSize: 12, 
+                color: order.status === 'delivering' ? '#fff' : 'rgba(255,255,255,0.5)'
+              }}>
+                Đang giao
+              </Typography>
+            </Stack>
+
+            {/* Đường kẻ giữa */}
+            <Box sx={{ 
+              width: 48, 
+              height: 6, 
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: 3,
+              mx: 1,
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <Box sx={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: '100%',
+                width: order.status === 'completed' ? '100%' : '0%',
+                background: '#fff',
+                transition: 'width 0.3s ease'
+              }} />
+            </Box>
+
+            {/* Bước 3: Hoàn thành */}
+            <Stack alignItems="center" spacing={1.5} sx={{ width: 64 }}>
+              <Box sx={{
+                width: 60.8,
+                height: 60.8,
+                borderRadius: 4,
+                background: order.status === 'completed' ? '#fff' : 'rgba(255,255,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <CheckCircleIcon sx={{ 
+                  fontSize: 26.6, 
+                  color: order.status === 'completed' ? '#ff6b35' : 'rgba(255,255,255,0.5)' 
+                }} />
+              </Box>
+              <Typography sx={{ 
+                fontSize: 12, 
+                color: order.status === 'completed' ? '#fff' : 'rgba(255,255,255,0.5)'
+              }}>
+                Hoàn thành
+              </Typography>
             </Stack>
           </Stack>
-        </Box>
+        </Stack>
       </Box>
 
-      {/* Bản đồ (placeholder) */}
-      <Box sx={{ maxWidth: 390, mx: 'auto', px: 2.5 }}>
-        <Box
-          sx={{
-            mt: 2,
-            height: 180,
-            borderRadius: 3,
-            background: 'linear-gradient(180deg, #f3f4f6, #e5e7eb)',
-            border: '1px dashed #cbd5e1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          <NavigationIcon sx={{ color: '#9ca3af' }} />
-          <Box sx={{ position: 'absolute', right: 12, bottom: 12 }}>
-            <Chip size="small" label="Mở điều hướng" clickable onClick={handleOpenNavigation} sx={{ background: '#111827', color: '#fff' }} />
+      {/* Bản đồ placeholder */}
+      <Box sx={{ px: 2, mt: -6, position: 'relative', zIndex: 1 }}>
+        <Box sx={{
+          height: 188,
+          borderRadius: 3.5,
+          background: 'linear-gradient(135deg, #e0f2fe 0%, #fef3c7 100%)',
+          border: '4px solid #fff',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {/* Grid pattern */}
+          <Box sx={{
+            position: 'absolute',
+            inset: 0,
+            opacity: 0.1,
+            backgroundImage: 'repeating-linear-gradient(0deg, #99a1af 0px, #99a1af 1px, transparent 1px, transparent 24px), repeating-linear-gradient(90deg, #99a1af 0px, #99a1af 1px, transparent 1px, transparent 33px)',
+          }} />
+          
+          {/* Marker điểm lấy hàng */}
+          <Box sx={{ 
+            position: 'absolute',
+            left: 97,
+            top: 122,
+            width: 34.5,
+            height: 34.5
+          }}>
+            <Box sx={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              background: '#51a2ff',
+              opacity: 0.5,
+              filter: 'blur(8px)'
+            }} />
+            <Box sx={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              background: '#2b7fff',
+              border: '2.857px solid #fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              <RoomIcon sx={{ fontSize: 17.3, color: '#fff' }} />
+            </Box>
+            {/* Tooltip */}
+            <Box sx={{
+              position: 'absolute',
+              top: -39,
+              left: -19,
+              background: '#155dfc',
+              borderRadius: 2.5,
+              px: 1.35,
+              py: 0.4,
+              boxShadow: '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -4,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                borderLeft: '4px solid transparent',
+                borderRight: '4px solid transparent',
+                borderTop: '4px solid #155dfc'
+              }
+            }}>
+              <Typography sx={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>
+                Lấy hàng
+              </Typography>
+            </Box>
           </Box>
-        </Box>
 
-        {/* Điểm lấy và giao */}
-        <Paper elevation={3} sx={{ mt: 2, borderRadius: 2, overflow: 'hidden' }}>
-          <Box sx={{ p: 1.75 }}>
-            <Stack direction="row" spacing={1.5} alignItems="flex-start">
-              <Box sx={{ width: 12, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: '#2b7fff', boxShadow: '0 0 0 4px #dbeafe' }} />
-                <Box sx={{ width: 2, flex: 1, mt: 1, background: 'linear-gradient(#bedbff, #e5e7eb 50%, #ffd6a7)' }} />
+          {/* Marker điểm giao hàng */}
+          <Box sx={{ 
+            position: 'absolute',
+            left: 262,
+            top: 44,
+            width: 34.3,
+            height: 34.3
+          }}>
+            <Box sx={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              background: '#05df72',
+              opacity: 0.5,
+              filter: 'blur(8px)'
+            }} />
+            <Box sx={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              background: '#00c853',
+              border: '2.857px solid #fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              <RoomIcon sx={{ fontSize: 17.1, color: '#fff' }} />
+            </Box>
+            {/* Tooltip */}
+            <Box sx={{
+              position: 'absolute',
+              top: -39,
+              left: -23,
+              background: '#ff6b35',
+              borderRadius: 2.5,
+              px: 1.35,
+              py: 0.4,
+              boxShadow: '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -4,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                borderLeft: '4px solid transparent',
+                borderRight: '4px solid transparent',
+                borderTop: '4px solid #ff6b35'
+              }
+            }}>
+              <Typography sx={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>
+                Giao hàng
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Distance info card */}
+          <Paper sx={{
+            position: 'absolute',
+            right: 16,
+            top: 12,
+            background: 'rgba(255,255,255,0.95)',
+            border: '0.571px solid rgba(255,255,255,0.4)',
+            borderRadius: 3.5,
+            px: 1.6,
+            py: 1,
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box sx={{
+                width: 28,
+                height: 28,
+                borderRadius: 2.5,
+                background: 'rgba(255,107,53,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <NavigationIcon sx={{ fontSize: 16, color: '#ff6b35' }} />
               </Box>
               <Box>
-                <Typography sx={{ fontSize: 12, color: '#6a7282' }}>Lấy hàng</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{order.pickupName}</Typography>
-                <Typography sx={{ fontSize: 14, color: '#4a5565' }}>{order.pickupAddr}</Typography>
+                <Typography sx={{ fontSize: 10, color: '#6a7282' }}>
+                  Khoảng cách
+                </Typography>
+                <Typography sx={{ fontSize: 14, color: '#ff6b35', fontWeight: 700 }}>
+                  {order.distance} km
+                </Typography>
               </Box>
-            </Stack>
-
-            <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mt: 1.5 }}>
-              <PlaceIcon sx={{ color: '#ed6c66' }} fontSize="small" />
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#6a7282' }}>Giao đến</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{order.dropName}</Typography>
-                <Typography sx={{ fontSize: 14, color: '#4a5565' }}>{order.dropAddr}</Typography>
-              </Box>
-            </Stack>
-          </Box>
-          <Divider />
-          {/* Chỉ số nhanh */}
-          <Box sx={{ p: 1.25 }}>
-            <Stack direction="row" spacing={1}>
-              <Box sx={{ flex: 1, background: '#ffffff', border: '1px solid #eef2f7', borderRadius: 2, px: 1, py: 1.25, textAlign: 'center' }}>
-                <Box sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                  <PlaceIcon sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: 12 }}>Khoảng cách</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 14, color: '#111827', fontWeight: 700 }}>{order.distance} km</Typography>
-              </Box>
-              <Box sx={{ flex: 1, background: '#ffffff', border: '1px solid #eef2f7', borderRadius: 2, px: 1, py: 1.25, textAlign: 'center' }}>
-                <Box sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                  <AccessTimeIcon sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: 12 }}>Thời gian</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 14, color: '#111827', fontWeight: 700 }}>{order.eta}</Typography>
-              </Box>
-              <Box sx={{ flex: 1, background: '#ffffff', border: '1px solid #eef2f7', borderRadius: 2, px: 1, py: 1.25, textAlign: 'center' }}>
-                <Box sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                  <ScaleIcon sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: 12 }}>Khối lượng</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 14, color: '#111827', fontWeight: 700 }}>{order.weight}</Typography>
-              </Box>
-            </Stack>
-          </Box>
-        </Paper>
-
-        {/* Thu hộ COD */}
-        <Box sx={{ mt: 2, background: '#f0fdf4', border: '1px solid #dcfce7', borderRadius: 2, px: 1.75, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography sx={{ color: '#00a63e', fontWeight: 700 }}>Thu hộ</Typography>
-          <Typography sx={{ color: '#00a63e', fontWeight: 800, fontSize: 18 }}>{order.cod.toLocaleString()}đ</Typography>
-        </Box>
-      </Box>
-
-      {/* Thanh hành động dính dưới (chừa khoảng cho BottomActionBar của layout) */}
-      <Box
-        sx={{
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 80,
-          zIndex: 1200,
-        }}
-      >
-        <Box sx={{ maxWidth: 390, mx: 'auto', px: 2.5 }}>
-          <Paper elevation={6} sx={{ borderRadius: 2, px: 1.25, py: 1 }}>
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Button onClick={handleCall} startIcon={<PhoneInTalkIcon />} variant="outlined" color="inherit" sx={{ flex: 1, height: 44, borderRadius: 1.5 }}>
-                Gọi
-              </Button>
-              <Button onClick={handleChat} startIcon={<ChatBubbleOutlineIcon />} variant="outlined" color="inherit" sx={{ flex: 1, height: 44, borderRadius: 1.5 }}>
-                Chat
-              </Button>
-              <Button onClick={handleComplete} startIcon={<CheckCircleRoundedIcon />} sx={{ flex: 2, height: 44, borderRadius: 1.5, background: '#00a63e', color: '#fff', '&:hover': { background: '#019c3a' } }}>
-                Hoàn thành giao
-              </Button>
             </Stack>
           </Paper>
         </Box>
       </Box>
+
+      {/* Nội dung chính */}
+      <Stack spacing={1.5} sx={{ px: 2, mt: 2 }}>
+        {/* Card điểm lấy hàng */}
+        <Paper elevation={0} sx={{ 
+          borderRadius: 3.5,
+          border: '1.714px solid #bedbff',
+          overflow: 'hidden'
+        }}>
+          {/* Header xanh */}
+          <Box sx={{
+            background: 'linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%)',
+            px: 2,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <RoomIcon sx={{ fontSize: 20, color: '#1c398e' }} />
+            <Typography sx={{ fontSize: 16, color: '#1c398e', fontWeight: 600 }}>
+              Điểm đến tiếp theo
+            </Typography>
+          </Box>
+
+          {/* Nội dung */}
+          <Box sx={{ p: 2 }}>
+            <Typography sx={{ fontSize: 12, color: '#6a7282', mb: 1 }}>
+              Điểm lấy hàng
+            </Typography>
+            <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#000', mb: 0.5 }}>
+              {order.pickupName}
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: '#4a5565', mb: 2 }}>
+              {order.pickupAddr}
+            </Typography>
+
+            {/* Contact info */}
+            <Box sx={{ 
+              background: '#f9fafb',
+              borderRadius: 3.5,
+              p: 1.5,
+              mb: 2
+            }}>
+              <Stack spacing={1}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <PersonIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                  <Typography sx={{ fontSize: 14, color: '#000' }}>
+                    {order.pickupContact}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <PhoneIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                  <Typography 
+                    component="a"
+                    href={`tel:${order.pickupPhone}`}
+                    sx={{ 
+                      fontSize: 14, 
+                      color: '#ff6b35',
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' }
+                    }}
+                  >
+                    {order.pickupPhone}
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Box>
+
+            {/* Buttons */}
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                onClick={handleCallPickup}
+                startIcon={<PhoneIcon />}
+                sx={{
+                  flex: 1,
+                  borderColor: '#ff6b35',
+                  color: '#ff6b35',
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  '&:hover': {
+                    borderColor: '#ff6b35',
+                    background: 'rgba(255,107,53,0.05)'
+                  }
+                }}
+              >
+                Gọi
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleNavigatePickup}
+                startIcon={<NavigationIcon />}
+                sx={{
+                  flex: 1,
+                  background: 'linear-gradient(90deg, #ff6b35 0%, #ff6900 100%)',
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    background: 'linear-gradient(90deg, #ff6900 0%, #f54900 100%)',
+                    boxShadow: 'none'
+                  }
+                }}
+              >
+                Chỉ đường
+              </Button>
+            </Stack>
+          </Box>
+        </Paper>
+
+        {/* Card điểm giao hàng */}
+        <Paper elevation={0} sx={{ 
+          borderRadius: 3.5,
+          border: '0.571px solid rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}>
+          {/* Header cam */}
+          <Box sx={{
+            background: 'linear-gradient(90deg, #fff7ed 0%, #ffedd4 100%)',
+            px: 2,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <RoomIcon sx={{ fontSize: 20, color: '#7e2a0c' }} />
+            <Typography sx={{ fontSize: 16, color: '#7e2a0c', fontWeight: 600 }}>
+              Điểm giao hàng
+            </Typography>
+          </Box>
+
+          {/* Nội dung */}
+          <Box sx={{ p: 2 }}>
+            <Typography sx={{ fontSize: 12, color: '#6a7282', mb: 1 }}>
+              Người nhận
+            </Typography>
+            <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#000', mb: 0.5 }}>
+              {order.dropName}
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: '#4a5565', mb: 2 }}>
+              {order.dropAddr}
+            </Typography>
+
+            {/* Contact info */}
+            <Box sx={{ 
+              background: '#f9fafb',
+              borderRadius: 3.5,
+              p: 1.5,
+              mb: order.status === 'delivering' ? 2 : 0
+            }}>
+              <Stack spacing={1}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <PersonIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                  <Typography sx={{ fontSize: 14, color: '#000' }}>
+                    {order.dropContact}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <PhoneIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                  <Typography 
+                    component="a"
+                    href={`tel:${order.dropPhone}`}
+                    sx={{ 
+                      fontSize: 14, 
+                      color: '#ff6b35',
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' }
+                    }}
+                  >
+                    {order.dropPhone}
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Box>
+
+            {/* Buttons - hiển thị khi đang giao */}
+            {order.status === 'delivering' && (
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  onClick={handleCallDrop}
+                  startIcon={<PhoneIcon />}
+                  sx={{
+                    flex: 1,
+                    borderColor: '#ff6b35',
+                    color: '#ff6b35',
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: '#ff6b35',
+                      background: 'rgba(255,107,53,0.05)'
+                    }
+                  }}
+                >
+                  Gọi
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleNavigateDrop}
+                  startIcon={<NavigationIcon />}
+                  sx={{
+                    flex: 1,
+                    background: 'linear-gradient(90deg, #ff6b35 0%, #ff6900 100%)',
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      background: 'linear-gradient(90deg, #ff6900 0%, #f54900 100%)',
+                      boxShadow: 'none'
+                    }
+                  }}
+                >
+                  Chỉ đường
+                </Button>
+              </Stack>
+            )}
+          </Box>
+        </Paper>
+
+        {/* Card chi tiết đơn hàng */}
+        <Paper elevation={0} sx={{ 
+          borderRadius: 3.5,
+          border: '0.571px solid rgba(0,0,0,0.1)',
+          p: 2
+        }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 3 }}>
+            <InfoIcon sx={{ fontSize: 20, color: '#000' }} />
+            <Typography sx={{ fontSize: 16, fontWeight: 600, color: '#000' }}>
+              Chi tiết đơn hàng
+            </Typography>
+          </Stack>
+
+          <Stack spacing={1.5}>
+            {/* Khối lượng */}
+            <Box sx={{
+              background: '#f9fafb',
+              borderRadius: 3.5,
+              px: 1.5,
+              py: 1.5,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Typography sx={{ fontSize: 16, color: '#4a5565' }}>
+                Khối lượng
+              </Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#000' }}>
+                {order.weight}
+              </Typography>
+            </Box>
+
+            {/* Thu hộ */}
+            <Box sx={{
+              background: 'linear-gradient(90deg, #fff7ed 0%, #ffedd4 100%)',
+              borderRadius: 3.5,
+              px: 1.5,
+              py: 1.5,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <AttachMoneyIcon sx={{ fontSize: 20, color: '#4a5565' }} />
+                <Typography sx={{ fontSize: 16, color: '#4a5565' }}>
+                  Thu hộ
+                </Typography>
+              </Stack>
+              <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#ff6b35' }}>
+                {order.cod.toLocaleString()}đ
+              </Typography>
+            </Box>
+
+            {/* Ghi chú */}
+            {order.note && (
+              <Box sx={{
+                background: '#eff6ff',
+                border: '0.571px solid #bedbff',
+                borderRadius: 3.5,
+                p: 1.6
+              }}>
+                <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 1 }}>
+                  <InfoIcon sx={{ fontSize: 12, color: '#155dfc' }} />
+                  <Typography sx={{ fontSize: 12, color: '#155dfc' }}>
+                    Ghi chú quan trọng
+                  </Typography>
+                </Stack>
+                <Typography sx={{ fontSize: 14, color: '#364153', lineHeight: 1.43 }}>
+                  {order.note}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        </Paper>
+
+        {/* Button hành động - thay đổi theo trạng thái */}
+        {order.status === 'picking' && (
+          <Button
+            variant="contained"
+            onClick={handlePickedUp}
+            startIcon={<CheckCircleIcon />}
+            fullWidth
+            sx={{
+              height: 48,
+              borderRadius: 3.5,
+              background: 'linear-gradient(90deg, #ff6b35 0%, #ff6900 100%)',
+              fontSize: 14,
+              fontWeight: 600,
+              textTransform: 'none',
+              boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #ff6900 0%, #f54900 100%)'
+              }
+            }}
+          >
+            Đã lấy hàng
+          </Button>
+        )}
+
+        {order.status === 'delivering' && (
+          <Button
+            variant="contained"
+            onClick={handleCompleted}
+            startIcon={<CheckCircleIcon />}
+            fullWidth
+            sx={{
+              height: 48,
+              borderRadius: 3.5,
+              background: 'linear-gradient(90deg, #00c853 0%, #00a63e 100%)',
+              fontSize: 14,
+              fontWeight: 600,
+              textTransform: 'none',
+              boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #00a63e 0%, #019c3a 100%)'
+              }
+            }}
+          >
+            Hoàn thành giao hàng
+          </Button>
+        )}
+
+        {order.status === 'completed' && (
+          <Box
+            sx={{
+              height: 48,
+              borderRadius: 3.5,
+              background: 'linear-gradient(90deg, #00c853 0%, #00a63e 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              color: '#fff'
+            }}
+          >
+            <CheckCircleIcon />
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              Đã hoàn thành
+            </Typography>
+          </Box>
+        )}
+      </Stack>
     </Box>
   );
 };
