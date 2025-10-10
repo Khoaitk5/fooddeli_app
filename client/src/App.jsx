@@ -33,6 +33,7 @@ import OrderPlaced from './pages/Customer/OrderPlaced';
 import Notifications from './pages/Customer/Notifications';
 import RestaurantDetailPage from './pages/Customer/RestaurantDetailPage';
 import { UserProfile } from './pages/Customer/UserProfile';
+import SearchPage from './pages/Customer/SearchPage';
 
 // Auth
 import Login from './pages/Auth/Login';
@@ -102,6 +103,8 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="restaurant/:id" element={<RestaurantDetailPage />} />
           <Route path="profile" element={<UserProfile />} />
+          <Route path="discover" element={<Discover />} />
+          <Route path="search" element={<SearchPage />} />
         </Route>
 
         {/* Shipper Routes */}
