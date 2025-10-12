@@ -1,7 +1,6 @@
-import React from 'react';
 import StarIcon from '../../shared/StarIcon';
 
-const ProductCart = () => {
+const ProductCardForVideo = () => {
   return (
     <div
       style={{
@@ -181,4 +180,4 @@ const ProductCart = () => {
   );
 };
 
-export default ProductCart;
+export default ProductCardForVideo;
