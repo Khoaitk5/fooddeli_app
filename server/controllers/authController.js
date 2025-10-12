@@ -26,23 +26,48 @@ exports.register = async (req, res) => {
   try {
     const body = { ...req.body };
 
-    // 🧩 Chuẩn hóa address nếu là object
+    // 🧩 Nếu FE gửi address dạng object (FE AddAddress)
     if (typeof body.address === "object" && body.address !== null) {
-      // FE gửi addressType, BE fallback sang address_type nếu có
-      const { detail, ward, city, note, addressType, address_type } =
-        body.address;
+      const {
+        address_line,
+        note,
+        addressType,
+        address_type,
+        is_primary,
+      } = body.address;
 
-      // Ghép địa chỉ lại thành 1 chuỗi
-      body.address = `${detail || ""}${ward || city ? ", " : ""}${ward || ""}${
-        ward && city ? ", " : ""
-      }${city || ""}`;
+      // 🔍 DEBUG: In ra dữ liệu thô từ FE
+      // console.log("🕵️‍♀️ [DEBUG] Raw address từ FE:", JSON.stringify(body.address, null, 2));
+      // console.log("📍 [DEBUG] address_line nhận từ FE:", JSON.stringify(address_line, null, 2));
 
-      // Gộp note và loại địa chỉ
+      // ✅ Nếu FE gửi address_line là object, gán đúng cấu trúc
+      if (typeof address_line === "object" && address_line !== null) {
+        const { detail, ward, district, city } = address_line;
+
+        // console.log("📍 [DEBUG] Các trường detail/ward/district/city:");
+        // console.log("   • detail:", detail);
+        // console.log("   • ward:", ward);
+        // console.log("   • district:", district);
+        // console.log("   • city:", city);
+
+        body.address_line = {
+          detail: detail || "",
+          ward: ward || "",
+          district: district || "",
+          city: city || "",
+        };
+      }
+
       body.note = note || "";
       body.address_type = addressType || address_type || "Nhà";
+      body.is_primary = is_primary ?? false;
+
+      delete body.address; // dọn sạch payload
     }
 
-    console.log("🧩 [DEBUG] Body gửi sang service:", JSON.stringify(body, null, 2));
+    // console.log("🧩 [DEBUG] Body gửi sang service:", JSON.stringify(body, null, 2));
+
+
     // 🧩 Gọi service xử lý đăng ký
     const newUser = await authService.register(body);
 
@@ -59,7 +84,7 @@ exports.register = async (req, res) => {
         full_name: newUser.fullname,
         phone: newUser.phone,
         email: newUser.email,
-        address: newUser.address,
+        address: newUser.address, // JSON hoặc null
         role: newUser.role,
       },
     });
@@ -72,6 +97,10 @@ exports.register = async (req, res) => {
   }
 };
 
+
+/**
+ * 🔐 Đăng nhập bằng số điện thoại và mật khẩu
+ */
 exports.loginWithPassword = async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -84,9 +113,6 @@ exports.loginWithPassword = async (req, res) => {
     }
 
     const user = await authService.login(phone, password);
-    // Tạo session
-    createSession(req, user);
-
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -94,13 +120,15 @@ exports.loginWithPassword = async (req, res) => {
       });
     }
 
-    // ✅ Tạo JWT nếu muốn tự động đăng nhập
-    const jwt = require("jsonwebtoken");
+    // ✅ Tạo JWT
     const token = jwt.sign(
       { id: user.id, phone: user.phone },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
+
+    // ✅ Tạo session
+    createSession(req, user);
 
     return res.status(200).json({
       success: true,
@@ -125,7 +153,7 @@ exports.loginWithPassword = async (req, res) => {
 };
 
 /**
- * 🔐 Tạo JWT cho user
+ * 🔑 Tạo JWT
  */
 const generateJwt = (user) => {
   return jwt.sign(
@@ -136,7 +164,7 @@ const generateJwt = (user) => {
 };
 
 /**
- * 📞 Xác thực số điện thoại bằng Firebase ID Token
+ * 📞 Xác thực số điện thoại bằng Firebase
  */
 exports.verifyPhone = async (req, res) => {
   const { token } = req.body;
@@ -166,10 +194,10 @@ exports.verifyPhone = async (req, res) => {
       });
     }
 
-    // Tạo session
+    // ✅ Tạo session & JWT
     createSession(req, user);
-    // ✅ Tạo JWT
     const jwtToken = generateJwt(user);
+
     return res.status(200).json({
       success: true,
       message: "📱 Xác thực thành công",
@@ -186,7 +214,7 @@ exports.verifyPhone = async (req, res) => {
 };
 
 /**
- * 🌐 Đăng nhập bằng Google (Firebase)
+ * 🌐 Đăng nhập bằng Google
  */
 exports.loginWithGoogle = async (req, res) => {
   const { token } = req.body;
@@ -199,7 +227,6 @@ exports.loginWithGoogle = async (req, res) => {
       });
     }
 
-    // ✅ Xác minh token từ Firebase
     const decoded = await admin.auth().verifyIdToken(token);
     const email = decoded.email;
     const name = decoded.name;
@@ -207,7 +234,6 @@ exports.loginWithGoogle = async (req, res) => {
 
     console.log("✅ Firebase xác thực thành công:", { email, name });
 
-    // ✅ Kiểm tra user có tồn tại trong DB không
     const user = await getUserByEmail(email);
     if (!user) {
       return res.status(404).json({
@@ -216,7 +242,6 @@ exports.loginWithGoogle = async (req, res) => {
       });
     }
 
-    // ✅ Tạo session như các loại login khác
     createSession(req, user);
 
     return res.status(200).json({
@@ -254,13 +279,11 @@ exports.registerWithGoogle = async (req, res) => {
       });
     }
 
-    // ✅ Xác minh token từ Firebase
     const decoded = await admin.auth().verifyIdToken(token);
     const email = decoded.email;
     const name = decoded.name;
     const picture = decoded.picture;
 
-    // ✅ Kiểm tra user đã tồn tại chưa
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({
@@ -270,7 +293,6 @@ exports.registerWithGoogle = async (req, res) => {
       });
     }
 
-    // ✅ Tạo user tạm (chưa có phone, address, v.v.)
     const newUser = await authService.register({
       username: email.split("@")[0],
       fullname: name,
@@ -279,7 +301,6 @@ exports.registerWithGoogle = async (req, res) => {
       role: "user",
     });
 
-    // ✅ Tạo session
     createSession(req, newUser);
 
     return res.status(201).json({
@@ -303,7 +324,7 @@ exports.registerWithGoogle = async (req, res) => {
 };
 
 /**
- * 🔴 Đăng xuất (xóa JWT nếu có)
+ * 🔴 Đăng xuất
  */
 exports.logout = async (req, res) => {
   try {
@@ -315,7 +336,7 @@ exports.logout = async (req, res) => {
           message: "Lỗi khi đăng xuất",
         });
       }
-      res.clearCookie("connect.sid"); // nếu dùng express-session
+      res.clearCookie("connect.sid");
       return res.status(200).json({
         success: true,
         message: "👋 Đăng xuất thành công",
@@ -330,20 +351,20 @@ exports.logout = async (req, res) => {
   }
 };
 
+/**
+ * ✉️ Gửi OTP qua email
+ */
 exports.sendOtpEmail = async (req, res) => {
   const nodemailer = require("nodemailer");
-
   const { email } = req.body;
+
   if (!email) {
     return res
       .status(400)
       .json({ success: false, message: "Email là bắt buộc" });
   }
 
-  // ✅ Sinh mã OTP 6 số
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  // ✅ Lưu OTP tạm thời (5 phút) — production thì nên dùng DB hoặc Redis
   if (!global.otpStore) global.otpStore = {};
   global.otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000 };
 
@@ -376,7 +397,9 @@ exports.sendOtpEmail = async (req, res) => {
   }
 };
 
-// ✅ Xác minh OTP email
+/**
+ * 📨 Xác minh OTP Email
+ */
 exports.verifyOtpEmail = async (req, res) => {
   const { email, otp } = req.body;
 
@@ -404,7 +427,6 @@ exports.verifyOtpEmail = async (req, res) => {
       .json({ success: false, message: "OTP không chính xác" });
   }
 
-  // ✅ OTP hợp lệ → xóa khỏi store
   delete global.otpStore[email];
   return res.json({ success: true, message: "OTP hợp lệ" });
 };

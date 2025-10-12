@@ -24,6 +24,7 @@ const AddAddress = () => {
     note: "",
     detail: "",
     ward: "",
+    district: "",
     city: "",
   });
 
@@ -32,7 +33,7 @@ const AddAddress = () => {
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
 
-  // ✅ 1. Lấy danh sách TỈNH/THÀNH khi load
+  // ✅ 1. Lấy danh sách tỉnh/thành khi load
   useEffect(() => {
     fetch("https://provinces.open-api.vn/api/p/")
       .then((res) => res.json())
@@ -40,58 +41,80 @@ const AddAddress = () => {
       .catch((err) => console.error("Lỗi tải tỉnh:", err));
   }, []);
 
-  // ✅ 2. Khi chọn TỈNH → Lấy danh sách HUYỆN
+  // ✅ 2. Khi chọn tỉnh → lấy danh sách quận/huyện
   const handleProvinceChange = (e) => {
     const provinceCode = e.target.value;
     const province = provinces.find((p) => p.code === provinceCode);
-    setForm((prev) => ({ ...prev, city: province.name, ward: "" }));
-    setWards([]);
+
+    setForm((prev) => ({
+      ...prev,
+      city: province.name,
+      district: "",
+      ward: "",
+    }));
+
     setDistricts([]);
+    setWards([]);
 
     fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
       .then((res) => res.json())
       .then((data) => {
         setDistricts(data.districts);
       })
-      .catch((err) => console.error("Lỗi tải quận:", err));
+      .catch((err) => console.error("Lỗi tải quận/huyện:", err));
   };
 
-  // ✅ 3. Khi chọn HUYỆN → Lấy danh sách XÃ
+  // ✅ 3. Khi chọn quận/huyện → lấy danh sách xã/phường
   const handleDistrictChange = (e) => {
     const districtCode = e.target.value;
-    
+    const district = districts.find((d) => d.code === districtCode);
+
+    setForm((prev) => ({
+      ...prev,
+      district: district.name,
+      ward: "",
+    }));
+
     fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
       .then((res) => res.json())
       .then((data) => {
         setWards(data.wards);
       })
-      .catch((err) => console.error("Lỗi tải xã:", err));
+      .catch((err) => console.error("Lỗi tải xã/phường:", err));
   };
 
+  // ✅ 4. Khi chọn xã/phường
   const handleWardChange = (e) => {
     const wardCode = e.target.value;
     const ward = wards.find((w) => w.code === wardCode);
     setForm((prev) => ({ ...prev, ward: ward.name }));
   };
 
+  // ✅ 5. Submit form
   const handleSubmit = () => {
-    const { address_type, detail, ward, city } = form;
-    if (!address_type || !detail || !ward || !city) {
-      alert("⚠️ Vui lòng nhập đầy đủ thông tin bắt buộc!");
+    const { address_type, detail, ward, district, city } = form;
+
+    if (!detail || !ward || !district || !city) {
+      alert("⚠️ Vui lòng nhập đầy đủ thông tin địa chỉ!");
       return;
     }
 
+    // ✅ Tạo payload JSON đúng format backend yêu cầu
     const payload = {
-      addressType: address_type,
-      note: form.note,
-      detail,
-      ward,
-      city,
-      isDefault,
+      address_type: address_type || "Nhà",
+      note: form.note || "",
+      is_primary: isDefault,
+      address_line: {
+        detail,
+        ward,
+        district,
+        city,
+      },
     };
 
-    console.log("✅ Địa chỉ mới:", payload);
+    console.log("✅ Địa chỉ mới được gửi:", payload);
 
+    // ✅ Quay lại trang profileRegister và gửi payload
     navigate("/profileRegister", {
       state: {
         ...prevState,
@@ -129,6 +152,7 @@ const AddAddress = () => {
           Thêm địa chỉ
         </Typography>
 
+        {/* ✅ Đặt làm địa chỉ mặc định */}
         <Box
           sx={{
             background: "#F9FAF8",
@@ -153,18 +177,20 @@ const AddAddress = () => {
 
         <Divider sx={{ mb: 2 }} />
 
+        {/* Loại địa chỉ */}
         <TextField
           name="address_type"
           value={form.address_type}
           onChange={(e) =>
             setForm((prev) => ({ ...prev, address_type: e.target.value }))
           }
-          placeholder="Loại địa chỉ (nhà, cơ quan, khác,...)"
+          placeholder="Loại địa chỉ (Nhà riêng, Cơ quan, ...)"
           fullWidth
           sx={{ mb: 2 }}
           InputProps={{ sx: { borderRadius: 2 } }}
         />
 
+        {/* Ghi chú */}
         <TextField
           name="note"
           value={form.note}
@@ -179,13 +205,14 @@ const AddAddress = () => {
 
         <Divider sx={{ mb: 2 }} />
 
+        {/* Địa chỉ chi tiết */}
         <TextField
           name="detail"
           value={form.detail}
           onChange={(e) =>
             setForm((prev) => ({ ...prev, detail: e.target.value }))
           }
-          placeholder="Địa chỉ chi tiết"
+          placeholder="Số nhà, tên đường, thôn/xóm..."
           fullWidth
           sx={{ mb: 2 }}
           InputProps={{ sx: { borderRadius: 2 } }}
@@ -193,7 +220,7 @@ const AddAddress = () => {
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {/* 🔹 Tỉnh/Thành */}
-          <Grid item xs={6}>
+          <Grid item xs={12}>
             <FormControl
               fullWidth
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
@@ -220,12 +247,15 @@ const AddAddress = () => {
           </Grid>
 
           {/* 🔹 Huyện */}
-          <Grid item xs={6}>
+          <Grid item xs={12}>
             <FormControl
               fullWidth
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             >
               <Select
+                value={
+                  districts.find((d) => d.name === form.district)?.code || ""
+                }
                 onChange={handleDistrictChange}
                 displayEmpty
                 renderValue={(selected) =>
@@ -250,6 +280,7 @@ const AddAddress = () => {
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             >
               <Select
+                value={wards.find((w) => w.name === form.ward)?.code || ""}
                 onChange={handleWardChange}
                 displayEmpty
                 renderValue={(selected) =>
@@ -268,6 +299,7 @@ const AddAddress = () => {
           </Grid>
         </Grid>
 
+        {/* Nút Tiếp tục */}
         <Button
           fullWidth
           variant="contained"
