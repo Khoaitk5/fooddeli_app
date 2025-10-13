@@ -8,12 +8,10 @@ const getAllUsers = async (req, res) => {
     return res.status(200).json({ success: true, users });
   } catch (error) {
     console.error("⚠️ Lỗi getAllUsers:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Lỗi server khi lấy danh sách người dùng.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách người dùng.",
+    });
   }
 };
 
@@ -26,12 +24,10 @@ const getCurrentUser = async (req, res) => {
     // console.log("📥 Session hiện tại tìm thấy:", req.session);
 
     if (!sessionUser) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+      });
     }
 
     const user = await userService.getUserById(sessionUser.id);
@@ -45,12 +41,10 @@ const getCurrentUser = async (req, res) => {
     return res.status(200).json({ success: true, user: safeUser });
   } catch (error) {
     console.error("⚠️ Lỗi getCurrentUser:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Lỗi server khi lấy thông tin người dùng.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy thông tin người dùng.",
+    });
   }
 };
 
@@ -68,7 +62,7 @@ const updateCurrentUser = async (req, res) => {
     const userId = sessionUser.id;
     const { username, fullname, email, phone, address } = req.body;
 
-    // 🧩 Chuẩn hóa dữ liệu người dùng để phù hợp DB
+    // 🧩 Chuẩn hóa dữ liệu người dùng
     const updatePayload = {};
 
     if (username) updatePayload.username = username.trim();
@@ -86,28 +80,39 @@ const updateCurrentUser = async (req, res) => {
       updatePayload.phone = normalizedPhone;
     }
 
-    // 🔄 Nếu có thông tin cần cập nhật → cập nhật user trong DB
+    // 🔄 Cập nhật thông tin user cơ bản
     let updatedUser = await userService.getUserById(userId);
     if (Object.keys(updatePayload).length > 0) {
       updatedUser = await userService.updateUser(userId, updatePayload);
     }
 
-    // 🏡 Xử lý địa chỉ nếu có FE gửi lên
-    let addedAddress = null;
-    if (address) {
-      // 🧩 FE gửi object có dạng { detail, ward, city, note, address_type, isDefault }
-      const addressLine =
-        typeof address === "object"
-          ? `${address.detail || ""}${
-              address.ward || address.city ? ", " : ""
-            }${address.ward || ""}${
-              address.ward && address.city ? ", " : ""
-            }${address.city || ""}`
-          : address;
+    // 🏡 Xử lý địa chỉ nếu FE gửi lên
+    let updatedAddress = null;
+    if (address && typeof address === "object") {
+      const { address_line, note, addressType, address_type, is_primary } = address;
 
-      const note = address.note || "";
-      const addressType = address.addressType || address.address_type || "Nhà";
-      const isDefault = address.isDefault ?? true;
+      // ✅ Chuẩn hoá address_line dạng object
+      let normalizedAddressLine;
+      if (typeof address_line === "object" && address_line !== null) {
+        const { detail, ward, district, city } = address_line;
+        normalizedAddressLine = {
+          detail: detail || "",
+          ward: ward || "",
+          district: district || "",
+          city: city || "",
+        };
+      } else {
+        normalizedAddressLine = {
+          detail: address_line || "",
+          ward: "",
+          district: "",
+          city: "",
+        };
+      }
+
+      const noteValue = note || "";
+      const addrType = addressType || address_type || "Nhà";
+      const isPrimary = is_primary ?? true;
 
       // 📬 Kiểm tra địa chỉ hiện có
       const existingAddresses = await addressService.getUserAddresses(userId);
@@ -115,30 +120,34 @@ const updateCurrentUser = async (req, res) => {
 
       if (!existingAddresses.length) {
         // 🆕 User chưa có địa chỉ → tạo mới
-        addedAddress = await addressService.addAddress({
-          user_id: userId,
-          address_line: addressLine,
-          note,
-          address_type: addressType,
-          is_default: isDefault,
-        });
+        updatedAddress = await addressService.createAddressForUser(
+          userId,
+          {
+            address_line: normalizedAddressLine,
+            note: noteValue,
+            address_type: addrType,
+          },
+          isPrimary
+        );
       } else if (defaultAddr) {
         // 🔄 Đã có default → cập nhật lại
-        addedAddress = await addressService.updateAddress(defaultAddr.address_id, {
-          address_line: addressLine,
-          note,
-          address_type: addressType,
-          is_default: isDefault,
+        updatedAddress = await addressService.updateAddress(defaultAddr.address_id, {
+          address_line: normalizedAddressLine,
+          note: noteValue,
+          address_type: addrType,
+          is_default: isPrimary,
         });
       } else {
         // 🆕 Có địa chỉ nhưng chưa có default → thêm mới và đặt mặc định
-        addedAddress = await addressService.addAddress({
-          user_id: userId,
-          address_line: addressLine,
-          note,
-          address_type: addressType,
-          is_default: true,
-        });
+        updatedAddress = await addressService.createAddressForUser(
+          userId,
+          {
+            address_line: normalizedAddressLine,
+            note: noteValue,
+            address_type: addrType,
+          },
+          true
+        );
       }
     }
 
@@ -152,11 +161,15 @@ const updateCurrentUser = async (req, res) => {
       message: "✅ Hồ sơ đã được cập nhật thành công!",
       user: {
         ...updatedUser,
-        address: addedAddress
+        address: updatedAddress
           ? {
-              address_line: addedAddress.address_line,
-              note: addedAddress.note,
-              address_type: addedAddress.address_type,
+              address_line:
+                typeof updatedAddress.address_line === "string"
+                  ? JSON.parse(updatedAddress.address_line)
+                  : updatedAddress.address_line,
+              note: updatedAddress.note,
+              address_type: updatedAddress.address_type,
+              is_default: updatedAddress.is_primary,
             }
           : null,
       },
@@ -176,22 +189,18 @@ const deleteCurrentUser = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
     if (!sessionUser) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+      });
     }
 
     const deletedUser = await userService.deleteUser(sessionUser.id);
     if (!deletedUser) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "❌ Không tìm thấy người dùng để xoá.",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "❌ Không tìm thấy người dùng để xoá.",
+      });
     }
 
     return res
@@ -210,31 +219,25 @@ const lockCurrentUser = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
     if (!sessionUser) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+      });
     }
 
     const lockedUser = await userService.lockUserAccount(sessionUser.id);
     if (!lockedUser) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "❌ Không tìm thấy người dùng để khoá.",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "❌ Không tìm thấy người dùng để khoá.",
+      });
     }
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "🔐 Tài khoản đã bị khoá thành công.",
-        user: lockedUser,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "🔐 Tài khoản đã bị khoá thành công.",
+      user: lockedUser,
+    });
   } catch (error) {
     console.error("⚠️ Lỗi lockCurrentUser:", error);
     return res
@@ -249,22 +252,18 @@ const getUserByUsername = async (req, res) => {
     const { username } = req.params;
     const user = await userService.getUserByUsername(username);
     if (!user) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "❌ Không tìm thấy người dùng với username này!",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "❌ Không tìm thấy người dùng với username này!",
+      });
     }
     return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByUsername:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Lỗi server khi tìm người dùng theo username.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi tìm người dùng theo username.",
+    });
   }
 };
 
@@ -274,22 +273,18 @@ const getUserByEmail = async (req, res) => {
     const { email } = req.params;
     const user = await userService.getUserByEmail(email);
     if (!user) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "❌ Không tìm thấy người dùng với email này!",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "❌ Không tìm thấy người dùng với email này!",
+      });
     }
     return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByEmail:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Lỗi server khi tìm người dùng theo email.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi tìm người dùng theo email.",
+    });
   }
 };
 
@@ -299,22 +294,18 @@ const getUserByPhone = async (req, res) => {
     const { phone } = req.params;
     const user = await userService.getUserByPhone(phone);
     if (!user) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "❌ Không tìm thấy người dùng với số điện thoại này!",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "❌ Không tìm thấy người dùng với số điện thoại này!",
+      });
     }
     return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByPhone:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Lỗi server khi tìm người dùng theo số điện thoại.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi tìm người dùng theo số điện thoại.",
+    });
   }
 };
 

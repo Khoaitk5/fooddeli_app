@@ -37,10 +37,12 @@ app.use((req, res, next) => {
 // ✅ Import routes
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 // ✅ Mount routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/orders", orderRoutes);
 
 // ✅ Route test nhanh
 app.get("/debug", (req, res) => {

@@ -152,6 +152,23 @@ class UserService {
       throw new Error("Không thể xóa người dùng.");
     }
   }
+  
+    /**
+   * @async
+   * @function getUserByEmail
+   * @description Lấy người dùng theo email
+   * @param {string} email - Địa chỉ email của người dùng
+   * @returns {Promise<object|null>} - User hoặc null nếu không tồn tại
+   */
+  async getUserByEmail(email) {
+    try {
+      return await userDao.getUserByEmail(email);
+    } catch (err) {
+      console.error("❌ Error fetching user by email:", err.message);
+      throw new Error("Không thể tìm người dùng theo email.");
+    }
+  }
 }
+
 
 module.exports = new UserService();

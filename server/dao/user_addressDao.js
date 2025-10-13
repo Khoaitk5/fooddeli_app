@@ -6,7 +6,7 @@ const pool = require("../config/db");
 /**
  * @class UserAddressDao
  * @extends GenericDao
- * @description Data Access Object cho bảng `user_addresses`
+ * @description DAO cho bảng `user_addresses`
  */
 class UserAddressDao extends GenericDao {
   constructor() {
@@ -14,15 +14,11 @@ class UserAddressDao extends GenericDao {
   }
 
   /**
-   * @async
-   * @function getAllAddressesByUserId
-   * @description Lấy danh sách tất cả địa chỉ của user
-   * @param {number} userId - ID của user
-   * @returns {Promise<Address[]>} Danh sách các địa chỉ
+   * Lấy tất cả địa chỉ của 1 user (JOIN addresses)
    */
-  async getAllAddressesByUserId(userId) {
+  async getAddressesByUserId(userId) {
     const query = `
-      SELECT a.*
+      SELECT a.*, ua.is_primary
       FROM user_addresses ua
       JOIN addresses a ON ua.address_id = a.address_id
       WHERE ua.user_id = $1
@@ -33,15 +29,11 @@ class UserAddressDao extends GenericDao {
   }
 
   /**
-   * @async
-   * @function getPrimaryAddressByUserId
-   * @description Lấy địa chỉ chính (is_primary = TRUE) của user
-   * @param {number} userId - ID của user
-   * @returns {Promise<Address|null>} Địa chỉ chính hoặc null nếu không có
+   * Lấy địa chỉ mặc định (is_primary = TRUE)
    */
-  async getPrimaryAddressByUserId(userId) {
+  async getDefaultAddressByUserId(userId) {
     const query = `
-      SELECT a.*
+      SELECT a.*, ua.is_primary
       FROM user_addresses ua
       JOIN addresses a ON ua.address_id = a.address_id
       WHERE ua.user_id = $1 AND ua.is_primary = TRUE
@@ -49,6 +41,37 @@ class UserAddressDao extends GenericDao {
     `;
     const res = await pool.query(query, [userId]);
     return res.rows[0] ? new Address(res.rows[0]) : null;
+  }
+
+  /**
+   * Cập nhật quan hệ user ↔ address (vd: đổi is_primary)
+   */
+  async updateByAddressId(addressId, updateData) {
+    const keys = Object.keys(updateData);
+    const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(", ");
+    const values = [addressId, ...Object.values(updateData)];
+
+    const query = `
+      UPDATE user_addresses
+      SET ${setClause}, updated_at = NOW()
+      WHERE address_id = $1
+      RETURNING *;
+    `;
+    const res = await pool.query(query, values);
+    return res.rows[0] ? new UserAddress(res.rows[0]) : null;
+  }
+
+  /**
+   * Tạo quan hệ giữa user và address (vì GenericDao.create() chỉ tạo trong 1 bảng)
+   */
+  async createRelation(userId, addressId, isPrimary = false) {
+    const query = `
+      INSERT INTO user_addresses (user_id, address_id, is_primary, created_at)
+      VALUES ($1, $2, $3, NOW())
+      RETURNING *;
+    `;
+    const res = await pool.query(query, [userId, addressId, isPrimary]);
+    return res.rows[0] ? new UserAddress(res.rows[0]) : null;
   }
 }
 
