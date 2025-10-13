@@ -1,4 +1,3 @@
-// dao/productDao.js
 const GenericDao = require("./generic_dao");
 const Product = require("../models/product");
 
@@ -30,6 +29,29 @@ class ProductDao extends GenericDao {
   }
 
   /**
+   * Cập nhật danh mục (category) của sản phẩm
+   * @param {number} productId - ID sản phẩm
+   * @param {string} category - Tên danh mục ('Thức ăn', 'Đồ uống', 'Tráng miệng', 'Khác')
+   * @returns {Promise<object>} - Sản phẩm sau khi cập nhật
+   */
+  async updateCategory(productId, category) {
+    const validCategories = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác"];
+    if (!validCategories.includes(category)) {
+      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${validCategories.join(", ")}`);
+    }
+
+    const query = `
+      UPDATE products
+      SET category = $1,
+          updated_at = NOW()
+      WHERE product_id = $2
+      RETURNING *;
+    `;
+    const result = await this.db.query(query, [category, productId]);
+    return result.rows[0];
+  }
+
+  /**
    * Lấy tất cả sản phẩm thuộc về 1 shop
    * @param {number} shopId - ID shop
    * @returns {Promise<object[]>} - Danh sách sản phẩm
@@ -41,6 +63,29 @@ class ProductDao extends GenericDao {
       ORDER BY updated_at DESC;
     `;
     const result = await this.db.query(query, [shopId]);
+    return result.rows;
+  }
+
+  /**
+   * Lọc sản phẩm theo danh mục
+   * @param {string} category - Danh mục ('Thức ăn', 'Đồ uống', 'Tráng miệng', 'Khác')
+   * @param {number} [limit=20]
+   * @param {number} [offset=0]
+   * @returns {Promise<object[]>}
+   */
+  async getProductsByCategory(category, limit = 20, offset = 0) {
+    const validCategories = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác"];
+    if (!validCategories.includes(category)) {
+      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${validCategories.join(", ")}`);
+    }
+
+    const query = `
+      SELECT * FROM products
+      WHERE category = $1
+      ORDER BY updated_at DESC
+      LIMIT $2 OFFSET $3;
+    `;
+    const result = await this.db.query(query, [category, limit, offset]);
     return result.rows;
   }
 
