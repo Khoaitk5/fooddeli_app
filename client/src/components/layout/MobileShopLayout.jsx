@@ -22,17 +22,17 @@ const MobileShopLayout = () => {
   // ✅ Kiểm tra user role mỗi khi truy cập /shop/*
   useEffect(() => {
     if (loading) return; // chờ context load xong user
-    console.log("DEBUG: Navigated to /shop/* route:", location.pathname);
-    console.log("DEBUG: Current user:", user);
+    // console.log("DEBUG: Navigated to /shop/* route:", location.pathname);
+    // console.log("DEBUG: Current user:", user);
 
     if (!user) {
-      console.log("DEBUG: No user → redirect to /customer");
+      // console.log("DEBUG: No user → redirect to /customer");
       navigate("/customer/home");
       return;
     }
 
     if (user.role !== "shop") {
-      console.log(`DEBUG: Invalid role (${user.role}) → redirect to /customer/home`);
+      // console.log(`DEBUG: Invalid role (${user.role}) → redirect to /customer/home`);
       navigate("/customer/home");
     }
   }, [user, loading, location.pathname, navigate]);

@@ -1,4 +1,4 @@
-const SearchIcon = ({ width = "2.3rem", height = "2.3rem" }) => {
+const SearchIcon = ({ width = "2.3rem", height = "2.3rem", onClick }) => {
   return (
     <svg
       width={width}
@@ -6,6 +6,8 @@ const SearchIcon = ({ width = "2.3rem", height = "2.3rem" }) => {
       viewBox="0 0 23 23"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
       <path
         fillRule="evenodd"

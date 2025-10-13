@@ -13,7 +13,7 @@ const ProfileRegister = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Lấy dữ liệu từ RegisterPhone / RegisterEmail / AddAddress
+  // ✅ Nhận dữ liệu từ các bước trước (RegisterPhone, RegisterEmail, AddAddress)
   const phoneFromState = location.state?.phone || "";
   const passwordFromState = location.state?.password || "";
   const addressFromState = location.state?.address || "";
@@ -21,11 +21,11 @@ const ProfileRegister = () => {
   const fullnameFromState = location.state?.fullname || "";
   const emailFromState = location.state?.email || "";
 
-  // ✅ Xác định luồng
+  // ✅ Xác định luồng xử lý
   const isPhoneFlow = !!phoneFromState;
   const isGoogleFlow = !phoneFromState && !passwordFromState;
 
-  // ✅ State form
+  // ✅ State lưu thông tin người dùng
   const [form, setForm] = useState({
     username: usernameFromState,
     fullname: fullnameFromState,
@@ -35,7 +35,17 @@ const ProfileRegister = () => {
     password: passwordFromState,
   });
 
-  // ✅ Nếu là Google, lấy user từ localStorage
+  // ✅ Cập nhật lại địa chỉ khi quay lại từ AddAddress
+  useEffect(() => {
+    if (location.state?.address) {
+      setForm((prev) => ({
+        ...prev,
+        address: location.state.address,
+      }));
+    }
+  }, [location.state?.address]);
+
+  // ✅ Nếu là đăng nhập bằng Google → lấy từ localStorage
   useEffect(() => {
     if (isGoogleFlow) {
       const storedUser = localStorage.getItem("user");
@@ -51,17 +61,17 @@ const ProfileRegister = () => {
     }
   }, [isGoogleFlow]);
 
-  // ✅ Cập nhật khi nhập
+  // ✅ Khi thay đổi input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ Điều hướng sang thêm địa chỉ
+  // ✅ Chuyển sang trang thêm địa chỉ
   const goToAddAddress = () => {
     navigate("/address/add", { state: { ...form } });
   };
 
-  // ✅ Submit form
+  // ✅ Gửi dữ liệu đăng ký
   const handleSubmit = async () => {
     const { username, fullname, email, address, phone, password } = form;
 
@@ -74,7 +84,7 @@ const ProfileRegister = () => {
       let response;
 
       if (isGoogleFlow) {
-        // 🔹 Google user: cập nhật hồ sơ hiện tại
+        // 🔹 Người dùng Google → cập nhật hồ sơ
         response = await fetch("http://localhost:5000/api/users/me", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -82,8 +92,8 @@ const ProfileRegister = () => {
           body: JSON.stringify({ username, fullname, email, address, phone }),
         });
       } else {
-        // 🔹 Đăng ký mới bằng email/số điện thoại
-        console.log("Địa chỉ gửi lên:", address);
+        // 🔹 Người dùng mới → đăng ký
+        console.log("📤 Địa chỉ gửi lên backend:", address);
         response = await fetch("http://localhost:5000/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -99,7 +109,7 @@ const ProfileRegister = () => {
       }
 
       const data = await response.json();
-      console.log("📡 Phản hồi từ backend:", data);
+      console.log("📡 Phản hồi backend:", data);
 
       if (!response.ok) throw new Error(data.message || "Đăng ký thất bại");
 
@@ -178,15 +188,28 @@ const ProfileRegister = () => {
           label="Địa chỉ"
           name="address"
           value={
-            typeof form.address === "object" && form.address !== null
-              ? `${form.address.detail || ""}${
-                  form.address.detail &&
-                  (form.address.ward || form.address.city)
-                    ? ", "
+            typeof form.address === "object" && form.address.address_line
+              ? `${form.address.address_line.detail || ""}${
+                  form.address.address_line.ward
+                    ? ", " + form.address.address_line.ward
                     : ""
-                }${form.address.ward || ""}${
-                  form.address.ward && form.address.city ? ", " : ""
-                }${form.address.city || ""}`
+                }${
+                  form.address.address_line.district
+                    ? ", " + form.address.address_line.district
+                    : ""
+                }${
+                  form.address.address_line.city
+                    ? ", " + form.address.address_line.city
+                    : ""
+                }`
+              : typeof form.address === "object"
+              ? `${form.address.detail || ""}${
+                  form.address.ward ? ", " + form.address.ward : ""
+                }${
+                  form.address.district ? ", " + form.address.district : ""
+                }${
+                  form.address.city ? ", " + form.address.city : ""
+                }`
               : form.address || ""
           }
           fullWidth
