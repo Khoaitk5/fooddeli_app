@@ -20,7 +20,9 @@ class UserDao extends GenericDao {
    * @returns {Promise<User|null>} User hoặc null nếu không tìm thấy
    */
   async findByUsername(username) {
-    const res = await pool.query(`SELECT * FROM users WHERE username = $1`, [username]);
+    const res = await pool.query(`SELECT * FROM users WHERE username = $1`, [
+      username,
+    ]);
     return res.rows[0] ? new User(res.rows[0]) : null;
   }
 
@@ -32,7 +34,9 @@ class UserDao extends GenericDao {
    * @returns {Promise<User|null>} User hoặc null nếu không tìm thấy
    */
   async findByPhone(phone) {
-    const res = await pool.query(`SELECT * FROM users WHERE phone = $1`, [phone]);
+    const res = await pool.query(`SELECT * FROM users WHERE phone = $1`, [
+      phone,
+    ]);
     return res.rows[0] ? new User(res.rows[0]) : null;
   }
 
@@ -89,6 +93,20 @@ class UserDao extends GenericDao {
   async getRoleById(id) {
     const res = await pool.query(`SELECT role FROM users WHERE id = $1`, [id]);
     return res.rows[0] ? res.rows[0].role : null;
+  }
+
+  /**
+   * @async
+   * @function getUserByEmail
+   * @description Tìm user theo email
+   * @param {string} email - Email của user
+   * @returns {Promise<User|null>} User hoặc null nếu không tồn tại
+   */
+  async getUserByEmail(email) {
+    const res = await pool.query(`SELECT * FROM users WHERE email = $1`, [
+      email,
+    ]);
+    return res.rows[0] ? new User(res.rows[0]) : null;
   }
 }
 
