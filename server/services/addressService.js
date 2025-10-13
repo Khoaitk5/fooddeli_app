@@ -7,13 +7,10 @@ const userAddressDao = require("../dao/user_addressDao");
  */
 class AddressService {
   /**
-   * @async
-   * @function createAddressForUser
-   * @description Tạo một địa chỉ mới (dạng JSON) và gán cho người dùng
+   * Tạo một địa chỉ mới cho người dùng
    */
   async createAddressForUser(userId, addressData, isPrimary = false) {
     try {
-      // ✅ Nhận đúng object address_line từ AuthService
       const raw = addressData.address_line || {};
 
       const addressJSON = {
@@ -23,33 +20,80 @@ class AddressService {
         city: raw.city ?? "",
       };
 
-      // 🔧 FIX: Chuẩn hóa và stringify trước khi gọi DAO
       const safeAddressJSON = JSON.stringify(addressJSON);
-      console.log("📦 [AddressService] address_line chuẩn bị insert:", safeAddressJSON);
 
       const address = await addressDao.create({
-        address_line: safeAddressJSON, // 👈 Gửi dạng JSON string xuống DB
+        address_line: safeAddressJSON,
         lat_lon: addressData.lat_lon ?? null,
         note: addressData.note ?? "",
         address_type: addressData.address_type ?? "Nhà",
       });
 
-      // Gán quan hệ user <-> address
       await userAddressDao.create({
         user_id: userId,
         address_id: address.address_id,
         is_primary: isPrimary,
       });
 
-      console.log("✅ [AddressService] Address tạo thành công:", address);
       return address;
     } catch (err) {
-      console.error("❌ [AddressService] Lỗi khi tạo address:", err.message);
+      console.error("❌ [AddressService] Lỗi createAddressForUser:", err.message);
       throw new Error("Không thể tạo địa chỉ mới cho người dùng.");
     }
   }
 
-  // Các hàm khác giữ nguyên
+  /**
+   * Lấy toàn bộ địa chỉ của user
+   */
+  async getUserAddresses(userId) {
+    try {
+      return await userAddressDao.getAddressesByUserId(userId);
+    } catch (err) {
+      console.error("❌ [AddressService] Lỗi getUserAddresses:", err.message);
+      throw new Error("Không thể lấy danh sách địa chỉ người dùng.");
+    }
+  }
+
+  /**
+   * Lấy địa chỉ mặc định (is_primary = true)
+   */
+  async getDefaultAddress(userId) {
+    try {
+      return await userAddressDao.getDefaultAddressByUserId(userId);
+    } catch (err) {
+      console.error("❌ [AddressService] Lỗi getDefaultAddress:", err.message);
+      throw new Error("Không thể lấy địa chỉ mặc định của người dùng.");
+    }
+  }
+
+  /**
+   * Cập nhật địa chỉ (và quan hệ user-address nếu cần)
+   */
+  async updateAddress(addressId, updateData) {
+    try {
+      const safeAddressJSON =
+        typeof updateData.address_line === "object"
+          ? JSON.stringify(updateData.address_line)
+          : updateData.address_line || "{}";
+
+      const updated = await addressDao.update("address_id", addressId, {
+        address_line: safeAddressJSON,
+        note: updateData.note ?? "",
+        address_type: updateData.address_type ?? "Nhà",
+      });
+
+      if (updateData.is_default !== undefined) {
+        await userAddressDao.updateByAddressId(addressId, {
+          is_primary: updateData.is_default,
+        });
+      }
+
+      return updated;
+    } catch (err) {
+      console.error("❌ [AddressService] Lỗi updateAddress:", err.message);
+      throw new Error("Không thể cập nhật địa chỉ.");
+    }
+  }
 }
 
 module.exports = new AddressService();
