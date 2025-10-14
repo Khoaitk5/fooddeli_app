@@ -1,42 +1,40 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Box, BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import HistoryIcon from '@mui/icons-material/History';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import PersonIcon from '@mui/icons-material/Person';
+import { Box, Fade } from '@mui/material';
+import BottomActionBar from '@/components/Shipper/BottomActionBar';
+import ShipperProvider from '@/contexts/ShipperContext.jsx';
 
 const MobileShipperLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [mounted, setMounted] = React.useState(false);
 
-  // Xác định tab hiện tại dựa trên path
-  const getCurrentTab = () => {
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Xác định key active cho BottomActionBar dựa trên path
+  const getActiveKey = () => {
     const path = location.pathname;
-    if (path.includes('/shipper/home')) return 0;
-    if (path.includes('/shipper/available') || path.includes('/shipper/my-runs') || path.includes('/shipper/order/') || path.includes('/shipper/navigation')) return 1;
-    if (path.includes('/shipper/history')) return 2;
-    if (path.includes('/shipper/earnings')) return 3;
-    if (path.includes('/shipper/profile') || path.includes('/shipper/settings')) return 4;
-    return 0;
+    if (path.includes('/shipper/home')) return 'home';
+    if (path.includes('/shipper/available')) return 'orders';
+    if (path.includes('/shipper/delivering')) return 'delivering';
+    if (path.includes('/shipper/profile')) return 'profile';
+    return 'home';
   };
 
-  const handleTabChange = (event, newValue) => {
-    switch (newValue) {
-      case 0:
+  const handleNavigate = (key) => {
+    switch (key) {
+      case 'home':
         navigate('/shipper/home');
         break;
-      case 1:
+      case 'orders':
         navigate('/shipper/available');
         break;
-      case 2:
-        navigate('/shipper/history');
+      case 'delivering':
+        navigate('/shipper/delivering');
         break;
-      case 3:
-        navigate('/shipper/earnings');
-        break;
-      case 4:
+      case 'profile':
         navigate('/shipper/profile');
         break;
       default:
@@ -45,81 +43,45 @@ const MobileShipperLayout = () => {
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100vh',
-      backgroundColor: '#f8fafc'
-    }}>
-      {/* Main Content */}
-      <Box sx={{ 
-        flex: 1, 
-        overflow: 'auto',
-        paddingBottom: '80px' // Chừa chỗ cho bottom navigation
-      }}>
-        <Outlet />
-      </Box>
+    <ShipperProvider>
+      <Fade in={mounted} timeout={600}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
+          position: 'relative',
+        }}>
+          {/* Main Content với smooth scrolling */}
+          <Box sx={{ 
+            flex: 1, 
+            overflow: 'auto',
+            overflowX: 'hidden',
+            paddingBottom: '90px', // Chừa chỗ cho bottom navigation
+            scrollBehavior: 'smooth',
+            WebkitOverflowScrolling: 'touch',
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '3px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(0,0,0,0.3)',
+            },
+          }}>
+            <Outlet />
+          </Box>
 
-      {/* Bottom Navigation */}
-      <Paper 
-        elevation={8}
-        sx={{ 
-          position: 'fixed', 
-          bottom: 0, 
-          left: 0, 
-          right: 0, 
-          zIndex: 1000,
-          borderRadius: '16px 16px 0 0'
-        }}
-      >
-        <BottomNavigation
-          value={getCurrentTab()}
-          onChange={handleTabChange}
-          showLabels
-          sx={{
-            height: 80,
-            '& .MuiBottomNavigationAction-root': {
-              minWidth: 'auto',
-              padding: '6px 0',
-              '&.Mui-selected': {
-                color: '#ff6b35',
-              },
-            },
-            '& .MuiBottomNavigationAction-label': {
-              fontSize: '10px',
-              fontWeight: 500,
-              marginTop: '4px',
-            },
-          }}
-        >
-          <BottomNavigationAction
-            label="Trang chủ"
-            icon={<HomeIcon />}
-            sx={{ color: getCurrentTab() === 0 ? '#ff6b35' : '#6b7280' }}
-          />
-          <BottomNavigationAction
-            label="Đơn hàng"
-            icon={<LocalShippingIcon />}
-            sx={{ color: getCurrentTab() === 1 ? '#ff6b35' : '#6b7280' }}
-          />
-          <BottomNavigationAction
-            label="Lịch sử"
-            icon={<HistoryIcon />}
-            sx={{ color: getCurrentTab() === 2 ? '#ff6b35' : '#6b7280' }}
-          />
-          <BottomNavigationAction
-            label="Thu nhập"
-            icon={<AccountBalanceWalletIcon />}
-            sx={{ color: getCurrentTab() === 3 ? '#ff6b35' : '#6b7280' }}
-          />
-          <BottomNavigationAction
-            label="Cá nhân"
-            icon={<PersonIcon />}
-            sx={{ color: getCurrentTab() === 4 ? '#ff6b35' : '#6b7280' }}
-          />
-        </BottomNavigation>
-      </Paper>
-    </Box>
+          {/* Bottom Action Bar */}
+          <BottomActionBar active={getActiveKey()} onNavigate={handleNavigate} />
+        </Box>
+      </Fade>
+    </ShipperProvider>
   );
 };
 

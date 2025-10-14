@@ -1,17 +1,28 @@
-// services/productService.js
 const productDao = require("../dao/productDao");
+
+const VALID_CATEGORIES = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác"];
 
 const productService = {
   /**
    * ➕ Tạo sản phẩm mới
-   * @param {object} productData - { shop_id, name, description, price, image_url, is_available }
+   * @param {object} productData - { shop_id, name, description, price, image_url, is_available, category }
    * @returns {Promise<object>}
    */
   async createProduct(productData) {
-    if (!productData.name || !productData.price || !productData.shop_id) {
+    const { name, price, shop_id, category } = productData;
+
+    if (!name || !price || !shop_id) {
       throw new Error("Thiếu thông tin bắt buộc: name, price, shop_id");
     }
-    return await productDao.create(productData);
+
+    if (category && !VALID_CATEGORIES.includes(category)) {
+      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+    }
+
+    return await productDao.create({
+      ...productData,
+      category: category || "Thức ăn", // default nếu không có
+    });
   },
 
   /**
@@ -42,6 +53,11 @@ const productService = {
     if (!existing) {
       throw new Error("Sản phẩm không tồn tại");
     }
+
+    if (updateData.category && !VALID_CATEGORIES.includes(updateData.category)) {
+      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+    }
+
     return await productDao.update(productId, updateData);
   },
 
@@ -73,12 +89,46 @@ const productService = {
   },
 
   /**
+   * 🏷️ Cập nhật danh mục sản phẩm
+   * @param {number} productId
+   * @param {string} category
+   * @returns {Promise<object>}
+   */
+  async updateCategory(productId, category) {
+    if (!VALID_CATEGORIES.includes(category)) {
+      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+    }
+
+    const existing = await productDao.findById(productId);
+    if (!existing) {
+      throw new Error("Sản phẩm không tồn tại");
+    }
+
+    return await productDao.updateCategory(productId, category);
+  },
+
+  /**
    * 🏪 Lấy tất cả sản phẩm của một shop
    * @param {number} shopId
    * @returns {Promise<object[]>}
    */
   async getProductsByShop(shopId) {
     return await productDao.getProductsByShop(shopId);
+  },
+
+  /**
+   * 🍱 Lấy sản phẩm theo danh mục
+   * @param {string} category
+   * @param {number} [limit=20]
+   * @param {number} [offset=0]
+   * @returns {Promise<object[]>}
+   */
+  async getProductsByCategory(category, limit = 20, offset = 0) {
+    if (!VALID_CATEGORIES.includes(category)) {
+      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+    }
+
+    return await productDao.getProductsByCategory(category, limit, offset);
   },
 
   /**
