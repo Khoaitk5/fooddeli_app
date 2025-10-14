@@ -152,6 +152,20 @@ const productService = {
   async getAvailableProducts() {
     return await productDao.getAvailableProducts();
   },
+
+  /**
+ * 📂 Lấy tất cả danh mục sản phẩm (chỉ 4 cái)
+ * @returns {Promise<object[]>}
+ */
+async getAllCategories() {
+  try {
+    return await productDao.getAllCategories();
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy danh mục sản phẩm:", err);
+    throw new Error("Không thể lấy danh mục sản phẩm");
+  }
+}
+
 };
 
 module.exports = productService;
