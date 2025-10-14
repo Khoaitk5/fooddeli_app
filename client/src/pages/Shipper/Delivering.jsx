@@ -277,7 +277,7 @@ const Delivering = () => {
       </Slide>
 
       {/* Bản đồ placeholder */}
-      <Box sx={{ px: 2, mt: -6, position: 'relative', zIndex: 1 }}>
+      <Box sx={{ px: 2, mt: 2, position: 'relative', zIndex: 1 }}>
         <Box sx={{
           height: 188,
           borderRadius: 3.5,
@@ -414,7 +414,7 @@ const Delivering = () => {
           {/* Distance info card */}
           <Paper sx={{
             position: 'absolute',
-            right: 16,
+            left: 16,
             top: 12,
             background: 'rgba(255,255,255,0.95)',
             border: '0.571px solid rgba(255,255,255,0.4)',
