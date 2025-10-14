@@ -44,7 +44,7 @@ export default function AddCoupon() {
               flexDirection: 'column',
               color: 'var(--Colors-Typography-400, #60655C)',
               fontSize: '1.5rem',
-              fontFamily: 'TikTok Sans',
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: '700',
               wordWrap: 'break-word',
               cursor: 'pointer'
@@ -63,7 +63,7 @@ export default function AddCoupon() {
               flexDirection: 'column',
               color: 'var(--Colors-Typography-500, #363A33)',
               fontSize: '1.7rem',
-              fontFamily: 'TikTok Sans',
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: '700',
               wordWrap: 'break-word'
             }}
@@ -82,7 +82,7 @@ export default function AddCoupon() {
               flexDirection: 'column',
               color: '#F9704B',
               fontSize: '1.5rem',
-              fontFamily: 'TikTok Sans',
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: '700',
               wordWrap: 'break-word',
               cursor: 'pointer'
@@ -110,7 +110,7 @@ export default function AddCoupon() {
                   color: '#363A33',
                   outline: 'none',
                   fontWeight: '400',
-                  fontFamily: 'TikTok Sans'
+                  fontFamily: 'Be Vietnam Pro'
                 }}
                 value={manual}
                 onChange={(e) => setManual(e.target.value)}
@@ -127,7 +127,7 @@ export default function AddCoupon() {
                     flexDirection: 'column',
                     color: 'var(--Colors-Typography-200, #91958E)',
                     fontSize: '1.5rem',
-                    fontFamily: 'TikTok Sans',
+                    fontFamily: 'Be Vietnam Pro',
                     fontWeight: '400',
                     wordWrap: 'break-word',
                     pointerEvents: 'none'
@@ -149,7 +149,7 @@ export default function AddCoupon() {
                 justifyContent: 'center',
                 color: canAdd ? 'white' : '#B6B8B6',
                 fontSize: '1.5rem',
-                fontFamily: 'TikTok Sans',
+                fontFamily: 'Be Vietnam Pro',
                 fontWeight: '700',
                 cursor: canAdd ? 'pointer' : 'not-allowed',
                 marginRight: '5.28vw'
@@ -162,7 +162,7 @@ export default function AddCoupon() {
           <div style={{position: 'absolute', top: '21.125vh'}}>
             <div style={{width: '89.44vw', outline: '1px var(--Colors-Grey-200, #E8EBE6) solid', outlineOffset: '-0.50px'}}></div>
 
-          <div style={{position: 'absolute', top: '2.875vh', left: '7.5vw', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-300, #70756B)', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '600', wordWrap: 'break-word', whiteSpace: 'nowrap', zIndex: 10}}>Chọn một voucher</div>
+          <div style={{position: 'absolute', top: '2.875vh', left: '7.5vw', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-300, #70756B)', fontSize: '1.2rem', fontFamily: 'Be Vietnam Pro', fontWeight: '600', wordWrap: 'break-word', whiteSpace: 'nowrap', zIndex: 10}}>Chọn một voucher</div>
 
             <div style={{position: 'absolute', top: '6.25vh', display: 'flex', flexDirection: 'column', gap: '1.875vh'}}>
               {COUPONS.map((c) => (
@@ -182,8 +182,8 @@ export default function AddCoupon() {
                 >
                   <div className="flex items-center justify-between gap-3 w-full">
                     <div className="min-w-0">
-                      <div style={{position: 'absolute', top: '2vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>{c.code}</div>
-                      <div style={{position: 'absolute', top: '4.125vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>{c.description}</div>
+                      <div style={{position: 'absolute', top: '2vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>{c.code}</div>
+                      <div style={{position: 'absolute', top: '4.125vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>{c.description}</div>
                     </div>
                     <div
                       onClick={() => setSelected(selected === c.code ? '' : c.code)}

@@ -128,7 +128,7 @@ const Login = () => {
           justifyContent: "center",
           color: "#70756B",
           fontSize: "1.5rem",
-          fontFamily: "TikTok Sans",
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: 600,
           lineHeight: "2.55rem",
           wordWrap: "break-word",

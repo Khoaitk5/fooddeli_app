@@ -57,6 +57,11 @@ export const theme = {
     '3xl': '2.5rem',  // was 2.25rem
   },
   
+  fontFamily: {
+    primary: "'Be Vietnam Pro', sans-serif",
+    secondary: "'Be Vietnam Pro', sans-serif",
+  },
+  
   borderRadius: {
     sm: '0.375rem',
     md: '0.5rem',

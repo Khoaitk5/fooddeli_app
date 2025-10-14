@@ -150,7 +150,7 @@ const RegisterPhone = () => {
             transform: "translateX(-50%)",
             color: "#EF5126",
             fontSize: 29,
-            fontFamily: "TikTok Sans",
+            fontFamily: 'Be Vietnam Pro',
             fontWeight: "700",
           }}
         >
@@ -174,7 +174,7 @@ const RegisterPhone = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
             }}
           >
@@ -222,7 +222,7 @@ const RegisterPhone = () => {
               outline: "none",
               background: "transparent",
               fontSize: 14,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
             }}
           />
         </div>
@@ -241,7 +241,7 @@ const RegisterPhone = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
               marginBottom: "8px",
             }}
@@ -274,7 +274,7 @@ const RegisterPhone = () => {
                   outline: "none",
                   background: "transparent",
                   fontSize: 14,
-                  fontFamily: "TikTok Sans",
+                  fontFamily: 'Be Vietnam Pro',
                 }}
               />
             </div>
@@ -297,7 +297,7 @@ const RegisterPhone = () => {
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: "pointer",
-                fontFamily: "TikTok Sans",
+                fontFamily: 'Be Vietnam Pro',
                 width: "70px",
               }}
               type="button"
@@ -323,7 +323,7 @@ const RegisterPhone = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
               marginBottom: "8px",
             }}
@@ -354,7 +354,7 @@ const RegisterPhone = () => {
                 outline: "none",
                 background: "transparent",
                 fontSize: 14,
-                fontFamily: "TikTok Sans",
+                fontFamily: 'Be Vietnam Pro',
               }}
             />
           </div>
@@ -385,7 +385,7 @@ const RegisterPhone = () => {
               fontWeight: 700,
               fontSize: 16,
               cursor: otpVerified ? "pointer" : "not-allowed",
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
             }}
             type="button"
             onClick={handleNext}

@@ -16,7 +16,7 @@ const theme = createTheme({
     background: { default: "#fafafa", paper: "#ffffff" },
   },
   shape: { borderRadius: 10 },
-  typography: { fontFamily: "'Inter', 'Roboto', sans-serif" },
+  typography: { fontFamily: "'Be Vietnam Pro', 'Roboto', sans-serif" },
 });
 
 console.log("DEBUG: [main.jsx] MUI Theme created:", theme);

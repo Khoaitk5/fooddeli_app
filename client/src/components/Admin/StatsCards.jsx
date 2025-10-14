@@ -65,7 +65,7 @@ const StatsCards = () => {
               fontSize: '14px',
               fontWeight: 'normal',
               color: '#717182',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               marginBottom: '4px'
             }}>
               {stat.title}
@@ -75,7 +75,7 @@ const StatsCards = () => {
               fontSize: '24px',
               fontWeight: 'bold',
               color: '#000000',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               marginBottom: '4px'
             }}>
               {stat.value}
@@ -85,7 +85,7 @@ const StatsCards = () => {
               fontSize: '12px',
               fontWeight: 'normal',
               color: '#717182',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
             }}>
               {stat.subtitle}
             </Typography>

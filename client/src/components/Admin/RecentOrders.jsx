@@ -68,7 +68,7 @@ const RecentOrders = () => {
           fontSize: '16px',
           fontWeight: 'normal',
           color: '#000000',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
           marginBottom: '6px'
         }}>
           Đơn hàng gần đây
@@ -77,7 +77,7 @@ const RecentOrders = () => {
           fontSize: '16px',
           fontWeight: 'normal',
           color: '#717182',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
         }}>
           Các đơn hàng mới nhất trong hệ thống
         </Typography>
@@ -120,7 +120,7 @@ const RecentOrders = () => {
                   fontSize: '16px',
                   fontWeight: 'normal',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   {order.id}
                 </Typography>
@@ -141,7 +141,7 @@ const RecentOrders = () => {
                     fontSize: '12px',
                     fontWeight: 'normal',
                     color: order.statusColor,
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                   }}>
                     {order.status}
                   </Typography>
@@ -153,7 +153,7 @@ const RecentOrders = () => {
                 fontSize: '14px',
                 fontWeight: 'normal',
                 color: '#717182',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {order.customer}
               </Typography>
@@ -163,7 +163,7 @@ const RecentOrders = () => {
                 fontSize: '14px',
                 fontWeight: 'normal',
                 color: '#000000',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {order.items}
               </Typography>
@@ -174,7 +174,7 @@ const RecentOrders = () => {
               fontSize: '12px',
               fontWeight: 'normal',
               color: '#717182',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
             }}>
               {order.timeAgo}
             </Typography>

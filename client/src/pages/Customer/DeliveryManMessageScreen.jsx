@@ -22,7 +22,7 @@ const GRADIENTS = {
 };
 
 const FONT = {
-  family: 'TikTok Sans',
+  family: 'Be Vietnam Pro',
   size: {
     small: '1rem',
     medium: '1.4rem',

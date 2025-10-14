@@ -28,7 +28,7 @@ const RecommendItem = ({ image, title, distance }) => {
           textAlign: "center",
           color: "black",
           fontSize: "1.4rem",
-          fontFamily: "TikTok Sans",
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: "500",
           overflowWrap: "break-word", // 👈 tốt hơn cho responsive
           lineHeight: 1.3,
@@ -45,7 +45,7 @@ const RecommendItem = ({ image, title, distance }) => {
           textAlign: "center",
           color: "#60635E",
           fontSize: "1.1rem",
-          fontFamily: "TikTok Sans",
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: "500",
         }}
       >

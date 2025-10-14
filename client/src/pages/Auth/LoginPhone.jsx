@@ -136,7 +136,7 @@ const LoginPhone = () => {
             flexDirection: "column",
             color: "#868686",
             fontSize: "1.4rem",
-            fontFamily: "TikTok Sans",
+            fontFamily: 'Be Vietnam Pro',
             fontWeight: "500",
             wordWrap: "break-word",
           }}
@@ -173,7 +173,7 @@ const LoginPhone = () => {
             flexDirection: "column",
             color: "#868686",
             fontSize: "1.4rem",
-            fontFamily: "TikTok Sans",
+            fontFamily: 'Be Vietnam Pro',
             fontWeight: "500",
             wordWrap: "break-word",
           }}
@@ -216,7 +216,7 @@ const LoginPhone = () => {
               outline: "none",
               fontSize: "1.4rem",
               fontWeight: "400",
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               color: "#aaaaae",
               backgroundColor: "transparent",
             }}
@@ -254,7 +254,7 @@ const LoginPhone = () => {
               flexDirection: "column",
               color: "white",
               fontSize: "1.3rem",
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
               wordWrap: "break-word",
             }}

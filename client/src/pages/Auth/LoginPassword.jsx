@@ -106,7 +106,7 @@ const LoginPassword = () => {
             style={{
               color: "black",
               fontSize: 28,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "700",
               whiteSpace: "nowrap",
             }}
@@ -136,7 +136,7 @@ const LoginPassword = () => {
               padding: "0 16px",
               color: "#555",
               fontSize: 16,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
             }}
           >
@@ -179,7 +179,7 @@ const LoginPassword = () => {
                 backgroundColor: "transparent",
                 color: "black",
                 fontSize: 16,
-                fontFamily: "TikTok Sans",
+                fontFamily: 'Be Vietnam Pro',
                 fontWeight: "400",
               }}
             />
@@ -194,7 +194,7 @@ const LoginPassword = () => {
                 color: "#868686",
                 padding: "6px 4px",
                 fontSize: 13,
-                fontFamily: "TikTok Sans",
+                fontFamily: 'Be Vietnam Pro',
                 fontWeight: "600",
               }}
             >
@@ -218,7 +218,7 @@ const LoginPassword = () => {
             style={{
               color: "black",
               fontSize: 14,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "700",
               textDecoration: "underline",
               cursor: "pointer",
@@ -261,7 +261,7 @@ const LoginPassword = () => {
               style={{
                 color: "white",
                 fontSize: 13,
-                fontFamily: "TikTok Sans",
+                fontFamily: 'Be Vietnam Pro',
                 fontWeight: "600",
                 whiteSpace: "nowrap",
               }}
