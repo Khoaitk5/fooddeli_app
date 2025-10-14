@@ -59,7 +59,7 @@ import ShopSettings from './pages/Shop/Settings';
 import ShipperHome from './pages/Shipper/Home';
 import ShipperActiveOrder from './pages/Shipper/ActiveOrder';
 import ShipperDelivering from './pages/Shipper/Delivering';
-// Đã loại bỏ MyRuns, Earnings, History và OrderDetail
+import ShipperHistory from './pages/Shipper/History';
 import ShipperProfile from './pages/Shipper/Profile';
 import EditProfile from './pages/Shipper/EditProfile';
 import ShipperWallet from './pages/Shipper/Wallet';
@@ -110,7 +110,7 @@ function App() {
           <Route path="home" element={<ShipperHome />} />
           <Route path="available" element={<ShipperActiveOrder />} />
           <Route path="delivering" element={<ShipperDelivering />} />
-          {/* Chỉ còn 4 trang: home, available, navigation, profile */}
+          <Route path="history" element={<ShipperHistory />} />
           <Route path="profile" element={<ShipperProfile />} />
           <Route path="profile/edit" element={<EditProfile />} />
           <Route path="wallet" element={<ShipperWallet />} />
