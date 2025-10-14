@@ -38,7 +38,7 @@ export default function Checkout() {
             flexDirection: "column",
             color: "var(--Colors-Typography-500, #363A33)",
             fontSize: "1.7rem",
-            fontFamily: "TikTok Sans",
+            fontFamily: 'Be Vietnam Pro',
             fontWeight: "700",
             wordWrap: "break-word",
           }}
@@ -84,7 +84,7 @@ export default function Checkout() {
               flexDirection: 'column',
               color: '#60655C',
               fontSize: '1.5rem',
-              fontFamily: 'TikTok Sans',
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: '400',
               wordWrap: 'break-word',
               position: 'absolute',
@@ -101,7 +101,7 @@ export default function Checkout() {
               flexDirection: 'column',
               color: 'var(--Colors-Typography-500, #363A33)',
               fontSize: '1.5rem',
-              fontFamily: 'TikTok Sans',
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: '600',
               wordWrap: 'break-word',
               position: 'absolute',
@@ -131,7 +131,7 @@ export default function Checkout() {
                 <BinIcon />
               )}
             </button>
-            <div style={{width: '100%', textBoxTrim: 'trim-both', textBoxEdge: 'cap alphabetic', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#60655C', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '500', wordWrap: 'break-word'}}>{quantity}</div>
+            <div style={{width: '100%', textBoxTrim: 'trim-both', textBoxEdge: 'cap alphabetic', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#60655C', fontSize: '1.5rem', fontFamily: 'Be Vietnam Pro', fontWeight: '500', wordWrap: 'break-word'}}>{quantity}</div>
             <button aria-label="Tăng" onClick={() => setQuantity(q => q + 1)} style={{width: '8.89vw', height: '4vh', background: '#F4F7F2', borderRadius: 9999, display: 'grid', placeItems: 'center', border: 'none', color: '#60655c'}}>
               <svg width="1rem" height="1rem" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.66699 0C5.04248 0.000164651 5.3541 0.290467 5.38086 0.665039L5.59961 3.73242L8.66797 3.95215C9.04265 3.97891 9.33301 4.29136 9.33301 4.66699C9.33284 5.04248 9.04254 5.3541 8.66797 5.38086L5.59961 5.59961L5.38086 8.66797C5.3541 9.04254 5.04248 9.33284 4.66699 9.33301C4.29136 9.33301 3.97891 9.04265 3.95215 8.66797L3.73242 5.59961L0.665039 5.38086C0.290469 5.3541 0.000167321 5.04248 0 4.66699C1.64194e-08 4.29136 0.290361 3.97891 0.665039 3.95215L3.73242 3.73242L3.95215 0.665039C3.97891 0.290361 4.29136 0 4.66699 0Z" fill="#60635E"/>
@@ -156,7 +156,7 @@ export default function Checkout() {
           padding: '0 1vw',
           color: '#91958E',
           fontSize: '1.5rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '400'
         }}>
           <span style={{position: 'absolute', left: '5.56vw', top: '50%', transform: 'translateY(-50%)'}}>
@@ -182,7 +182,7 @@ export default function Checkout() {
           top: '34.5vh',
           color: '#60655C',
           fontSize: '1.5rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '400'
         }}>
           <div style={{display: 'flex', justifyContent: 'space-between', padding: '0.5vh 0'}}>
@@ -217,7 +217,7 @@ export default function Checkout() {
               flexDirection: 'column',
               color: '#363A33',
               fontSize: '2.3rem',
-              fontFamily: 'TikTok Sans',
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: '600',
               wordWrap: 'break-word',
               position: 'absolute',
@@ -244,7 +244,7 @@ export default function Checkout() {
               color: 'white',
               fontSize: '1.5rem',
               textDecoration: 'none',
-              fontFamily: 'TikTok Sans',
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: '700',
               border: 'none'
             }}

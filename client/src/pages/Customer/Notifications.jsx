@@ -1,146 +1,210 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Navbar from "../../components/shared/Navbar";
-import CustomerNotificationIcon from "../../components/role-specific/Customer/CustomerNotificationIcon";
-import { pxW, pxH } from "../../utils/scale.js";
+import NotificationContent from "../../components/shared/NotificationContent";
 
-const styles = {
-  absoluteCenter: {
-    position: "absolute",
-    justifyContent: "center",
-    display: "flex",
-    flexDirection: "column",
-    wordWrap: "break-word",
-  },
-  tikTokFont: {
-    fontFamily: "TikTok Sans",
-  },
-  notificationCard: {
-    background: "white",
-    borderRadius: 12,
-    marginBottom: pxH(12),
-    cursor: "pointer",
-    width: "89.33vw",
-    height: "11.08vh",
-    position: "absolute",
-    top: "13.36vh",
-    left: "50%",
-    transform: "translateX(-50%)",
-  },
-};
+// Add styles to hide scrollbar
+const hideScrollbarStyles = `
+  .hide-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+`;
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([]);
+  const [isNotificationActive, setIsNotificationActive] = useState(false);
 
-  useEffect(() => {
-    const mockNotifications = [
-      {
-        id: 1,
-        title: "Order Out for Delivery!",
-        body: "Your food is on the move! Track your order for real-time updates.",
-        is_read: false,
-        created_at: "5 mins ago",
-      },
-    ];
-    setNotifications(mockNotifications);
-  }, []);
-
-  const formatTime = (dateString) => {
-    if (typeof dateString === 'string' && (dateString.includes('ago') || dateString.includes('trước'))) {
-      return dateString;
+  // Sample data - in real app this would come from API
+  const notifications = [
+    {
+      id: 1,
+      title: "Đơn hàng của bạn đã được giao thành công!",
+      body: "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi. Đơn hàng #12345 đã được giao đến địa chỉ của bạn.",
+      time: "2 giờ trước"
+    },
+    {
+      id: 2,
+      title: "Khuyến mãi đặc biệt!",
+      body: "Giảm 30% cho đơn hàng tiếp theo. Sử dụng mã FOOD30 khi đặt hàng.",
+      time: "1 ngày trước"
+    },
+    {
+      id: 3,
+      title: "Cập nhật trạng thái đơn hàng",
+      body: "Đơn hàng #12344 đang được chuẩn bị bởi nhà bếp. Dự kiến giao trong 25 phút.",
+      time: "3 giờ trước"
+    },
+    {
+      id: 4,
+      title: "Phản hồi từ nhà hàng",
+      body: "Cảm ơn bạn đã đánh giá 5 sao! Chúng tôi rất vui khi phục vụ bạn.",
+      time: "2 ngày trước"
+    },
+    {
+      id: 5,
+      title: "Món mới trong tuần",
+      body: "Khám phá các món ăn mới với giá ưu đãi. Burger gà sốt mật ong chỉ 45k!",
+      time: "3 ngày trước"
+    },
+    {
+      id: 6,
+      title: "Chương trình tích điểm",
+      body: "Bạn đã tích được 150 điểm. Đổi 100 điểm để được giảm 10k cho đơn hàng tiếp theo!",
+      time: "5 ngày trước"
     }
+  ];
 
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+  const chats = [
+    {
+      id: 1,
+      sender: "Hỗ trợ khách hàng",
+      message: "Xin chào! Tôi có thể giúp gì cho bạn hôm nay? Nếu bạn có câu hỏi về đơn hàng hoặc cần hỗ trợ, hãy cho tôi biết nhé!",
+      time: "Online • 2 phút trước"
+    },
+    {
+      id: 2,
+      sender: "Nhà hàng ABC",
+      message: "Đơn hàng của bạn đang được chuẩn bị. Bếp trưởng đang làm món gà rán đặc biệt theo yêu cầu của bạn.",
+      time: "5 phút trước"
+    },
+    {
+      id: 3,
+      sender: "Tài xế giao hàng",
+      message: "Xin chào! Tôi là tài xế giao hàng. Tôi đang trên đường đến nhà bạn, dự kiến 10 phút nữa sẽ đến.",
+      time: "15 phút trước"
+    },
+    {
+      id: 4,
+      sender: "Nhà hàng Pizza Hot",
+      message: "Cảm ơn bạn đã đặt hàng! Pizza hải sản của bạn sẽ được nướng trong 15 phút. Bạn có muốn thêm nước uống không?",
+      time: "1 giờ trước"
+    },
+    {
+      id: 5,
+      sender: "Hỗ trợ kỹ thuật",
+      message: "Vấn đề đăng nhập của bạn đã được khắc phục. Bạn có thể thử đăng nhập lại bây giờ.",
+      time: "2 giờ trước"
+    },
+    {
+      id: 6,
+      sender: "Nhà hàng Sushi Fresh",
+      message: "Combo sushi đặc biệt hôm nay giảm 20%! Bao gồm 12 miếng sushi tươi ngon với giá chỉ 120k.",
+      time: "3 giờ trước"
+    }
+  ];
 
-    if (diffInHours < 1) return "Vừa xong";
-    if (diffInHours < 24) return `${diffInHours} giờ trước`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays} ngày trước`;
+  const handleChatClick = () => {
+    setIsNotificationActive(false);
   };
 
-  const markAsRead = (id) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, is_read: true } : notif
-      )
-    );
+  const handleNotificationClick = () => {
+    setIsNotificationActive(true);
   };
-
   return (
-    <div className="bg-white pb-20">
-      <Navbar />
-      <div className="mx-auto max-w-[360px] px-5 pb-24 pt-5">
-        {/* Header */}
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <style>{hideScrollbarStyles}</style>
+      {/* Fixed Header */}
+      <div style={{ flexShrink: 0 }}>
         <div
           style={{
-            position: "absolute",
-            top: "6.625vh",
-            left: "50%",
-            transform: "translateX(-50%)",
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "var(--Colors-Typography-500, #363A33)",
-            fontSize: "1.7rem",
-            fontFamily: "TikTok Sans",
-            fontWeight: "700",
-            wordWrap: "break-word",
+            position: "relative",
+            height: "15vh",
+            background: "white",
           }}
         >
-          Thông báo
-        </div>
+          <div
+            style={{
+              position: "absolute",
+              top: "1.875vh",
+              left: "6.11vw",
+              textAlign: "center",
+              justifyContent: "center",
+              display: "flex",
+              flexDirection: "column",
+              color: "black",
+              fontSize: "2.2rem",
+              fontWeight: "500",
+              wordWrap: "break-word",
+            }}
+          >
+            Thông báo
+          </div>
 
-        {/* Notifications List */}
-        <div>
-          {notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500" style={styles.tikTokFont}>
-                Chưa có thông báo nào
-              </p>
+          <div
+            style={{
+              position: "absolute",
+              top: "7.875vh",
+              left: "6.11vw",
+              width: "42.78vw",
+              height: "4.125vh",
+              background: isNotificationActive ? "rgba(249, 112, 75, 0.10)" : "#F9704B",
+              borderRadius: 16.5,
+              justifyContent: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+            onClick={handleChatClick}
+          >
+            <div
+              style={{
+                color: isNotificationActive ? "#F9704B" : "white",
+                fontSize: "1.3rem",
+                fontWeight: "500",
+                wordWrap: "break-word",
+              }}
+            >
+              Trò chuyện
             </div>
-          ) : (
-            notifications.map((notification) => (
-              <div
-                key={notification.id}
-                style={styles.notificationCard}
-                onClick={() => markAsRead(notification.id)}
-              >
-                <div style={{display: 'flex', alignItems: 'flex-start', gap: '4.27vw'}}>
-                  <div style={{
-                    width: '12.8vw',
-                    height: '5.76vh',
-                    backgroundColor: '#F4F7F2',
-                    borderRadius: '50%',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <CustomerNotificationIcon />
-                  </div>
+          </div>
 
-                  <div style={{flex: 1}}>
-                    <div className="mb-2">
-                      <div style={{color: '#363A33', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '600', wordWrap: 'break-word'}}>
-                        {notification.title}
-                      </div>
-                    </div>
-
-                    <div style={{color: '#60655C', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word', marginBottom: '0.5vh'}}>
-                      {notification.body}
-                    </div>
-
-                    <div style={{color: '#60655C', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '600', wordWrap: 'break-word'}}>
-                      {formatTime(notification.created_at)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+          <div
+            style={{
+              position: "absolute",
+              top: "7.875vh",
+              right: "6.11vw",
+              width: "42.78vw",
+              height: "4.125vh",
+              background: isNotificationActive ? "#F9704B" : "rgba(249, 112, 75, 0.10)",
+              borderRadius: 16.5,
+              justifyContent: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+            onClick={handleNotificationClick}
+          >
+            <div
+              style={{
+                justifyContent: "center",
+                display: "flex",
+                flexDirection: "column",
+                color: isNotificationActive ? "white" : "#F9704B",
+                fontSize: "1.3rem",
+                fontWeight: "500",
+                wordWrap: "break-word",
+              }}
+            >
+              Thông báo
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Scrollable Content */}
+      <div className="hide-scrollbar" style={{ flex: 1, overflowY: "auto", paddingBottom: "80px" }}>
+        <NotificationContent
+          isNotificationActive={isNotificationActive}
+          notifications={notifications}
+          chats={chats}
+        />
+      </div>
+
+      <Navbar />
     </div>
   );
 };

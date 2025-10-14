@@ -22,8 +22,7 @@ import Home from './pages/Customer/Home';
 import Discover from './pages/Customer/Discover';
 import Order from './pages/Customer/Order';
 import OrderTracking from './pages/Customer/OrderTracking';
-import OrderSummary from './pages/Customer/OrderSummary';
-import Cart from './pages/Customer/Cart';
+import { CartPage as Cart } from './pages/Customer/Cart';
 import Checkout from './pages/Customer/Checkout';
 import Payment from './pages/Customer/Payment';
 import AddCoupon from './pages/Customer/AddCoupon';
@@ -35,6 +34,8 @@ import Notifications from './pages/Customer/Notifications';
 import RestaurantDetailPage from './pages/Customer/RestaurantDetailPage';
 import { UserProfile } from './pages/Customer/UserProfile';
 import SearchPage from './pages/Customer/SearchPage';
+import SearchResults from './components/role-specific/Customer/SearchResults';
+import FoodFilters from './pages/Customer/FoodFilters';
 
 // Auth
 import Login from './pages/Auth/Login';
@@ -95,7 +96,6 @@ function App() {
           <Route path="add-coupon" element={<AddCoupon />} />
           <Route path="orders" element={<Order />} />
           <Route path="order-tracking" element={<OrderTracking />} />
-          <Route path="order-summary" element={<OrderSummary />} />
           <Route path="order-history" element={<OrderHistory />} />
           <Route path="delivery-man-call" element={<DeliveryManCallScreen />} />
           <Route path="delivery-man-message" element={<DeliveryManMessageScreen />} />
@@ -105,6 +105,8 @@ function App() {
           <Route path="profile" element={<UserProfile />} />
           <Route path="discover" element={<Discover />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="search-results" element={<SearchResults />} />
+          <Route path="filters" element={<FoodFilters />} />
         </Route>
 
         {/* Shipper Routes */}

@@ -1,6 +1,6 @@
 // Các biến style dùng chung cho khu vực Shop
 
-export const FONT_FAMILY = "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif";
+export const FONT_FAMILY = "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif";
 export const CARD_BG = '#ffffff';
 export const BORDER_LIGHT = '0.8px solid rgba(0,0,0,0.1)';
 export const TEXT_MUTED = '#717182';

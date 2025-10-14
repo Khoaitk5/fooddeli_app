@@ -29,7 +29,7 @@ const ProductCardForVideo = () => {
           flexDirection: "column",
           color: "black",
           fontSize: "1.1rem",
-          fontFamily: "TikTok Sans",
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: "500",
           wordWrap: "break-word",
           position: "absolute",
@@ -60,7 +60,7 @@ const ProductCardForVideo = () => {
             flexDirection: "column",
             color: "black",
             fontSize: "1rem",
-            fontFamily: "TikTok Sans",
+            fontFamily: 'Be Vietnam Pro',
             fontWeight: "400",
             wordWrap: "break-word",
           }}
@@ -75,7 +75,7 @@ const ProductCardForVideo = () => {
           flexDirection: "column",
           color: "#868686",
           fontSize: "1rem",
-          fontFamily: "TikTok Sans",
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: "400",
           wordWrap: "break-word",
           position: "absolute",
@@ -101,7 +101,7 @@ const ProductCardForVideo = () => {
           flexDirection: "column",
           color: "#D3D1D8",
           fontSize: "0.9rem",
-          fontFamily: "TikTok Sans",
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: "400",
           textDecoration: "line-through",
           wordWrap: "break-word",
@@ -126,7 +126,7 @@ const ProductCardForVideo = () => {
           style={{
             color: "#ED4E30",
             fontSize: "1.5rem",
-            fontFamily: "TikTok Sans",
+            fontFamily: 'Be Vietnam Pro',
             fontWeight: "600",
             wordWrap: "break-word",
           }}
@@ -156,7 +156,7 @@ const ProductCardForVideo = () => {
             flexDirection: "column",
             color: "white",
             fontSize: '1.1rem',
-            fontFamily: "TikTok Sans",
+            fontFamily: 'Be Vietnam Pro',
             fontWeight: "500",
             wordWrap: "break-word",
           }}

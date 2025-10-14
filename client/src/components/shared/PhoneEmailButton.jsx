@@ -28,7 +28,7 @@ const PhoneEmailButton = ({ onClick, style, ...props }) => (
 
       <span style={{
         fontSize: 13,
-        fontFamily: 'TikTok Sans',
+        fontFamily: 'Be Vietnam Pro',
         fontWeight: '600',
         color: 'black'
       }}

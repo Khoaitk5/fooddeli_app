@@ -195,7 +195,7 @@ const handleSubmit = async (e) => {
             style={{
               color: "black",
               fontSize: 28,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "700",
               whiteSpace: "nowrap",
             }}
@@ -218,7 +218,7 @@ const handleSubmit = async (e) => {
             style={{
               color: "#868686",
               fontSize: 12.5,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "400",
               marginRight: "4px",
             }}
@@ -229,7 +229,7 @@ const handleSubmit = async (e) => {
             style={{
               color: "#868686",
               fontSize: 12.5,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
             }}
           >
@@ -303,7 +303,7 @@ const handleSubmit = async (e) => {
                     textAlign: "center",
                     color: "black",
                     fontSize: 24,
-                    fontFamily: "TikTok Sans",
+                    fontFamily: 'Be Vietnam Pro',
                     fontWeight: "600",
                   }}
                 />
@@ -320,7 +320,7 @@ const handleSubmit = async (e) => {
               width: "100%",
               paddingLeft: "4px",
               fontSize: 14,
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "500",
               cursor: countdown === 0 ? "pointer" : "default",
               marginBottom: "24px",
@@ -361,7 +361,7 @@ const handleSubmit = async (e) => {
               style={{
                 color: "#000",
                 fontSize: 14,
-                fontFamily: "TikTok Sans",
+                fontFamily: 'Be Vietnam Pro',
                 fontWeight: "600",
               }}
             >

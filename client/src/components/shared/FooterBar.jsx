@@ -8,7 +8,7 @@ const FooterBar = ({ text1 = "Bạn không có tài khoản?", text2 = "Đăng k
 
   const textStyle = {
     fontSize: "1.4rem",
-    fontFamily: 'TikTok Sans',
+    fontFamily: 'Be Vietnam Pro',
   };
 
   return (

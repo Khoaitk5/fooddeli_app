@@ -100,7 +100,7 @@ const VideoManagement = () => {
           fontSize: '20px',
           fontWeight: 'bold',
           color: '#000000',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
         }}>
           Quản lý Video Review
         </Typography>
@@ -126,7 +126,7 @@ const VideoManagement = () => {
               backgroundColor: '#F9704B',
               borderRadius: '8px',
               textTransform: 'none',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               '&:hover': {
                 backgroundColor: '#e55a3a'
               }
@@ -209,7 +209,7 @@ const VideoManagement = () => {
                   padding: '4px 8px',
                   borderRadius: '4px',
                   fontSize: '12px',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   {video.duration}
                 </Box>
@@ -221,7 +221,7 @@ const VideoManagement = () => {
                   fontSize: '16px',
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                   marginBottom: '8px',
                   lineHeight: 1.3
                 }}>
@@ -231,7 +231,7 @@ const VideoManagement = () => {
                 <Typography sx={{
                   fontSize: '14px',
                   color: '#717182',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                   marginBottom: '8px',
                   lineHeight: 1.4
                 }}>
@@ -241,7 +241,7 @@ const VideoManagement = () => {
                 <Typography sx={{
                   fontSize: '14px',
                   color: '#717182',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                   marginBottom: '12px'
                 }}>
                   Món ăn: {video.dishName}
@@ -256,14 +256,14 @@ const VideoManagement = () => {
                   <Typography sx={{
                     fontSize: '12px',
                     color: '#717182',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                   }}>
                     👁️ {video.views} lượt xem
                   </Typography>
                   <Typography sx={{
                     fontSize: '12px',
                     color: '#717182',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                   }}>
                     ❤️ {video.likes} lượt thích
                   </Typography>
@@ -277,7 +277,7 @@ const VideoManagement = () => {
                     backgroundColor: statusInfo.bg,
                     color: statusInfo.color,
                     fontSize: '12px',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                     marginBottom: '16px'
                   }}
                 />
@@ -343,7 +343,7 @@ const VideoManagement = () => {
               fontSize: '20px',
               fontWeight: 'bold',
               color: '#000000',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               marginBottom: '24px'
             }}>
               Upload Video Review
@@ -353,7 +353,7 @@ const VideoManagement = () => {
             <Typography sx={{
               color: '#6c757d',
               fontSize: '16px',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               textAlign: 'center',
               padding: '40px 0'
             }}>
@@ -372,7 +372,7 @@ const VideoManagement = () => {
                 sx={{
                   borderRadius: '8px',
                   textTransform: 'none',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}
               >
                 Hủy
@@ -383,7 +383,7 @@ const VideoManagement = () => {
                   backgroundColor: '#F9704B',
                   borderRadius: '8px',
                   textTransform: 'none',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                   '&:hover': {
                     backgroundColor: '#e55a3a'
                   }

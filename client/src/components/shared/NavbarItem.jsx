@@ -19,7 +19,7 @@ const NavbarItem = ({ icon: Icon, label, isActive = false, onClick }) => {
         flexDirection: 'column',
         color: isActive ? '#FE724C' : '#D3D1D8',
         fontSize: "0.9rem",
-        fontFamily: 'TikTok Sans',
+        fontFamily: 'Be Vietnam Pro',
         fontWeight: '700',
         wordWrap: 'break-word',
         textAlign: 'center'

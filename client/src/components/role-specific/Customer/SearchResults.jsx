@@ -1,284 +1,362 @@
-import { useState } from 'react';
-import { X, SlidersHorizontal } from 'lucide-react';
-import { motion } from 'framer-motion';
-import FoodCard from './FoodCard';
-import RestaurantCard from './RestaurantCard';
-import theme from '../../../styles/theme';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import BackArrow from '../../../components/shared/BackArrow';
+import ClearIcon from '../../../components/shared/ClearIcon';
+import FilterIcon from '../../../components/shared/FilterIcon';
+import SortIcon from '../../../components/shared/SortIcon';
+import DownArrow from '../../../components/shared/DownArrow';
+import TagIcon from '../../../components/shared/TagIcon';
+import FoodResults from '../../shared/FoodResultItem';
+import VideoResults from '../../shared/VideoResultItem';
+import AccountResultItem from '../../shared/AccountResultItem';
 
-export default function SearchResults({
-  searchQuery,
-  onClose,
-  allFoods,
-  allRestaurants,
-  onFoodClick,
-  onRestaurantClick,
-}) {
-  const [activeFilter, setActiveFilter] = useState('all');
 
-  // Filter results based on search query
-  const filteredFoods = allFoods.filter(food =>
-    food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    food.restaurant.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+const SearchResults = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('food');
 
-  const filteredRestaurants = allRestaurants.filter(restaurant =>
-    restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    restaurant.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const getTabColor = (tabName) => {
+    return activeTab === tabName ? 'black' : '#8A8B8F';
+  };
 
-  const totalResults = filteredFoods.length + filteredRestaurants.length;
+  const tabStyle = {
+    position: 'absolute',
+    top: '11.75vh',
+    justifyContent: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    fontSize: '1.4rem',
+    fontFamily: 'Be Vietnam Pro',
+    fontWeight: '600',
+    wordWrap: 'break-word',
+    cursor: 'pointer',
+    zIndex: 2, // Above separator line
+  };
 
-  const styles = {
-    container: {
-      minHeight: '100vh',
-      backgroundColor: theme.colors.background,
-      paddingBottom: '6rem',
-    },
-    header: {
-      position: 'sticky',
-      top: 0,
-      zIndex: 40,
-      backgroundColor: theme.colors.white,
-      borderBottom: `1px solid ${theme.colors.borderLight}`,
-      boxShadow: theme.shadow.sm,
-    },
-    headerContent: {
-      padding: `${theme.spacing.lg} ${theme.spacing.lg}`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    headerLeft: {
-      flex: 1,
-    },
-    headerTitleSection: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing.md,
-    },
-    closeButton: {
-      padding: theme.spacing.md,
-      backgroundColor: 'transparent',
-      border: 'none',
-      borderRadius: theme.borderRadius.full,
-      cursor: 'pointer',
-      transition: `all ${theme.transition.fast}`,
-    },
-    closeButtonHover: {
-      backgroundColor: theme.colors.backgroundLight,
-    },
-    headerText: {
-      fontSize: theme.fontSize.xl, // increased from lg
-      fontWeight: '600',
-      color: theme.colors.text.primary,
-      marginBottom: '0.25rem',
-    },
-    headerSubtitle: {
-      fontSize: theme.fontSize.base, // increased from sm
-      color: theme.colors.text.secondary,
-    },
-    filterButton: {
-      padding: theme.spacing.md,
-      backgroundColor: 'transparent',
-      border: 'none',
-      borderRadius: theme.borderRadius.full,
-      cursor: 'pointer',
-      transition: `all ${theme.transition.fast}`,
-    },
-    filterTabs: {
-      padding: `0 ${theme.spacing.lg} ${theme.spacing.md}`,
-      display: 'flex',
-      gap: theme.spacing.md,
-      overflowX: 'auto',
-    },
-    tabButton: {
-      padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-      borderRadius: theme.borderRadius.full,
-      fontSize: theme.fontSize.base, // increased from sm
-      fontWeight: '500',
-      border: 'none',
-      cursor: 'pointer',
-      transition: `all ${theme.transition.fast}`,
-      whiteSpace: 'nowrap',
-      flexShrink: 0,
-    },
-    tabButtonActive: {
-      background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryLight} 100%)`,
-      color: theme.colors.text.white,
-    },
-    tabButtonInactive: {
-      backgroundColor: theme.colors.backgroundLight,
-      color: theme.colors.text.secondary,
-    },
-    resultsContainer: {
-      padding: `${theme.spacing.lg} ${theme.spacing.lg}`,
-    },
-    noResults: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingTop: '5rem',
-    },
-    noResultsIcon: {
-      width: '8rem',
-      height: '8rem',
-      backgroundColor: theme.colors.backgroundLight,
-      borderRadius: theme.borderRadius.full,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: theme.spacing.lg,
-    },
-    noResultsEmoji: {
-      fontSize: '4rem',
-    },
-    noResultsTitle: {
-      fontSize: theme.fontSize.xl, // increased from lg
-      fontWeight: '600',
-      color: theme.colors.text.primary,
-      marginBottom: theme.spacing.md,
-    },
-    noResultsText: {
-      fontSize: theme.fontSize.base, // increased from sm
-      color: theme.colors.text.secondary,
-      textAlign: 'center',
-    },
-    section: {
-      marginBottom: theme.spacing['2xl'],
-    },
-    sectionTitle: {
-      marginBottom: theme.spacing.lg,
-      fontSize: theme.fontSize.lg, // increased from base
-      fontWeight: '600',
-      color: theme.colors.text.primary,
-    },
-    foodList: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing.lg,
-    },
-    restaurantGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-      gap: theme.spacing.lg,
-    },
+  const tabs = [
+    { id: 'food', label: 'Đồ ăn', left: '10vw' },
+    { id: 'video', label: 'Video', left: '40.83vw' },
+    { id: 'account', label: 'Tài khoản', left: '71.94vw' },
+  ];
+
+  const getActiveTabIndicatorPosition = () => {
+    const positions = {
+      food: '0vw',
+      video: '31.39vw',
+      account: 'auto'
+    };
+    return positions[activeTab] || '0vw';
+  };
+
+  const getActiveTabIndicatorStyle = () => {
+    const baseStyle = {
+      position: 'absolute',
+      top: '15.5vh',
+      height: '100%',
+      outline: '2px black solid',
+      outlineOffset: '-1px',
+      zIndex: 3, // Above tabs, below BackArrow
+    };
+
+    if (activeTab === 'account') {
+      return {
+        ...baseStyle,
+        right: '0vw',
+        width: '37.5vw', // Special width for account tab
+      };
+    }
+
+    return {
+      ...baseStyle,
+      left: getActiveTabIndicatorPosition(),
+      width: '31.11vw', // Default width for other tabs
+    };
   };
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerContent}>
-          <div style={styles.headerLeft}>
-            <div style={styles.headerTitleSection}>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={onClose}
-                style={styles.closeButton}
-                onMouseEnter={(e) => e.target.style.backgroundColor = theme.colors.backgroundLight}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-              >
-                <X style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.primary }} />
-              </motion.button>
-              <div>
-                <h2 style={styles.headerText}>Kết quả tìm kiếm</h2>
-                <p style={styles.headerSubtitle}>
-                  "{searchQuery}" - {totalResults} kết quả
-                </p>
-              </div>
-            </div>
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            style={styles.filterButton}
-            onMouseEnter={(e) => e.target.style.backgroundColor = theme.colors.backgroundLight}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-          >
-            <SlidersHorizontal style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.primary }} />
-          </motion.button>
-        </div>
+    <div style={{ position: 'relative' }}>
+      {/* Back Arrow */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '7.125vh',
+          left: '6.67vw',
+          zIndex: 15,
+        }}
+      >
+        <BackArrow onClick={() => navigate(-1)} />
+      </div>
 
-        {/* Filter Tabs */}
-        <div style={styles.filterTabs}>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setActiveFilter('all')}
-            style={{
-              ...styles.tabButton,
-              ...(activeFilter === 'all' ? styles.tabButtonActive : styles.tabButtonInactive)
-            }}
-          >
-            Tất cả ({totalResults})
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setActiveFilter('food')}
-            style={{
-              ...styles.tabButton,
-              ...(activeFilter === 'food' ? styles.tabButtonActive : styles.tabButtonInactive)
-            }}
-          >
-            Món ăn ({filteredFoods.length})
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setActiveFilter('restaurant')}
-            style={{
-              ...styles.tabButton,
-              ...(activeFilter === 'restaurant' ? styles.tabButtonActive : styles.tabButtonInactive)
-            }}
-          >
-            Quán ăn ({filteredRestaurants.length})
-          </motion.button>
+      {/* Search Bar */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '5.625vh',
+          left: '15.28vw',
+          width: '79.4vw',
+          height: '4.5vh',
+          background: '#F5F5F5',
+          borderRadius: 10,
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            right: '3.61vw',
+            top: '50%',
+            transform: 'translateY(-50%)',
+          }}
+        >
+          <ClearIcon />
         </div>
       </div>
 
-      {/* Results */}
-      <div style={styles.resultsContainer}>
-        {totalResults === 0 ? (
-          <div style={styles.noResults}>
-            <div style={styles.noResultsIcon}>
-              <span style={styles.noResultsEmoji}>🔍</span>
-            </div>
-            <h3 style={styles.noResultsTitle}>Không tìm thấy kết quả</h3>
-            <p style={styles.noResultsText}>
-              Thử tìm kiếm với từ khóa khác hoặc<br />
-              khám phá các món ăn phổ biến
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Food Results */}
-            {(activeFilter === 'all' || activeFilter === 'food') && filteredFoods.length > 0 && (
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>Món ăn</h3>
-                <div style={styles.foodList}>
-                  {filteredFoods.map((food) => (
-                    <FoodCard key={food.id} {...food} onClick={() => onFoodClick(food)} />
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Tabs */}
+      {tabs.map((tab) => (
+        <div
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id)}
+          style={{
+            ...tabStyle,
+            left: tab.left,
+            color: getTabColor(tab.id),
+          }}
+        >
+          {tab.label}
+        </div>
+      ))}
 
-            {/* Restaurant Results */}
-            {(activeFilter === 'all' || activeFilter === 'restaurant') && filteredRestaurants.length > 0 && (
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>Quán ăn</h3>
-                <div style={styles.restaurantGrid}>
-                  {filteredRestaurants.map((restaurant) => (
-                    <RestaurantCard
-                      key={restaurant.id}
-                      {...restaurant}
-                      onClick={() => onRestaurantClick(restaurant)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+      {/* Active Tab Indicator */}
+      <div style={getActiveTabIndicatorStyle()} />
+
+      {/* Separator Line */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '15.5vh',
+          left: '0',
+          right: '0',
+          width: '100%',
+          height: '100%',
+          outline: '0.30px #E7E7E7 solid',
+          outlineOffset: '-0.15px',
+          zIndex: 1,
+        }}
+      />
+
+      {/* Filter Container - Scrollable */}
+      {activeTab === 'food' && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '17.375vh',
+            left: '0',
+            right: '0',
+            width: '100%',
+            height: '4.125vh',
+            display: 'flex',
+            gap: '2.22vw',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            scrollbarWidth: 'none', // Firefox
+            msOverflowStyle: 'none', // IE and Edge
+            paddingLeft: '4.17vw',
+            paddingRight: '4.17vw',
+            boxSizing: 'border-box',
+          }}
+          className="scrollbar-hide" // Custom class for webkit scrollbar
+        >
+        {/* Filter Button 1 */}
+        <div
+          style={{
+            minWidth: '12.22vw',
+            height: '100%',
+            borderRadius: 16,
+            border: '1px #B3B3B3 solid',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+          onClick={() => navigate('/customer/filters')}
+        >
+          <FilterIcon />
+        </div>
+
+        {/* Filter Button 2 */}
+        <div
+          style={{
+            minWidth: '34.72vw',
+            height: '100%',
+            borderRadius: 16,
+            border: '1px #B3B3B3 solid',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            position: 'relative',
+          }}
+          onClick={() => console.log('Filter clicked')}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: '4.167vw',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <SortIcon />
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              left: '10vw',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'black',
+              fontSize: '1.3rem',
+              fontWeight: '500',
+              wordWrap: 'break-word',
+            }}
+          >
+            Lọc theo
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              right: '4.167vw',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <DownArrow />
+          </div>
+        </div>
+
+        {/* Filter Button 3 */}
+        <div
+          style={{
+            minWidth: '37.22vw',
+            height: '100%',
+            borderRadius: 16,
+            border: '1px #B3B3B3 solid',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            position: 'relative',
+          }}
+          onClick={() => console.log('Filter clicked')}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: '4.167vw',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'black',
+              fontSize: '1.3rem',
+              fontWeight: '500',
+              wordWrap: 'break-word',
+            }}
+          >
+            Phí giao hàng
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              right: '4.167vw',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <DownArrow />
+          </div>
+        </div>
+
+        {/* Filter Button 4 */}
+        <div
+          style={{
+            minWidth: '37.22vw',
+            height: '100%',
+            borderRadius: 16,
+            border: '1px #B3B3B3 solid',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            position: 'relative',
+          }}
+          onClick={() => console.log('Filter clicked')}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: '4.167vw',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <TagIcon />
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              left: '10.28vw',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'black',
+              fontSize: '1.3rem',
+              fontWeight: '500',
+              wordWrap: 'break-word',
+            }}
+          >
+            Khuyến mãi
+          </div>
+        </div>
+      </div>
+      )}
+
+      {/* Search Results */}
+      <div
+        style={{
+          position: 'absolute',
+          top: activeTab === 'food' ? '23vh' : '17.375vh',
+          left: '0',
+          right: '0',
+          width: '100%',
+          height: activeTab === 'food' ? 'calc(100vh - 23vh)' : 'calc(100vh - 16vh)',
+          overflowY: 'auto',
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE and Edge
+          boxSizing: 'border-box',
+        }}
+        className="scrollbar-hide" // Custom class for webkit scrollbar
+      >
+        {activeTab === 'food' && <FoodResults />}
+        {activeTab === 'video' && <VideoResults />}
+        {activeTab === 'account' && <AccountResultItem />}
       </div>
     </div>
   );
-}
+};
+
+export default SearchResults;
+

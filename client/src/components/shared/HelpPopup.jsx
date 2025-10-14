@@ -50,7 +50,7 @@ const HelpPopup = ({ isOpen, onClose, phone }) => {
             style={{
               color: "#868686",
               fontSize: "12px",
-              fontFamily: "TikTok Sans",
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
             }}
           >
@@ -109,7 +109,7 @@ const optionStyle = (top) => ({
 const optionText = {
   color: "black",
   fontSize: "16px",
-  fontFamily: "TikTok Sans",
+  fontFamily: 'Be Vietnam Pro',
   fontWeight: "600",
 };
 

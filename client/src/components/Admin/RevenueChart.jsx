@@ -38,7 +38,7 @@ const RevenueChart = () => {
           fontSize: '16px',
           fontWeight: 'normal',
           color: '#000000',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
           marginBottom: '6px'
         }}>
           Doanh thu theo tháng
@@ -47,7 +47,7 @@ const RevenueChart = () => {
           fontSize: '16px',
           fontWeight: 'normal',
           color: '#717182',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
         }}>
           Tổng quan doanh thu 12 tháng trong năm
         </Typography>
@@ -160,7 +160,7 @@ const RevenueChart = () => {
               fontSize: '14px',
               fontWeight: 'normal',
               color: '#717182',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               marginBottom: '4px'
             }}>
               Tổng doanh thu
@@ -169,7 +169,7 @@ const RevenueChart = () => {
               fontSize: '16px',
               fontWeight: 'bold',
               color: '#00a63e',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
             }}>
               281.700.000 ₫
             </Typography>
@@ -180,7 +180,7 @@ const RevenueChart = () => {
               fontSize: '14px',
               fontWeight: 'normal',
               color: '#717182',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               marginBottom: '4px'
             }}>
               TB/tháng
@@ -189,7 +189,7 @@ const RevenueChart = () => {
               fontSize: '16px',
               fontWeight: 'bold',
               color: '#000000',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
             }}>
               23.475.000 ₫
             </Typography>
@@ -200,7 +200,7 @@ const RevenueChart = () => {
               fontSize: '14px',
               fontWeight: 'normal',
               color: '#717182',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               marginBottom: '4px'
             }}>
               Tháng cao nhất
@@ -209,7 +209,7 @@ const RevenueChart = () => {
               fontSize: '16px',
               fontWeight: 'bold',
               color: '#f54900',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
             }}>
               T12
             </Typography>
@@ -220,7 +220,7 @@ const RevenueChart = () => {
               fontSize: '14px',
               fontWeight: 'normal',
               color: '#717182',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
               marginBottom: '4px'
             }}>
               Tổng đơn hàng
@@ -229,7 +229,7 @@ const RevenueChart = () => {
               fontSize: '16px',
               fontWeight: 'bold',
               color: '#000000',
-              fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+              fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
             }}>
               5634
             </Typography>

@@ -36,7 +36,7 @@ export default function Payment() {
           flexDirection: 'column',
           color: 'var(--Colors-Typography-500, #363A33)',
           fontSize: '1.7rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '700',
           wordWrap: 'break-word'
         }}
@@ -63,7 +63,7 @@ export default function Payment() {
           padding: '0 1vw',
           color: '#363A33',
           fontSize: '1.3rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '400',
           textAlign: 'left'
         }}
@@ -73,8 +73,8 @@ export default function Payment() {
           <path fillRule="evenodd" clipRule="evenodd" d="M6.75 1.5C3.8505 1.5 1.5 3.85051 1.5 6.75C1.5 8.84542 2.29973 10.7738 3.3315 12.3855C4.36208 13.9953 5.5968 15.2461 6.39675 15.9709C6.60503 16.1596 6.89498 16.1596 7.10325 15.9709C7.9032 15.2461 9.13793 13.9953 10.1685 12.3855C11.2003 10.7738 12 8.84542 12 6.75C12 3.85051 9.6495 1.5 6.75 1.5ZM0 6.75C0 3.02208 3.02205 0 6.75 0C10.478 0 13.5 3.02208 13.5 6.75C13.5 9.22755 12.557 11.4365 11.4318 13.1942C10.3052 14.954 8.96835 16.3051 8.11035 17.0825C7.33058 17.789 6.16943 17.789 5.38965 17.0825C4.53165 16.3051 3.19477 14.954 2.06823 13.1942C0.942937 11.4365 0 9.22755 0 6.75Z" fill="#60635E"/>
         </svg>
         <div>
-        <div style={{position: 'absolute', left: '13.89vw', top: '1.625vh', opacity: 0.70, justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>Giao đến</div>
-          <div style={{position: 'absolute', left: '13.89vw', bottom: '1.5vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>Nhà - Lê Đức Thọ, Điện Bàn...</div>
+        <div style={{position: 'absolute', left: '13.89vw', top: '1.625vh', opacity: 0.70, justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>Giao đến</div>
+          <div style={{position: 'absolute', left: '13.89vw', bottom: '1.5vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>Nhà - Lê Đức Thọ, Điện Bàn...</div>
         </div>
         <svg width="0.9rem" height="1.4rem" viewBox="0 0 9 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{position: 'absolute', right: '4.46vw'}}>
           <path fill-rule="evenodd" clip-rule="evenodd" d="M1.174 13.1052C0.9085 12.7872 0.952001 12.3139 1.27 12.0492C2.50375 11.0164 5.36875 8.47768 6.3505 7.18768C5.35225 5.87593 2.5255 3.37393 1.27 2.32618C0.952001 2.06143 0.9085 1.58818 1.174 1.27018C1.43875 0.951426 1.912 0.908676 2.23075 1.17418C3.61 2.32318 6.58 4.91893 7.63075 6.39718C7.795 6.63118 7.9375 6.89518 7.9375 7.18768C7.9375 7.48018 7.795 7.74418 7.63075 7.97743C6.601 9.42643 3.5815 12.0739 2.23075 13.2004L2.23 13.2012C1.912 13.4667 1.43875 13.4232 1.174 13.1052Z" fill="#A9ADA5" stroke="#A9ADA5" stroke-width="0.4"/>
@@ -100,7 +100,7 @@ export default function Payment() {
           padding: '0 1vw',
           color: '#363A33',
           fontSize: '1.3rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '400',
           textAlign: 'left'
         }}
@@ -110,8 +110,8 @@ export default function Payment() {
           <path fillRule="evenodd" clipRule="evenodd" d="M1.5 3.75H16.5V6.75H1.5V3.75Z" fill="#60635E"/>
         </svg>
         <div>
-          <div style={{position: 'absolute', left: '13.89vw', top: '1.625vh', opacity: 0.70, justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>Phương thức thanh toán</div>
-          <div style={{position: 'absolute', left: '13.89vw', bottom: '1.5vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'TikTok Sans', fontWeight: '400', wordWrap: 'break-word'}}>Tiền mặt</div>
+          <div style={{position: 'absolute', left: '13.89vw', top: '1.625vh', opacity: 0.70, justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>Phương thức thanh toán</div>
+          <div style={{position: 'absolute', left: '13.89vw', bottom: '1.5vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>Tiền mặt</div>
         </div>
         <svg width="0.9rem" height="1.4rem" viewBox="0 0 9 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{position: 'absolute', right: '4.46vw'}}>
           <path fillRule="evenodd" clipRule="evenodd" d="M1.174 13.1052C0.9085 12.7872 0.952001 12.3139 1.27 12.0492C2.50375 11.0164 5.36875 8.47768 6.3505 7.18768C5.35225 5.87593 2.5255 3.37393 1.27 2.32618C0.952001 2.06143 0.9085 1.58818 1.174 1.27018C1.43875 0.951426 1.912 0.908676 2.23075 1.17418C3.61 2.32318 6.58 4.91893 7.63075 6.39718C7.795 6.63118 7.9375 6.89518 7.9375 7.18768C7.9375 7.48018 7.795 7.74418 7.63075 7.97743C6.601 9.42643 3.5815 12.0739 2.23075 13.2004L2.23 13.2012C1.912 13.4667 1.43875 13.4232 1.174 13.1052Z" fill="#A9ADA5" stroke="#A9ADA5" strokeWidth="0.4"/>
@@ -128,7 +128,7 @@ export default function Payment() {
           top: '32vh',
           color: '#60655C',
           fontSize: '1.5rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '400'
         }}
       >
@@ -159,7 +159,7 @@ export default function Payment() {
           flexDirection: 'column',
           color: '#363A33',
           fontSize: '2.3rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '600',
           wordWrap: 'break-word'
         }}
@@ -182,7 +182,7 @@ export default function Payment() {
           color: 'white',
           fontSize: '1.5rem',
           textDecoration: 'none',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '700',
           border: 'none'
         }}

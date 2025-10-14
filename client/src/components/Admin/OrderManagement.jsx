@@ -118,7 +118,7 @@ const OrderManagement = () => {
           fontSize: '20px',
           fontWeight: 'bold',
           color: '#000000',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
         }}>
           Quản lý đơn hàng
         </Typography>
@@ -190,49 +190,49 @@ const OrderManagement = () => {
                 <TableCell sx={{
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   Mã đơn
                 </TableCell>
                 <TableCell sx={{
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   Khách hàng
                 </TableCell>
                 <TableCell sx={{
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   Món ăn
                 </TableCell>
                 <TableCell sx={{
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   Tổng tiền
                 </TableCell>
                 <TableCell sx={{
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   Trạng thái
                 </TableCell>
                 <TableCell sx={{
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   Thời gian
                 </TableCell>
                 <TableCell sx={{
                   fontWeight: 'bold',
                   color: '#000000',
-                  fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                  fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                 }}>
                   Thao tác
                 </TableCell>
@@ -245,14 +245,14 @@ const OrderManagement = () => {
                 return (
                   <TableRow key={order.id} sx={{ '&:hover': { backgroundColor: '#f8f9fa' } }}>
                     <TableCell sx={{
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                      fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                       fontWeight: 'bold',
                       color: '#F9704B'
                     }}>
                       {order.id}
                     </TableCell>
                     <TableCell sx={{
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                      fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                     }}>
                       <Box>
                         <Typography sx={{ fontWeight: 'medium', color: '#000000' }}>
@@ -264,7 +264,7 @@ const OrderManagement = () => {
                       </Box>
                     </TableCell>
                     <TableCell sx={{
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                      fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                       maxWidth: '200px'
                     }}>
                       <Typography sx={{
@@ -278,7 +278,7 @@ const OrderManagement = () => {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                      fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                       fontWeight: 'bold',
                       color: '#F9704B'
                     }}>
@@ -292,12 +292,12 @@ const OrderManagement = () => {
                           backgroundColor: statusInfo.bg,
                           color: statusInfo.color,
                           fontSize: '12px',
-                          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                         }}
                       />
                     </TableCell>
                     <TableCell sx={{
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                      fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                       fontSize: '14px',
                       color: '#717182'
                     }}>
@@ -349,7 +349,7 @@ const OrderManagement = () => {
                 fontSize: '24px',
                 fontWeight: 'bold',
                 color: statusInfo.color,
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                 marginBottom: '8px'
               }}>
                 {count}
@@ -357,7 +357,7 @@ const OrderManagement = () => {
               <Typography sx={{
                 fontSize: '14px',
                 color: '#717182',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {status.label}
               </Typography>
