@@ -33,7 +33,7 @@ const OrderPlaced = () => {
 
   const titleStyle = {
     fontSize: '2.5rem',
-    fontFamily: 'TikTok Sans',
+    fontFamily: 'Be Vietnam Pro',
     fontWeight: '700',
     color: '#333',
     marginBottom: '1vh'
@@ -41,7 +41,7 @@ const OrderPlaced = () => {
 
   const subtitleStyle = {
     fontSize: '1.5rem',
-    fontFamily: 'TikTok Sans',
+    fontFamily: 'Be Vietnam Pro',
     fontWeight: '400',
     color: '#666',
     marginBottom: '3vh'
@@ -56,7 +56,7 @@ const OrderPlaced = () => {
 
   const orderTextStyle = {
     fontSize: '1.4rem',
-    fontFamily: 'TikTok Sans',
+    fontFamily: 'Be Vietnam Pro',
     color: '#333',
     marginBottom: '1vh'
   };
@@ -66,7 +66,7 @@ const OrderPlaced = () => {
     padding: '2vh',
     borderRadius: '30px',
     fontSize: '1.6rem',
-    fontFamily: 'TikTok Sans',
+    fontFamily: 'Be Vietnam Pro',
     fontWeight: '600',
     border: 'none',
     cursor: 'pointer',

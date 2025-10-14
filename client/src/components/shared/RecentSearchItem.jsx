@@ -23,7 +23,7 @@ const RecentSearchItem = ({ text = "phúc long", onClick }) => {
         style={{
           color: "#3B3B3B",
           fontSize: "1.3rem",
-          fontFamily: "TikTok Sans",
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: "400",
           wordWrap: "break-word",
         }}

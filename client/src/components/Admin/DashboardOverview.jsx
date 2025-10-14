@@ -136,7 +136,7 @@ const DashboardOverview = () => {
                 fontSize: isMobile ? '12px' : '14px',
                 fontWeight: 'normal',
                 color: '#717182',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                 marginBottom: '4px'
               }}>
                 {stat.title}
@@ -146,7 +146,7 @@ const DashboardOverview = () => {
                 fontSize: isMobile ? '18px' : '24px',
                 fontWeight: 'bold',
                 color: '#000000',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                 marginBottom: '4px'
               }}>
                 {stat.value}
@@ -156,7 +156,7 @@ const DashboardOverview = () => {
                 fontSize: isMobile ? '10px' : '12px',
                 fontWeight: 'normal',
                 color: '#717182',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {stat.subtitle}
               </Typography>
@@ -201,7 +201,7 @@ const DashboardOverview = () => {
             fontSize: isMobile ? '14px' : '16px',
             fontWeight: 'normal',
             color: '#000000',
-            fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+            fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
             marginBottom: '6px'
           }}>
             Đơn hàng gần đây
@@ -210,7 +210,7 @@ const DashboardOverview = () => {
             fontSize: isMobile ? '12px' : '16px',
             fontWeight: 'normal',
             color: '#717182',
-            fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+            fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
             marginBottom: isMobile ? '16px' : '24px'
           }}>
             Các đơn hàng mới nhất trong hệ thống
@@ -247,7 +247,7 @@ const DashboardOverview = () => {
                       fontSize: '14px',
                       fontWeight: '600',
                       color: '#000000',
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                      fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                     }}>
                       {order.id}
                     </Typography>
@@ -258,7 +258,7 @@ const DashboardOverview = () => {
                       borderRadius: '8px',
                       fontSize: '12px',
                       fontWeight: '500',
-                      fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                      fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                     }}>
                       {order.status}
                     </Box>
@@ -267,7 +267,7 @@ const DashboardOverview = () => {
                   <Typography sx={{
                     fontSize: '12px',
                     color: '#717182',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                     marginBottom: '2px'
                   }}>
                     {order.customer}
@@ -276,7 +276,7 @@ const DashboardOverview = () => {
                   <Typography sx={{
                     fontSize: '11px',
                     color: '#aaaaae',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                   }}>
                     {order.items}
                   </Typography>
@@ -288,7 +288,7 @@ const DashboardOverview = () => {
                     fontSize: '14px',
                     fontWeight: '600',
                     color: '#000000',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
                     marginBottom: '4px'
                   }}>
                     {order.total}
@@ -297,7 +297,7 @@ const DashboardOverview = () => {
                   <Typography sx={{
                     fontSize: '11px',
                     color: '#aaaaae',
-                    fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                    fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
                   }}>
                     {order.time}
                   </Typography>
@@ -319,7 +319,7 @@ const DashboardOverview = () => {
             fontSize: isMobile ? '14px' : '16px',
             fontWeight: 'normal',
             color: '#000000',
-            fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+            fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
             marginBottom: '6px'
           }}>
             Hiệu suất hôm nay
@@ -328,7 +328,7 @@ const DashboardOverview = () => {
             fontSize: isMobile ? '12px' : '16px',
             fontWeight: 'normal',
             color: '#717182',
-            fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+            fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
             marginBottom: isMobile ? '16px' : '24px'
           }}>
             Tỷ lệ hoàn thành đơn hàng
@@ -338,10 +338,10 @@ const DashboardOverview = () => {
             {performanceBars.map((bar) => (
               <Box key={bar.label}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <Typography sx={{ fontSize: '14px', color: '#000', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>
+                  <Typography sx={{ fontSize: '14px', color: '#000', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>
                     {bar.label}
                   </Typography>
-                  <Typography sx={{ fontSize: '14px', color: '#000', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>
+                  <Typography sx={{ fontSize: '14px', color: '#000', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>
                     {bar.percent}%
                   </Typography>
                 </Box>
@@ -354,16 +354,16 @@ const DashboardOverview = () => {
             {/* Bottom counters */}
             <Box sx={{ borderTop: '0.8px solid rgba(0,0,0,0.1)', pt: '16.8px', display: 'flex', justifyContent: 'space-between' }}>
               <Box sx={{ textAlign: 'center', width: '33.33%' }}>
-                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#00a63e', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>36</Typography>
-                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Hoàn tất</Typography>
+                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#00a63e', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>36</Typography>
+                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Hoàn tất</Typography>
               </Box>
               <Box sx={{ textAlign: 'center', width: '33.33%' }}>
-                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#155dfc', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>5</Typography>
-                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Đang chế biến</Typography>
+                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#155dfc', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>5</Typography>
+                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Đang chế biến</Typography>
               </Box>
               <Box sx={{ textAlign: 'center', width: '33.33%' }}>
-                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#d08700', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>1</Typography>
-                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Chờ xử lý</Typography>
+                <Typography sx={{ fontSize: '24px', fontWeight: 'bold', color: '#d08700', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>1</Typography>
+                <Typography sx={{ fontSize: '12px', color: '#717182', fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif" }}>Chờ xử lý</Typography>
               </Box>
             </Box>
           </Box>

@@ -10,7 +10,7 @@ const SearchTitle = ({ children, style }) => {
         style={{
           color: 'black',
           fontSize: '1.8rem',
-          fontFamily: 'TikTok Sans',
+          fontFamily: 'Be Vietnam Pro',
           fontWeight: '500',
         }}
       >

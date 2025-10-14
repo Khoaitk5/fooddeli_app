@@ -10,6 +10,7 @@ import ProductCart from "../../components/role-specific/Customer/ProductCardForV
 import { pxW, pxH } from "../../utils/scale.js";
 import { createClient } from "@supabase/supabase-js";
 import TabItem from "../../components/role-specific/Customer/TabItem.jsx";
+import MessagePopup from "../../components/shared/MessagePopup";
 
 const supabase = createClient(
   "https://xyngruphcelumtjlmzud.supabase.co",
@@ -26,6 +27,7 @@ const Home = () => {
   const [bookmarkCounts, setBookmarkCounts] = useState({});
   const videoRefs = useRef([]);
   const [activeTab, setActiveTab] = useState("suggestion");
+  const [showMessagePopup, setShowMessagePopup] = useState(false);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -190,7 +192,7 @@ const Home = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
             {/* Follow & Suggestions Tabs */}
-            <div className="absolute top-[6.25vh] w-full flex justify-center gap-[15px]">
+            <div className="absolute top-[2vh] w-full flex justify-center gap-[15px]">
               <TabItem
                 label="Đã follow"
                 isActive={activeTab === "follow"}
@@ -206,12 +208,12 @@ const Home = () => {
             </div>
 
             {/* Search Icon */}
-            <div className="absolute top-[6.25vh] right-[4.8vw]">
+            <div className="absolute top-[2vh] right-[4.8vw]">
               <SearchIcon onClick={() => navigate('/customer/search')} />
             </div>
 
             {/* Profile Image */}
-            <div className="absolute top-[51.625vh] right-[1.94vw]">
+            <div className="absolute top-[47.625vh] right-[1.94vw]">
               <img
                 style={{
                   width: "4.8rem",
@@ -226,7 +228,7 @@ const Home = () => {
             </div>
 
             {/* Author Name */}
-            <div className="absolute top-[67.75vh] left-[2.78vw]">
+            <div className="absolute top-[63.75vh] left-[2.78vw]">
               <div
                 style={{
                   width: "100%",
@@ -236,7 +238,7 @@ const Home = () => {
                   flexDirection: "column",
                   color: "white",
                   fontSize: "1.7rem",
-                  fontFamily: "TikTok Sans",
+                  fontFamily: 'Be Vietnam Pro',
                   fontWeight: "600",
                   wordWrap: "break-word",
                 }}
@@ -246,7 +248,7 @@ const Home = () => {
             </div>
 
             {/* Caption */}
-            <div className="absolute left-[2.78vw] top-[71.5vh]">
+            <div className="absolute left-[2.78vw] top-[67.5vh]">
               <div
                 style={{
                   width: "71.94vw",
@@ -259,7 +261,7 @@ const Home = () => {
                   style={{
                     color: "white",
                     fontSize: "1.5rem",
-                    fontFamily: "TikTok Sans",
+                    fontFamily: 'Be Vietnam Pro',
                     fontWeight: "400",
                     wordWrap: "break-word",
                   }}
@@ -272,7 +274,7 @@ const Home = () => {
                   style={{
                     color: "white",
                     fontSize: "1.5rem",
-                    fontFamily: "TikTok Sans",
+                    fontFamily: 'Be Vietnam Pro',
                     fontWeight: "600",
                     wordWrap: "break-word",
                   }}
@@ -284,7 +286,7 @@ const Home = () => {
 
             {/* Heart Icon and Count */}
             <div
-              className="absolute top-[60.875vh] right-[4.72vw] flex flex-col items-center"
+              className="absolute top-[56.875vh] right-[4.72vw] flex flex-col items-center"
               style={{ gap: "1.25vh" }}
             >
               <HeartIcon
@@ -298,18 +300,18 @@ const Home = () => {
             </div>
 
             {/* Comment Icon */}
-            <div className="absolute top-[69vh] right-[4.72vw]">
-              <CommentIcon />
+            <div className="absolute top-[65vh] right-[4.72vw]">
+              <CommentIcon onClick={() => setShowMessagePopup(true)} />
             </div>
 
             {/* Comment Count */}
-            <div className="absolute top-[73.5vh] right-[4.86vw]">
+            <div className="absolute top-[69.5vh] right-[4.86vw]">
               <div style={countStyle}>100K</div>
             </div>
 
             {/* Bookmark Icon and Count */}
             <div
-              className="absolute top-[77.25vh] right-[5.56vw] flex flex-col items-center"
+              className="absolute top-[73.25vh] right-[5.56vw] flex flex-col items-center"
               style={{ gap: "1.25vh" }}
             >
               <BookmarkIcon
@@ -323,22 +325,23 @@ const Home = () => {
             </div>
 
             {/* Share Icon */}
-            <div className="absolute top-[85.125vh] right-[4.72vw]">
+            <div className="absolute top-[81.125vh] right-[4.72vw]">
               <ShareIcon />
             </div>
 
             {/* Share Count */}
-            <div className="absolute top-[89.75vh] right-[3.61vw]">
+            <div className="absolute top-[85.75vh] right-[3.61vw]">
               <div style={countStyle}>132,5K</div>
             </div>
 
             {/* Product Cart */}
-            <div className="absolute top-[82.5vh] left-[2.78vw]">
+            <div className="absolute top-[80.5vh] left-[2.78vw]">
               <ProductCart />
             </div>
           </section>
         ))}
       </div>
+      <MessagePopup isVisible={showMessagePopup} onClose={() => setShowMessagePopup(false)} />
       <Navbar />
     </div>
   );

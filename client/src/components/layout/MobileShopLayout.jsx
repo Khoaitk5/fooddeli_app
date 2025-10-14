@@ -20,31 +20,31 @@ const MobileShopLayout = () => {
   const navigate = useNavigate();
 
   // ✅ Kiểm tra user role mỗi khi truy cập /shop/*
-  useEffect(() => {
-    if (loading) return; // chờ context load xong user
-    // console.log("DEBUG: Navigated to /shop/* route:", location.pathname);
-    // console.log("DEBUG: Current user:", user);
+  // useEffect(() => {
+  //   if (loading) return; // chờ context load xong user
+  //   // console.log("DEBUG: Navigated to /shop/* route:", location.pathname);
+  //   // console.log("DEBUG: Current user:", user);
 
-    if (!user) {
-      // console.log("DEBUG: No user → redirect to /customer");
-      navigate("/customer/home");
-      return;
-    }
+  //   if (!user) {
+  //     // console.log("DEBUG: No user → redirect to /customer");
+  //     navigate("/customer/home");
+  //     return;
+  //   }
 
-    if (user.role !== "shop") {
-      // console.log(`DEBUG: Invalid role (${user.role}) → redirect to /customer/home`);
-      navigate("/customer/home");
-    }
-  }, [user, loading, location.pathname, navigate]);
+  //   if (user.role !== "shop") {
+  //     // console.log(`DEBUG: Invalid role (${user.role}) → redirect to /customer/home`);
+  //     navigate("/customer/home");
+  //   }
+  // }, [user, loading, location.pathname, navigate]);
 
-  // ✅ Loading state
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-        <Typography>Đang tải...</Typography>
-      </Box>
-    );
-  }
+  // // ✅ Loading state
+  // if (loading) {
+  //   return (
+  //     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+  //       <Typography>Đang tải...</Typography>
+  //     </Box>
+  //   );
+  // }
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);

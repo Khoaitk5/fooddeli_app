@@ -9,7 +9,7 @@ const styles = {
     baseText: {
         fontSize: 10,
         lineHeight: '15px',
-        fontFamily: 'TikTok Sans',
+        fontFamily: 'Be Vietnam Pro',
         fontWeight: 400,
         color: 'rgba(22, 24, 35, 0.50)',
         whiteSpace: 'pre-line',

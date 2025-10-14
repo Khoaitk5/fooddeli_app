@@ -11,7 +11,7 @@ const SubmitButton = ({ children, onClick, style, ...props }) => (
       cursor: 'pointer',
       color: 'white',
       fontSize: "1.5rem",
-      fontFamily: 'TikTok Sans',
+      fontFamily: 'Be Vietnam Pro',
       fontWeight: '700',
       wordWrap: 'break-word',
       display: 'flex',

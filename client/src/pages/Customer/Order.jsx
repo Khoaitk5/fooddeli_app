@@ -1,367 +1,552 @@
-import React, { useState } from "react";
-import Navbar from "../../components/shared/Navbar";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from 'react';
+import { MapPin, Clock, ChevronRight, ShoppingBag, Star, RotateCcw } from 'lucide-react';
+import Navbar from '../../components/shared/Navbar';
+import { useNavigate } from 'react-router-dom';
+import { useTheme, useMediaQuery } from '@mui/material';
 
-const styles = {
-  absoluteCenter: {
-    position: "absolute",
-    justifyContent: "center",
-    display: "flex",
-    flexDirection: "column",
-    wordWrap: "break-word",
-  },
-  tikTokFont: {
-    fontFamily: "TikTok Sans",
-  },
-  buttonBase: {
-    background: "white",
-    borderRadius: 8,
-    border: "1px #E8EBE6 solid",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-  },
-  textBase: {
-    justifyContent: "center",
-    display: "flex",
-    flexDirection: "column",
-    wordWrap: "break-word",
-  },
-};
+function OrdersPage({ isMobile = false, isTablet = false, onTrackOrder = () => {} }) {
+  const [activeTab, setActiveTab] = useState('ongoing');
+  const navigate = useNavigate();
+  const paddingApplied = useRef(false);
+  const theme = useTheme();
+  const isMobileDetected = useMediaQuery(theme.breakpoints.down('sm'));
 
-function TabSwitch({ active, onChange }) {
-  const textStyle = {
-    justifyContent: "center",
-    display: "flex",
-    flexDirection: "column",
-    color: "var(--Colors-Typography-500, #363A33)",
-    fontSize: "1.5rem",
-    fontFamily: "TikTok Sans",
-    fontWeight: "600",
-    wordWrap: "break-word",
-    position: "relative",
-    zIndex: 10,
+  // Add safe area padding for mobile status bar
+  useEffect(() => {
+    console.log('isMobileDetected:', isMobileDetected, 'paddingApplied:', paddingApplied.current);
+    if (isMobileDetected && !paddingApplied.current) {
+      const originalPadding = document.body.style.paddingTop;
+      document.body.style.paddingTop = '3rem';
+      paddingApplied.current = true;
+      console.log('Applied padding, original was:', originalPadding);
+      
+      return () => {
+        document.body.style.paddingTop = originalPadding;
+        paddingApplied.current = false;
+        console.log('Removed padding, restored to:', originalPadding);
+      };
+    }
+  }, [isMobileDetected]);
+
+  // Mock data for ongoing orders
+  const ongoingOrders = [
+    {
+      id: '2024100912345',
+      restaurant: 'Quán Phở Ngon',
+      restaurantAddress: '123 Nguyễn Huệ, Q.1',
+      status: 'Đang giao hàng',
+      estimatedTime: '14:30',
+      items: [
+        { name: 'Phở bò tái', quantity: 2, price: 80000 },
+        { name: 'Gỏi cuốn tôm thịt', quantity: 1, price: 30000 },
+        { name: 'Trà sữa trân châu', quantity: 1, price: 35000 }
+      ],
+      total: 145000,
+      image: 'https://images.unsplash.com/photo-1656945843375-207bb6e47750?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aWV0bmFtZXNlJTIwZm9vZCUyMG5vb2RsZXN8ZW58MXx8fHwxNzU5OTkyOTMwfDA&ixlib=rb-4.1.0&q=80&w=1080'
+    }
+  ];
+
+  // Mock data for completed orders
+  const completedOrders = [
+    {
+      id: '2024100812344',
+      restaurant: 'Bún Chả Hà Nội',
+      restaurantAddress: '789 Trần Hưng Đạo, Q.5',
+      deliveredAt: 'Hôm qua, 12:30',
+      items: [
+        { name: 'Bún chả Hà Nội', quantity: 2, price: 70000 },
+        { name: 'Nem cua bể', quantity: 1, price: 40000 }
+      ],
+      total: 110000,
+      image: 'https://images.unsplash.com/photo-1559847844-5315695dadae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aWV0bmFtZXNlJTIwYnVuJTIwY2hhfGVufDF8fHx8MTc2MDAyNjkzMHww&ixlib=rb-4.1.0&q=80&w=1080',
+      rated: false
+    },
+    {
+      id: '2024100712343',
+      restaurant: 'Cơm Tấm Sườn Bì',
+      restaurantAddress: '321 Võ Văn Tần, Q.3',
+      deliveredAt: '2 ngày trước, 19:15',
+      items: [
+        { name: 'Cơm tấm sườn bì chả', quantity: 1, price: 45000 },
+        { name: 'Trà đá', quantity: 1, price: 5000 }
+      ],
+      total: 50000,
+      image: 'https://images.unsplash.com/photo-1626804475297-41608ea09aeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZGlzaCUyMHZpZXRuYW1lc2V8ZW58MXx8fHwxNzYwMDI2OTMwfDA&ixlib=rb-4.1.0&q=80&w=1080',
+      rated: true,
+      rating: 5
+    },
+    {
+      id: '2024100612342',
+      restaurant: 'Bánh Mì Huỳnh Hoa',
+      restaurantAddress: '26 Lê Thị Riêng, Q.1',
+      deliveredAt: '3 ngày trước, 08:45',
+      items: [
+        { name: 'Bánh mì đặc biệt', quantity: 3, price: 75000 }
+      ],
+      total: 75000,
+      image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYW5oJTIwbWl8ZW58MXx8fHwxNzYwMDI2OTMwfDA&ixlib=rb-4.1.0&q=80&w=1080',
+      rated: true,
+      rating: 4
+    }
+  ];
+
+  const padding = isMobileDetected ? '1.25rem' : isTablet ? '1.5rem' : '2rem';
+  const cardMargin = isMobileDetected ? '1rem' : '1.25rem';
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
-  return (
-    <div className="bg-transparent rounded-[8px] h-[49px] flex p-1 w-full">
-      <button
-        onClick={() => onChange("coming")}
-        className={
-          active === "coming"
-            ? "relative flex-1 rounded-[6px] text-[14px] text-[#363a33] font-semibold leading-none"
-            : "relative flex-1 text-[14px] text-[#91958e] leading-none"
-        }
-      >
-        <div style={textStyle}>Đang đến</div>
-        {active === "coming" && (
-          <div></div>
-        )}
-      </button>
-      <button
-        onClick={() => onChange("delivered")}
-        className={
-          active === "delivered"
-            ? "flex-1 rounded-[6px] text-[14px] text-[#363a33] font-semibold leading-none"
-            : "flex-1 text-[14px] text-[#91958e] leading-none"
-        }
-      >
-        <div style={textStyle}>Đã giao</div>
-      </button>
-    </div>
-  );
-}
+  const renderOngoingOrder = (order) => (
+    <div
+      key={order.id}
+      style={{
+        background: '#fff',
+        borderRadius: isMobileDetected ? '1rem' : '1.25rem',
+        overflow: 'hidden',
+        marginBottom: cardMargin,
+        boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)'
+      }}
+    >
+      {/* Order Header */}
+      <div style={{
+        padding: isMobileDetected ? '1rem' : '1.25rem',
+        borderBottom: '0.0625rem solid #f5f5f5'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '0.5rem'
+        }}>
+          <div style={{ flex: 1 }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: isMobileDetected ? '1.375rem' : '1.5rem',
+              fontWeight: '700',
+              color: '#333',
+              marginBottom: '0.25rem'
+            }}>
+              {order.restaurant}
+            </h3>
+            <div style={{
+              fontSize: isMobileDetected ? '1.0625rem' : '1.125rem',
+              color: '#999',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}>
+              <MapPin size={14} strokeWidth={2} />
+              {order.restaurantAddress}
+            </div>
+          </div>
+          <div style={{
+            background: order.status === 'Đang giao hàng' ? '#fff7ed' : '#f0fdf4',
+            color: order.status === 'Đang giao hàng' ? '#ea580c' : '#16a34a',
+            padding: '0.375rem 0.75rem',
+            borderRadius: '0.5rem',
+            fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+            fontWeight: '500',
+            whiteSpace: 'nowrap',
+            marginLeft: '0.75rem'
+          }}>
+            {order.status}
+          </div>
+        </div>
+        <div style={{
+          fontSize: isMobileDetected ? '1.0625rem' : '1.125rem',
+          color: '#666',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.25rem'
+        }}>
+          <Clock size={14} strokeWidth={2} />
+          Dự kiến {order.estimatedTime}
+        </div>
+      </div>
 
-function OrderCard() {
-  const navigate = useNavigate();
-  return (
-    <div className="mt-4">
-      <img
-        style={{
-          ...styles.absoluteCenter,
-          top: "20.16vh",
-          left: "5.28vw",
-          width: "18.13vw",
-          height: "8.16vh",
-          borderRadius: 8,
-        }}
-        src="https://placehold.co/65x65"
-      />
-      <div
-        style={{
-          ...styles.absoluteCenter,
-          ...styles.tikTokFont,
-          left: "27.58vw",
-          top: "21.66vh",
-          color: "black",
-          fontSize: "1.5rem",
-          fontWeight: "700",
-        }}
-      >
-        Lotteria
+      {/* Order Items */}
+      <div style={{
+        padding: isMobileDetected ? '1rem' : '1.25rem',
+        borderBottom: '0.0625rem solid #f5f5f5'
+      }}>
+        <div style={{
+          display: 'flex',
+          gap: isMobileDetected ? '0.75rem' : '1rem',
+          alignItems: 'flex-start'
+        }}>
+          <div style={{
+            width: isMobileDetected ? '5rem' : '6.5rem',
+            height: isMobileDetected ? '5rem' : '6.5rem',
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            flexShrink: 0
+          }}>
+          </div>
+          <div style={{ flex: 1 }}>
+            {order.items.map((item, idx) => (
+              <div
+                key={idx}
+                style={{
+                  fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+                  color: '#666',
+                  marginBottom: idx < order.items.length - 1 ? '0.25rem' : 0
+                }}
+              >
+                {item.quantity}x {item.name}
+              </div>
+            ))}
+            <div style={{
+              fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+              fontWeight: '700',
+              color: '#ee4d2d',
+              marginTop: '0.5rem'
+            }}>
+              {formatPrice(order.total)}
+            </div>
+          </div>
+        </div>
       </div>
-      <div
-        style={{
-          ...styles.absoluteCenter,
-          ...styles.tikTokFont,
-          top: "21.91vh",
-          right: "5.28vw",
-          color: "#6B6E82",
-          fontSize: "1.4rem",
-          fontWeight: "400",
-          textDecoration: "underline",
-        }}
-      >
-        #162432
-      </div>
-      <div
-        style={{
-          ...styles.absoluteCenter,
-          ...styles.tikTokFont,
-          top: "25.07vh",
-          left: "27.5vw",
-          color: "black",
-          fontSize: "1.2rem",
-          fontWeight: "600",
-        }}
-      >
-        69.000 ₫
-      </div>
-      <div
-        style={{
-          ...styles.absoluteCenter,
-          ...styles.tikTokFont,
-          top: "25.07vh",
-          right: "5.28vw",
-          color: "#6B6E82",
-          fontSize: "1.2rem",
-          fontWeight: "400",
-        }}
-      >
-        1 món
-      </div>
-      <div
-        style={{
-          ...styles.absoluteCenter,
-          top: "29.81vh",
-          left: "5.28vw",
-          width: "89.44vw",
-          height: "5vh",
-          ...styles.buttonBase,
-        }}
-        onClick={() => navigate("/customer/order-tracking")}
-      >
-        <div
+
+      {/* Actions */}
+      <div style={{ padding: isMobileDetected ? '1rem' : '1.25rem' }}>
+        <button
+          onClick={() => navigate('/customer/order-tracking')}
           style={{
-            ...styles.textBase,
-            color: "black",
-            fontSize: "1.5rem",
-            fontFamily: "TikTok Sans",
-            fontWeight: "600",
+            width: '100%',
+            padding: isMobileDetected ? '1rem' : '1.125rem',
+            background: 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
+            border: 'none',
+            borderRadius: '0.75rem',
+            color: '#fff',
+            fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-0.125rem)';
+            e.currentTarget.style.boxShadow = '0 0.375rem 1rem rgba(238, 77, 45, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)';
           }}
         >
           Theo dõi đơn hàng
-        </div>
+          <ChevronRight size={isMobileDetected ? 18 : 20} strokeWidth={2.5} />
+        </button>
       </div>
     </div>
   );
-}
 
-function DeliveredCard() {
-  return (
-    <div className="mt-4">
-      <div className="flex items-center gap-3">
-        <img
-          style={{
-            ...styles.absoluteCenter,
-            top: "20.16vh",
-            left: "5.28vw",
-            width: "18.13vw",
-            height: "8.16vh",
-            borderRadius: 8,
-          }}
-          src="https://placehold.co/65x65"
-        />
-        <div className="flex-1">
-          <div
-            style={{
-              ...styles.absoluteCenter,
-              ...styles.tikTokFont,
-              left: "27.58vw",
-              top: "21.66vh",
-              color: "black",
-              fontSize: "1.5rem",
-              fontWeight: "700",
-            }}
-          >
-            Lotteria
-          </div>
-          <div
-            style={{
-              ...styles.absoluteCenter,
-              ...styles.tikTokFont,
-              top: "21.91vh",
-              right: "5.28vw",
-              color: "#6B6E82",
-              fontSize: "1.4rem",
-              fontWeight: "400",
-              textDecoration: "underline",
-            }}
-          >
-            #162432
-          </div>
-          <div className="mt-1 flex items-center justify-between text-[12px]">
-            <div className="flex items-center gap-3 text-[#6b6e82]">
-              <div
-                style={{
-                  ...styles.absoluteCenter,
-                  ...styles.tikTokFont,
-                  top: "25.07vh",
-                  left: "27.5vw",
-                  color: "black",
-                  fontSize: "1.2rem",
-                  fontWeight: "600",
-                }}
-              >
-                69.000 ₫
-              </div>
-              <span className="h-[16px] w-px bg-[#e8ebe6]"></span>
-              <div
-                style={{
-                  ...styles.absoluteCenter,
-                  ...styles.tikTokFont,
-                  top: "25.03vh",
-                  right: "25vw",
-                  color: "#6B6E82",
-                  fontSize: "1.2rem",
-                  fontWeight: "400",
-                }}
-              >
-                03/10/2025, 12:30
-              </div>
+  const renderCompletedOrder = (order) => (
+    <div
+      key={order.id}
+      style={{
+        background: '#fff',
+        borderRadius: isMobileDetected ? '1rem' : '1.25rem',
+        overflow: 'hidden',
+        marginBottom: cardMargin,
+        boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)'
+      }}
+    >
+      {/* Order Header */}
+      <div style={{
+        padding: isMobileDetected ? '1rem' : '1.25rem',
+        borderBottom: '0.0625rem solid #f5f5f5'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start'
+        }}>
+          <div style={{ flex: 1 }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: isMobileDetected ? '1.375rem' : '1.5rem',
+              fontWeight: '700',
+              color: '#333',
+              marginBottom: '0.25rem'
+            }}>
+              {order.restaurant}
+            </h3>
+            <div style={{
+              fontSize: isMobileDetected ? '1.0625rem' : '1.125rem',
+              color: '#999',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}>
+              <MapPin size={14} strokeWidth={2} />
+              {order.restaurantAddress}
             </div>
-            <div
-              style={{
-                ...styles.absoluteCenter,
-                ...styles.tikTokFont,
-                top: "25.07vh",
-                right: "5.28vw",
-                color: "#6B6E82",
-                fontSize: "1.2rem",
-                fontWeight: "400",
-              }}
-            >
-              1 món
+          </div>
+          {order.rated && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              marginLeft: '0.75rem'
+            }}>
+              <Star size={16} fill="#f59e0b" color="#f59e0b" strokeWidth={2} />
+              <span style={{
+                fontSize: isMobileDetected ? '1.0625rem' : '1.125rem',
+                fontWeight: '600',
+                color: '#f59e0b'
+              }}>
+                {order.rating}
+              </span>
+            </div>
+          )}
+        </div>
+        <div style={{
+          fontSize: isMobileDetected ? '1.0625rem' : '1.125rem',
+          color: '#16a34a',
+          marginTop: '0.5rem'
+        }}>
+          Đã giao • {order.deliveredAt}
+        </div>
+      </div>
+
+      {/* Order Items */}
+      <div style={{
+        padding: isMobileDetected ? '1rem' : '1.25rem',
+        borderBottom: '0.0625rem solid #f5f5f5'
+      }}>
+        <div style={{
+          display: 'flex',
+          gap: isMobileDetected ? '0.75rem' : '1rem',
+          alignItems: 'flex-start'
+        }}>
+          <div style={{
+            width: isMobileDetected ? '5rem' : '6.5rem',
+            height: isMobileDetected ? '5rem' : '6.5rem',
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            flexShrink: 0
+          }}>
+          </div>
+          <div style={{ flex: 1 }}>
+            {order.items.map((item, idx) => (
+              <div
+                key={idx}
+                style={{
+                  fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+                  color: '#666',
+                  marginBottom: idx < order.items.length - 1 ? '0.25rem' : 0
+                }}
+              >
+                {item.quantity}x {item.name}
+              </div>
+            ))}
+            <div style={{
+              fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+              fontWeight: '700',
+              color: '#ee4d2d',
+              marginTop: '0.5rem'
+            }}>
+              {formatPrice(order.total)}
             </div>
           </div>
         </div>
       </div>
-      <div
-        style={{
-          ...styles.absoluteCenter,
-          top: "29.82vh",
-          left: "8.06vw",
-          width: "36.94vw",
-          height: "5vh",
-          ...styles.buttonBase,
-        }}
-      >
-        <div
+
+      {/* Actions */}
+      <div style={{
+        padding: isMobileDetected ? '1rem' : '1.25rem',
+        display: 'flex',
+        gap: isMobileDetected ? '0.75rem' : '1rem'
+      }}>
+        <button
           style={{
-            ...styles.textBase,
-            color: "#363a33",
-            fontSize: "1.5rem",
-            fontFamily: "TikTok Sans",
-            fontWeight: "600",
+            flex: 1,
+            padding: isMobileDetected ? '1rem' : '1.125rem',
+            background: '#fff',
+            border: '0.125rem solid #e5e5e5',
+            borderRadius: '0.75rem',
+            color: '#666',
+            fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#ee4d2d';
+            e.currentTarget.style.color = '#ee4d2d';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#e5e5e5';
+            e.currentTarget.style.color = '#666';
           }}
         >
+          <RotateCcw size={isMobileDetected ? 18 : 20} strokeWidth={2} />
           Đặt lại
-        </div>
-      </div>
-      <div
-        style={{
-          ...styles.absoluteCenter,
-          top: "29.82vh",
-          right: "8.06vw",
-          width: "36.94vw",
-          height: "5vh",
-          ...styles.buttonBase,
-        }}
-      >
-        <div
+        </button>
+        <button
           style={{
-            ...styles.textBase,
-            color: "#363a33",
-            fontSize: "1.5rem",
-            fontFamily: "TikTok Sans",
-            fontWeight: "600",
+            flex: 1,
+            padding: isMobileDetected ? '1rem' : '1.125rem',
+            background: order.rated ? '#f5f5f5' : 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
+            border: 'none',
+            borderRadius: '0.75rem',
+            color: order.rated ? '#999' : '#fff',
+            fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+            fontWeight: '600',
+            cursor: order.rated ? 'default' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            boxShadow: order.rated ? 'none' : '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)',
+            transition: 'all 0.2s'
           }}
+          onMouseEnter={(e) => {
+            if (!order.rated) {
+              e.currentTarget.style.transform = 'translateY(-0.125rem)';
+              e.currentTarget.style.boxShadow = '0 0.375rem 1rem rgba(238, 77, 45, 0.4)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!order.rated) {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)';
+            }
+          }}
+          disabled={order.rated}
         >
-          Đánh giá
-        </div>
+          <Star size={isMobileDetected ? 18 : 20} strokeWidth={2} fill={order.rated ? '#999' : 'none'} />
+          {order.rated ? 'Đã đánh giá' : 'Đánh giá'}
+        </button>
       </div>
     </div>
   );
-}
-
-export default function Order() {
-  const [activeTab, setActiveTab] = useState("coming");
 
   return (
-    <div className="bg-white pb-20">
-      <div className="mx-auto max-w-[360px] px-5 pb-24 pt-5">
-        <div
-          style={{
-            position: "absolute",
-            top: "6.625vh",
-            left: "50%",
-            transform: "translateX(-50%)",
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "var(--Colors-Typography-500, #363A33)",
-            fontSize: "1.7rem",
-            fontFamily: "TikTok Sans",
-            fontWeight: "700",
-            wordWrap: "break-word",
-          }}
-        >
+    <div style={{ 
+      width: '100%', 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column'
+    }}>
+      {/* Header */}
+      <div style={{
+        background: '#fff',
+        padding: padding,
+        boxShadow: '0 0.125rem 0.5rem rgba(238, 77, 45, 0.3)'
+      }}>
+        <h1 style={{
+          margin: 0,
+          color: '#333',
+          fontSize: isMobileDetected ? '1.75rem' : isTablet ? '2.25rem' : '2.75rem',
+          fontWeight: '700',
+          marginBottom: isMobileDetected ? '1.25rem' : '1.5rem',
+          letterSpacing: '-0.025em'
+        }}>
           Đơn hàng của tôi
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            top: "12.125vh",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "89.44vw",
-            height: "6.1625vh",
-            background: "#F4F7F2",
-            borderRadius: 8,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
+        </h1>
+
+        {/* Tabs */}
+        <div style={{
+          display: 'flex',
+          gap: '0.75rem',
+          background: '#f5f5f5',
+          padding: '0.25rem',
+          borderRadius: '0.75rem',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <button
+            onClick={() => setActiveTab('ongoing')}
             style={{
-              position: "absolute",
-              left: activeTab === 'coming' ? '1.11vw' : '45.17vw',
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: "43.06vw",
-              height: "5.3vh",
-              background: "white",
-              borderRadius: 4,
-              zIndex: 1,
+              flex: 1,
+              padding: isMobileDetected ? '0.75rem' : '0.875rem',
+              background: activeTab === 'ongoing' ? '#ee4d2d' : 'transparent',
+              border: 'none',
+              borderRadius: '0.625rem',
+              color: activeTab === 'ongoing' ? '#fff' : '#666',
+              fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeTab === 'ongoing' ? '0 0.125rem 0.5rem rgba(0, 0, 0, 0.1)' : 'none'
             }}
-          />
-          <TabSwitch active={activeTab} onChange={setActiveTab} />
+          >
+            Đang đến ({ongoingOrders.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('completed')}
+            style={{
+              flex: 1,
+              padding: isMobileDetected ? '0.75rem' : '0.875rem',
+              background: activeTab === 'completed' ? '#ee4d2d' : 'transparent',
+              border: 'none',
+              borderRadius: '0.625rem',
+              color: activeTab === 'completed' ? '#fff' : '#666',
+              fontSize: isMobileDetected ? '1.25rem' : '1.375rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeTab === 'completed' ? '0 0.125rem 0.5rem rgba(0, 0, 0, 0.1)' : 'none'
+            }}
+          >
+            Đã giao ({completedOrders.length})
+          </button>
         </div>
-        {activeTab === "coming" ? <OrderCard /> : <DeliveredCard />}
       </div>
-      <Navbar />
+
+      {/* Content */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        padding: padding,
+        paddingBottom: isMobileDetected ? '8rem' : '9rem',
+        background: '#f5f5f5'
+      }}>
+        {activeTab === 'ongoing' ? (
+          ongoingOrders.length > 0 ? (
+            ongoingOrders.map(order => renderOngoingOrder(order))
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: isMobileDetected ? '3rem 1rem' : '4rem 2rem',
+              color: '#999'
+            }}>
+              <ShoppingBag size={isMobileDetected ? 48 : 64} color="#ccc" strokeWidth={1.5} />
+              <p style={{ marginTop: '1rem', fontSize: isMobileDetected ? '1.125rem' : '1.25rem' }}>
+                Chưa có đơn hàng nào đang giao
+              </p>
+            </div>
+          )
+        ) : (
+          completedOrders.length > 0 ? (
+            completedOrders.map(order => renderCompletedOrder(order))
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: isMobileDetected ? '3rem 1rem' : '4rem 2rem',
+              color: '#999'
+            }}>
+              <ShoppingBag size={isMobileDetected ? 48 : 64} color="#ccc" strokeWidth={1.5} />
+              <p style={{ marginTop: '1rem', fontSize: isMobileDetected ? '1.125rem' : '1.25rem' }}>
+                Chưa có đơn hàng nào đã giao
+              </p>
+            </div>
+          )
+        )}
+      </div>
+      <Navbar isProfilePage={false} />
     </div>
   );
 }
+
+export default OrdersPage;

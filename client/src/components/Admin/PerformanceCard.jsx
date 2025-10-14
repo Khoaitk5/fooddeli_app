@@ -26,7 +26,7 @@ const PerformanceCard = () => {
           fontSize: '16px',
           fontWeight: 'normal',
           color: '#000000',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif",
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif",
           marginBottom: '6px'
         }}>
           Hiệu suất hôm nay
@@ -35,7 +35,7 @@ const PerformanceCard = () => {
           fontSize: '16px',
           fontWeight: 'normal',
           color: '#717182',
-          fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+          fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
         }}>
           Tỷ lệ hoàn thành đơn hàng
         </Typography>
@@ -65,7 +65,7 @@ const PerformanceCard = () => {
                 fontSize: '14px',
                 fontWeight: 'normal',
                 color: '#000000',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {item.label}
               </Typography>
@@ -73,7 +73,7 @@ const PerformanceCard = () => {
                 fontSize: '14px',
                 fontWeight: 'normal',
                 color: '#000000',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {item.percentage}%
               </Typography>
@@ -116,7 +116,7 @@ const PerformanceCard = () => {
                 fontSize: '24px',
                 fontWeight: 'bold',
                 color: item.color,
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {item.count}
               </Typography>
@@ -124,7 +124,7 @@ const PerformanceCard = () => {
                 fontSize: '12px',
                 fontWeight: 'normal',
                 color: '#717182',
-                fontFamily: "'TikTok Sans', system-ui, Avenir, Helvetica, Arial, sans-serif"
+                fontFamily: "'Be Vietnam Pro', system-ui, Avenir, Helvetica, Arial, sans-serif"
               }}>
                 {item.label.split(' ').slice(1).join(' ')}
               </Typography>
