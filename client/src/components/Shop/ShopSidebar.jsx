@@ -1,19 +1,19 @@
 // import React from 'react';
-import { 
-  Box, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Typography,
   Divider,
   IconButton,
   useTheme,
   useMediaQuery
 } from '@mui/material';
-import { 
+import {
   Menu as MenuIcon,
   Close as CloseIcon,
   Dashboard as DashboardIcon,
@@ -83,8 +83,8 @@ const ShopSidebar = ({ open, onClose }) => {
   const drawerContent = (
     <Box sx={{ width: 280, height: '100%', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <Box sx={{ 
-        p: 3, 
+      <Box sx={{
+        p: 3,
         borderBottom: '1px solid #f0f0f0',
         display: 'flex',
         alignItems: 'center',
@@ -116,10 +116,10 @@ const ShopSidebar = ({ open, onClose }) => {
             Quản trị cửa hàng
           </Typography>
         </Box>
-        
+
         {isMobile && (
-          <IconButton 
-            onClick={onClose} 
+          <IconButton
+            onClick={onClose}
             size="small"
             sx={{
               color: '#676767',
@@ -155,16 +155,18 @@ const ShopSidebar = ({ open, onClose }) => {
             A
           </Box>
           <Box>
-            <Typography sx={{ 
-              fontSize: '16px', 
-              fontWeight: 600, 
+            <Typography sx={{
+              fontSize: '16px',
+              fontWeight: 600,
               color: '#000',
               lineHeight: 1.2
             }}>
-             Chủ cửa hàng {user ? `#${user.id}` : ''}
+              {user?.shop_profile?.shop_name
+                ? user.shop_profile.shop_name
+                : `Chủ cửa hàng ${user ? `#${user.id}` : ''}`}
             </Typography>
-            <Typography sx={{ 
-              fontSize: '14px', 
+            <Typography sx={{
+              fontSize: '14px',
               color: '#676767',
               lineHeight: 1.2,
               mt: 0.5
@@ -206,7 +208,7 @@ const ShopSidebar = ({ open, onClose }) => {
                   }
                 }}
               >
-                <ListItemIcon sx={{ 
+                <ListItemIcon sx={{
                   minWidth: 44,
                   color: item.active ? '#ffffff' : '#676767',
                   '& .MuiSvgIcon-root': {
@@ -215,7 +217,7 @@ const ShopSidebar = ({ open, onClose }) => {
                 }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText 
+                <ListItemText
                   primary={item.label}
                   primaryTypographyProps={{
                     fontSize: '15px',
@@ -246,8 +248,8 @@ const ShopSidebar = ({ open, onClose }) => {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            <ListItemIcon sx={{ 
-              minWidth: 44, 
+            <ListItemIcon sx={{
+              minWidth: 44,
               color: '#dc3545',
               '& .MuiSvgIcon-root': {
                 fontSize: '22px'
@@ -255,7 +257,7 @@ const ShopSidebar = ({ open, onClose }) => {
             }}>
               <LogoutIcon />
             </ListItemIcon>
-            <ListItemText 
+            <ListItemText
               primary="Đăng xuất"
               primaryTypographyProps={{
                 fontSize: '15px',

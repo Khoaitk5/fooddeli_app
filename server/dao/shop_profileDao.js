@@ -1,4 +1,4 @@
-// dao/shopProfileDao.js
+// dao/shop_profileDao.js
 const GenericDao = require("./generic_dao");
 const ShopProfile = require("../models/shop_profile");
 const pool = require("../config/db");

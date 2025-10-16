@@ -1,4 +1,5 @@
 const userDao = require("../dao/userDao");
+const shopProfileService = require("./shop_profileService");
 
 /**
  * @class UserService
@@ -23,15 +24,23 @@ class UserService {
   }
 
   /**
-   * @async
-   * @function getUserById
-   * @description Lấy thông tin người dùng theo ID
-   * @param {number} id - ID người dùng
-   * @returns {Promise<object|null>} - Thông tin user hoặc null nếu không có
-   */
+  * @async
+  * @function getUserById
+  * @description Lấy thông tin người dùng theo ID (bao gồm shop_profile nếu có)
+  * @param {number} id - ID người dùng
+  * @returns {Promise<object|null>} - Thông tin user hoặc null nếu không có
+  */
   async getUserById(id) {
     try {
-      return await userDao.findById(id);
+      const user = await userDao.findById(id);
+      if (!user) return null;
+
+      if (user.role === "shop") {
+        const shopProfile = await shopProfileService.getShopByUserId(id);
+        if (shopProfile) user.shop_profile = shopProfile;
+      }
+
+      return user;
     } catch (err) {
       console.error("❌ Error fetching user by ID:", err.message);
       throw new Error("Không thể lấy thông tin người dùng.");
@@ -152,14 +161,14 @@ class UserService {
       throw new Error("Không thể xóa người dùng.");
     }
   }
-  
-    /**
-   * @async
-   * @function getUserByEmail
-   * @description Lấy người dùng theo email
-   * @param {string} email - Địa chỉ email của người dùng
-   * @returns {Promise<object|null>} - User hoặc null nếu không tồn tại
-   */
+
+  /**
+ * @async
+ * @function getUserByEmail
+ * @description Lấy người dùng theo email
+ * @param {string} email - Địa chỉ email của người dùng
+ * @returns {Promise<object|null>} - User hoặc null nếu không tồn tại
+ */
   async getUserByEmail(email) {
     try {
       return await userDao.getUserByEmail(email);

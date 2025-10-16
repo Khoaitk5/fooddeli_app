@@ -17,28 +17,75 @@ const getAllUsers = async (req, res) => {
 
 // 📌 Lấy thông tin user hiện tại từ session
 const getCurrentUser = async (req, res) => {
+  console.log("[DEBUG] >>> Bắt đầu getCurrentUser()");
   try {
     const sessionUser = req.session?.user;
-    // console.log("📥 Cookie gửi lên:", req.headers.cookie);
-    // console.log("📥 Toàn bộ session server lưu:", req.sessionStore.sessions);
-    // console.log("📥 Session hiện tại tìm thấy:", req.session);
+    console.log("[DEBUG] sessionUser =", sessionUser);
 
+    // 🧭 Kiểm tra đăng nhập
     if (!sessionUser) {
+      console.warn("[DEBUG] Không có sessionUser → trả 401");
       return res.status(401).json({
         success: false,
         message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
       });
     }
 
+    // 🔍 Lấy thông tin người dùng (đã bao gồm shop_profile nếu có)
     const user = await userService.getUserById(sessionUser.id);
+    console.log("[DEBUG] userService.getUserById() =", user);
+
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "❌ Không tìm thấy người dùng." });
+      console.warn("[DEBUG] Không tìm thấy user → trả 404");
+      return res.status(404).json({
+        success: false,
+        message: "❌ Không tìm thấy người dùng.",
+      });
     }
 
-    const { password, ...safeUser } = user; // xoá password nếu có
-    return res.status(200).json({ success: true, user: safeUser });
+    // 🏡 Lấy toàn bộ địa chỉ của user
+    const addresses = await addressService.getNormalizedUserAddresses(user.id);
+    console.log("[DEBUG] addresses =", addresses);
+
+    // 🏪 Nếu là shop → lấy shop_profile đã có sẵn trong user
+    let shop_profile = null;
+    if (user.role === "shop" && user.shop_profile) {
+      console.log("[DEBUG] User có role = shop, bắt đầu xử lý shop_profile");
+      shop_profile = user.shop_profile;
+
+      // 🏠 Gắn thêm thông tin địa chỉ cho shop nếu có
+      if (shop_profile.shop_address_id) {
+        console.log("[DEBUG] shop_profile.shop_address_id =", shop_profile.shop_address_id);
+        try {
+          const shopAddress = await addressService.getAddressById(
+            shop_profile.shop_address_id
+          );
+          console.log("[DEBUG] shopAddress =", shopAddress);
+          shop_profile = { ...shop_profile, address: shopAddress };
+        } catch (err) {
+          console.warn("[DEBUG] Không thể lấy địa chỉ shop:", err.message);
+          shop_profile = { ...shop_profile, address: null };
+        }
+      } else {
+        console.warn("[DEBUG] shop_profile không có shop_address_id");
+      }
+    } else {
+      console.log("[DEBUG] User không phải shop hoặc chưa có shop_profile");
+    }
+
+    // 🚫 Xoá password khỏi kết quả
+    const { password, ...safeUser } = user;
+
+    // ✅ Trả kết quả về FE
+    console.log("[DEBUG] >>> Hoàn tất getCurrentUser(), trả về dữ liệu thành công.");
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...safeUser,
+        addresses,
+        shop_profile,
+      },
+    });
   } catch (error) {
     console.error("⚠️ Lỗi getCurrentUser:", error);
     return res.status(500).json({
@@ -182,7 +229,6 @@ const updateCurrentUser = async (req, res) => {
     });
   }
 };
-
 
 // 📌 Xoá tài khoản user hiện tại
 const deleteCurrentUser = async (req, res) => {

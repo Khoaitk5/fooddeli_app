@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -8,18 +8,36 @@ import {
   FormControlLabel,
   TextField,
   Button,
-  Divider,
   Avatar
 } from '@mui/material';
 import { 
   Person as PersonIcon,
   Store as StoreIcon,
   Notifications as NotificationsIcon,
-  Security as SecurityIcon,
-  Palette as PaletteIcon
+  Security as SecurityIcon
 } from '@mui/icons-material';
 
 const ShopSettings = () => {
+  const [user, setUser] = useState(null);
+
+  // Gọi API lấy session
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/users/me', {
+          credentials: 'include', // nếu bạn dùng cookie/session
+        });
+        const data = await res.json();
+        if (data.success) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy session:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
       <Box sx={{ p: 3 }}>
@@ -62,14 +80,14 @@ const ShopSettings = () => {
                     mr: 2
                   }}
                 >
-                  A
+                  {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'A'}
                 </Avatar>
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Admin
+                    {user?.shop_profile?.shop_name || `Chủ cửa hàng #${user?.id || ''}`}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#717182' }}>
-                    Quản trị viên
+                    {user?.role === 'shop' ? 'Chủ cửa hàng' : 'Người dùng'}
                   </Typography>
                 </Box>
               </Box>
@@ -77,19 +95,19 @@ const ShopSettings = () => {
               <TextField
                 fullWidth
                 label="Tên cửa hàng"
-                defaultValue="Bobo Food"
+                value={user?.shop_profile?.shop_name || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Email"
-                defaultValue="admin@bobofood.com"
+                value={user?.email || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Số điện thoại"
-                defaultValue="+84 123 456 789"
+                value={user?.phone || ''}
                 sx={{ mb: 3 }}
               />
               
@@ -126,19 +144,19 @@ const ShopSettings = () => {
               <TextField
                 fullWidth
                 label="Địa chỉ cửa hàng"
-                defaultValue="123 Đường ABC, Quận 1, TP.HCM"
+                value={user?.shop_profile?.shop_address_id || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Giờ mở cửa"
-                defaultValue="08:00"
+                value={user?.shop_profile?.open_hours || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Giờ đóng cửa"
-                defaultValue="22:00"
+                value={user?.shop_profile?.closed_hours || ''}
                 sx={{ mb: 3 }}
               />
               
@@ -171,30 +189,22 @@ const ShopSettings = () => {
                 </Typography>
               </Box>
 
-              <Box sx={{ mb: 2 }}>
-                <FormControlLabel
-                  control={<Switch defaultChecked />}
-                  label="Thông báo đơn hàng mới"
-                />
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                <FormControlLabel
-                  control={<Switch defaultChecked />}
-                  label="Thông báo đánh giá"
-                />
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                <FormControlLabel
-                  control={<Switch />}
-                  label="Thông báo khuyến mãi"
-                />
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                <FormControlLabel
-                  control={<Switch defaultChecked />}
-                  label="Thông báo hệ thống"
-                />
-              </Box>
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label="Thông báo đơn hàng mới"
+              />
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label="Thông báo đánh giá"
+              />
+              <FormControlLabel
+                control={<Switch />}
+                label="Thông báo khuyến mãi"
+              />
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label="Thông báo hệ thống"
+              />
             </Paper>
           </Grid>
 

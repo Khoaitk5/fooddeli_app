@@ -94,6 +94,61 @@ class AddressService {
       throw new Error("Không thể cập nhật địa chỉ.");
     }
   }
+  
+    /**
+   * 🧭 Lấy 1 địa chỉ theo ID (kèm parse JSON)
+   */
+  async getAddressById(addressId) {
+    try {
+      // const addr = await addressDao.getById(addressId);
+      const addr = await addressDao.findById("address_id", addressId);
+      if (!addr) return null;
+
+      return {
+        address_id: addr.address_id,
+        address_line:
+          typeof addr.address_line === "string"
+            ? JSON.parse(addr.address_line)
+            : addr.address_line,
+        lat_lon:
+          typeof addr.lat_lon === "string"
+            ? JSON.parse(addr.lat_lon)
+            : addr.lat_lon,
+        note: addr.note,
+        address_type: addr.address_type,
+      };
+    } catch (err) {
+      console.error("❌ [AddressService] Lỗi getAddressById:", err.message);
+      throw new Error("Không thể lấy địa chỉ theo ID.");
+    }
+  }
+
+  /**
+   * 🧩 Chuẩn hoá danh sách địa chỉ của user (đã parse JSON sẵn)
+   */
+  async getNormalizedUserAddresses(userId) {
+    try {
+      const rawAddrs = await this.getUserAddresses(userId);
+      return rawAddrs.map((addr) => ({
+        address_id: addr.address_id,
+        address_line:
+          typeof addr.address_line === "string"
+            ? JSON.parse(addr.address_line)
+            : addr.address_line,
+        lat_lon:
+          typeof addr.lat_lon === "string"
+            ? JSON.parse(addr.lat_lon)
+            : addr.lat_lon,
+        note: addr.note,
+        address_type: addr.address_type,
+        is_primary: addr.is_primary,
+      }));
+    } catch (err) {
+      console.error("❌ [AddressService] Lỗi getNormalizedUserAddresses:", err.message);
+      throw new Error("Không thể chuẩn hoá danh sách địa chỉ người dùng.");
+    }
+  }
+
 }
 
 module.exports = new AddressService();
