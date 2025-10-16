@@ -1,4 +1,3 @@
-// controllers/productController.js
 const ProductService = require("../services/productService");
 
 // ➕ Tạo sản phẩm mới
@@ -53,3 +52,63 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// 🔄 Cập nhật trạng thái (còn bán / ngừng bán)
+exports.updateAvailability = async (req, res) => {
+  try {
+    const result = await ProductService.updateAvailability(
+      req.params.id,
+      req.body.isAvailable
+    );
+    if (!result) return res.status(404).json({ message: "Product not found" });
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 🏪 Lấy sản phẩm theo shop
+exports.getProductsByShop = async (req, res) => {
+  try {
+    const result = await ProductService.getProductsByShop(req.params.shopId);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 🔍 Tìm kiếm sản phẩm theo tên
+exports.searchProducts = async (req, res) => {
+  try {
+    const { keyword, limit, offset } = req.query;
+    const result = await ProductService.searchProducts(keyword, limit, offset);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 📦 Lấy danh sách sản phẩm còn bán
+exports.getAvailableProducts = async (req, res) => {
+  try {
+    const result = await ProductService.getAvailableProducts();
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 📂 Lấy danh mục sản phẩm (4 cái)
+exports.getAllCategories = async (req, res) => {
+  console.log("🟢 [Controller] GET /api/products/categories được gọi"); // <--- thêm dòng này
+
+  try {
+    const result = await ProductService.getAllCategories();
+    console.log("✅ [Controller] Nhận được kết quả từ service:", result);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("❌ [Controller] Error fetching categories:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
