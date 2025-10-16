@@ -26,5 +26,11 @@ router.post("/google", authController.loginWithGoogle);
 
 router.post("/google-register", authController.registerWithGoogle);
 
+router.post("/check-phone", authController.checkPhoneExists);
+
+router.post("/check-email", authController.checkEmailExists);
+
+
+
 
 module.exports = router;
