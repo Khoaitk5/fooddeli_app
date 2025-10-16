@@ -38,33 +38,47 @@ const LoginPhone = () => {
     e.preventDefault();
     setError("");
 
-    if (phone.length === 10) {
-      try {
-        // ✅ 1. Lấy reCAPTCHA đã khởi tạo từ useEffect
-        const appVerifier = window.recaptchaVerifier;
-
-        // ✅ 2. Format số sang dạng quốc tế (+84xxxxxxxxx)
-        const formattedPhone = "+84" + phone.substring(1);
-        alert(`Số gửi OTP: ${formattedPhone}`);
-
-        // ✅ 3. Gửi OTP qua Firebase
-        const confirmationResult = await signInWithPhoneNumber(
-          auth,
-          formattedPhone,
-          appVerifier
-        );
-
-        // ✅ 4. Lưu confirmationResult để xác minh OTP ở trang OTP
-        window.confirmationResult = confirmationResult;
-
-        // ✅ 5. Điều hướng sang trang nhập OTP
-        navigate("/otp", { state: { phone: formattedPhone } });
-      } catch (err) {
-        console.error("Lỗi gửi OTP:", err.code, err.message);
-        setError("Không thể gửi OTP. Vui lòng thử lại.");
-      }
-    } else {
+    if (phone.length !== 10) {
       setError("Vui lòng nhập đúng số điện thoại 10 chữ số");
+      return;
+    }
+
+    try {
+      // ✅ 1. Kiểm tra số điện thoại trong DB
+      const formattedPhone = "+84" + phone.substring(1);
+
+      const checkRes = await fetch(
+        "http://localhost:5000/api/auth/check-phone",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: formattedPhone }),
+        }
+      );
+
+      const checkData = await checkRes.json();
+
+      // Nếu không tồn tại
+      if (!checkData.success) {
+        setError(checkData.message || "Số điện thoại này chưa được đăng ký.");
+        return;
+      }
+
+      // ✅ 2. Nếu có trong DB, gửi OTP qua Firebase
+      const appVerifier = window.recaptchaVerifier;
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        formattedPhone,
+        appVerifier
+      );
+
+      window.confirmationResult = confirmationResult;
+
+      // ✅ 3. Điều hướng sang trang nhập OTP
+      navigate("/otp", { state: { phone: formattedPhone } });
+    } catch (err) {
+      console.error("❌ Lỗi gửi OTP:", err);
+      setError("Không thể gửi OTP. Vui lòng thử lại.");
     }
   };
 
@@ -136,7 +150,7 @@ const LoginPhone = () => {
             flexDirection: "column",
             color: "#868686",
             fontSize: "1.4rem",
-            fontFamily: 'Be Vietnam Pro',
+            fontFamily: "Be Vietnam Pro",
             fontWeight: "500",
             wordWrap: "break-word",
           }}
@@ -173,7 +187,7 @@ const LoginPhone = () => {
             flexDirection: "column",
             color: "#868686",
             fontSize: "1.4rem",
-            fontFamily: 'Be Vietnam Pro',
+            fontFamily: "Be Vietnam Pro",
             fontWeight: "500",
             wordWrap: "break-word",
           }}
@@ -216,7 +230,7 @@ const LoginPhone = () => {
               outline: "none",
               fontSize: "1.4rem",
               fontWeight: "400",
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               color: "#aaaaae",
               backgroundColor: "transparent",
             }}
@@ -254,7 +268,7 @@ const LoginPhone = () => {
               flexDirection: "column",
               color: "white",
               fontSize: "1.3rem",
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               fontWeight: "600",
               wordWrap: "break-word",
             }}

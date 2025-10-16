@@ -21,26 +21,35 @@ const Login = () => {
       const user = result.user;
       console.log("✅ Đăng nhập thành công:", user);
 
-      // 🔹 Lấy ID token của user từ Firebase
+      // 🔹 Lấy ID token từ Firebase
       const idToken = await user.getIdToken();
 
-      // 🔹 Gửi token đó lên backend của bạn bằng fetch
+      // 🔹 Gửi token đó lên backend
       const res = await fetch("http://localhost:5000/api/auth/google", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: idToken }),
       });
 
-      if (!res.ok) {
-        throw new Error("❌ Lỗi server khi xác minh token");
+      // 🔹 Xử lý lỗi theo status code
+      if (res.status === 404) {
+        // Gmail chưa tồn tại trong DB
+        console.warn("⚠️ Tài khoản Google chưa tồn tại trong hệ thống");
+        alert("Tài khoản Google này chưa tồn tại. Vui lòng đăng ký trước!");
+        return; // dừng lại, không tiếp tục navigate
       }
 
+      if (!res.ok) {
+        // Các lỗi khác (500, 401, v.v.)
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "❌ Lỗi server khi xác minh token");
+      }
+
+      // 🔹 Nếu ok → lấy dữ liệu trả về
       const data = await res.json();
       console.log("✅ Server trả về:", data);
 
-      // 🔹 Lưu user và token (nếu backend trả về)
+      // 🔹 Lưu user và token
       localStorage.setItem("user", JSON.stringify(data.user));
       if (data.token) localStorage.setItem("token", data.token);
 
@@ -48,6 +57,7 @@ const Login = () => {
       navigate("/customer/home");
     } catch (error) {
       console.error("❌ Lỗi đăng nhập Google:", error);
+      alert(error.message || "Đăng nhập Google thất bại. Vui lòng thử lại!");
     }
   };
 
@@ -128,7 +138,7 @@ const Login = () => {
           justifyContent: "center",
           color: "#70756B",
           fontSize: "1.5rem",
-          fontFamily: 'Be Vietnam Pro',
+          fontFamily: "Be Vietnam Pro",
           fontWeight: 600,
           lineHeight: "2.55rem",
           wordWrap: "break-word",

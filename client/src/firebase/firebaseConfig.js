@@ -1,12 +1,12 @@
 // client/src/firebase/firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-
+import { getStorage } from "firebase/storage";
 const firebaseConfig = {
   apiKey: "AIzaSyDVADTRyha6lV5MbF9epUO6ubVNjQGIA80",
   authDomain: "fooddeli-6d394.firebaseapp.com",
   projectId: "fooddeli-6d394",
-  storageBucket: "fooddeli-6d394.appspot.com",
+  storageBucket: "fooddeli-6d394.firebasestorage.app",
   messagingSenderId: "791352003469",
   appId: "1:791352003469:web:907026dda68039657b4bc4",
   measurementId: "G-THRB97DEF3",
@@ -22,3 +22,4 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 export { auth, googleProvider };
+export const storage = getStorage(app);
