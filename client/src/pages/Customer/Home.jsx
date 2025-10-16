@@ -8,14 +8,10 @@ import ShareIcon from "../../components/shared/ShareIcon";
 import SearchIcon from "../../components/shared/SearchIcon";
 import ProductCart from "../../components/role-specific/Customer/ProductCardForVideo.jsx";
 import { pxW, pxH } from "../../utils/scale.js";
-import { createClient } from "@supabase/supabase-js";
 import TabItem from "../../components/role-specific/Customer/TabItem.jsx";
 import MessagePopup from "../../components/shared/MessagePopup";
-
-const supabase = createClient(
-  "https://xyngruphcelumtjlmzud.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bmdydXBoY2VsdW10amxtenVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzIyOTUsImV4cCI6MjA3MzE0ODI5NX0.dOpfK9jEzARQJbBmzLjTZ4wtSENsz57Wmu13oP5A6og"
-);
+import { ref, listAll, getDownloadURL } from "firebase/storage";
+import { storage } from "../../firebase/firebaseConfig";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -29,20 +25,27 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState("suggestion");
   const [showMessagePopup, setShowMessagePopup] = useState(false);
 
+  // 🔹 Fetch video list từ Firebase Storage
   useEffect(() => {
     const fetchVideos = async () => {
-      const { data, error } = await supabase.storage
-        .from("videos")
-        .list("user-videos", {
-          sortBy: { column: "created_at", order: "desc" },
-        });
-      if (data) {
-        setVideos(data);
+      try {
+        const folderRef = ref(storage, "videos/shop_video/");
+        const res = await listAll(folderRef);
+        const videoUrls = await Promise.all(
+          res.items.map(async (itemRef) => {
+            const url = await getDownloadURL(itemRef);
+            return { name: itemRef.name, url };
+          })
+        );
+        setVideos(videoUrls.reverse()); // hiển thị video mới nhất trước
+      } catch (error) {
+        console.error("Error fetching videos:", error);
       }
     };
     fetchVideos();
   }, []);
 
+  // 🔹 Xử lý auto-play theo Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -50,11 +53,11 @@ const Home = () => {
           const video = entry.target;
           const index = videoRefs.current.indexOf(video);
           if (entry.isIntersecting) {
-            // Pause all other videos
+            // Pause các video khác
             videoRefs.current.forEach((v, i) => {
               if (v && i !== index) v.pause();
             });
-            video.play().catch(() => {}); // Ignore play errors
+            video.play().catch(() => {});
           } else {
             video.pause();
           }
@@ -74,6 +77,7 @@ const Home = () => {
     };
   }, [videos]);
 
+  // 🔹 Styles
   const statusStyle = {
     color: "white",
     fontSize: "1.8rem",
@@ -92,6 +96,7 @@ const Home = () => {
     textShadow: "1px 1px 1px rgba(0, 0, 0, 0.25)",
   };
 
+  // 🔹 Xử lý Like
   const handleHeartClick = (videoIndex, e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -115,6 +120,7 @@ const Home = () => {
     });
   };
 
+  // 🔹 Xử lý Bookmark
   const handleBookmarkClick = (videoIndex, e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -146,9 +152,7 @@ const Home = () => {
 
   return (
     <div
-      className={`h-[${pxH(800)}] w-[${pxW(
-        360
-      )}] overflow-hidden relative mx-auto`}
+      className={`h-[${pxH(800)}] w-[${pxW(360)}] overflow-hidden relative mx-auto`}
     >
       <div className="h-[93.75vh] overflow-y-auto snap-y snap-mandatory">
         {videos.map((video, index) => (
@@ -159,12 +163,8 @@ const Home = () => {
           >
             <video
               ref={(el) => (videoRefs.current[index] = el)}
-              src={
-                supabase.storage
-                  .from("videos")
-                  .getPublicUrl(`user-videos/${video.name}`).data.publicUrl
-              }
-              className="absolute inset-0 h-full w-full object-cover" // 👈 đổi contain -> cover
+              src={video.url}
+              className="absolute inset-0 h-full w-full object-cover"
               loop
               playsInline
               preload="metadata"
@@ -189,9 +189,10 @@ const Home = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
               </div>
             )}
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-            {/* Follow & Suggestions Tabs */}
+            {/* Tabs */}
             <div className="absolute top-[2vh] w-full flex justify-center gap-[15px]">
               <TabItem
                 label="Đã follow"
@@ -207,12 +208,12 @@ const Home = () => {
               />
             </div>
 
-            {/* Search Icon */}
+            {/* Search */}
             <div className="absolute top-[2vh] right-[4.8vw]">
-              <SearchIcon onClick={() => navigate('/customer/search')} />
+              <SearchIcon onClick={() => navigate("/customer/search")} />
             </div>
 
-            {/* Profile Image */}
+            {/* Profile */}
             <div className="absolute top-[47.625vh] right-[1.94vw]">
               <img
                 style={{
@@ -227,64 +228,21 @@ const Home = () => {
               />
             </div>
 
-            {/* Author Name */}
-            <div className="absolute top-[63.75vh] left-[2.78vw]">
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  justifyContent: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  color: "white",
-                  fontSize: "1.7rem",
-                  fontFamily: 'Be Vietnam Pro',
-                  fontWeight: "600",
-                  wordWrap: "break-word",
-                }}
-              >
-                KFC Việt Nam
-              </div>
+            {/* Author */}
+            <div className="absolute top-[63.75vh] left-[2.78vw] text-white text-[1.7rem] font-semibold font-['Be Vietnam Pro']">
+              KFC Việt Nam
             </div>
 
             {/* Caption */}
-            <div className="absolute left-[2.78vw] top-[67.5vh]">
-              <div
-                style={{
-                  width: "71.94vw",
-                  justifyContent: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <span
-                  style={{
-                    color: "white",
-                    fontSize: "1.5rem",
-                    fontFamily: 'Be Vietnam Pro',
-                    fontWeight: "400",
-                    wordWrap: "break-word",
-                  }}
-                >
-                  Gà rán giòn tan, quyện thêm xốt mắm tỏi đậm đà, cay cay, ngọt
-                  ngọt, thơm nồng nàn từ tỏi và ớt. 😉
-                  <br />
-                </span>
-                <span
-                  style={{
-                    color: "white",
-                    fontSize: "1.5rem",
-                    fontFamily: 'Be Vietnam Pro',
-                    fontWeight: "600",
-                    wordWrap: "break-word",
-                  }}
-                >
-                  #fyp #kfc #gaxotmamtoi
-                </span>
+            <div className="absolute left-[2.78vw] top-[67.5vh] text-white font-['Be Vietnam Pro']">
+              <div className="text-[1.5rem] font-normal">
+                Gà rán giòn tan, quyện thêm xốt mắm tỏi đậm đà, cay cay, ngọt
+                ngọt, thơm nồng nàn từ tỏi và ớt. 😉
               </div>
+              <div className="text-[1.5rem] font-semibold">#fyp #kfc #gaxotmamtoi</div>
             </div>
 
-            {/* Heart Icon and Count */}
+            {/* Icons */}
             <div
               className="absolute top-[56.875vh] right-[4.72vw] flex flex-col items-center"
               style={{ gap: "1.25vh" }}
@@ -294,22 +252,17 @@ const Home = () => {
                 onClick={(e) => handleHeartClick(index, e)}
                 style={{ cursor: "pointer" }}
               />
-              <div style={countStyle}>
-                {formatCount(likeCounts[index] || 0)}
-              </div>
+              <div style={countStyle}>{formatCount(likeCounts[index] || 0)}</div>
             </div>
 
-            {/* Comment Icon */}
             <div className="absolute top-[65vh] right-[4.72vw]">
               <CommentIcon onClick={() => setShowMessagePopup(true)} />
             </div>
 
-            {/* Comment Count */}
             <div className="absolute top-[69.5vh] right-[4.86vw]">
               <div style={countStyle}>100K</div>
             </div>
 
-            {/* Bookmark Icon and Count */}
             <div
               className="absolute top-[73.25vh] right-[5.56vw] flex flex-col items-center"
               style={{ gap: "1.25vh" }}
@@ -324,24 +277,26 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Share Icon */}
             <div className="absolute top-[81.125vh] right-[4.72vw]">
               <ShareIcon />
             </div>
 
-            {/* Share Count */}
             <div className="absolute top-[85.75vh] right-[3.61vw]">
               <div style={countStyle}>132,5K</div>
             </div>
 
-            {/* Product Cart */}
+            {/* Product Card */}
             <div className="absolute top-[80.5vh] left-[2.78vw]">
               <ProductCart />
             </div>
           </section>
         ))}
       </div>
-      <MessagePopup isVisible={showMessagePopup} onClose={() => setShowMessagePopup(false)} />
+
+      <MessagePopup
+        isVisible={showMessagePopup}
+        onClose={() => setShowMessagePopup(false)}
+      />
       <Navbar />
     </div>
   );
