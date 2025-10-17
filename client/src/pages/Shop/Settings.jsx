@@ -8,17 +8,25 @@ import {
   FormControlLabel,
   TextField,
   Button,
-  Avatar
+  Avatar,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import { 
   Person as PersonIcon,
   Store as StoreIcon,
   Notifications as NotificationsIcon,
-  Security as SecurityIcon
+  Security as SecurityIcon,
+  SwapHoriz as SwapHorizIcon
 } from '@mui/icons-material';
 
 const ShopSettings = () => {
   const [user, setUser] = useState(null);
+  const [openNotification, setOpenNotification] = useState(false);
+  const [openPassword, setOpenPassword] = useState(false);
 
   // Gọi API lấy session
   useEffect(() => {
@@ -240,24 +248,26 @@ const ShopSettings = () => {
                   {item.desc}
                 </Typography>
 
-              <FormControlLabel
-                control={<Switch defaultChecked />}
-                label="Thông báo đơn hàng mới"
-              />
-              <FormControlLabel
-                control={<Switch defaultChecked />}
-                label="Thông báo đánh giá"
-              />
-              <FormControlLabel
-                control={<Switch />}
-                label="Thông báo khuyến mãi"
-              />
-              <FormControlLabel
-                control={<Switch defaultChecked />}
-                label="Thông báo hệ thống"
-              />
-            </Paper>
-          </Grid>
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Thông báo đơn hàng mới"
+                />
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Thông báo đánh giá"
+                />
+                <FormControlLabel
+                  control={<Switch />}
+                  label="Thông báo khuyến mãi"
+                />
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Thông báo hệ thống"
+                />
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
 
         {/* Divider */}
         <Divider sx={{ my: 4 }} />
