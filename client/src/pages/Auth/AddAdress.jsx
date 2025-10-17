@@ -10,14 +10,16 @@ import {
   MenuItem,
   Select,
   FormControl,
+  useMediaQuery,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { pxW, pxH } from "../../utils/scale.js";
 
-const AddAddress = () => {
+const AddAddress = ({ onSubmit }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const prevState = location.state || {};
+  const isDesktop = useMediaQuery("(min-width: 769px)");
 
   const [form, setForm] = useState({
     address_type: "",
@@ -33,7 +35,6 @@ const AddAddress = () => {
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
 
-  // ✅ 1. Lấy danh sách tỉnh/thành khi load
   useEffect(() => {
     fetch("https://provinces.open-api.vn/api/p/")
       .then((res) => res.json())
@@ -41,118 +42,78 @@ const AddAddress = () => {
       .catch((err) => console.error("Lỗi tải tỉnh:", err));
   }, []);
 
-  // ✅ 2. Khi chọn tỉnh → lấy danh sách quận/huyện
   const handleProvinceChange = (e) => {
     const provinceCode = e.target.value;
     const province = provinces.find((p) => p.code === provinceCode);
-
-    setForm((prev) => ({
-      ...prev,
-      city: province.name,
-      district: "",
-      ward: "",
-    }));
-
+    setForm((prev) => ({ ...prev, city: province.name, district: "", ward: "" }));
     setDistricts([]);
     setWards([]);
-
     fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
       .then((res) => res.json())
-      .then((data) => {
-        setDistricts(data.districts);
-      })
+      .then((data) => setDistricts(data.districts))
       .catch((err) => console.error("Lỗi tải quận/huyện:", err));
   };
 
-  // ✅ 3. Khi chọn quận/huyện → lấy danh sách xã/phường
   const handleDistrictChange = (e) => {
     const districtCode = e.target.value;
     const district = districts.find((d) => d.code === districtCode);
-
-    setForm((prev) => ({
-      ...prev,
-      district: district.name,
-      ward: "",
-    }));
-
+    setForm((prev) => ({ ...prev, district: district.name, ward: "" }));
     fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
       .then((res) => res.json())
-      .then((data) => {
-        setWards(data.wards);
-      })
+      .then((data) => setWards(data.wards))
       .catch((err) => console.error("Lỗi tải xã/phường:", err));
   };
 
-  // ✅ 4. Khi chọn xã/phường
   const handleWardChange = (e) => {
     const wardCode = e.target.value;
     const ward = wards.find((w) => w.code === wardCode);
     setForm((prev) => ({ ...prev, ward: ward.name }));
   };
 
-  // ✅ 5. Submit form
   const handleSubmit = () => {
     const { address_type, detail, ward, district, city } = form;
-
     if (!detail || !ward || !district || !city) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin địa chỉ!");
       return;
     }
-
-    // ✅ Tạo payload JSON đúng format backend yêu cầu
     const payload = {
       address_type: address_type || "Nhà",
       note: form.note || "",
       is_primary: isDefault,
-      address_line: {
-        detail,
-        ward,
-        district,
-        city,
-      },
+      address_line: { detail, ward, district, city },
     };
-
-    console.log("✅ Địa chỉ mới được gửi:", payload);
-
-    // ✅ Quay lại trang profileRegister và gửi payload
-    navigate("/profileRegister", {
-      state: {
-        ...prevState,
-        address: payload,
-      },
-    });
+    console.log("✅ Địa chỉ mới:", payload);
+    if (onSubmit) onSubmit(payload);
+    else navigate("/profileRegister", { state: { ...prevState, address: payload } });
   };
 
   return (
     <Box
       sx={{
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "#f5f5f5",
+        width: isDesktop ? "100%" : "100vw",
+        height: isDesktop ? "auto" : "100vh",
+        backgroundColor: isDesktop ? "#fff" : "#f5f5f5",
         display: "flex",
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: isDesktop ? "flex-start" : "center",
+        p: isDesktop ? 4 : 0,
       }}
     >
       <Box
         sx={{
-          width: pxW(360),
-          minHeight: pxH(800),
+          width: isDesktop ? "700px" : pxW(360),
+          minHeight: isDesktop ? "auto" : pxH(800),
           background: "white",
-          p: 3,
+          p: isDesktop ? 4 : 3,
           borderRadius: 4,
-          boxShadow: "0 0 20px rgba(0,0,0,0.1)",
+          boxShadow: isDesktop ? "0 0 20px rgba(0,0,0,0.15)" : "0 0 10px rgba(0,0,0,0.1)",
           position: "relative",
         }}
       >
-        <Typography
-          variant="h6"
-          sx={{ mb: 2, color: "#000", textAlign: "center", fontWeight: 700 }}
-        >
-          Thêm địa chỉ
+        <Typography variant="h6" sx={{ mb: 2, textAlign: "center", fontWeight: 700 }}>
+          Thêm địa chỉ mới
         </Typography>
 
-        {/* ✅ Đặt làm địa chỉ mặc định */}
         <Box
           sx={{
             background: "#F9FAF8",
@@ -165,9 +126,7 @@ const AddAddress = () => {
             justifyContent: "space-between",
           }}
         >
-          <Typography sx={{ fontSize: 17, color: "#000" }}>
-            Đặt làm địa chỉ mặc định
-          </Typography>
+          <Typography sx={{ fontSize: 17 }}>Đặt làm địa chỉ mặc định</Typography>
           <Switch
             checked={isDefault}
             onChange={(e) => setIsDefault(e.target.checked)}
@@ -177,41 +136,30 @@ const AddAddress = () => {
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* Loại địa chỉ */}
         <TextField
           name="address_type"
           value={form.address_type}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, address_type: e.target.value }))
-          }
+          onChange={(e) => setForm((prev) => ({ ...prev, address_type: e.target.value }))}
           placeholder="Loại địa chỉ (Nhà riêng, Cơ quan, ...)"
           fullWidth
           sx={{ mb: 2 }}
           InputProps={{ sx: { borderRadius: 2 } }}
         />
 
-        {/* Ghi chú */}
         <TextField
           name="note"
           value={form.note}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, note: e.target.value }))
-          }
+          onChange={(e) => setForm((prev) => ({ ...prev, note: e.target.value }))}
           placeholder="Ghi chú giao hàng (tuỳ chọn)"
           fullWidth
           sx={{ mb: 2 }}
           InputProps={{ sx: { borderRadius: 2 } }}
         />
 
-        <Divider sx={{ mb: 2 }} />
-
-        {/* Địa chỉ chi tiết */}
         <TextField
           name="detail"
           value={form.detail}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, detail: e.target.value }))
-          }
+          onChange={(e) => setForm((prev) => ({ ...prev, detail: e.target.value }))}
           placeholder="Số nhà, tên đường, thôn/xóm..."
           fullWidth
           sx={{ mb: 2 }}
@@ -219,16 +167,10 @@ const AddAddress = () => {
         />
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          {/* 🔹 Tỉnh/Thành */}
           <Grid item xs={12}>
-            <FormControl
-              fullWidth
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            >
+            <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}>
               <Select
-                value={
-                  provinces.find((p) => p.name === form.city)?.code || ""
-                }
+                value={provinces.find((p) => p.name === form.city)?.code || ""}
                 onChange={handleProvinceChange}
                 displayEmpty
                 renderValue={(selected) =>
@@ -246,16 +188,10 @@ const AddAddress = () => {
             </FormControl>
           </Grid>
 
-          {/* 🔹 Huyện */}
           <Grid item xs={12}>
-            <FormControl
-              fullWidth
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            >
+            <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}>
               <Select
-                value={
-                  districts.find((d) => d.name === form.district)?.code || ""
-                }
+                value={districts.find((d) => d.name === form.district)?.code || ""}
                 onChange={handleDistrictChange}
                 displayEmpty
                 renderValue={(selected) =>
@@ -273,12 +209,8 @@ const AddAddress = () => {
             </FormControl>
           </Grid>
 
-          {/* 🔹 Xã/Phường */}
           <Grid item xs={12}>
-            <FormControl
-              fullWidth
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            >
+            <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}>
               <Select
                 value={wards.find((w) => w.name === form.ward)?.code || ""}
                 onChange={handleWardChange}
@@ -299,7 +231,6 @@ const AddAddress = () => {
           </Grid>
         </Grid>
 
-        {/* Nút Tiếp tục */}
         <Button
           fullWidth
           variant="contained"
