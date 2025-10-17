@@ -17,6 +17,7 @@ const RegisterEmail = () => {
       alert("📧 Vui lòng nhập email.");
       return;
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       alert("⚠️ Email không hợp lệ.");
@@ -26,7 +27,7 @@ const RegisterEmail = () => {
     try {
       setLoading(true);
 
-      // ✅ Bước 1: Kiểm tra email có tồn tại trong DB chưa
+      // ✅ Bước 1: Kiểm tra email trong DB
       const checkRes = await fetch(
         "http://localhost:5000/api/auth/check-email",
         {
@@ -35,15 +36,18 @@ const RegisterEmail = () => {
           body: JSON.stringify({ email }),
         }
       );
-
       const checkData = await checkRes.json();
-      if (!checkData.success) {
-        alert(checkData.message || "❌ Email chưa được đăng ký!");
+
+      // ⚠️ Nếu email ĐÃ tồn tại → KHÔNG cho đăng ký
+      if (checkData.success) {
+        alert(
+          "⚠️ Email này đã được đăng ký. Vui lòng đăng nhập thay vì đăng ký mới!"
+        );
         setLoading(false);
         return;
       }
 
-      // ✅ Bước 2: Nếu tồn tại → gửi OTP
+      // ✅ Bước 2: Nếu email chưa tồn tại → Gửi OTP
       const res = await fetch("http://localhost:5000/api/auth/send-otp-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,6 +56,7 @@ const RegisterEmail = () => {
 
       const data = await res.json();
       if (data.success) {
+        // Reset OTP khi gửi mã mới
         setOtp("");
         setOtpVerified(false);
         alert("📨 Mã OTP đã được gửi đến email của bạn!");
@@ -59,8 +64,8 @@ const RegisterEmail = () => {
         alert("❌ " + data.message);
       }
     } catch (err) {
-      console.error(err);
-      alert("❌ Gửi OTP thất bại.");
+      console.error("❌ Gửi OTP thất bại:", err);
+      alert("❌ Gửi OTP thất bại. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
