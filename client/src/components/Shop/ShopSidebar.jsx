@@ -1,18 +1,18 @@
-import React, { useContext } from "react";
-import { 
-  Box, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
+// import React from 'react';
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Typography,
   IconButton,
   useTheme,
   useMediaQuery
-} from "@mui/material";
-import { 
+} from '@mui/material';
+import {
   Menu as MenuIcon,
   Close as CloseIcon,
   Dashboard as DashboardIcon,
@@ -84,16 +84,14 @@ const ShopSidebar = ({ open, onClose }) => {
   const drawerContent = (
     <Box sx={{ width: 280, height: "100%", backgroundColor: "#fff", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <Box
-        sx={{
-          p: 3,
-          borderBottom: "1px solid #f0f0f0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          minHeight: "80px"
-        }}
-      >
+      <Box sx={{
+        p: 3,
+        borderBottom: '1px solid #f0f0f0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        minHeight: '80px'
+      }}>
         <Box>
           <Typography sx={{ fontSize: "18px", color: "#F9704B", fontWeight: 700, textTransform: "uppercase" }}>
             Bobo Food
@@ -102,8 +100,19 @@ const ShopSidebar = ({ open, onClose }) => {
             Quản trị cửa hàng
           </Typography>
         </Box>
+
         {isMobile && (
-          <IconButton onClick={onClose} size="small" sx={{ color: "#676767" }}>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              color: '#676767',
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,0.04)',
+                color: '#F9704B'
+              }
+            }}
+          >
             <CloseIcon />
           </IconButton>
         )}
@@ -130,8 +139,22 @@ const ShopSidebar = ({ open, onClose }) => {
             A
           </Box>
           <Box>
-            <Typography sx={{ fontSize: "16px", fontWeight: 600, color: "#000" }}>
-              Chủ cửa hàng {user ? `#${user.id}` : ""}
+            <Typography sx={{
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#000',
+              lineHeight: 1.2
+            }}>
+              {user?.shop_profile?.shop_name
+                ? user.shop_profile.shop_name
+                : `Chủ cửa hàng ${user ? `#${user.id}` : ''}`}
+            </Typography>
+            <Typography sx={{
+              fontSize: '14px',
+              color: '#676767',
+              lineHeight: 1.2,
+              mt: 0.5
+            }}>
             </Typography>
             <Typography sx={{ fontSize: "14px", color: "#676767", mt: 0.5 }}>Online</Typography>
           </Box>
@@ -157,7 +180,13 @@ const ShopSidebar = ({ open, onClose }) => {
                   }
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 44, color: item.active ? "#fff" : "#676767" }}>
+                <ListItemIcon sx={{
+                  minWidth: 44,
+                  color: item.active ? '#ffffff' : '#676767',
+                  '& .MuiSvgIcon-root': {
+                    fontSize: '22px'
+                  }
+                }}>
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText
@@ -189,7 +218,13 @@ const ShopSidebar = ({ open, onClose }) => {
               }
             }}
           >
-            <ListItemIcon sx={{ minWidth: 44, color: "#dc3545" }}>
+            <ListItemIcon sx={{
+              minWidth: 44,
+              color: '#dc3545',
+              '& .MuiSvgIcon-root': {
+                fontSize: '22px'
+              }
+            }}>
               <LogoutIcon />
             </ListItemIcon>
             <ListItemText

@@ -1,4 +1,4 @@
-const shopProfileDao = require("../dao/shopProfileDao");
+const shopProfileDao = require("../dao/shop_profileDao");
 const addressDao = require("../dao/addressDao");
 const userDao = require("../dao/userDao");
 

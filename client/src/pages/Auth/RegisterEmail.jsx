@@ -25,14 +25,33 @@ const RegisterEmail = () => {
 
     try {
       setLoading(true);
+
+      // ✅ Bước 1: Kiểm tra email có tồn tại trong DB chưa
+      const checkRes = await fetch(
+        "http://localhost:5000/api/auth/check-email",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const checkData = await checkRes.json();
+      if (!checkData.success) {
+        alert(checkData.message || "❌ Email chưa được đăng ký!");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Bước 2: Nếu tồn tại → gửi OTP
       const res = await fetch("http://localhost:5000/api/auth/send-otp-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+
       const data = await res.json();
       if (data.success) {
-        // ✅ Reset OTP khi gửi mã mới
         setOtp("");
         setOtpVerified(false);
         alert("📨 Mã OTP đã được gửi đến email của bạn!");
@@ -137,7 +156,7 @@ const RegisterEmail = () => {
             transform: "translateX(-50%)",
             color: "#EF5126",
             fontSize: 29,
-            fontFamily: 'Be Vietnam Pro',
+            fontFamily: "Be Vietnam Pro",
             fontWeight: "700",
           }}
         >
@@ -161,7 +180,7 @@ const RegisterEmail = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               fontWeight: "600",
             }}
           >
@@ -209,7 +228,7 @@ const RegisterEmail = () => {
               outline: "none",
               background: "transparent",
               fontSize: 14,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
             }}
           />
         </div>
@@ -228,7 +247,7 @@ const RegisterEmail = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               fontWeight: "600",
               marginBottom: "8px",
             }}
@@ -261,7 +280,7 @@ const RegisterEmail = () => {
                   outline: "none",
                   background: "transparent",
                   fontSize: 14,
-                  fontFamily: 'Be Vietnam Pro',
+                  fontFamily: "Be Vietnam Pro",
                 }}
               />
             </div>
@@ -284,7 +303,7 @@ const RegisterEmail = () => {
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: "pointer",
-                fontFamily: 'Be Vietnam Pro',
+                fontFamily: "Be Vietnam Pro",
                 width: "70px",
               }}
               type="button"
@@ -310,7 +329,7 @@ const RegisterEmail = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               fontWeight: "600",
               marginBottom: "8px",
             }}
@@ -341,7 +360,7 @@ const RegisterEmail = () => {
                 outline: "none",
                 background: "transparent",
                 fontSize: 14,
-                fontFamily: 'Be Vietnam Pro',
+                fontFamily: "Be Vietnam Pro",
               }}
             />
           </div>
@@ -372,7 +391,7 @@ const RegisterEmail = () => {
               fontWeight: 700,
               fontSize: 16,
               cursor: otpVerified ? "pointer" : "not-allowed",
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
             }}
             type="button"
             onClick={handleNext}

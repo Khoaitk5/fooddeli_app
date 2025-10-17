@@ -1,31 +1,42 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
+import React, { useEffect, useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Grid, 
+  Switch, 
+  FormControlLabel,
   TextField,
   Button,
-  Avatar,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControlLabel,
-  Switch,
-} from "@mui/material";
-import {
+  Avatar
+} from '@mui/material';
+import { 
   Person as PersonIcon,
   Store as StoreIcon,
   Notifications as NotificationsIcon,
-  Security as SecurityIcon,
-  SwapHoriz as SwapHorizIcon,
-} from "@mui/icons-material";
+  Security as SecurityIcon
+} from '@mui/icons-material';
 
 const ShopSettings = () => {
-  const [openPassword, setOpenPassword] = useState(false);
-  const [openNotification, setOpenNotification] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Gọi API lấy session
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/users/me', {
+          credentials: 'include', // nếu bạn dùng cookie/session
+        });
+        const data = await res.json();
+        if (data.success) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy session:', error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <Box
@@ -81,14 +92,14 @@ const ShopSettings = () => {
                     mr: 2,
                   }}
                 >
-                  A
+                  {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'A'}
                 </Avatar>
                 <Box>
-                  <Typography sx={{ fontWeight: 600, fontSize: 18 }}>
-                    Admin
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                    {user?.shop_profile?.shop_name || `Chủ cửa hàng #${user?.id || ''}`}
                   </Typography>
-                  <Typography sx={{ color: "#717182", fontSize: 14 }}>
-                    Quản trị viên
+                  <Typography variant="body2" sx={{ color: '#717182' }}>
+                    {user?.role === 'shop' ? 'Chủ cửa hàng' : 'Người dùng'}
                   </Typography>
                 </Box>
               </Box>
@@ -96,19 +107,19 @@ const ShopSettings = () => {
               <TextField
                 fullWidth
                 label="Tên cửa hàng"
-                defaultValue="Bobo Food"
+                value={user?.shop_profile?.shop_name || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Email"
-                defaultValue="admin@bobofood.com"
+                value={user?.email || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Số điện thoại"
-                defaultValue="+84 123 456 789"
+                value={user?.phone || ''}
                 sx={{ mb: 3 }}
               />
 
@@ -149,19 +160,19 @@ const ShopSettings = () => {
               <TextField
                 fullWidth
                 label="Địa chỉ cửa hàng"
-                defaultValue="123 Đường ABC, Quận 1, TP.HCM"
+                value={user?.shop_profile?.shop_address_id || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Giờ mở cửa"
-                defaultValue="08:00"
+                value={user?.shop_profile?.open_hours || ''}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Giờ đóng cửa"
-                defaultValue="22:00"
+                value={user?.shop_profile?.closed_hours || ''}
                 sx={{ mb: 3 }}
               />
 
@@ -229,27 +240,24 @@ const ShopSettings = () => {
                   {item.desc}
                 </Typography>
 
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={item.action}
-                  sx={{
-                    borderColor: "#F9704B",
-                    color: "#F9704B",
-                    fontWeight: 600,
-                    textTransform: "none",
-                    "&:hover": {
-                      borderColor: "#e55a3a",
-                      backgroundColor: "rgba(249, 112, 75, 0.04)",
-                    },
-                  }}
-                >
-                  {item.button}
-                </Button>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label="Thông báo đơn hàng mới"
+              />
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label="Thông báo đánh giá"
+              />
+              <FormControlLabel
+                control={<Switch />}
+                label="Thông báo khuyến mãi"
+              />
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label="Thông báo hệ thống"
+              />
+            </Paper>
+          </Grid>
 
         {/* Divider */}
         <Divider sx={{ my: 4 }} />

@@ -38,13 +38,30 @@ const RegisterPhone = () => {
 
     try {
       setLoading(true);
+
+      // ✅ Bước 1: Kiểm tra số điện thoại trong DB
+      const checkRes = await fetch(
+        "http://localhost:5000/api/auth/check-phone",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone : formatPhoneNumber(phone) }),
+        }
+      );
+      const checkData = await checkRes.json();
+
+      if (!checkData.success) {
+        alert(checkData.message || "❌ Số điện thoại chưa được đăng ký!");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Bước 2: Chỉ gửi OTP nếu số điện thoại có trong DB
       if (!window.recaptchaVerifier) {
         window.recaptchaVerifier = new RecaptchaVerifier(
           auth,
           "recaptcha-container",
-          {
-            size: "invisible",
-          }
+          { size: "invisible" }
         );
       }
 
@@ -56,13 +73,11 @@ const RegisterPhone = () => {
       );
       setConfirmationResult(result);
 
-      // ✅ Reset OTP khi gửi mã mới
       setOtp("");
       setOtpVerified(false);
-
       alert("📨 Mã OTP đã được gửi về số điện thoại của bạn!");
     } catch (err) {
-      console.error(err);
+      console.error("❌ Lỗi gửi OTP:", err);
       alert("❌ Gửi OTP thất bại. Vui lòng kiểm tra số điện thoại.");
     } finally {
       setLoading(false);
@@ -150,7 +165,7 @@ const RegisterPhone = () => {
             transform: "translateX(-50%)",
             color: "#EF5126",
             fontSize: 29,
-            fontFamily: 'Be Vietnam Pro',
+            fontFamily: "Be Vietnam Pro",
             fontWeight: "700",
           }}
         >
@@ -174,7 +189,7 @@ const RegisterPhone = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               fontWeight: "600",
             }}
           >
@@ -222,7 +237,7 @@ const RegisterPhone = () => {
               outline: "none",
               background: "transparent",
               fontSize: 14,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
             }}
           />
         </div>
@@ -241,7 +256,7 @@ const RegisterPhone = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               fontWeight: "600",
               marginBottom: "8px",
             }}
@@ -274,7 +289,7 @@ const RegisterPhone = () => {
                   outline: "none",
                   background: "transparent",
                   fontSize: 14,
-                  fontFamily: 'Be Vietnam Pro',
+                  fontFamily: "Be Vietnam Pro",
                 }}
               />
             </div>
@@ -297,7 +312,7 @@ const RegisterPhone = () => {
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: "pointer",
-                fontFamily: 'Be Vietnam Pro',
+                fontFamily: "Be Vietnam Pro",
                 width: "70px",
               }}
               type="button"
@@ -323,7 +338,7 @@ const RegisterPhone = () => {
             style={{
               color: "#161823",
               fontSize: 13,
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
               fontWeight: "600",
               marginBottom: "8px",
             }}
@@ -354,7 +369,7 @@ const RegisterPhone = () => {
                 outline: "none",
                 background: "transparent",
                 fontSize: 14,
-                fontFamily: 'Be Vietnam Pro',
+                fontFamily: "Be Vietnam Pro",
               }}
             />
           </div>
@@ -385,7 +400,7 @@ const RegisterPhone = () => {
               fontWeight: 700,
               fontSize: 16,
               cursor: otpVerified ? "pointer" : "not-allowed",
-              fontFamily: 'Be Vietnam Pro',
+              fontFamily: "Be Vietnam Pro",
             }}
             type="button"
             onClick={handleNext}

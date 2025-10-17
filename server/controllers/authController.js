@@ -429,3 +429,56 @@ exports.verifyOtpEmail = async (req, res) => {
   delete global.otpStore[email];
   return res.json({ success: true, message: "OTP hợp lệ" });
 };
+
+
+exports.checkPhoneExists = async (req, res) => {
+  try {
+    let { phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ success: false, message: "Thiếu số điện thoại" });
+    }
+
+    // ✅ Chuẩn hóa: chuyển '0xxxxxxxxx' → '+84xxxxxxxxx'
+    phone = phone.replace(/\s+/g, ""); // bỏ khoảng trắng
+    if (phone.startsWith("0")) {
+      phone = "+84" + phone.substring(1);
+    }
+
+    const user = await getUserByPhone(phone);
+    if (user) {
+      return res.status(200).json({ success: true, exists: true });
+    } else {
+      return res.status(404).json({
+        success: false,
+        exists: false,
+        message: "Số điện thoại này chưa được đăng ký.",
+      });
+    }
+  } catch (err) {
+    console.error("❌ Lỗi kiểm tra số điện thoại:", err);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
+exports.checkEmailExists = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Thiếu email" });
+    }
+
+    const user = await getUserByEmail(email);
+    if (user) {
+      return res.status(200).json({ success: true, exists: true });
+    } else {
+      return res.status(404).json({
+        success: false,
+        exists: false,
+        message: "Email này chưa được đăng ký.",
+      });
+    }
+  } catch (err) {
+    console.error("❌ Lỗi kiểm tra email:", err);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
