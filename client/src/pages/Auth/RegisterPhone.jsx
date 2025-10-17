@@ -45,18 +45,21 @@ const RegisterPhone = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone : formatPhoneNumber(phone) }),
+          body: JSON.stringify({ phone: formatPhoneNumber(phone) }),
         }
       );
       const checkData = await checkRes.json();
 
-      if (!checkData.success) {
-        alert(checkData.message || "❌ Số điện thoại chưa được đăng ký!");
+      // ⚠️ Nếu số điện thoại ĐÃ tồn tại thì KHÔNG cho đăng ký
+      if (checkData.success) {
+        alert(
+          "⚠️ Số điện thoại này đã được đăng ký. Vui lòng đăng nhập thay vì đăng ký mới!"
+        );
         setLoading(false);
         return;
       }
 
-      // ✅ Bước 2: Chỉ gửi OTP nếu số điện thoại có trong DB
+      // ✅ Nếu chưa có trong DB → gửi OTP qua Firebase
       if (!window.recaptchaVerifier) {
         window.recaptchaVerifier = new RecaptchaVerifier(
           auth,
