@@ -15,6 +15,7 @@ import Shops from './pages/Admin/Shops';
 import Shippers from './pages/Admin/Shippers';
 import System from './pages/Admin/System';
 import Revenue from './pages/Admin/Revenue';
+import AdminWalletPage from './pages/Admin/AdminWalletPage';
 
 // Customer
 import Home from './pages/Customer/Home';
@@ -55,6 +56,7 @@ import MenuManagement from './pages/Shop/Menu';
 import ShopVideo from './pages/Shop/Video';
 import ShopOrders from './pages/Shop/Orders';
 import ShopSettings from './pages/Shop/Settings';
+import ShopWalletPage from './pages/Shop/ShopWalletPage';
 
 // Shipper
 import ShipperHome from './pages/Shipper/Home';
@@ -125,6 +127,7 @@ function App() {
           <Route path="menu" element={<MenuManagement />} />
           <Route path="video" element={<ShopVideo />} />
           <Route path="orders" element={<ShopOrders />} />
+          <Route path="wallet" element={<ShopWalletPage />} />
           <Route path="settings" element={<ShopSettings />} />
           <Route path="*" element={<Navigate to="/shop/dashboard" />} /> {/* Redirect */}
         </Route>
@@ -139,11 +142,12 @@ function App() {
           <Route path="shops" element={<Shops />} />
           <Route path="shippers" element={<Shippers />} />
           <Route path="revenue" element={<Revenue />} />
+          <Route path="wallet" element={<AdminWalletPage />} />
           <Route path="*" element={<Navigate to="/admin/dashboard" />} />
         </Route>
 
         {/* Default redirect */}
-        <Route path="*" element={<Navigate to="/customer/home" />} />
+        <Route path="*" element={<Navigate to="/login " />} />
       </Routes>
     </AuthProvider>
   );

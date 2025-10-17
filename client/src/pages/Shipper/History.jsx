@@ -234,71 +234,78 @@ const History = () => {
         pb: 12,
       }}
     >
-      {/* Header */}
-      <Slide direction="down" in timeout={600}>
-        <Box
-          sx={{
-            background: "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
-            color: "#fff",
-            p: 3,
-            boxShadow: "0 8px 24px rgba(255,107,53,0.25)",
-            position: "relative",
-            overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              right: 0,
-              width: 250,
-              height: 250,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.1)",
-              transform: "translate(30%, -30%)",
-            },
-          }}
-        >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={2}
-            sx={{ position: "relative", zIndex: 1 }}
-          >
-            <IconButton
-              onClick={() => navigate(-1)}
-              sx={{ color: "#fff", mr: -1 }}
-            >
-              <ArrowBack />
-            </IconButton>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h5" sx={{ fontWeight: 900, mb: 0.5 }}>
-                Lịch sử giao hàng
-              </Typography>
-              <Typography sx={{ fontSize: 14, opacity: 0.9 }}>
-                Xem lại các chuyến đi của bạn
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: 3,
-                background: "rgba(255,255,255,0.2)",
-                backdropFilter: "blur(10px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                border: "1px solid rgba(255,255,255,0.3)",
-                fontSize: 28,
-              }}
-            >
-              📦
-            </Box>
-          </Stack>
-        </Box>
-      </Slide>
+<Slide direction="down" in timeout={600}>
+  <Box
+    sx={{
+      background: "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
+      color: "#fff",
+      p: 3,
+      boxShadow: "0 8px 24px rgba(255,107,53,0.25)",
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      zIndex: 1000,
+      overflow: "hidden",
+      pointerEvents: "auto", // 👈 Cho phép bấm trong header
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        top: 0,
+        right: 0,
+        width: 250,
+        height: 250,
+        borderRadius: "50%",
+        background: "rgba(255,255,255,0.1)",
+        transform: "translate(30%, -30%)",
+      },
+    }}
+  >
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={2}
+      sx={{ position: "relative", zIndex: 1 }}
+    >
+      <IconButton
+        onClick={() => navigate(-1)}
+        sx={{ color: "#fff", mr: -1 }}
+      >
+        <ArrowBack />
+      </IconButton>
+
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="h5" sx={{ fontWeight: 900, mb: 0.5 }}>
+          Lịch sử giao hàng
+        </Typography>
+        <Typography sx={{ fontSize: 14, opacity: 0.9 }}>
+          Xem lại các chuyến đi của bạn
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          width: 56,
+          height: 56,
+          borderRadius: 3,
+          background: "rgba(255,255,255,0.2)",
+          backdropFilter: "blur(10px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "1px solid rgba(255,255,255,0.3)",
+          fontSize: 28,
+        }}
+      >
+        📦
+      </Box>
+    </Stack>
+  </Box>
+</Slide>
+
 
       {/* Container */}
-      <Box sx={{ px: 2.5, mt: 2.5 }}>
+      <Box sx={{ px: 2.5, mt: 17 }}>
         {/* Stats Cards */}
         <Fade in timeout={800}>
           <Stack direction="row" spacing={2} mb={2.5} sx={{ overflowX: "auto" }}>

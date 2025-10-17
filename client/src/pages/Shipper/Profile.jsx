@@ -317,82 +317,92 @@ const Profile = () => {
           </Card>
         </Fade>
 
-        {/* Thành tích & Stats - Modern design */}
-        <Stack direction="row" spacing={2} mb={2.5}>
-          <Fade in timeout={1400}>
-            <Card sx={{
-              flex: 1,
-              p: 3,
-              borderRadius: 4,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-              background: "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)",
-              border: '1px solid rgba(255,107,53,0.1)',
-            }}>
-              <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#c2410c", mb: 2 }}>
-                🏆 Thành tích
-              </Typography>
-              <Stack direction="row" justifyContent="space-around">
-                {[
-                  { icon: "🏆", label: "Top" },
-                  { icon: "⚡", label: "Nhanh" },
-                  { icon: "💎", label: "1000+" },
-                ].map((item, idx) => (
-                  <Box key={idx} textAlign="center">
-                    <Box sx={{ 
-                      fontSize: 32,
-                      width: 56,
-                      height: 56,
-                      borderRadius: 3,
-                      background: 'rgba(255,255,255,0.7)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 0.75,
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-                    }}>
-                      {item.icon}
-                    </Box>
-                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#92400e" }}>
-                      {item.label}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </Card>
-          </Fade>
+        {/* Thành tích & Stats - tách riêng từng hàng */}
+<Stack spacing={2.5} mb={2.5}>
+  <Fade in timeout={1400}>
+    <Card
+      sx={{
+        p: 3,
+        borderRadius: 4,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+        background: "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)",
+        border: "1px solid rgba(255,107,53,0.1)",
+      }}
+    >
+      <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#c2410c", mb: 2 }}>
+        🏆 Thành tích
+      </Typography>
+      <Stack direction="row" justifyContent="space-around">
+        {[
+          { icon: "🏆", label: "Top" },
+          { icon: "⚡", label: "Nhanh" },
+          { icon: "💎", label: "1000+" },
+        ].map((item, idx) => (
+          <Box key={idx} textAlign="center">
+            <Box
+              sx={{
+                fontSize: 32,
+                width: 56,
+                height: 56,
+                borderRadius: 3,
+                background: "rgba(255,255,255,0.7)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 0.75,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+              }}
+            >
+              {item.icon}
+            </Box>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#92400e" }}>
+              {item.label}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
+    </Card>
+  </Fade>
 
-          <Fade in timeout={1600}>
-            <Card sx={{
-              flex: 1,
-              p: 3,
-              borderRadius: 4,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-              background: "linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%)",
-              border: '1px solid rgba(59,130,246,0.1)',
-            }}>
-              <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#1d4ed8", mb: 2 }}>
-                📊 Tổng quan
-              </Typography>
-              <Stack spacing={1.5}>
-                {[
-                  { label: "Tổng đơn", value: shipper.totalOrders, color: "#ff6b35" },
-                  { label: "Thu nhập", value: shipper.totalIncome, color: "#16a34a" },
-                  { label: "5 sao", value: shipper.fiveStars, color: "#ca8a04" },
-                ].map((item, idx) => (
-                  <Stack key={idx} direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography sx={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>
-                      {item.label}
-                    </Typography>
-                    <Typography sx={{ fontSize: 16, fontWeight: 900, color: item.color }}>
-                      {item.value}
-                    </Typography>
-                  </Stack>
-                ))}
-              </Stack>
-            </Card>
-          </Fade>
-        </Stack>
+  <Fade in timeout={1600}>
+    <Card
+      sx={{
+        p: 3,
+        borderRadius: 4,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+        background: "linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%)",
+        border: "1px solid rgba(59,130,246,0.1)",
+      }}
+    >
+      <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#1d4ed8", mb: 2 }}>
+        📊 Tổng quan
+      </Typography>
+      <Stack spacing={1.5}>
+        {[
+          { label: "Tổng đơn", value: shipper.totalOrders, color: "#ff6b35" },
+          { label: "Thu nhập", value: shipper.totalIncome, color: "#16a34a" },
+          { label: "5 sao", value: shipper.fiveStars, color: "#ca8a04" },
+        ].map((item, idx) => (
+          <Stack
+            key={idx}
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography sx={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>
+              {item.label}
+            </Typography>
+            <Typography sx={{ fontSize: 16, fontWeight: 900, color: item.color }}>
+              {item.value}
+            </Typography>
+          </Stack>
+        ))}
+      </Stack>
+    </Card>
+  </Fade>
+</Stack>
+
 
         {/* Navigation buttons - Modern design */}
         <Stack spacing={2}>
