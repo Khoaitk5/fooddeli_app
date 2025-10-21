@@ -1,5 +1,6 @@
 // services/videoService.js
 const videoDao = require("../dao/videoDao");
+const { filterShopsByDistance } = require("../utils/map4d");
 
 const videoService = {
   /**
@@ -111,6 +112,33 @@ const videoService = {
   async getLatestVideos(limit = 10) {
     return await videoDao.getLatestVideos(limit);
   },
+
+  /**
+   * 🗺️ Lấy danh sách video trong bán kính 10km quanh vị trí người dùng
+   *  - Dùng để hiển thị feed kiểu TikTok
+   *  - Sắp xếp theo rating shop giảm dần
+   * @param {{ lat: number, lng: number }} userLocation
+   * @returns {Promise<object[]>}
+   */
+  async getNearbyVideos(userLocation) {
+    if (!userLocation || !userLocation.lat || !userLocation.lng) {
+      throw new Error("Thiếu tọa độ người dùng (lat, lng)");
+    }
+
+    // Lấy tất cả video kèm dữ liệu shop
+    const videos = await videoDao.getVideosWithShopData();
+    //console.log("📦 DEBUG ALL VIDEOS FROM DB:", videos);
+
+    // Lọc theo khoảng cách ≤ 10 km
+    const nearby = filterShopsByDistance(userLocation, videos, 20);
+    console.log("📍 DEBUG AFTER DISTANCE FILTER:", nearby);
+
+    // Sắp xếp theo rating giảm dần
+    nearby.sort((a, b) => b.shop_rating - a.shop_rating);
+
+    // Lấy 10 video đầu tiên
+    return nearby.slice(0, 10);
+  }
 };
 
 module.exports = videoService;

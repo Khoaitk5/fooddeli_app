@@ -169,7 +169,7 @@ exports.verifyPhone = async (req, res) => {
   const { token } = req.body;
 
   try {
-    console.log("📩 Nhận request verify-phone:", req.body);
+    // console.log("📩 Nhận request verify-phone:", req.body);
 
     if (!admin) {
       return res.status(500).json({
