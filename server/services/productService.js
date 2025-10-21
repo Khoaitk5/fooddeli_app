@@ -1,6 +1,6 @@
 const productDao = require("../dao/productDao");
 
-const VALID_CATEGORIES = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác"];
+const VALID_CATEGORIES = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác", "Combo"];
 
 const productService = {
   /**

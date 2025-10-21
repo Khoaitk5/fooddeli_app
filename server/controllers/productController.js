@@ -100,14 +100,10 @@ exports.getAvailableProducts = async (req, res) => {
 
 // 📂 Lấy danh mục sản phẩm (4 cái)
 exports.getAllCategories = async (req, res) => {
-  console.log("🟢 [Controller] GET /api/products/categories được gọi"); // <--- thêm dòng này
-
   try {
     const result = await ProductService.getAllCategories();
-    console.log("✅ [Controller] Nhận được kết quả từ service:", result);
     res.status(200).json(result);
   } catch (err) {
-    console.error("❌ [Controller] Error fetching categories:", err);
     res.status(500).json({ error: err.message });
   }
 };
