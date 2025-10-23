@@ -40,6 +40,7 @@ const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const productRoutes = require("./routes/productRoutes");
 const videoRoutes = require("./routes/videoRoutes");
+const shopRoutes = require("./routes/shopRoutes");
 
 // ✅ Mount routes
 app.use("/api/users", userRoutes);
@@ -47,6 +48,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/videos", videoRoutes);
+app.use("/api/shops", shopRoutes);
 
 // ✅ Route test nhanh
 app.get("/debug", (req, res) => {

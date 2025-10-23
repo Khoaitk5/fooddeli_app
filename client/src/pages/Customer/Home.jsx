@@ -166,7 +166,9 @@ const Home = () => {
 
   return (
     <div
-      className={`h-[${pxH(800)}] w-[${pxW(360)}] overflow-hidden relative mx-auto`}
+      className={`h-[${pxH(800)}] w-[${pxW(
+        360
+      )}] overflow-hidden relative mx-auto`}
     >
       <div className="h-[93.75vh] overflow-y-auto snap-y snap-mandatory">
         {videos.map((video, index) => (
@@ -235,9 +237,15 @@ const Home = () => {
                   cursor: "pointer",
                 }}
                 src={video.shop_avatar || "/default-avatar.png"}
-                onClick={() =>
-                  navigate(`/customer/restaurant/${video.shop_name || "shop"}`)
-                }
+                onClick={() => {
+                  if (video.shop_id) {
+                    navigate("/customer/restaurant-details", {
+                      state: { shopId: video.shop_id },
+                    });
+                  } else {
+                    console.warn("⚠️ Không có shop_id trong video:", video);
+                  }
+                }}
                 alt="Restaurant profile"
               />
             </div>
@@ -251,10 +259,7 @@ const Home = () => {
             </div>
 
             {/* Caption */}
-            <div
-              className="absolute left-[3vw] top-[67.5vh]"
-              style={textStyle}
-            >
+            <div className="absolute left-[3vw] top-[67.5vh]" style={textStyle}>
               <div style={{ fontSize: "1.5rem" }}>
                 {video.title || "Video món ăn hấp dẫn 😋"}
               </div>

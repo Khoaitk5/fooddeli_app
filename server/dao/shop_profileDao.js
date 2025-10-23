@@ -23,6 +23,17 @@ class ShopProfileDao extends GenericDao {
     return result.rows[0] ? new ShopProfile(result.rows[0]) : null;
   }
 
+  async findDetailsById(shopId) {
+    const query = `
+      SELECT sp.*, u.avatar_url, u.rating
+      FROM shop_profiles sp
+      JOIN users u ON sp.user_id = u.id
+      WHERE sp.id = $1
+    `;
+    const result = await pool.query(query, [shopId]);
+    return result.rows[0] ? new ShopProfile(result.rows[0]) : null;
+  }
+
   /**
    * Cập nhật trạng thái cửa hàng (open/closed/pending)
    * @param {number} shopId - ID shop
@@ -68,7 +79,7 @@ class ShopProfileDao extends GenericDao {
       ORDER BY distance_km ASC;
     `;
     const result = await pool.query(query, [latitude, longitude, radiusKm]);
-    return result.rows.map(r => new ShopProfile(r));
+    return result.rows.map((r) => new ShopProfile(r));
   }
 }
 

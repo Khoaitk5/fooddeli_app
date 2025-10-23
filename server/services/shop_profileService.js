@@ -1,27 +1,21 @@
+// services/shopProfileService.js
 const shopProfileDao = require("../dao/shop_profileDao");
 const addressDao = require("../dao/addressDao");
 const userDao = require("../dao/userDao");
+const videoService = require("./videoService");
 
-/**
- * @class ShopProfileService
- * @description Xử lý nghiệp vụ liên quan đến cửa hàng (shop_profiles)
- */
 class ShopProfileService {
   /**
-   * @async
-   * @function createShopProfile
-   * @description Tạo hồ sơ cửa hàng mới cho user
-   * @param {number} userId - ID người dùng
-   * @param {object} shopData - Dữ liệu cửa hàng (shop_name, description, open_hours, closed_hours, shop_address_id)
-   * @returns {Promise<object>} - Hồ sơ shop mới tạo
+   * 🏪 Tạo hồ sơ cửa hàng mới cho user (role = 'shop')
    */
   async createShopProfile(userId, shopData) {
     try {
-      // Kiểm tra user có tồn tại và có vai trò phù hợp
-      const user = await userDao.findById(userId);
+      // Kiểm tra user tồn tại
+      const user = await userDao.findById("id", userId);
       if (!user) throw new Error("Người dùng không tồn tại.");
-      if (user.role !== "shop")
+      if (user.role !== "shop") {
         throw new Error("Chỉ người dùng có role = 'shop' mới được tạo cửa hàng.");
+      }
 
       // Tạo hồ sơ shop
       const shop = await shopProfileDao.create({
@@ -33,138 +27,134 @@ class ShopProfileService {
         shop_address_id: shopData.shop_address_id ?? null,
       });
 
-      return shop;
+      // Trả về chi tiết (kèm user info)
+      return await this.getShopById(shop.id);
     } catch (err) {
-      console.error("❌ Error creating shop profile:", err.message);
+      console.error("[ShopProfileService:createShopProfile]", err.message);
       throw new Error("Không thể tạo hồ sơ cửa hàng.");
     }
   }
 
   /**
-   * @async
-   * @function getShopByUserId
-   * @description Lấy thông tin shop theo user_id
-   * @param {number} userId - ID người dùng
-   * @returns {Promise<object|null>} - Hồ sơ shop hoặc null
+   * 🔍 Lấy thông tin shop theo user_id
    */
   async getShopByUserId(userId) {
     try {
       return await shopProfileDao.getByUserId(userId);
     } catch (err) {
-      console.error("❌ Error fetching shop by user_id:", err.message);
+      console.error("[ShopProfileService:getShopByUserId]", err.message);
       throw new Error("Không thể lấy thông tin cửa hàng.");
     }
   }
 
   /**
-   * @async
-   * @function getAllShops
-   * @description Lấy danh sách tất cả cửa hàng
-   * @returns {Promise<object[]>} - Danh sách shop
+   * 🔍 Lấy thông tin shop theo ID (kèm avatar & rating user)
    */
-  async getAllShops() {
+  async getShopById(shopId) {
     try {
-      return await shopProfileDao.findAll();
+      const shop = await shopProfileDao.findDetailsById(shopId);
+      if (!shop) throw new Error("Không tìm thấy cửa hàng.");
+      return shop;
     } catch (err) {
-      console.error("❌ Error fetching all shops:", err.message);
-      throw new Error("Không thể lấy danh sách cửa hàng.");
-    }
-  }
-
-  /**
-   * @async
-   * @function updateShopInfo
-   * @description Cập nhật thông tin cửa hàng
-   * @param {number} shopId - ID cửa hàng
-   * @param {object} updateData - Dữ liệu cập nhật
-   * @returns {Promise<object>} - Shop sau khi cập nhật
-   */
-  async updateShopInfo(shopId, updateData) {
-    try {
-      const updated = await shopProfileDao.update("id", shopId, updateData);
-      if (!updated) {
-        console.warn(`⚠️ Shop profile ID ${shopId} không cập nhật được`);
-        throw new Error("Không tìm thấy hồ sơ cửa hàng hoặc dữ liệu không hợp lệ.");
-      }
-      return updated;
-    } catch (err) {
-      console.error("❌ Error updating shop info:", err.message);
+      console.error("[ShopProfileService:getShopById]", err.message);
       throw err;
     }
   }
 
   /**
-   * @async
-   * @function updateShopStatus
-   * @description Thay đổi trạng thái cửa hàng (open / closed / pending)
-   * @param {number} shopId - ID cửa hàng
-   * @param {"open"|"closed"|"pending"} status - Trạng thái mới
-   * @returns {Promise<object>} - Shop sau khi cập nhật
+   * 📦 Lấy chi tiết cửa hàng + danh sách video của shop
+   */
+  async getShopDetail(shopId) {
+    try {
+      const shop = await this.getShopById(shopId);
+      const videos = await videoService.getVideosByShop(shopId);
+      return { shop, videos };
+    } catch (err) {
+      console.error("[ShopProfileService:getShopDetail]", err.message);
+      throw new Error("Không thể lấy thông tin chi tiết cửa hàng.");
+    }
+  }
+
+  /**
+   * 📋 Lấy danh sách tất cả cửa hàng
+   */
+  async getAllShops() {
+    try {
+      return await shopProfileDao.findAll();
+    } catch (err) {
+      console.error("[ShopProfileService:getAllShops]", err.message);
+      throw new Error("Không thể lấy danh sách cửa hàng.");
+    }
+  }
+
+  /**
+   * ✏️ Cập nhật thông tin cửa hàng
+   */
+  async updateShopInfo(shopId, updateData) {
+    try {
+      const shop = await shopProfileDao.update("id", shopId, {
+        ...updateData,
+        updated_at: new Date(),
+      });
+      return shop;
+    } catch (err) {
+      console.error("[ShopProfileService:updateShopInfo]", err.message);
+      throw new Error("Không thể cập nhật thông tin cửa hàng.");
+    }
+  }
+
+  /**
+   * 🔄 Cập nhật trạng thái cửa hàng (open / closed / pending)
    */
   async updateShopStatus(shopId, status) {
     try {
       return await shopProfileDao.updateStatus(shopId, status);
     } catch (err) {
-      console.error("❌ Error updating shop status:", err.message);
+      console.error("[ShopProfileService:updateShopStatus]", err.message);
       throw new Error("Không thể thay đổi trạng thái cửa hàng.");
     }
   }
 
   /**
-   * @async
-   * @function getNearbyShops
-   * @description Lấy danh sách cửa hàng trong bán kính nhất định (dựa vào địa chỉ)
-   * @param {number} latitude - Vĩ độ người dùng
-   * @param {number} longitude - Kinh độ người dùng
-   * @param {number} [radiusKm=5] - Bán kính (km)
-   * @returns {Promise<object[]>} - Danh sách shop gần người dùng
+   * 📍 Lấy danh sách cửa hàng gần người dùng
    */
   async getNearbyShops(latitude, longitude, radiusKm = 5) {
     try {
       return await shopProfileDao.findNearbyShops(latitude, longitude, radiusKm);
     } catch (err) {
-      console.error("❌ Error finding nearby shops:", err.message);
+      console.error("[ShopProfileService:getNearbyShops]", err.message);
       throw new Error("Không thể lấy danh sách cửa hàng gần bạn.");
     }
   }
 
   /**
-   * @async
-   * @function assignAddressToShop
-   * @description Gán địa chỉ cho cửa hàng
-   * @param {number} shopId - ID cửa hàng
-   * @param {number} addressId - ID địa chỉ
-   * @returns {Promise<object>} - Hồ sơ shop sau khi cập nhật
+   * 🏠 Gán địa chỉ cho cửa hàng
    */
   async assignAddressToShop(shopId, addressId) {
     try {
-      // kiểm tra address tồn tại
       const address = await addressDao.findById("address_id", addressId);
       if (!address) throw new Error("Địa chỉ không tồn tại.");
 
       const updated = await shopProfileDao.update("id", shopId, {
         shop_address_id: addressId,
+        updated_at: new Date(),
       });
 
       return updated;
     } catch (err) {
-      console.error("❌ Error assigning address to shop:", err.message);
+      console.error("[ShopProfileService:assignAddressToShop]", err.message);
       throw new Error("Không thể gán địa chỉ cho cửa hàng.");
     }
   }
 
   /**
-   * @async
-   * @function deleteShop
-   * @description Xóa hồ sơ cửa hàng (thường khi user bị xóa)
-   * @param {number} shopId - ID cửa hàng
-   * @returns {Promise<object>} - Hồ sơ shop đã xóa
+   * ❌ Xóa hồ sơ cửa hàng
    */
   async deleteShop(shopId) {
     try {
       return await shopProfileDao.delete("id", shopId);
     } catch (err) {
-      console.error("❌ Error deleting shop profile:", err.message);
+      console.error("[ShopProfileService:deleteShop]", err.message);
       throw new Error("Không thể xóa hồ sơ cửa hàng.");
     }
   }
