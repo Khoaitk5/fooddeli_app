@@ -39,27 +39,45 @@ const getCurrentUser = async (req, res) => {
       });
     }
 
-    const addresses = await addressService.getNormalizedUserAddresses(user.id);
+    // 🧩 Lấy danh sách địa chỉ user
+    let addresses = await addressService.getNormalizedUserAddresses(user.id);
     let shop_profile = null;
 
+    // 🏪 Nếu user là shop → tách riêng địa chỉ shop
     if (user.role === "shop" && user.shop_profile) {
       shop_profile = user.shop_profile;
+
       if (shop_profile.shop_address_id) {
-        try {
-          const shopAddress = await addressService.getAddressById(
-            shop_profile.shop_address_id
-          );
-          shop_profile = { ...shop_profile, address: shopAddress };
-        } catch {
-          shop_profile = { ...shop_profile, address: null };
-        }
+        const shopAddress = await addressService.getAddressById(
+          shop_profile.shop_address_id
+        );
+        shop_profile = { ...shop_profile, address: shopAddress };
+
+        // 🧹 Loại bỏ địa chỉ shop khỏi danh sách user.addresses
+        addresses = addresses.filter(
+          (a) => a.address_id !== shop_profile.shop_address_id
+        );
       }
     }
 
+    // 🧹 Chỉ giữ lại 1 địa chỉ mặc định (is_primary = true)
+    // Nếu không có, fallback lấy địa chỉ đầu tiên
+    let primaryAddresses = addresses.filter((a) => a.is_primary);
+    if (primaryAddresses.length === 0 && addresses.length > 0) {
+      primaryAddresses = [addresses[0]];
+    } else if (primaryAddresses.length > 1) {
+      primaryAddresses = [primaryAddresses[0]];
+    }
+    addresses = primaryAddresses;
+
+    let ongoing_role = "user";
+    
     const { password, ...safeUser } = user;
+
     return res.status(200).json({
       success: true,
       user: { ...safeUser, addresses, shop_profile },
+      ongoing_role,
     });
   } catch (error) {
     console.error("⚠️ Lỗi getCurrentUser:", error);
@@ -74,8 +92,6 @@ const getCurrentUser = async (req, res) => {
  * 📌 Cập nhật thông tin user hiện tại (User + Shop + Address)
  */
 const updateCurrentUser = async (req, res) => {
-  console.log("[DEBUG] >>> Hàm updateCurrentUser() được gọi!");
-  console.log("[DEBUG] req.body:", req.body);
   try {
     const sessionUser = req.session?.user;
     if (!sessionUser) {
@@ -88,10 +104,7 @@ const updateCurrentUser = async (req, res) => {
     const userId = sessionUser.id;
     const { username, fullname, email, phone, address, shop_profile } = req.body;
 
-    console.log("[DEBUG] === BẮT ĐẦU UPDATE USER ===");
-    console.log("[DEBUG] req.body:", JSON.stringify(req.body, null, 2));
-
-    // 🧩 Chuẩn hóa dữ liệu user
+    // 🧱 Chuẩn hoá dữ liệu user cơ bản
     const updatePayload = {};
     if (username) updatePayload.username = username.trim();
     if (fullname) updatePayload.full_name = fullname.trim();
@@ -107,159 +120,112 @@ const updateCurrentUser = async (req, res) => {
       updatePayload.phone = normalizedPhone;
     }
 
-    console.log("[DEBUG] updatePayload (users):", updatePayload);
-
     // 🔄 Cập nhật bảng users
     if (Object.keys(updatePayload).length > 0) {
-      console.log("[DEBUG] → Gọi userService.updateUser()");
       await userService.updateUser(userId, updatePayload);
     }
 
-    // 🏪 Nếu user là shop → cập nhật thông tin cửa hàng
+    // 🏪 Nếu user là shop → xử lý cập nhật shop_profile
     if (sessionUser.role === "shop" && shop_profile) {
-      console.log("[DEBUG] → Bắt đầu cập nhật shop_profile cho user_id:", userId);
-
       const currentShop = await shopProfileService.getShopByUserId(userId);
       if (currentShop) {
         const shopId =
           currentShop.shop_profile_id || currentShop.id || currentShop.shop_id;
 
-        console.log(`[DEBUG] Found shopProfile ID=${shopId}`);
-
-        // Cập nhật thông tin cơ bản
         const updateShopData = {
           shop_name: shop_profile.shop_name || currentShop.shop_name,
           description: shop_profile.description || currentShop.description,
           open_hours: shop_profile.open_hours || currentShop.open_hours,
           closed_hours: shop_profile.closed_hours || currentShop.closed_hours,
         };
-        console.log("[DEBUG] updateShopData:", updateShopData);
 
-        const updatedShop = await shopProfileService.updateShopInfo(shopId, updateShopData);
-        console.log("[DEBUG] Shop cập nhật xong:", updatedShop);
+        await shopProfileService.updateShopInfo(shopId, updateShopData);
 
-        // ✅ Nếu có address object được gửi từ frontend → tạo và gán vào shop
+        // ✅ Cập nhật hoặc tạo địa chỉ shop
         if (shop_profile.address && typeof shop_profile.address === "object") {
-          console.log("[DEBUG] → Đang xử lý shop_profile.address");
-          const { address_line, note, address_type, is_primary } = shop_profile.address;
-          const normalizedAddressLine = {
-            detail: address_line?.detail || "",
-            ward: address_line?.ward || "",
-            district: address_line?.district || "",
-            city: address_line?.city || "",
+          const { address_id, address_line, note, address_type, is_primary } =
+            shop_profile.address;
+
+          const normalizedAddress = {
+            address_line: {
+              detail: address_line?.detail || "",
+              ward: address_line?.ward || "",
+              district: address_line?.district || "",
+              city: address_line?.city || "",
+            },
+            note: note || "",
+            address_type: address_type || "Cửa hàng",
           };
 
-          console.log("[DEBUG] normalizedAddressLine:", normalizedAddressLine);
+          let shopAddress;
+          if (address_id) {
+            // 🧩 Nếu có ID → UPDATE
+            shopAddress = await addressService.updateAddress(
+              address_id,
+              normalizedAddress
+            );
+            console.log(`[DEBUG] ✅ Cập nhật địa chỉ shop ID=${address_id}`);
+          } else {
+            // 🆕 Nếu chưa có → CREATE
+            shopAddress = await addressService.createAddressForUser(
+              userId,
+              normalizedAddress,
+              is_primary ?? false
+            );
+            console.log(
+              `[DEBUG] ✅ Tạo mới địa chỉ shop ID=${shopAddress.address_id}`
+            );
+          }
 
-          const newShopAddress = await addressService.createAddressForUser(
-            userId,
-            {
-              address_line: normalizedAddressLine,
-              note: note || "",
-              address_type: address_type || "Cửa hàng",
-            },
-            is_primary ?? false
-          );
-
-          console.log("[DEBUG] Đã tạo địa chỉ mới:", newShopAddress);
-
+          // Gán vào shop_profile
           await shopProfileService.assignAddressToShop(
             shopId,
-            newShopAddress.address_id
+            shopAddress.address_id
           );
-
-          console.log(`[DEBUG] ✅ Đã gán địa chỉ ${newShopAddress.address_id} cho cửa hàng ${shopId}`);
         }
-
-        // Nếu chỉ có address_id được gửi lên (địa chỉ đã có sẵn)
-        else if (shop_profile.address_id) {
-          console.log(`[DEBUG] → Gán địa chỉ có sẵn ID=${shop_profile.address_id} cho shop`);
-          await shopProfileService.assignAddressToShop(
-            shopId,
-            shop_profile.address_id
-          );
-        } else {
-          console.log("[DEBUG] → Không có address hoặc address_id trong shop_profile.");
-        }
-      } else {
-        console.warn(`⚠️ Không tìm thấy shop_profile cho user_id=${userId}`);
       }
-    } else {
-      console.log("[DEBUG] → User không có role 'shop' hoặc không gửi shop_profile");
     }
 
-    // 🏡 Nếu có địa chỉ user mới → xử lý update
-    let updatedAddress = null;
+    // 🏡 Nếu có địa chỉ user → xử lý cập nhật hoặc tạo mới
     if (address && typeof address === "object") {
-      console.log("[DEBUG] → Đang xử lý địa chỉ user:", address);
+      const { address_id, address_line, note, address_type, is_primary } =
+        address;
 
-      const { address_line, note, addressType, address_type, is_primary } = address;
-      let normalizedAddressLine;
+      const normalizedAddress = {
+        address_line: {
+          detail: address_line?.detail || "",
+          ward: address_line?.ward || "",
+          district: address_line?.district || "",
+          city: address_line?.city || "",
+        },
+        note: note || "",
+        address_type: address_type || "Nhà",
+        is_primary: is_primary ?? true,
+      };
 
-      if (typeof address_line === "object" && address_line !== null) {
-        const { detail, ward, district, city } = address_line;
-        normalizedAddressLine = { detail, ward, district, city };
+      if (address_id) {
+        // 🧩 UPDATE địa chỉ user
+        await addressService.updateAddress(address_id, normalizedAddress);
+        console.log(`[DEBUG] ✅ Cập nhật địa chỉ user ID=${address_id}`);
       } else {
-        normalizedAddressLine = {
-          detail: address_line || "",
-          ward: "",
-          district: "",
-          city: "",
-        };
-      }
-
-      const noteValue = note || "";
-      const addrType = addressType || address_type || "Nhà";
-      const isPrimary = is_primary ?? true;
-
-      console.log("[DEBUG] normalizedAddressLine (user):", normalizedAddressLine);
-
-      const existingAddresses = await addressService.getUserAddresses(userId);
-      const defaultAddr = await addressService.getDefaultAddress(userId);
-
-      console.log(`[DEBUG] User hiện có ${existingAddresses.length} địa chỉ.`);
-      if (!existingAddresses.length) {
-        console.log("[DEBUG] → Tạo địa chỉ đầu tiên cho user.");
-        updatedAddress = await addressService.createAddressForUser(
+        // 🆕 CREATE mới nếu chưa có
+        const newAddr = await addressService.createAddressForUser(
           userId,
-          { address_line: normalizedAddressLine, note: noteValue, address_type: addrType },
-          isPrimary
+          normalizedAddress,
+          normalizedAddress.is_primary
         );
-      } else if (defaultAddr) {
-        console.log(`[DEBUG] → Cập nhật địa chỉ mặc định ID=${defaultAddr.address_id}`);
-        updatedAddress = await addressService.updateAddress(defaultAddr.address_id, {
-          address_line: normalizedAddressLine,
-          note: noteValue,
-          address_type: addrType,
-          is_default: isPrimary,
-        });
-      } else {
-        console.log("[DEBUG] → Tạo địa chỉ mới khác cho user.");
-        updatedAddress = await addressService.createAddressForUser(
-          userId,
-          { address_line: normalizedAddressLine, note: noteValue, address_type: addrType },
-          true
-        );
+        console.log(`[DEBUG] ✅ Tạo mới địa chỉ user ID=${newAddr.address_id}`);
       }
-      console.log("[DEBUG] updatedAddress:", updatedAddress);
     }
 
-    // 🔁 Reload lại user đầy đủ (bao gồm shop_profile và addresses)
-    console.log("[DEBUG] → Reload lại user và địa chỉ sau khi cập nhật...");
-    await new Promise((r) => setTimeout(r, 200)); // đợi DB commit
+    // 🔁 Reload lại user sau cập nhật
     const reloadedUser = await userService.getUserById(userId);
     const normalizedAddresses = await addressService.getNormalizedUserAddresses(userId);
     reloadedUser.addresses = normalizedAddresses;
 
-    console.log("[DEBUG] ✅ Dữ liệu user sau update:", JSON.stringify(reloadedUser, null, 2));
-
-    // 🔁 Cập nhật session
     req.session.user = reloadedUser;
     await req.session.save();
 
-    console.log("[DEBUG] ✅ Session đã được cập nhật!");
-
-    // ✅ Trả về kết quả
     return res.status(200).json({
       success: true,
       message: "✅ Hồ sơ đã được cập nhật thành công!",
@@ -269,7 +235,7 @@ const updateCurrentUser = async (req, res) => {
     console.error("❌ [ERROR] updateCurrentUser:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi server khi hoàn tất hồ sơ người dùng.",
+      message: "Lỗi server khi cập nhật hồ sơ người dùng.",
       error: error.message,
     });
   }
