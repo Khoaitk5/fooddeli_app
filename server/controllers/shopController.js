@@ -6,12 +6,15 @@ const shopService = require("../services/shop_profileService");
  */
 exports.createShopProfile = async (req, res) => {
   try {
-    const { userId, ...shopData } = req.body;
-    if (!userId) {
-      return res.status(400).json({ success: false, message: "Thiếu userId" });
+    // ✅ Fix: Accept cả userId và user_id
+    const { userId, user_id, ...shopData } = req.body;
+    const finalUserId = userId || user_id;
+    
+    if (!finalUserId) {
+      return res.status(400).json({ success: false, message: "Thiếu userId hoặc user_id" });
     }
 
-    const result = await shopService.createShopProfile(userId, shopData);
+    const result = await shopService.createShopProfile(finalUserId, shopData);
     res.status(201).json({ success: true, data: result });
   } catch (err) {
     console.error("[ShopController:createShopProfile]", err.message);
@@ -105,7 +108,8 @@ exports.updateShopStatus = async (req, res) => {
  */
 exports.getNearbyShops = async (req, res) => {
   try {
-    const { latitude, longitude, radiusKm } = req.query;
+    // ✅ Fix: Đọc từ body vì route dùng POST
+    const { latitude, longitude, radiusKm, radius } = req.body;
     if (!latitude || !longitude) {
       return res.status(400).json({ success: false, message: "Thiếu tọa độ người dùng" });
     }
@@ -113,7 +117,7 @@ exports.getNearbyShops = async (req, res) => {
     const shops = await shopService.getNearbyShops(
       parseFloat(latitude),
       parseFloat(longitude),
-      parseFloat(radiusKm) || 5
+      parseFloat(radiusKm || radius) || 5
     );
     res.status(200).json({ success: true, data: shops });
   } catch (err) {

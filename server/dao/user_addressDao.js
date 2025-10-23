@@ -1,78 +1,94 @@
-const GenericDao = require("./generic_dao");
+const FirestoreDao = require("./firestore_dao");
 const UserAddress = require("../models/user_address");
 const Address = require("../models/address");
-const pool = require("../config/db");
 
 /**
  * @class UserAddressDao
- * @extends GenericDao
- * @description DAO cho bảng `user_addresses`
+ * @extends FirestoreDao
+ * @description DAO cho collection `user_addresses`
  */
-class UserAddressDao extends GenericDao {
+class UserAddressDao extends FirestoreDao {
   constructor() {
     super("user_addresses", UserAddress);
   }
 
   /**
-   * Lấy tất cả địa chỉ của 1 user (JOIN addresses)
+   * Lấy tất cả địa chỉ của 1 user (kết hợp với addresses collection)
    */
   async getAddressesByUserId(userId) {
-    const query = `
-    SELECT a.*, ua.is_primary
-    FROM user_addresses ua
-    JOIN addresses a ON ua.address_id = a.address_id
-    WHERE ua.user_id = $1
-    ORDER BY ua.is_primary DESC, ua.created_at DESC;
-  `;
-    const res = await pool.query(query, [userId]);
-    return res.rows.map(row => new Address(row));
-  }
+    try {
+      const conditions = [{ field: "user_id", operator: "==", value: userId }];
+      const userAddresses = await this.findWithConditions(
+        conditions,
+        "is_primary",
+        "desc"
+      );
 
+      // Sắp xếp: primary first, sau đó theo created_at
+      userAddresses.sort((a, b) => {
+        if (a.is_primary !== b.is_primary) {
+          return a.is_primary ? -1 : 1;
+        }
+        const aTime = a.created_at?.toDate?.() || new Date(0);
+        const bTime = b.created_at?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
+
+      return userAddresses.map(ua => new Address(ua));
+    } catch (err) {
+      console.error("❌ Error in getAddressesByUserId:", err.message);
+      throw err;
+    }
+  }
 
   /**
    * Lấy địa chỉ mặc định (is_primary = TRUE)
    */
   async getDefaultAddressByUserId(userId) {
-    const query = `
-      SELECT a.*, ua.is_primary
-      FROM user_addresses ua
-      JOIN addresses a ON ua.address_id = a.address_id
-      WHERE ua.user_id = $1 AND ua.is_primary = TRUE
-      LIMIT 1;
-    `;
-    const res = await pool.query(query, [userId]);
-    return res.rows[0] ? new Address(res.rows[0]) : null;
+    try {
+      const conditions = [
+        { field: "user_id", operator: "==", value: userId },
+        { field: "is_primary", operator: "==", value: true }
+      ];
+      const addresses = await this.findWithConditions(conditions);
+      return addresses.length > 0 ? new Address(addresses[0]) : null;
+    } catch (err) {
+      console.error("❌ Error in getDefaultAddressByUserId:", err.message);
+      throw err;
+    }
   }
 
   /**
    * Cập nhật quan hệ user ↔ address (vd: đổi is_primary)
    */
   async updateByAddressId(addressId, updateData) {
-    const keys = Object.keys(updateData);
-    const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(", ");
-    const values = [addressId, ...Object.values(updateData)];
+    try {
+      const userAddresses = await this.findAll();
+      const targetUA = userAddresses.find(ua => ua.address_id === addressId);
 
-    const query = `
-      UPDATE user_addresses
-      SET ${setClause}, updated_at = NOW()
-      WHERE address_id = $1
-      RETURNING *;
-    `;
-    const res = await pool.query(query, values);
-    return res.rows[0] ? new UserAddress(res.rows[0]) : null;
+      if (!targetUA) return null;
+
+      return this.update(targetUA.id, updateData);
+    } catch (err) {
+      console.error("❌ Error in updateByAddressId:", err.message);
+      throw err;
+    }
   }
 
   /**
-   * Tạo quan hệ giữa user và address (vì GenericDao.create() chỉ tạo trong 1 bảng)
+   * Tạo quan hệ giữa user và address
    */
   async createRelation(userId, addressId, isPrimary = false) {
-    const query = `
-      INSERT INTO user_addresses (user_id, address_id, is_primary, created_at)
-      VALUES ($1, $2, $3, NOW())
-      RETURNING *;
-    `;
-    const res = await pool.query(query, [userId, addressId, isPrimary]);
-    return res.rows[0] ? new UserAddress(res.rows[0]) : null;
+    try {
+      return this.create({
+        user_id: userId,
+        address_id: addressId,
+        is_primary: isPrimary,
+      });
+    } catch (err) {
+      console.error("❌ Error in createRelation:", err.message);
+      throw err;
+    }
   }
 }
 

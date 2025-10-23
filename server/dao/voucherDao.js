@@ -1,8 +1,9 @@
 // dao/voucherDao.js
-const GenericDao = require("./generic_dao");
+const FirestoreDao = require("./firestore_dao");
 const Voucher = require("../models/voucher");
+const admin = require("../config/firebase");
 
-class VoucherDao extends GenericDao {
+class VoucherDao extends FirestoreDao {
   constructor() {
     super("vouchers", Voucher);
   }
@@ -13,13 +14,7 @@ class VoucherDao extends GenericDao {
    * @returns {Promise<object|null>} - Voucher nếu tồn tại, null nếu không
    */
   async findByCode(code) {
-    const query = `
-      SELECT * FROM vouchers
-      WHERE code = $1
-      LIMIT 1;
-    `;
-    const result = await this.db.query(query, [code]);
-    return result.rows[0] || null;
+    return this.findOneByField("code", code);
   }
 
   /**
@@ -27,14 +22,33 @@ class VoucherDao extends GenericDao {
    * @returns {Promise<object[]>} - Danh sách voucher còn hiệu lực
    */
   async getActiveVouchers() {
-    const query = `
-      SELECT * FROM vouchers
-      WHERE status = 'active'
-      AND NOW() BETWEEN start_date AND end_date
-      ORDER BY start_date DESC;
-    `;
-    const result = await this.db.query(query);
-    return result.rows;
+    try {
+      const now = admin.firestore.Timestamp.now();
+      const allVouchers = await this.findAll();
+      
+      // Lọc voucher đang active
+      const activeVouchers = allVouchers.filter(v => {
+        if (v.status !== "active") return false;
+        
+        const startDate = v.start_date?.toDate?.() || new Date(0);
+        const endDate = v.end_date?.toDate?.() || new Date(9999, 0, 0);
+        const nowDate = now.toDate?.() || new Date();
+        
+        return nowDate >= startDate && nowDate <= endDate;
+      });
+      
+      // Sắp xếp theo start_date
+      activeVouchers.sort((a, b) => {
+        const aTime = a.start_date?.toDate?.() || new Date(0);
+        const bTime = b.start_date?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
+      
+      return activeVouchers;
+    } catch (err) {
+      console.error("❌ Error in getActiveVouchers:", err.message);
+      throw err;
+    }
   }
 
   /**
@@ -51,8 +65,12 @@ class VoucherDao extends GenericDao {
     if (voucher.status !== "active") {
       throw new Error("Voucher không còn hoạt động");
     }
+    
     const now = new Date();
-    if (now < new Date(voucher.start_date) || now > new Date(voucher.end_date)) {
+    const startDate = voucher.start_date?.toDate?.() || new Date(0);
+    const endDate = voucher.end_date?.toDate?.() || new Date(9999, 0, 0);
+    
+    if (now < startDate || now > endDate) {
       throw new Error("Voucher đã hết hạn hoặc chưa bắt đầu");
     }
     if (voucher.min_order_value && orderValue < voucher.min_order_value) {
@@ -65,19 +83,11 @@ class VoucherDao extends GenericDao {
 
   /**
    * 🚫 Vô hiệu hóa một voucher
-   * @param {number} voucherId - ID voucher
+   * @param {string} voucherId - ID voucher
    * @returns {Promise<object>} - Voucher sau khi cập nhật
    */
   async disableVoucher(voucherId) {
-    const query = `
-      UPDATE vouchers
-      SET status = 'disabled',
-          updated_at = NOW()
-      WHERE voucher_id = $1
-      RETURNING *;
-    `;
-    const result = await this.db.query(query, [voucherId]);
-    return result.rows[0];
+    return this.update(voucherId, { status: "disabled" });
   }
 
   /**
@@ -85,13 +95,25 @@ class VoucherDao extends GenericDao {
    * @returns {Promise<number>} - Số lượng voucher đã cập nhật
    */
   async expireOutdatedVouchers() {
-    const query = `
-      UPDATE vouchers
-      SET status = 'expired'
-      WHERE end_date < NOW() AND status = 'active';
-    `;
-    const result = await this.db.query(query);
-    return result.rowCount;
+    try {
+      const now = new Date();
+      const allVouchers = await this.findAll();
+      
+      let count = 0;
+      for (const voucher of allVouchers) {
+        const endDate = voucher.end_date?.toDate?.() || new Date(9999, 0, 0);
+        
+        if (endDate < now && voucher.status === "active") {
+          await this.update(voucher.id, { status: "expired" });
+          count++;
+        }
+      }
+      
+      return count;
+    } catch (err) {
+      console.error("❌ Error in expireOutdatedVouchers:", err.message);
+      throw err;
+    }
   }
 }
 

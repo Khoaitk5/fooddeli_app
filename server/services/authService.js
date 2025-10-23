@@ -10,10 +10,18 @@ const AuthService = {
   /**
    * @async
    * @function login
-   * @description Đăng nhập bằng số điện thoại và mật khẩu
+   * @description Đăng nhập bằng số điện thoại/email và mật khẩu
    */
-  async login(phone, password) {
-    const user = await userDao.findByPhone(phone);
+  async login(identifier, password) {
+    // ✅ Try to find user by phone or email
+    let user = await userDao.findByPhone(identifier);
+    
+    // If not found by phone, try email
+    if (!user) {
+      const allUsers = await userDao.findAll();
+      user = allUsers.find((u) => u.email === identifier);
+    }
+    
     if (!user) return null;
 
     const isMatch = await bcrypt.compare(password, user.password);

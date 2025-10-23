@@ -1,38 +1,31 @@
 // dao/videoDao.js
-const GenericDao = require("./generic_dao");
+const FirestoreDao = require("./firestore_dao");
 const Video = require("../models/video");
-const pool = require("../config/db");
 
-
-class VideoDao extends GenericDao {
+class VideoDao extends FirestoreDao {
   constructor() {
     super("videos", Video);
   }
 
   /**
    * 📜 Lấy tất cả video mà một người dùng đã đăng
-   * @param {number} userId - ID người đăng
+   * @param {string} userId - ID người đăng
    * @returns {Promise<object[]>} - Danh sách video
    */
   async getVideosByUser(userId) {
-    const query = `
-      SELECT * FROM videos
-      WHERE user_id = $1
-      ORDER BY created_at DESC;
-    `;
-    const result = await pool.query(query, [userId]);
-    return result.rows;
+    const conditions = [{ field: "user_id", operator: "==", value: userId }];
+    return this.findWithConditions(conditions, "created_at", "desc");
   }
 
+  /**
+   * 📜 Lấy video của shop
+   */
   async getVideosByShop(shopId) {
-    const query = `
-      SELECT v.video_id, v.title, v.video_url, v.likes_count, v.views_count, v.comments_count
-      FROM videos v
-      WHERE v.shop_id = $1 AND v.status = 'approved'
-      ORDER BY v.created_at DESC;
-    `;
-    const result = await pool.query(query, [shopId]);
-    return result.rows;
+    const conditions = [
+      { field: "shop_id", operator: "==", value: shopId },
+      { field: "status", operator: "==", value: "approved" }
+    ];
+    return this.findWithConditions(conditions, "created_at", "desc");
   }
 
   /**
@@ -41,16 +34,24 @@ class VideoDao extends GenericDao {
    * @returns {Promise<object[]>} - Danh sách video phổ biến
    */
   async getMostLikedVideos(limit = 10) {
-    const query = `
-      SELECT v.*, COUNT(vl.video_id) AS like_count
-      FROM videos v
-      LEFT JOIN video_likes vl ON v.video_id = vl.video_id
-      GROUP BY v.video_id
-      ORDER BY like_count DESC, v.created_at DESC
-      LIMIT $1;
-    `;
-    const result = await pool.query(query, [limit]);
-    return result.rows;
+    try {
+      const allVideos = await this.findAll();
+      
+      // Sắp xếp theo likes_count giảm dần, sau đó theo created_at
+      allVideos.sort((a, b) => {
+        const likeDiff = (b.likes_count || 0) - (a.likes_count || 0);
+        if (likeDiff !== 0) return likeDiff;
+        
+        const aTime = a.created_at?.toDate?.() || new Date(0);
+        const bTime = b.created_at?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
+      
+      return allVideos.slice(0, limit);
+    } catch (err) {
+      console.error("❌ Error in getMostLikedVideos:", err.message);
+      throw err;
+    }
   }
 
   /**
@@ -61,31 +62,47 @@ class VideoDao extends GenericDao {
    * @returns {Promise<object[]>} - Danh sách video khớp từ khóa
    */
   async searchVideos(keyword, limit = 20, offset = 0) {
-    const query = `
-      SELECT * FROM videos
-      WHERE LOWER(title) LIKE LOWER($1) OR LOWER(description) LIKE LOWER($1)
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3;
-    `;
-    const result = await pool.query(query, [`%${keyword}%`, limit, offset]);
-    return result.rows;
+    try {
+      const allVideos = await this.findAll();
+      const keywordLower = keyword.toLowerCase();
+      
+      // Lọc video chứa keyword trong title hoặc description
+      const filtered = allVideos.filter(v => 
+        (v.title && v.title.toLowerCase().includes(keywordLower)) ||
+        (v.description && v.description.toLowerCase().includes(keywordLower))
+      );
+      
+      // Sắp xếp theo created_at
+      filtered.sort((a, b) => {
+        const aTime = a.created_at?.toDate?.() || new Date(0);
+        const bTime = b.created_at?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
+      
+      // Pagination
+      return filtered.slice(offset, offset + limit);
+    } catch (err) {
+      console.error("❌ Error in searchVideos:", err.message);
+      throw err;
+    }
   }
 
   /**
    * 📈 Tăng lượt xem video thêm 1
-   * @param {number} videoId - ID video
+   * @param {string} videoId - ID video
    * @returns {Promise<object>} - Video sau khi cập nhật
    */
   async incrementViews(videoId) {
-    const query = `
-      UPDATE videos
-      SET views_count = views_count + 1,
-          updated_at = NOW()
-      WHERE video_id = $1
-      RETURNING *;
-    `;
-    const result = await pool.query(query, [videoId]);
-    return result.rows[0];
+    try {
+      const video = await this.findById(videoId);
+      if (!video) return null;
+      
+      const newViewsCount = (video.views_count || 0) + 1;
+      return this.update(videoId, { views_count: newViewsCount });
+    } catch (err) {
+      console.error("❌ Error in incrementViews:", err.message);
+      throw err;
+    }
   }
 
   /**
@@ -94,13 +111,7 @@ class VideoDao extends GenericDao {
    * @returns {Promise<object[]>} - Danh sách video mới nhất
    */
   async getLatestVideos(limit = 10) {
-    const query = `
-      SELECT * FROM videos
-      ORDER BY created_at DESC
-      LIMIT $1;
-    `;
-    const result = await pool.query(query, [limit]);
-    return result.rows;
+    return this.getWithOrdering("created_at", "desc", limit);
   }
 
   /**
@@ -108,43 +119,22 @@ class VideoDao extends GenericDao {
    * Dùng cho thuật toán lọc theo khoảng cách
    */
   async getVideosWithShopData() {
-    const query = `
-      SELECT 
-        v.video_id, v.title, v.video_url,
-        v.views_count, v.likes_count, v.comments_count, 
-        s.id AS shop_id, s.shop_name, s.description AS shop_description,
-        u.rating AS shop_rating,
-        u.avatar_url AS shop_avatar,
-        a.lat_lon->>'lat' AS lat,
-        a.lat_lon->>'lon' AS lng
-      FROM videos v
-      JOIN shop_profiles s ON v.shop_id = s.id
-      JOIN users u ON s.user_id = u.id
-      LEFT JOIN addresses a ON s.shop_address_id = a.address_id
-      WHERE v.status = 'approved'
-        AND u.status = 'active'
-        AND a.lat_lon IS NOT NULL;
-    `;
-
-    const res = await pool.query(query);
-
-    // Ép kiểu float + đảm bảo an toàn
-    return res.rows.map(row => ({
-      ...row,
-      lat: row.lat ? parseFloat(row.lat) : null,
-      lng: row.lng ? parseFloat(row.lng) : null,
-      shop_rating: parseFloat(row.shop_rating || 0),
-    }));
+    try {
+      const allVideos = await this.findAll();
+      
+      // Lọc video đã approved
+      return allVideos.filter(v => v.status === "approved");
+    } catch (err) {
+      console.error("❌ Error in getVideosWithShopData:", err.message);
+      throw err;
+    }
   }
 
   /**
    * 🧭 Lấy video của các shop trong bán kính 10km quanh vị trí người dùng
-   * (Dựa vào danh sách video + vị trí + rating)
-   * ⚠️ Tính toán khoảng cách ở tầng service (để tách logic)
    */
   async getVideosNearby(userLocation, maxDistanceKm = 10) {
     const allVideos = await this.getVideosWithShopData();
-    // chỉ lọc ở tầng service — DAO chỉ fetch dữ liệu
     return allVideos;
   }
 }

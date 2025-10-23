@@ -41,17 +41,14 @@ const orderVoucherService = {
    */
   async deleteSpecificVoucher(orderId, voucherId) {
     const vouchers = await orderVoucherDao.getVouchersByOrderId(orderId);
-    const exists = vouchers.some(v => v.voucher_id === voucherId);
-    if (!exists) {
+    const target = vouchers.find(v => v.voucher_id === voucherId);
+    
+    if (!target) {
       throw new Error("Voucher này không áp dụng cho đơn hàng");
     }
 
-    const query = `
-      DELETE FROM order_vouchers
-      WHERE order_id = $1 AND voucher_id = $2;
-    `;
-    const result = await orderVoucherDao.db.query(query, [orderId, voucherId]);
-    return result.rowCount > 0;
+    await orderVoucherDao.delete(target.id);
+    return true;
   }
 };
 

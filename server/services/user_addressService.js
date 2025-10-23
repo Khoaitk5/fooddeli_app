@@ -66,20 +66,23 @@ class UserAddressService {
    * @returns {Promise<void>}
    */
   async setPrimaryAddress(userId, addressId) {
-    const pool = require("../config/db");
-
     try {
-      await pool.query("BEGIN");
-
-      await pool.query(`UPDATE user_addresses SET is_primary = FALSE WHERE user_id = $1`, [userId]);
-      await pool.query(
-        `UPDATE user_addresses SET is_primary = TRUE WHERE user_id = $1 AND address_id = $2`,
-        [userId, addressId]
-      );
-
-      await pool.query("COMMIT");
+      // 1. Tìm tất cả user_addresses của user này
+      const allUserAddresses = await userAddressDao.findByField("user_id", userId);
+      
+      // 2. Set tất cả is_primary = false
+      for (const ua of allUserAddresses) {
+        await userAddressDao.update(ua.id, { is_primary: false });
+      }
+      
+      // 3. Set địa chỉ được chọn = true
+      const targetUA = allUserAddresses.find(ua => ua.address_id === addressId);
+      if (targetUA) {
+        await userAddressDao.update(targetUA.id, { is_primary: true });
+      } else {
+        throw new Error("Không tìm thấy địa chỉ trong danh sách của user");
+      }
     } catch (err) {
-      await pool.query("ROLLBACK");
       console.error("❌ Error setting primary address:", err.message);
       throw new Error("Không thể đặt địa chỉ chính cho người dùng.");
     }
@@ -95,14 +98,17 @@ class UserAddressService {
    */
   async removeAddressFromUser(userId, addressId) {
     try {
-      const query = `
-        DELETE FROM user_addresses
-        WHERE user_id = $1 AND address_id = $2
-        RETURNING *;
-      `;
-      const pool = require("../config/db");
-      const result = await pool.query(query, [userId, addressId]);
-      return result.rows[0];
+      // Tìm user_address record
+      const allUserAddresses = await userAddressDao.findByField("user_id", userId);
+      const targetUA = allUserAddresses.find(ua => ua.address_id === addressId);
+      
+      if (!targetUA) {
+        throw new Error("Không tìm thấy liên kết địa chỉ với user");
+      }
+      
+      // Xóa record
+      const deleted = await userAddressDao.delete(targetUA.id);
+      return deleted;
     } catch (err) {
       console.error("❌ Error removing user address link:", err.message);
       throw new Error("Không thể gỡ địa chỉ khỏi người dùng.");

@@ -1,71 +1,67 @@
 // dao/videoCommentDao.js
-const GenericDao = require("./generic_dao");
+const FirestoreDao = require("./firestore_dao");
 const VideoComment = require("../models/video_comment");
 
-class VideoCommentDao extends GenericDao {
+class VideoCommentDao extends FirestoreDao {
   constructor() {
     super("video_comments", VideoComment);
   }
 
   /**
    * 📜 Lấy tất cả bình luận theo video_id
-   * @param {number} videoId - ID video
+   * @param {string} videoId - ID video
    * @returns {Promise<object[]>} - Danh sách bình luận
    */
   async getCommentsByVideoId(videoId) {
-    const query = `
-      SELECT vc.*, u.username, u.avatar_url
-      FROM video_comments vc
-      JOIN users u ON vc.user_id = u.id
-      WHERE vc.video_id = $1
-      ORDER BY vc.created_at ASC;
-    `;
-    const result = await this.db.query(query, [videoId]);
-    return result.rows;
+    const conditions = [{ field: "video_id", operator: "==", value: videoId }];
+    return this.findWithConditions(conditions, "created_at", "asc");
   }
 
   /**
    * 📜 Lấy tất cả bình luận mà 1 user đã viết
-   * @param {number} userId - ID người dùng
+   * @param {string} userId - ID người dùng
    * @returns {Promise<object[]>} - Danh sách bình luận
    */
   async getCommentsByUserId(userId) {
-    const query = `
-      SELECT * FROM video_comments
-      WHERE user_id = $1
-      ORDER BY created_at DESC;
-    `;
-    const result = await this.db.query(query, [userId]);
-    return result.rows;
+    const conditions = [{ field: "user_id", operator: "==", value: userId }];
+    return this.findWithConditions(conditions, "created_at", "desc");
   }
 
   /**
    * 🔢 Đếm số lượng bình luận của 1 video
-   * @param {number} videoId - ID video
+   * @param {string} videoId - ID video
    * @returns {Promise<number>} - Số lượng bình luận
    */
   async countCommentsByVideo(videoId) {
-    const query = `
-      SELECT COUNT(*)::int AS total_comments
-      FROM video_comments
-      WHERE video_id = $1;
-    `;
-    const result = await this.db.query(query, [videoId]);
-    return result.rows[0]?.total_comments || 0;
+    try {
+      const comments = await this.getCommentsByVideoId(videoId);
+      return comments.length;
+    } catch (err) {
+      console.error("❌ Error in countCommentsByVideo:", err.message);
+      throw err;
+    }
   }
 
   /**
    * 🗑️ Xóa toàn bộ bình luận của 1 video (dùng khi xóa video)
-   * @param {number} videoId - ID video
+   * @param {string} videoId - ID video
    * @returns {Promise<number>} - Số lượng bình luận đã xóa
    */
   async deleteCommentsByVideoId(videoId) {
-    const query = `
-      DELETE FROM video_comments
-      WHERE video_id = $1;
-    `;
-    const result = await this.db.query(query, [videoId]);
-    return result.rowCount;
+    try {
+      const comments = await this.getCommentsByVideoId(videoId);
+      let count = 0;
+
+      for (const comment of comments) {
+        await this.delete(comment.id);
+        count++;
+      }
+
+      return count;
+    } catch (err) {
+      console.error("❌ Error in deleteCommentsByVideoId:", err.message);
+      throw err;
+    }
   }
 }
 

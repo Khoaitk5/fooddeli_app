@@ -1,17 +1,17 @@
-const GenericDao = require("./generic_dao");
+const FirestoreDao = require("./firestore_dao");
 const Address = require("../models/address");
 
 /**
  * @class AddressDao
- * @extends GenericDao
- * @description Quản lý bảng `addresses`
+ * @extends FirestoreDao
+ * @description Quản lý collection `addresses`
  */
-class AddressDao extends GenericDao {
+class AddressDao extends FirestoreDao {
   constructor() {
     super("addresses", Address);
   }
 
-  // ⚡ Có thể thêm hàm đặc thù ở đây nếu cần
+  // Có thể thêm hàm đặc thù ở đây nếu cần
   // ví dụ: findByCity, findByDistrict, v.v.
 }
 

@@ -1,8 +1,7 @@
-const GenericDao = require("./generic_dao");
+const FirestoreDao = require("./firestore_dao");
 const Product = require("../models/product");
-const pool = require("../config/db");
 
-class ProductDao extends GenericDao {
+class ProductDao extends FirestoreDao {
   constructor() {
     super("products", Product);
   }
@@ -14,16 +13,7 @@ class ProductDao extends GenericDao {
     if (typeof isAvailable !== "boolean") {
       throw new Error("isAvailable phải là boolean");
     }
-
-    const query = `
-      UPDATE products
-      SET is_available = $1,
-          updated_at = NOW()
-      WHERE product_id = $2
-      RETURNING *;
-    `;
-    const result = await pool.query(query, [isAvailable, productId]);
-    return result.rows[0];
+    return this.update(productId, { is_available: isAvailable });
   }
 
   /** 
@@ -36,29 +26,15 @@ class ProductDao extends GenericDao {
         `Danh mục không hợp lệ. Chỉ chấp nhận: ${validCategories.join(", ")}`
       );
     }
-
-    const query = `
-      UPDATE products
-      SET category = $1,
-          updated_at = NOW()
-      WHERE product_id = $2
-      RETURNING *;
-    `;
-    const result = await pool.query(query, [category, productId]);
-    return result.rows[0];
+    return this.update(productId, { category });
   }
 
   /** 
    * Lấy tất cả sản phẩm thuộc về 1 shop
    */
   async getProductsByShop(shopId) {
-    const query = `
-      SELECT * FROM products
-      WHERE shop_id = $1
-      ORDER BY updated_at DESC;
-    `;
-    const result = await pool.query(query, [shopId]);
-    return result.rows;
+    const conditions = [{ field: "shop_id", operator: "==", value: shopId }];
+    return this.findWithConditions(conditions, "updated_at", "desc");
   }
 
   /** 
@@ -72,41 +48,46 @@ class ProductDao extends GenericDao {
       );
     }
 
-    const query = `
-      SELECT * FROM products
-      WHERE category = $1
-      ORDER BY updated_at DESC
-      LIMIT $2 OFFSET $3;
-    `;
-    const result = await pool.query(query, [category, limit, offset]);
-    return result.rows;
+    const conditions = [{ field: "category", operator: "==", value: category }];
+    let products = await this.findWithConditions(conditions, "updated_at", "desc");
+    
+    // Xử lý pagination thủ công vì Firestore không có OFFSET
+    return products.slice(offset, offset + limit);
   }
 
   /** 
-   * Tìm kiếm sản phẩm theo tên
+   * Tìm kiếm sản phẩm theo tên (tìm kiếm toàn bộ, rồi lọc ở app)
    */
   async searchProducts(keyword, limit = 20, offset = 0) {
-    const query = `
-      SELECT * FROM products
-      WHERE LOWER(name) LIKE LOWER($1)
-      ORDER BY updated_at DESC
-      LIMIT $2 OFFSET $3;
-    `;
-    const result = await pool.query(query, [`%${keyword}%`, limit, offset]);
-    return result.rows;
+    try {
+      const allProducts = await this.findAll();
+      
+      // Lọc sản phẩm chứa keyword trong tên (không phân biệt chữ hoa/thường)
+      const filtered = allProducts.filter(p => 
+        p.name && p.name.toLowerCase().includes(keyword.toLowerCase())
+      );
+      
+      // Sắp xếp theo updated_at
+      filtered.sort((a, b) => {
+        const aTime = a.updated_at?.toDate?.() || new Date(0);
+        const bTime = b.updated_at?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
+      
+      // Xử lý pagination
+      return filtered.slice(offset, offset + limit);
+    } catch (err) {
+      console.error("❌ Error in searchProducts:", err.message);
+      throw err;
+    }
   }
 
   /** 
    * Lấy danh sách sản phẩm đang bán (is_available = true)
    */
   async getAvailableProducts() {
-    const query = `
-      SELECT * FROM products
-      WHERE is_available = TRUE
-      ORDER BY updated_at DESC;
-    `;
-    const result = await pool.query(query);
-    return result.rows;
+    const conditions = [{ field: "is_available", operator: "==", value: true }];
+    return this.findWithConditions(conditions, "updated_at", "desc");
   }
 
   /** 
@@ -114,31 +95,30 @@ class ProductDao extends GenericDao {
    */
   async getAllCategories() {
     try {
-      console.log("🟢 [DAO] Bắt đầu truy vấn danh mục...");
+      console.log("🟢 [DAO] Bắt đầu lấy danh mục...");
 
-      const query = `
-        SELECT DISTINCT category
-        FROM products
-        WHERE category IS NOT NULL
-        ORDER BY category
-        LIMIT 4;
-      `;
+      const allProducts = await this.findAll();
+      
+      // Lấy danh mục duy nhất
+      const categoriesSet = new Set();
+      allProducts.forEach(product => {
+        if (product.category) {
+          categoriesSet.add(product.category);
+        }
+      });
 
-      console.log("📜 [DAO] Query:", query);
+      // Chuyển thành array và lấy 4 cái đầu
+      const categories = Array.from(categoriesSet).slice(0, 4);
 
-      const result = await pool.query(query);
+      console.log("✅ [DAO] Lấy danh mục thành công. Kết quả:", categories);
 
-      console.log("✅ [DAO] Query thành công. Kết quả:", result.rows);
-
-      if (!result.rows.length) {
-        console.warn("⚠️ [DAO] Không tìm thấy danh mục nào trong DB.");
+      if (categories.length === 0) {
+        console.warn("⚠️ [DAO] Không tìm thấy danh mục nào.");
       }
 
-      return result.rows.map((row) => ({
-        name: row.category,
-      }));
+      return categories.map(name => ({ name }));
     } catch (err) {
-      console.error("❌ [DAO] Lỗi khi truy vấn danh mục:", err.message);
+      console.error("❌ [DAO] Lỗi khi lấy danh mục:", err.message);
       console.error("📂 Stack Trace:", err.stack);
       throw err;
     }

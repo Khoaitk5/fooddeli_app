@@ -18,6 +18,10 @@ build/
 # ===== Environment Files =====
 .env
 
+# ===== Firebase Secret Files =====
+server/config/serviceAccountKey.json
+serviceAccountKey.json
+
 # ===== Editor Directories & Files =====
 .vscode/*
 !.vscode/extensions.json
@@ -39,3 +43,19 @@ server/node_modules/
 server/build/
 server/.env
 client/.env
+
+# ===== Test files =====
+server/test/
+server/test-results/
+server/test-results-updated/
+server/test-results-final/
+server/test-final-summary/
+server/test-setup/
+server/test-verify/
+server/test-production/
+server/test-development/
+server/test-staging/
+
+#.md files
+*.md
+*.cursorignore

@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node test/api.test.js",
+    "test:quick": "node test/quick-test.js",
+    "test:manual": "echo \"See test/api-manual-test.md for manual testing guide\"",
+    "test:ps": "powershell -ExecutionPolicy Bypass -File test/test-api.ps1",
     "dev": "node server.js"
   },
   "keywords": [],
@@ -17,7 +20,6 @@
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "firebase-admin": "^13.5.0",
-    "nodemailer": "^7.0.9",
-    "pg": "^8.16.3"
+    "nodemailer": "^7.0.9"
   }
 }

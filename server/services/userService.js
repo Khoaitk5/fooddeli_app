@@ -8,6 +8,22 @@ const shopProfileService = require("./shop_profileService");
 class UserService {
   /**
    * @async
+   * @function getAllUsers
+   * @description Lấy danh sách tất cả người dùng
+   * @returns {Promise<Array>} - Danh sách users
+   */
+  async getAllUsers() {
+    try {
+      const users = await userDao.findAll();
+      return users;
+    } catch (err) {
+      console.error("❌ Error fetching all users:", err.message);
+      throw new Error("Không thể lấy danh sách người dùng.");
+    }
+  }
+
+  /**
+   * @async
    * @function createUser
    * @description Tạo người dùng mới
    * @param {object} userData - Thông tin người dùng (username, password, email, phone, role, ...)

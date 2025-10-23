@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if true; // Allow read for public profiles
+      allow create: if true; // Allow registration
+      allow update, delete: if isOwner(userId);
+    }
+    
+    // Products collection
+    match /products/{productId} {
+      allow read: if true; // Public can view products
+      allow create, update, delete: if isSignedIn(); // Shop owners can manage
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false; // Don't allow delete orders
+    }
+    
+    // Shops collection
+    match /shops/{shopId} {
+      allow read: if true; // Public can view shops
+      allow create, update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+    
+    // Videos collection
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn();
+    }
+    
+    // Reviews collection
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+    
+    // Default: deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

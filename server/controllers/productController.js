@@ -87,8 +87,10 @@ exports.getProductsByShop = async (req, res) => {
 // 🔍 Tìm kiếm sản phẩm theo tên
 exports.searchProducts = async (req, res) => {
   try {
-    const { keyword, limit, offset } = req.query;
-    const result = await ProductService.searchProducts(keyword, limit, offset);
+    // ✅ Fix: Accept cả 'keyword' và 'q' query parameters
+    const { keyword, q, limit, offset } = req.query;
+    const searchKeyword = keyword || q;
+    const result = await ProductService.searchProducts(searchKeyword, limit, offset);
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

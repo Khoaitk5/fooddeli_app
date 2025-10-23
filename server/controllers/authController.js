@@ -98,24 +98,27 @@ exports.register = async (req, res) => {
 
 
 /**
- * 🔐 Đăng nhập bằng số điện thoại và mật khẩu
+ * 🔐 Đăng nhập bằng số điện thoại/email và mật khẩu
  */
 exports.loginWithPassword = async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, identifier, password } = req.body;
 
-    if (!phone || !password) {
+    // ✅ Fix: Accept cả phone hoặc identifier (email/phone)
+    const loginIdentifier = identifier || phone;
+
+    if (!loginIdentifier || !password) {
       return res.status(400).json({
         success: false,
-        message: "⚠️ Vui lòng nhập đầy đủ số điện thoại và mật khẩu",
+        message: "⚠️ Vui lòng nhập đầy đủ thông tin đăng nhập và mật khẩu",
       });
     }
 
-    const user = await authService.login(phone, password);
+    const user = await authService.login(loginIdentifier, password);
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "❌ Số điện thoại hoặc mật khẩu không chính xác",
+        message: "❌ Thông tin đăng nhập hoặc mật khẩu không chính xác",
       });
     }
 
@@ -448,8 +451,9 @@ exports.checkPhoneExists = async (req, res) => {
     if (user) {
       return res.status(200).json({ success: true, exists: true });
     } else {
-      return res.status(404).json({
-        success: false,
+      // ✅ Fix: Trả về 200 thay vì 404 vì đây là response hợp lệ
+      return res.status(200).json({
+        success: true,
         exists: false,
         message: "Số điện thoại này chưa được đăng ký.",
       });
@@ -471,8 +475,9 @@ exports.checkEmailExists = async (req, res) => {
     if (user) {
       return res.status(200).json({ success: true, exists: true });
     } else {
-      return res.status(404).json({
-        success: false,
+      // ✅ Fix: Trả về 200 thay vì 404 vì đây là response hợp lệ
+      return res.status(200).json({
+        success: true,
         exists: false,
         message: "Email này chưa được đăng ký.",
       });

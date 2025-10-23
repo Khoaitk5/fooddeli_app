@@ -1,11 +1,10 @@
-const GenericDao = require("./generic_dao");
+const FirestoreDao = require("./firestore_dao");
 const Payment = require("../models/payment");
-const pool = require("../config/db");
+const admin = require("../config/firebase");
 
-class PaymentDao extends GenericDao {
+class PaymentDao extends FirestoreDao {
   constructor() {
     super("payments", Payment);
-    this.db = pool;
   }
 
   /**
@@ -13,18 +12,13 @@ class PaymentDao extends GenericDao {
    * (Trường hợp mỗi đơn hàng có nhiều giao dịch)
    */
   async getPaymentsByOrderId(orderId) {
-    const query = `
-      SELECT * FROM payments
-      WHERE order_id = $1
-      ORDER BY paid_at DESC NULLS LAST;
-    `;
-    const result = await this.db.query(query, [orderId]);
-    return result.rows.map(row => new Payment(row));
+    const conditions = [{ field: "order_id", operator: "==", value: orderId }];
+    return this.findWithConditions(conditions, "paid_at", "desc");
   }
 
   /**
    * 💳 Cập nhật trạng thái thanh toán
-   * @param {number} paymentId
+   * @param {string} paymentId
    * @param {string} status - 'pending' | 'success' | 'failed' | 'refunded'
    * @param {Date|null} paidAt - thời điểm thanh toán (nếu success)
    */
@@ -34,23 +28,12 @@ class PaymentDao extends GenericDao {
       throw new Error(`Invalid payment status: ${status}`);
     }
 
-    const query = `
-      UPDATE payments
-      SET status = $1,
-          paid_at = $2,
-          amount = amount, -- giữ nguyên amount
-          transaction_code = transaction_code, -- giữ nguyên mã giao dịch
-          provider = provider, -- giữ nguyên provider
-          order_id = order_id, -- giữ nguyên order
-          -- (updated_at có thể thêm nếu bạn muốn theo dõi)
-          -- updated_at = NOW(),
-          id = id
-      WHERE id = $3
-      RETURNING *;
-    `;
+    const updateData = { status };
+    if (paidAt) {
+      updateData.paid_at = admin.firestore.Timestamp.fromDate(new Date(paidAt));
+    }
 
-    const result = await this.db.query(query, [status, paidAt, paymentId]);
-    return result.rows[0] ? new Payment(result.rows[0]) : null;
+    return this.update(paymentId, updateData);
   }
 
   /**
@@ -58,13 +41,8 @@ class PaymentDao extends GenericDao {
    * Dành cho admin hoặc thống kê doanh thu
    */
   async getSuccessfulPayments() {
-    const query = `
-      SELECT * FROM payments
-      WHERE status = 'success'
-      ORDER BY paid_at DESC;
-    `;
-    const result = await this.db.query(query);
-    return result.rows.map(row => new Payment(row));
+    const conditions = [{ field: "status", operator: "==", value: "success" }];
+    return this.findWithConditions(conditions, "paid_at", "desc");
   }
 }
 
