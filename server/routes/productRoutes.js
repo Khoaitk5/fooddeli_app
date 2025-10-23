@@ -8,7 +8,7 @@ router.get("/", ProductController.getAllProducts);
 
 // ✅ Đặt các route tĩnh TRƯỚC khi có ":id"
 router.get("/categories", ProductController.getAllCategories);
-router.get("/shop/:shopId", ProductController.getProductsByShop);
+router.post("/by-shop", ProductController.getProductsByShop);
 router.get("/search", ProductController.searchProducts);
 router.get("/available", ProductController.getAvailableProducts);
 

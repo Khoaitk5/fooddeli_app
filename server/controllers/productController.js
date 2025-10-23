@@ -70,12 +70,19 @@ exports.updateAvailability = async (req, res) => {
 // 🏪 Lấy sản phẩm theo shop
 exports.getProductsByShop = async (req, res) => {
   try {
-    const result = await ProductService.getProductsByShop(req.params.shopId);
-    res.status(200).json(result);
+    const { shopId } = req.body; // ✅ Lấy từ body thay vì params
+    if (!shopId) {
+      return res.status(400).json({ success: false, message: "Thiếu shopId" });
+    }
+
+    const result = await ProductService.getProductsByShop(shopId);
+    res.status(200).json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Lỗi getProductsByShop:", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // 🔍 Tìm kiếm sản phẩm theo tên
 exports.searchProducts = async (req, res) => {

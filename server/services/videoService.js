@@ -69,6 +69,14 @@ const videoService = {
   },
 
   /**
+   * 🏪 Lấy video theo cửa hàng
+   * @param {number} shopId
+   */
+  async getVideosByShop(shopId) {
+    return await videoDao.getVideosByShop(shopId);
+  },
+
+  /**
    * 🔥 Lấy video phổ biến nhất (dựa theo lượt thích)
    * @param {number} limit
    * @returns {Promise<object[]>}
@@ -131,14 +139,14 @@ const videoService = {
 
     // Lọc theo khoảng cách ≤ 10 km
     const nearby = filterShopsByDistance(userLocation, videos, 20);
-    console.log("📍 DEBUG AFTER DISTANCE FILTER:", nearby);
+    //console.log("📍 DEBUG AFTER DISTANCE FILTER:", nearby);
 
     // Sắp xếp theo rating giảm dần
     nearby.sort((a, b) => b.shop_rating - a.shop_rating);
 
     // Lấy 10 video đầu tiên
     return nearby.slice(0, 10);
-  }
+  },
 };
 
 module.exports = videoService;

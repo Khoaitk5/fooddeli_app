@@ -24,6 +24,17 @@ class VideoDao extends GenericDao {
     return result.rows;
   }
 
+  async getVideosByShop(shopId) {
+    const query = `
+      SELECT v.video_id, v.title, v.video_url, v.likes_count, v.views_count, v.comments_count
+      FROM videos v
+      WHERE v.shop_id = $1 AND v.status = 'approved'
+      ORDER BY v.created_at DESC;
+    `;
+    const result = await pool.query(query, [shopId]);
+    return result.rows;
+  }
+
   /**
    * 🔥 Lấy danh sách video phổ biến nhất (dựa theo lượt thích)
    * @param {number} limit - số lượng video cần lấy
