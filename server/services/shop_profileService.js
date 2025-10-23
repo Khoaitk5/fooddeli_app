@@ -81,11 +81,15 @@ class ShopProfileService {
    */
   async updateShopInfo(shopId, updateData) {
     try {
-      const shop = await shopProfileDao.update("id", shopId, updateData);
-      return shop;
+      const updated = await shopProfileDao.update("id", shopId, updateData);
+      if (!updated) {
+        console.warn(`⚠️ Shop profile ID ${shopId} không cập nhật được`);
+        throw new Error("Không tìm thấy hồ sơ cửa hàng hoặc dữ liệu không hợp lệ.");
+      }
+      return updated;
     } catch (err) {
       console.error("❌ Error updating shop info:", err.message);
-      throw new Error("Không thể cập nhật thông tin cửa hàng.");
+      throw err;
     }
   }
 

@@ -36,18 +36,30 @@ class GenericDao {
   }
 
   async update(idField, id, data) {
-    const keys = Object.keys(data);
-    const values = Object.values(data);
+    try {
+      const keys = Object.keys(data);
+      const values = Object.values(data);
 
-    const setString = keys.map((key, i) => `${key}=$${i + 1}`).join(", ");
-    const query = `
+      if (!keys.length) return null;
+
+      const setString =
+        keys.map((key, i) => `${key}=$${i + 1}`).join(", ") + ", updated_at=NOW()";
+
+      const query = `
       UPDATE ${this.table}
       SET ${setString}
       WHERE ${idField}=$${keys.length + 1}
       RETURNING *`;
 
-    const res = await pool.query(query, [...values, id]);
-    return res.rows[0] ? new this.Model(res.rows[0]) : null;
+      console.log(`[SQL] ${query}`, values, id); // 👈 log câu query
+
+      const res = await pool.query(query, [...values, id]);
+      if (!res.rows[0]) console.warn(`⚠️ No row updated in ${this.table}`);
+      return res.rows[0] ? new this.Model(res.rows[0]) : null;
+    } catch (err) {
+      console.error(`❌ Error in ${this.table}.update():`, err.message);
+      throw err;
+    }
   }
 
   async delete(idField, id) {

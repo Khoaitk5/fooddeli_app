@@ -1,7 +1,10 @@
 const userService = require("../services/userService");
 const addressService = require("../services/addressService");
+const shopProfileService = require("../services/shop_profileService");
 
-// 📌 Lấy toàn bộ người dùng (chỉ nên dùng cho admin)
+/**
+ * 📌 Lấy danh sách tất cả người dùng (chỉ admin)
+ */
 const getAllUsers = async (req, res) => {
   try {
     const users = await userService.getAllUsers();
@@ -15,76 +18,48 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// 📌 Lấy thông tin user hiện tại từ session
+/**
+ * 📌 Lấy thông tin user hiện tại (dựa trên session)
+ */
 const getCurrentUser = async (req, res) => {
-  console.log("[DEBUG] >>> Bắt đầu getCurrentUser()");
   try {
     const sessionUser = req.session?.user;
-    console.log("[DEBUG] sessionUser =", sessionUser);
-
-    // 🧭 Kiểm tra đăng nhập
     if (!sessionUser) {
-      console.warn("[DEBUG] Không có sessionUser → trả 401");
       return res.status(401).json({
         success: false,
         message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
       });
     }
 
-    // 🔍 Lấy thông tin người dùng (đã bao gồm shop_profile nếu có)
     const user = await userService.getUserById(sessionUser.id);
-    console.log("[DEBUG] userService.getUserById() =", user);
-
     if (!user) {
-      console.warn("[DEBUG] Không tìm thấy user → trả 404");
       return res.status(404).json({
         success: false,
         message: "❌ Không tìm thấy người dùng.",
       });
     }
 
-    // 🏡 Lấy toàn bộ địa chỉ của user
     const addresses = await addressService.getNormalizedUserAddresses(user.id);
-    console.log("[DEBUG] addresses =", addresses);
-
-    // 🏪 Nếu là shop → lấy shop_profile đã có sẵn trong user
     let shop_profile = null;
-    if (user.role === "shop" && user.shop_profile) {
-      console.log("[DEBUG] User có role = shop, bắt đầu xử lý shop_profile");
-      shop_profile = user.shop_profile;
 
-      // 🏠 Gắn thêm thông tin địa chỉ cho shop nếu có
+    if (user.role === "shop" && user.shop_profile) {
+      shop_profile = user.shop_profile;
       if (shop_profile.shop_address_id) {
-        console.log("[DEBUG] shop_profile.shop_address_id =", shop_profile.shop_address_id);
         try {
           const shopAddress = await addressService.getAddressById(
             shop_profile.shop_address_id
           );
-          console.log("[DEBUG] shopAddress =", shopAddress);
           shop_profile = { ...shop_profile, address: shopAddress };
-        } catch (err) {
-          console.warn("[DEBUG] Không thể lấy địa chỉ shop:", err.message);
+        } catch {
           shop_profile = { ...shop_profile, address: null };
         }
-      } else {
-        console.warn("[DEBUG] shop_profile không có shop_address_id");
       }
-    } else {
-      console.log("[DEBUG] User không phải shop hoặc chưa có shop_profile");
     }
 
-    // 🚫 Xoá password khỏi kết quả
     const { password, ...safeUser } = user;
-
-    // ✅ Trả kết quả về FE
-    console.log("[DEBUG] >>> Hoàn tất getCurrentUser(), trả về dữ liệu thành công.");
     return res.status(200).json({
       success: true,
-      user: {
-        ...safeUser,
-        addresses,
-        shop_profile,
-      },
+      user: { ...safeUser, addresses, shop_profile },
     });
   } catch (error) {
     console.error("⚠️ Lỗi getCurrentUser:", error);
@@ -95,8 +70,12 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-// 📌 Cập nhật thông tin user hiện tại
+/**
+ * 📌 Cập nhật thông tin user hiện tại (User + Shop + Address)
+ */
 const updateCurrentUser = async (req, res) => {
+  console.log("[DEBUG] >>> Hàm updateCurrentUser() được gọi!");
+  console.log("[DEBUG] req.body:", req.body);
   try {
     const sessionUser = req.session?.user;
     if (!sessionUser) {
@@ -107,16 +86,17 @@ const updateCurrentUser = async (req, res) => {
     }
 
     const userId = sessionUser.id;
-    const { username, fullname, email, phone, address } = req.body;
+    const { username, fullname, email, phone, address, shop_profile } = req.body;
 
-    // 🧩 Chuẩn hóa dữ liệu người dùng
+    console.log("[DEBUG] === BẮT ĐẦU UPDATE USER ===");
+    console.log("[DEBUG] req.body:", JSON.stringify(req.body, null, 2));
+
+    // 🧩 Chuẩn hóa dữ liệu user
     const updatePayload = {};
-
     if (username) updatePayload.username = username.trim();
     if (fullname) updatePayload.full_name = fullname.trim();
     if (email) updatePayload.email = email.trim();
 
-    // ☎️ Chuẩn hóa số điện thoại về dạng +84
     if (phone) {
       let normalizedPhone = phone.trim();
       if (normalizedPhone.startsWith("0")) {
@@ -127,27 +107,98 @@ const updateCurrentUser = async (req, res) => {
       updatePayload.phone = normalizedPhone;
     }
 
-    // 🔄 Cập nhật thông tin user cơ bản
-    let updatedUser = await userService.getUserById(userId);
+    console.log("[DEBUG] updatePayload (users):", updatePayload);
+
+    // 🔄 Cập nhật bảng users
     if (Object.keys(updatePayload).length > 0) {
-      updatedUser = await userService.updateUser(userId, updatePayload);
+      console.log("[DEBUG] → Gọi userService.updateUser()");
+      await userService.updateUser(userId, updatePayload);
     }
 
-    // 🏡 Xử lý địa chỉ nếu FE gửi lên
+    // 🏪 Nếu user là shop → cập nhật thông tin cửa hàng
+    if (sessionUser.role === "shop" && shop_profile) {
+      console.log("[DEBUG] → Bắt đầu cập nhật shop_profile cho user_id:", userId);
+
+      const currentShop = await shopProfileService.getShopByUserId(userId);
+      if (currentShop) {
+        const shopId =
+          currentShop.shop_profile_id || currentShop.id || currentShop.shop_id;
+
+        console.log(`[DEBUG] Found shopProfile ID=${shopId}`);
+
+        // Cập nhật thông tin cơ bản
+        const updateShopData = {
+          shop_name: shop_profile.shop_name || currentShop.shop_name,
+          description: shop_profile.description || currentShop.description,
+          open_hours: shop_profile.open_hours || currentShop.open_hours,
+          closed_hours: shop_profile.closed_hours || currentShop.closed_hours,
+        };
+        console.log("[DEBUG] updateShopData:", updateShopData);
+
+        const updatedShop = await shopProfileService.updateShopInfo(shopId, updateShopData);
+        console.log("[DEBUG] Shop cập nhật xong:", updatedShop);
+
+        // ✅ Nếu có address object được gửi từ frontend → tạo và gán vào shop
+        if (shop_profile.address && typeof shop_profile.address === "object") {
+          console.log("[DEBUG] → Đang xử lý shop_profile.address");
+          const { address_line, note, address_type, is_primary } = shop_profile.address;
+          const normalizedAddressLine = {
+            detail: address_line?.detail || "",
+            ward: address_line?.ward || "",
+            district: address_line?.district || "",
+            city: address_line?.city || "",
+          };
+
+          console.log("[DEBUG] normalizedAddressLine:", normalizedAddressLine);
+
+          const newShopAddress = await addressService.createAddressForUser(
+            userId,
+            {
+              address_line: normalizedAddressLine,
+              note: note || "",
+              address_type: address_type || "Cửa hàng",
+            },
+            is_primary ?? false
+          );
+
+          console.log("[DEBUG] Đã tạo địa chỉ mới:", newShopAddress);
+
+          await shopProfileService.assignAddressToShop(
+            shopId,
+            newShopAddress.address_id
+          );
+
+          console.log(`[DEBUG] ✅ Đã gán địa chỉ ${newShopAddress.address_id} cho cửa hàng ${shopId}`);
+        }
+
+        // Nếu chỉ có address_id được gửi lên (địa chỉ đã có sẵn)
+        else if (shop_profile.address_id) {
+          console.log(`[DEBUG] → Gán địa chỉ có sẵn ID=${shop_profile.address_id} cho shop`);
+          await shopProfileService.assignAddressToShop(
+            shopId,
+            shop_profile.address_id
+          );
+        } else {
+          console.log("[DEBUG] → Không có address hoặc address_id trong shop_profile.");
+        }
+      } else {
+        console.warn(`⚠️ Không tìm thấy shop_profile cho user_id=${userId}`);
+      }
+    } else {
+      console.log("[DEBUG] → User không có role 'shop' hoặc không gửi shop_profile");
+    }
+
+    // 🏡 Nếu có địa chỉ user mới → xử lý update
     let updatedAddress = null;
     if (address && typeof address === "object") {
-      const { address_line, note, addressType, address_type, is_primary } = address;
+      console.log("[DEBUG] → Đang xử lý địa chỉ user:", address);
 
-      // ✅ Chuẩn hoá address_line dạng object
+      const { address_line, note, addressType, address_type, is_primary } = address;
       let normalizedAddressLine;
+
       if (typeof address_line === "object" && address_line !== null) {
         const { detail, ward, district, city } = address_line;
-        normalizedAddressLine = {
-          detail: detail || "",
-          ward: ward || "",
-          district: district || "",
-          city: city || "",
-        };
+        normalizedAddressLine = { detail, ward, district, city };
       } else {
         normalizedAddressLine = {
           detail: address_line || "",
@@ -161,23 +212,21 @@ const updateCurrentUser = async (req, res) => {
       const addrType = addressType || address_type || "Nhà";
       const isPrimary = is_primary ?? true;
 
-      // 📬 Kiểm tra địa chỉ hiện có
+      console.log("[DEBUG] normalizedAddressLine (user):", normalizedAddressLine);
+
       const existingAddresses = await addressService.getUserAddresses(userId);
       const defaultAddr = await addressService.getDefaultAddress(userId);
 
+      console.log(`[DEBUG] User hiện có ${existingAddresses.length} địa chỉ.`);
       if (!existingAddresses.length) {
-        // 🆕 User chưa có địa chỉ → tạo mới
+        console.log("[DEBUG] → Tạo địa chỉ đầu tiên cho user.");
         updatedAddress = await addressService.createAddressForUser(
           userId,
-          {
-            address_line: normalizedAddressLine,
-            note: noteValue,
-            address_type: addrType,
-          },
+          { address_line: normalizedAddressLine, note: noteValue, address_type: addrType },
           isPrimary
         );
       } else if (defaultAddr) {
-        // 🔄 Đã có default → cập nhật lại
+        console.log(`[DEBUG] → Cập nhật địa chỉ mặc định ID=${defaultAddr.address_id}`);
         updatedAddress = await addressService.updateAddress(defaultAddr.address_id, {
           address_line: normalizedAddressLine,
           note: noteValue,
@@ -185,52 +234,50 @@ const updateCurrentUser = async (req, res) => {
           is_default: isPrimary,
         });
       } else {
-        // 🆕 Có địa chỉ nhưng chưa có default → thêm mới và đặt mặc định
+        console.log("[DEBUG] → Tạo địa chỉ mới khác cho user.");
         updatedAddress = await addressService.createAddressForUser(
           userId,
-          {
-            address_line: normalizedAddressLine,
-            note: noteValue,
-            address_type: addrType,
-          },
+          { address_line: normalizedAddressLine, note: noteValue, address_type: addrType },
           true
         );
       }
+      console.log("[DEBUG] updatedAddress:", updatedAddress);
     }
 
-    // 🔁 Cập nhật lại session
-    req.session.user = updatedUser;
+    // 🔁 Reload lại user đầy đủ (bao gồm shop_profile và addresses)
+    console.log("[DEBUG] → Reload lại user và địa chỉ sau khi cập nhật...");
+    await new Promise((r) => setTimeout(r, 200)); // đợi DB commit
+    const reloadedUser = await userService.getUserById(userId);
+    const normalizedAddresses = await addressService.getNormalizedUserAddresses(userId);
+    reloadedUser.addresses = normalizedAddresses;
+
+    console.log("[DEBUG] ✅ Dữ liệu user sau update:", JSON.stringify(reloadedUser, null, 2));
+
+    // 🔁 Cập nhật session
+    req.session.user = reloadedUser;
     await req.session.save();
 
-    // ✅ Trả kết quả về FE
+    console.log("[DEBUG] ✅ Session đã được cập nhật!");
+
+    // ✅ Trả về kết quả
     return res.status(200).json({
       success: true,
       message: "✅ Hồ sơ đã được cập nhật thành công!",
-      user: {
-        ...updatedUser,
-        address: updatedAddress
-          ? {
-              address_line:
-                typeof updatedAddress.address_line === "string"
-                  ? JSON.parse(updatedAddress.address_line)
-                  : updatedAddress.address_line,
-              note: updatedAddress.note,
-              address_type: updatedAddress.address_type,
-              is_default: updatedAddress.is_primary,
-            }
-          : null,
-      },
+      user: reloadedUser,
     });
   } catch (error) {
-    console.error("⚠️ Lỗi updateCurrentUser:", error);
+    console.error("❌ [ERROR] updateCurrentUser:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server khi hoàn tất hồ sơ người dùng.",
+      error: error.message,
     });
   }
 };
 
-// 📌 Xoá tài khoản user hiện tại
+/**
+ * 📌 Xoá tài khoản user hiện tại
+ */
 const deleteCurrentUser = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
@@ -249,18 +296,22 @@ const deleteCurrentUser = async (req, res) => {
       });
     }
 
-    return res
-      .status(200)
-      .json({ success: true, message: "✅ Tài khoản đã được xoá thành công." });
+    return res.status(200).json({
+      success: true,
+      message: "✅ Tài khoản đã được xoá thành công.",
+    });
   } catch (error) {
     console.error("⚠️ Lỗi deleteCurrentUser:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Lỗi server khi xoá người dùng." });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi xoá người dùng.",
+    });
   }
 };
 
-// 📌 Khoá tài khoản user hiện tại
+/**
+ * 📌 Khoá tài khoản user hiện tại
+ */
 const lockCurrentUser = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
@@ -286,23 +337,25 @@ const lockCurrentUser = async (req, res) => {
     });
   } catch (error) {
     console.error("⚠️ Lỗi lockCurrentUser:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Lỗi server khi khoá tài khoản." });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi khoá tài khoản.",
+    });
   }
 };
 
-// 📌 Tìm người dùng theo username
+/**
+ * 📌 Tìm người dùng theo username/email/phone
+ */
 const getUserByUsername = async (req, res) => {
   try {
     const { username } = req.params;
     const user = await userService.getUserByUsername(username);
-    if (!user) {
+    if (!user)
       return res.status(404).json({
         success: false,
         message: "❌ Không tìm thấy người dùng với username này!",
       });
-    }
     return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByUsername:", error);
@@ -313,17 +366,15 @@ const getUserByUsername = async (req, res) => {
   }
 };
 
-// 📌 Tìm người dùng theo email
 const getUserByEmail = async (req, res) => {
   try {
     const { email } = req.params;
     const user = await userService.getUserByEmail(email);
-    if (!user) {
+    if (!user)
       return res.status(404).json({
         success: false,
         message: "❌ Không tìm thấy người dùng với email này!",
       });
-    }
     return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByEmail:", error);
@@ -334,17 +385,15 @@ const getUserByEmail = async (req, res) => {
   }
 };
 
-// 📌 Tìm người dùng theo số điện thoại
 const getUserByPhone = async (req, res) => {
   try {
     const { phone } = req.params;
     const user = await userService.getUserByPhone(phone);
-    if (!user) {
+    if (!user)
       return res.status(404).json({
         success: false,
         message: "❌ Không tìm thấy người dùng với số điện thoại này!",
       });
-    }
     return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("⚠️ Lỗi getUserByPhone:", error);
