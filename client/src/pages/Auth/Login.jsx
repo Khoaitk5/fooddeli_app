@@ -29,6 +29,7 @@ const Login = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: idToken }),
+        credentials: "include", // ⚡ để gửi cookie session
       });
 
       // 🔹 Xử lý lỗi theo status code
