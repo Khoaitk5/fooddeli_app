@@ -45,6 +45,30 @@ const Home = () => {
 
             if (data.success) {
               setVideos(data.data);
+
+              // ✅ Kiểm tra tym cho từng video (song song)
+              const checkPromises = data.data.map(async (video, index) => {
+                try {
+                  const res = await fetch(
+                    "http://localhost:5000/api/video-likes/check",
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({ video_id: video.video_id }),
+                    }
+                  );
+
+                  const result = await res.json();
+                  if (result.success && result.liked) {
+                    setLikedVideos((prev) => new Set(prev).add(index));
+                  }
+                } catch (err) {
+                  console.warn("⚠️ Lỗi khi kiểm tra like video:", err);
+                }
+              });
+
+              await Promise.all(checkPromises);
             } else {
               console.error("Không lấy được video:", data.message);
             }
@@ -111,27 +135,49 @@ const Home = () => {
   };
 
   // 🔹 Xử lý Like
-  const handleHeartClick = (videoIndex, e) => {
+  const handleHeartClick = async (videoIndex, e) => {
     e.stopPropagation();
     e.preventDefault();
-    setLikedVideos((prev) => {
-      const newLiked = new Set(prev);
-      const wasLiked = newLiked.has(videoIndex);
-      if (wasLiked) {
-        newLiked.delete(videoIndex);
-        setLikeCounts((prevCounts) => ({
-          ...prevCounts,
-          [videoIndex]: Math.max((prevCounts[videoIndex] || 0) - 1, 0),
+
+    const video = videos[videoIndex];
+    if (!video || !video.video_id) return;
+
+    const isLiked = likedVideos.has(videoIndex);
+    const endpoint = isLiked
+      ? "http://localhost:5000/api/video-likes/unlike"
+      : "http://localhost:5000/api/video-likes/like";
+
+    // 🟢 DEBUG FE
+    console.log("🎯 [DEBUG] Endpoint:", endpoint);
+    console.log("📦 [DEBUG] Request body:", { video_id: video.video_id });
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ video_id: video.video_id }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setLikedVideos((prev) => {
+          const newSet = new Set(prev);
+          if (isLiked) newSet.delete(videoIndex);
+          else newSet.add(videoIndex);
+          return newSet;
+        });
+
+        // ✅ Cập nhật likes_count thực tế
+        setLikeCounts((prev) => ({
+          ...prev,
+          [videoIndex]: video.likes_count + (isLiked ? -1 : 1), // tăng hoặc giảm
         }));
       } else {
-        newLiked.add(videoIndex);
-        setLikeCounts((prevCounts) => ({
-          ...prevCounts,
-          [videoIndex]: (prevCounts[videoIndex] || 0) + 1,
-        }));
+        console.warn("⚠️ Lỗi khi tym:", data.message);
       }
-      return newLiked;
-    });
+    } catch (err) {
+      console.error("❌ Lỗi khi gọi API like/unlike:", err);
+    }
   };
 
   // 🔹 Xử lý Bookmark
@@ -279,7 +325,11 @@ const Home = () => {
                 style={{ cursor: "pointer" }}
               />
               <div style={countStyle}>
-                {formatCount(video.likes_count || likeCounts[index] || 0)}
+                {formatCount(
+                  likeCounts[index] !== undefined
+                    ? likeCounts[index]
+                    : video.likes_count || 0
+                )}
               </div>
 
               <CommentIcon onClick={() => setShowMessagePopup(true)} />
