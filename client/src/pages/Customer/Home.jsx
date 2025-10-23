@@ -234,7 +234,7 @@ const Home = () => {
                   borderRadius: 9999,
                   cursor: "pointer",
                 }}
-                src={"/KFC_logo.png"}
+                src={video.shop_avatar || "/default-avatar.png"}
                 onClick={() =>
                   navigate(`/customer/restaurant/${video.shop_name || "shop"}`)
                 }

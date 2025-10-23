@@ -103,6 +103,7 @@ class VideoDao extends GenericDao {
         v.views_count, v.likes_count, v.comments_count, 
         s.id AS shop_id, s.shop_name, s.description AS shop_description,
         u.rating AS shop_rating,
+        u.avatar_url AS shop_avatar,
         a.lat_lon->>'lat' AS lat,
         a.lat_lon->>'lon' AS lng
       FROM videos v
