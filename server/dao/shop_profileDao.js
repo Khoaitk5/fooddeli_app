@@ -31,7 +31,13 @@ class ShopProfileDao extends GenericDao {
       WHERE sp.id = $1
     `;
     const result = await pool.query(query, [shopId]);
-    return result.rows[0] ? new ShopProfile(result.rows[0]) : null;
+    if (result.rows[0]) {
+    const shop = new ShopProfile(result.rows[0]);
+    shop.user_id = result.rows[0].user_id; // ✅ Thêm dòng này
+    return shop;
+  }
+
+  return null;
   }
 
   /**

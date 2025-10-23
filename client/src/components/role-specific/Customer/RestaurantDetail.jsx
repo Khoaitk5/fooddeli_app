@@ -41,6 +41,24 @@ export default function RestaurantDetail() {
         if (shopDataRes.success) {
           setShop(shopDataRes.data.shop);
           setVideos(shopDataRes.data.videos || []);
+
+          // ✅ Kiểm tra follow ngay sau khi load shop detail
+          const shopUserId = shopDataRes.data.shop.user_id;
+          const checkRes = await fetch(
+            "http://localhost:5000/api/follows/check",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ shopUserId }),
+            }
+          );
+
+          const checkData = await checkRes.json();
+          if (checkData.success) {
+            setIsFollowing(checkData.isFollowing);
+            console.log("📍 Follow status:", checkData.isFollowing);
+          }
         }
 
         const menuRes = await fetch(
@@ -149,7 +167,55 @@ export default function RestaurantDetail() {
         {/* Follow button */}
         <motion.button
           whileTap={{ scale: 0.96 }}
-          onClick={() => setIsFollowing(!isFollowing)}
+          onClick={async () => {
+            try {
+              // ✅ Log bước đầu tiên
+              console.log("🧠 [DEBUG] Follow button clicked!");
+              console.log("👉 isFollowing:", isFollowing);
+              console.log("👉 shop.user_id:", shop.user_id);
+
+              const endpoint = isFollowing
+                ? "http://localhost:5000/api/follows/unfollow"
+                : "http://localhost:5000/api/follows/follow";
+
+              console.log("🌐 [DEBUG] Sending request to:", endpoint);
+
+              const res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include", // ⚡ để gửi cookie session
+                body: JSON.stringify({ shopUserId: shop.user_id }),
+              });
+
+              // ✅ Log response cơ bản
+              console.log("📡 [DEBUG] Response status:", res.status);
+              const text = await res.text();
+              console.log("📦 [DEBUG raw body]:", text);
+
+              // ✅ Parse JSON cẩn thận
+              let data = {};
+              try {
+                data = JSON.parse(text);
+              } catch (err) {
+                console.warn("⚠️ [DEBUG] Không parse được JSON:", err);
+              }
+
+              console.log("✅ [DEBUG] Parsed response data:", data);
+
+              // ✅ Kiểm tra kết quả
+              if (res.ok && data.success) {
+                console.log("🎉 [DEBUG] Follow/unfollow thành công!");
+                setIsFollowing(!isFollowing);
+              } else {
+                console.warn(
+                  "⚠️ [DEBUG] Follow/unfollow thất bại:",
+                  data.message
+                );
+              }
+            } catch (err) {
+              console.error("❌ [DEBUG] Lỗi khi gọi API follow/unfollow:", err);
+            }
+          }}
           style={{
             width: "100%",
             marginTop: 20,

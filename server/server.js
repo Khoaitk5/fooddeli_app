@@ -7,6 +7,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", 1); // ✅ Cần cho express-session để cookie hoạt động đúng
 
 // ✅ CORS cấu hình chuẩn để gửi cookie session
 app.use(
@@ -41,6 +42,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const productRoutes = require("./routes/productRoutes");
 const videoRoutes = require("./routes/videoRoutes");
 const shopRoutes = require("./routes/shopRoutes");
+const followRoutes = require("./routes/followRoutes");
 
 // ✅ Mount routes
 app.use("/api/users", userRoutes);
@@ -49,6 +51,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/shops", shopRoutes);
+app.use("/api/follows", followRoutes);
 
 // ✅ Route test nhanh
 app.get("/debug", (req, res) => {
