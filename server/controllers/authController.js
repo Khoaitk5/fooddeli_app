@@ -10,10 +10,11 @@ const jwt = require("jsonwebtoken");
 const { createSession } = require("../services/sessionService");
 
 // ✅ Khởi tạo Firebase Admin toàn cục
-let admin;
+let admin, auth;
 try {
-  admin = require("../config/firebase");
-  console.log("✅ Firebase admin loaded thành công");
+  // Lấy đúng named exports từ file cấu hình
+  ({ admin, auth } = require("../config/firebase"));
+  console.log("✅ Firebase Admin đã load (auth + storage)");
 } catch (e) {
   console.error("❌ Lỗi khi require firebase:", e);
 }
@@ -179,7 +180,8 @@ exports.verifyPhone = async (req, res) => {
     }
 
     // ✅ Xác thực token từ Firebase
-    const decoded = await admin.auth().verifyIdToken(token);
+    const decoded = await auth.verifyIdToken(token);
+
     const phoneNumber = decoded.phone_number;
 
     console.log("📞 Firebase xác thực thành công:", phoneNumber);

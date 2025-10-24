@@ -69,6 +69,10 @@ import ShipperProfile from './pages/Shipper/Profile';
 import EditProfile from './pages/Shipper/EditProfile';
 import ShipperWallet from './pages/Shipper/Wallet';
 
+
+// Test
+import UploadImageTest from './pages/Test/UploadImageTest';
+
 // 🧠 App Component
 function App() {
   console.log("🧠DEBUG: [App] Rendered!");
@@ -156,8 +160,12 @@ function App() {
           <Route path="*" element={<Navigate to="/admin/dashboard" />} />
         </Route>
 
+        {/* Test Upload Firebase */}
+        <Route path="/test/upload" element={<UploadImageTest />} />
+        
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/login" />} />
+
       </Routes>
     </AuthProvider>
   );
