@@ -1,45 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import axios from "axios";
+import { CircularProgress, Box, Typography } from "@mui/material";
 
-const BarChartMini = ({
-  data = [14, 18, 22, 19, 25, 28],
-  labels = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
-  width = '100%',
-  height = 280,
-  color = '#F9704B'
-}) => {
-  const max = Math.max(...data, 1);
-  const viewWidth = 620;
-  const viewHeight = 280;
-  const pad = 28;
-  const barGap = 16;
-  const innerWidth = viewWidth - pad * 2;
-  const barWidth = (innerWidth - (data.length - 1) * barGap) / data.length;
+const BarChartMini = ({ endpoint = "/api/admin/stats/dashboard/monthly" }) => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const scaleY = (v) => pad + (1 - v / max) * (viewHeight - pad * 2);
+  useEffect(() => {
+    axios.get(`http://localhost:5000${endpoint}`)
+      .then(res => {
+        // API trả về { items: [ { month: 'Jan', revenue: 12345 }, ... ] }
+        const formatted = res.data.items.map(i => ({
+          name: i.month,
+          revenue: Number(i.revenue) || 0
+        }));
+        setData(formatted);
+      })
+      .catch(err => console.error("❌ Lỗi lấy dữ liệu BarChart:", err))
+      .finally(() => setLoading(false));
+  }, [endpoint]);
 
-  const yGrid = 4;
-  const gridLines = Array.from({ length: yGrid + 1 }, (_, i) => pad + (i * (viewHeight - pad * 2)) / yGrid);
+  if (loading)
+    return (
+      <Box textAlign="center" py={4}>
+        <CircularProgress size={20} />
+        <Typography variant="caption" display="block" sx={{ mt: 1 }}>Đang tải...</Typography>
+      </Box>
+    );
 
   return (
-    <svg viewBox={`0 0 ${viewWidth} ${viewHeight}`} width={width} height={height} style={{ display: 'block' }}>
-      {gridLines.map((y, i) => (
-        <line key={i} x1={pad} y1={y} x2={viewWidth - pad} y2={y} stroke="#eee" strokeWidth={1} />
-      ))}
-      {data.map((v, i) => {
-        const x = pad + i * (barWidth + barGap);
-        const y = scaleY(v);
-        const h = viewHeight - pad - y;
-        return <rect key={i} x={x} y={y} width={barWidth} height={h} rx={6} fill={color} />;
-      })}
-      {labels.map((t, i) => {
-        const x = pad + i * (barWidth + barGap) + barWidth / 2;
-        return (
-          <text key={t} x={x} y={viewHeight - 6} fontSize={12} fill="#9aa1a9" textAnchor="middle">{t}</text>
-        );
-      })}
-    </svg>
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip formatter={(v) => v.toLocaleString("vi-VN") + " ₫"} />
+        <Bar dataKey="revenue" fill="#4caf50" radius={[4, 4, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
   );
 };
 
 export default BarChartMini;
-
