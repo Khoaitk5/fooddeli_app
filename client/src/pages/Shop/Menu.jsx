@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
   Button,
   IconButton,
   TextField,
-  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -15,18 +14,17 @@ import {
   CardMedia,
   Chip,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  AddCircleOutline,
-  RemoveCircleOutline,
 } from "@mui/icons-material";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
-import { Snackbar, Alert } from "@mui/material";
 
 const API_URL = "http://localhost:5000/api/images/upload";
 
@@ -48,10 +46,66 @@ const MenuManagement = () => {
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Tải sản phẩm của shop hiện tại
+  useEffect(() => {
+    const loadProductsByShop = async () => {
+      try {
+        const userRes = await fetch("http://localhost:5000/api/users/me", {
+          credentials: "include",
+        });
+        const me = await userRes.json();
+
+        // Lấy đúng shopId (không dùng shop_profile.id)
+        const shopId =
+          me?.user?.shop_profile?.shop_profile_id ??
+          me?.shop_profile?.shop_profile_id ??
+          me?.user?.shop_profile?.shop_id ??
+          me?.shop_profile?.shop_id ??
+          null;
+
+        if (!shopId) {
+          console.warn("[Menu] Không tìm thấy shopId hợp lệ từ /api/users/me");
+          return;
+        }
+
+        const productRes = await fetch(
+          "http://localhost:5000/api/products/by-shop",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ shopId: Number(shopId) }),
+          }
+        );
+        const resp = await productRes.json();
+        const products = Array.isArray(resp?.data) ? resp.data : [];
+
+        const active = products.filter((p) => p?.is_available === true);
+        const formatted = active.map((p) => ({
+          id: p.product_id,
+          name: p.name || "",
+          description: p.description || "",
+          price: Number(p.price) || 0,
+          image: p.image_url || "",
+          category: p.category || "Khác",
+          preparationTime: Number(p.prep_minutes) || 0,
+          status: p.is_available ? "active" : "inactive",
+          hasVideo: false,
+        }));
+
+        setMenuItems(formatted);
+      } catch (e) {
+        console.error("❌ Lỗi loadProductsByShop:", e);
+      }
+    };
+
+    loadProductsByShop();
+  }, []);
+
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
+      maximumFractionDigits: 0,
     }).format(price);
 
   const handleAdd = () => {
@@ -64,8 +118,8 @@ const MenuManagement = () => {
       image: "",
       preparationTime: "",
     });
-    setImagePreview(""); // reset preview khi tạo mới
-    setSelectedImageFile(null); // xóa file ảnh tạm đã chọn
+    setImagePreview("");
+    setSelectedImageFile(null);
     setUploadError("");
     setIsDialogOpen(true);
   };
@@ -80,13 +134,13 @@ const MenuManagement = () => {
       image: item.image,
       preparationTime: String(item.preparationTime),
     });
-    setImagePreview(item.image); // ✅ giữ preview cũ khi sửa
-    setSelectedImageFile(null); // xóa file ảnh tạm đã chọn
+    setImagePreview(item.image);
+    setSelectedImageFile(null);
     setUploadError("");
     setIsDialogOpen(true);
   };
 
-  // 🖼️ Chọn ảnh (chỉ lưu tạm & hiển thị preview)
+  // Chọn ảnh (preview cục bộ)
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -95,9 +149,8 @@ const MenuManagement = () => {
     setUploadError("");
   };
 
-  // 💾 Lưu món ăn
+  // Lưu món ăn (upload ảnh khi submit)
   const handleSave = async () => {
-    // 1) VALIDATE cơ bản
     if (!selectedImageFile && !formData.image) {
       setUploadError("⚠️ Vui lòng chọn ảnh sản phẩm trước khi lưu!");
       return;
@@ -107,8 +160,7 @@ const MenuManagement = () => {
       return;
     }
 
-    // 2) (NẾU CÓ) UPLOAD ẢNH LÊN SERVER → FIREBASE
-    let imageUrl = formData.image; // nếu đang sửa và chưa đổi ảnh, dùng ảnh cũ
+    let imageUrl = formData.image;
     if (selectedImageFile) {
       setUploading(true);
       setUploadError("");
@@ -126,69 +178,51 @@ const MenuManagement = () => {
         if (!res.ok || !data.imageUrl) {
           setUploadError(data?.error || "Upload thất bại!");
           setUploading(false);
-          return; // ❌ DỪNG TẠI ĐÂY nếu upload lỗi — KHÔNG hiện success
+          return;
         }
 
-        // ✅ Upload thành công → đã có URL public
-        console.log("📸 Ảnh đã upload lên Firebase:", data.imageUrl);
         imageUrl = data.imageUrl;
       } catch (err) {
         console.error("❌ Lỗi upload:", err);
         setUploadError("Không thể upload ảnh lên server!");
         setUploading(false);
-        return; // ❌ DỪNG TẠI ĐÂY nếu upload lỗi — KHÔNG hiện success
+        return;
       } finally {
         setUploading(false);
       }
     }
 
-    // 3) TẠO ĐỐI TƯỢNG MÓN ĂN
     const newItem = {
       id: editingItem ? editingItem.id : Date.now(),
       ...formData,
-      image: imageUrl, // 🔗 dùng URL đã upload (hoặc ảnh cũ nếu không đổi)
+      image: imageUrl,
       price: parseInt(formData.price, 10) || 0,
       preparationTime: parseInt(formData.preparationTime, 10) || 0,
       status: "active",
       hasVideo: false,
     };
 
-    // 4) (TODO) GỬI newItem LÊN API THẬT TẠI ĐÂY NẾU CẦN
-    console.log("📦 [TODO] Gửi thông tin sản phẩm:", newItem);
-
-    // 5) CẬP NHẬT DANH SÁCH Ở UI
+    // TODO: gọi API tạo/cập nhật sản phẩm ở đây nếu cần
     if (editingItem) {
-      setMenuItems((items) => items.map((i) => (i.id === editingItem.id ? newItem : i)));
+      setMenuItems((items) =>
+        items.map((i) => (i.id === editingItem.id ? newItem : i))
+      );
     } else {
       setMenuItems((items) => [newItem, ...items]);
     }
 
-    // 6) ✅ HIỂN THỊ THÔNG BÁO THÀNH CÔNG
     setSuccessMessage(
       editingItem
         ? "✅ Ảnh đã được upload và món ăn đã được cập nhật thành công!"
         : "✅ Ảnh đã được upload và món ăn đã được thêm thành công!"
     );
 
-    // 7) ĐÓNG DIALOG & RESET CÁC TRẠNG THÁI TẠM
     setIsDialogOpen(false);
-    setSelectedImageFile(null); // bỏ file tạm
-    // KHÔNG xóa imagePreview: để user thấy kết quả ngoài danh sách
+    setSelectedImageFile(null);
   };
 
   const handleDelete = (id) =>
     setMenuItems((items) => items.filter((i) => i.id !== id));
-
-  // 🎛️ Điều chỉnh giá / thời gian
-  const adjustValue = (field, delta, step = 1) => {
-    setFormData((prev) => {
-      const current = parseInt(prev[field] || "0", 10);
-      let next = current + delta * step;
-      if (field === "price") next = Math.max(0, next);
-      if (field === "preparationTime") next = Math.max(0, next);
-      return { ...prev, [field]: String(next) };
-    });
-  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -233,106 +267,156 @@ const MenuManagement = () => {
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={3}>
+        // ✅ CSS GRID (không phụ thuộc Grid2), responsive + đồng đều
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2, // nhỏ hơn
+            gridTemplateColumns: {
+              xs: "1fr",               // mobile: 1 cột
+              sm: "repeat(2, 1fr)",    // tablet: 2 cột
+              md: "repeat(3, 1fr)",    // laptop: 3 cột
+              lg: "repeat(4, 1fr)",    // desktop: 4 cột ✅
+              xl: "repeat(4, 1fr)",
+            },
+            alignItems: "stretch",
+            px: { xs: 1.5, sm: 2, md: 3 },
+          }}
+        >
           {menuItems.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.id}>
-              <Card sx={{ overflow: "hidden" }}>
-                <Box sx={{ position: "relative" }}>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={item.image}
-                    alt={item.name}
+            <Card
+              key={item.id}
+              sx={{
+                height: { xs: 420, sm: 460, md: 500 },
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                borderRadius: 2,
+              }}
+            >
+              {/* Ảnh: tỉ lệ cố định */}
+              <Box
+                sx={{
+                  position: "relative",
+                  width: "100%",
+                  aspectRatio: "4 / 3",
+                  bgcolor: "rgba(0,0,0,0.04)",
+                  flexShrink: 0,
+                }}
+              >
+                <CardMedia
+                  component="img"
+                  image={item.image || ""}
+                  alt={item.name}
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                  onError={(e) => (e.currentTarget.style.visibility = "hidden")}
+                />
+                {item.hasVideo && (
+                  <Chip
+                    size="small"
+                    color="error"
+                    icon={<VideoLibraryIcon sx={{ fontSize: 16 }} />}
+                    label="Video"
+                    sx={{ position: "absolute", top: 8, right: 8 }}
                   />
-                  {item.hasVideo && (
-                    <Chip
-                      size="small"
-                      color="error"
-                      icon={<VideoLibraryIcon sx={{ fontSize: 16 }} />}
-                      label="Video"
-                      sx={{ position: "absolute", top: 8, right: 8 }}
-                    />
-                  )}
+                )}
+              </Box>
+
+              {/* Nội dung */}
+              <CardContent
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1.25,
+                  flexGrow: 1,
+                  pb: 1.5,
+                }}
+              >
+                {/* Tiêu đề: 1 dòng */}
+                <Typography
+                  fontWeight={700}
+                  sx={{
+                    lineHeight: 1.4,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    minHeight: 24,
+                  }}
+                >
+                  {item.name}
+                </Typography>
+
+                {/* Mô tả: 2 dòng */}
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    minHeight: 40,
+                  }}
+                >
+                  {item.description}
+                </Typography>
+
+                {/* Chips */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    minHeight: 32,
+                  }}
+                >
+                  <Chip label={item.category || "Khác"} variant="outlined" size="small" />
+                  <Chip
+                    label={item.status === "active" ? "Đang bán" : "Tạm ngưng"}
+                    size="small"
+                    color={item.status === "active" ? "success" : "default"}
+                  />
                 </Box>
-                <CardContent>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                    <Typography fontWeight={600} noWrap>
-                      {item.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {item.description}
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Chip
-                        label={item.category}
-                        variant="outlined"
-                        size="small"
-                      />
-                      <Chip
-                        label={item.status === "active" ? "Đang bán" : "Tạm ngưng"}
-                        size="small"
-                        color={item.status === "active" ? "success" : "default"}
-                      />
-                    </Box>
 
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        color: "text.secondary",
-                      }}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <AttachMoneyIcon sx={{ fontSize: 18 }} />
-                        <Typography color="text.primary" fontWeight={500}>
-                          {formatPrice(item.price)}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <AccessTimeIcon sx={{ fontSize: 18 }} />
-                        <Typography>{item.preparationTime} phút</Typography>
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ display: "flex", gap: 1, pt: 1 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={() => handleEdit(item)}
-                        sx={{ flex: 1 }}
-                      >
-                        Sửa
-                      </Button>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
+                {/* Giá + Thời gian */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, minHeight: 24 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <AttachMoneyIcon sx={{ fontSize: 18 }} />
+                    <Typography fontWeight={600}>{formatPrice(item.price)}</Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <AccessTimeIcon sx={{ fontSize: 18 }} />
+                    <Typography>{item.preparationTime} phút</Typography>
+                  </Box>
+                </Box>
+
+                {/* Hành động: bám đáy */}
+                <Box sx={{ display: "flex", gap: 1, mt: "auto" }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => handleEdit(item)}
+                    fullWidth
+                    sx={{ minHeight: 36 }}
+                  >
+                    SỬA
+                  </Button>
+                  <IconButton size="small" onClick={() => handleDelete(item.id)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Dialog thêm/sửa món */}
@@ -350,18 +434,14 @@ const MenuManagement = () => {
             <TextField
               label="Tên món"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               fullWidth
               size="small"
             />
             <TextField
               label="Mô tả"
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               fullWidth
               size="small"
               multiline
@@ -370,7 +450,6 @@ const MenuManagement = () => {
 
             {/* Giá và Thời gian làm */}
             <Box sx={{ display: "flex", gap: 2 }}>
-              {/* Giá */}
               <Box sx={{ flex: 1 }}>
                 <Typography variant="body2" sx={{ mb: 0.5 }}>
                   Giá (VND)
@@ -379,19 +458,15 @@ const MenuManagement = () => {
                   type="number"
                   value={formData.price}
                   onChange={(e) => {
-                    const val = Math.max(0, Math.floor(e.target.value / 1000) * 1000);
+                    const val = Math.max(0, Math.floor((+e.target.value || 0) / 1000) * 1000);
                     setFormData({ ...formData, price: val.toString() });
                   }}
                   size="small"
                   fullWidth
-                  inputProps={{
-                    step: 1000, // mỗi lần tăng/giảm 1000
-                    min: 0,
-                  }}
+                  inputProps={{ step: 1000, min: 0 }}
                 />
               </Box>
 
-              {/* Thời gian làm */}
               <Box sx={{ flex: 1 }}>
                 <Typography variant="body2" sx={{ mb: 0.5 }}>
                   Thời gian làm (phút)
@@ -405,10 +480,7 @@ const MenuManagement = () => {
                   }}
                   size="small"
                   fullWidth
-                  inputProps={{
-                    step: 1,
-                    min: 0,
-                  }}
+                  inputProps={{ step: 1, min: 0 }}
                 />
               </Box>
             </Box>
@@ -416,9 +488,7 @@ const MenuManagement = () => {
             <TextField
               label="Danh mục"
               value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               fullWidth
               size="small"
             />
@@ -428,20 +498,11 @@ const MenuManagement = () => {
               <Typography variant="body2" sx={{ mb: 1 }}>
                 Hình ảnh sản phẩm
               </Typography>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                disabled={uploading}
-              />
+              <input type="file" accept="image/*" onChange={handleImageSelect} disabled={uploading} />
               {uploading && (
-                <Box
-                  sx={{ display: "flex", alignItems: "center", mt: 1, gap: 1 }}
-                >
+                <Box sx={{ display: "flex", alignItems: "center", mt: 1, gap: 1 }}>
                   <CircularProgress size={20} />
-                  <Typography color="text.secondary">
-                    Đang tải ảnh lên...
-                  </Typography>
+                  <Typography color="text.secondary">Đang tải ảnh lên...</Typography>
                 </Box>
               )}
               {uploadError && (
@@ -472,11 +533,7 @@ const MenuManagement = () => {
           <Button onClick={handleSave} variant="contained">
             {editingItem ? "Cập nhật" : "Thêm món"}
           </Button>
-          <Button
-            onClick={() => setIsDialogOpen(false)}
-            variant="outlined"
-            color="inherit"
-          >
+          <Button onClick={() => setIsDialogOpen(false)} variant="outlined" color="inherit">
             Hủy
           </Button>
         </DialogActions>
@@ -489,15 +546,10 @@ const MenuManagement = () => {
         onClose={() => setSuccessMessage("")}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setSuccessMessage("")}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={() => setSuccessMessage("")} severity="success" sx={{ width: "100%" }}>
           {successMessage}
         </Alert>
       </Snackbar>
-
     </Box>
   );
 };
