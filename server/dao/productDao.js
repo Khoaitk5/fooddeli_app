@@ -114,7 +114,7 @@ class ProductDao extends GenericDao {
    */
   async getAllCategories() {
     try {
-      console.log("🟢 [DAO] Bắt đầu truy vấn danh mục...");
+      //console.log("🟢 [DAO] Bắt đầu truy vấn danh mục...");
 
       const query = `
         SELECT DISTINCT category
@@ -124,11 +124,11 @@ class ProductDao extends GenericDao {
         LIMIT 4;
       `;
 
-      console.log("📜 [DAO] Query:", query);
+      //console.log("📜 [DAO] Query:", query);
 
       const result = await pool.query(query);
 
-      console.log("✅ [DAO] Query thành công. Kết quả:", result.rows);
+      //console.log("✅ [DAO] Query thành công. Kết quả:", result.rows);
 
       if (!result.rows.length) {
         console.warn("⚠️ [DAO] Không tìm thấy danh mục nào trong DB.");

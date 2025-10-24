@@ -82,6 +82,35 @@ export default function RestaurantDetail() {
     fetchData();
   }, [shopId]);
 
+  // 🛒 Hàm thêm món vào giỏ hàng
+const handleAddToCart = async (item) => {
+  try {
+    const res = await fetch("http://localhost:5000/api/cart/items", {
+      method: "POST",
+      credentials: "include", // để gửi session cookie
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        shop_id: shop.id,          // id cửa hàng hiện tại
+        product_id: item.product_id, // id sản phẩm
+        quantity: 1,
+        unit_price: item.price
+      }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log("✅ Đã thêm vào giỏ hàng:", item.name);
+      alert(`✅ Đã thêm "${item.name}" vào giỏ hàng!`);
+    } else {
+      alert("❌ Không thể thêm vào giỏ hàng: " + data.message);
+    }
+  } catch (err) {
+    console.error("❌ Lỗi khi thêm vào giỏ hàng:", err);
+    alert("Đã xảy ra lỗi khi thêm vào giỏ hàng!");
+  }
+};
+
+
   if (loading) return <p className="text-center mt-40">Đang tải dữ liệu...</p>;
   if (!shop)
     return <p className="text-center mt-40">Không tìm thấy cửa hàng</p>;
@@ -436,6 +465,7 @@ export default function RestaurantDetail() {
                     </div>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
+                      onClick={() => handleAddToCart(item)}
                       style={{
                         border: "1.5px solid #ff6b35",
                         borderRadius: "10px",
