@@ -1,44 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import axios from "axios";
+import { CircularProgress, Box, Typography } from "@mui/material";
 
-const LineChartMini = ({
-  data = [112, 140, 168, 130, 175, 190, 170],
-  labels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-  width = '100%',
-  height = 280,
-  color = '#F9704B'
-}) => {
-  const viewWidth = 620;
-  const viewHeight = 280;
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const pad = 28;
-  const stepX = (viewWidth - pad * 2) / (data.length - 1);
-  const scaleY = (v) => {
-    const norm = (v - min) / (max - min || 1);
-    return viewHeight - pad - norm * (viewHeight - pad * 2);
-  };
+const LineChartMini = ({ endpoint = "/api/admin/stats/dashboard/weekly" }) => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const points = data.map((v, i) => [pad + i * stepX, scaleY(v)]);
-  const pathD = points.map((p, i) => (i === 0 ? `M ${p[0]},${p[1]}` : `L ${p[0]},${p[1]}`)).join(' ');
+  useEffect(() => {
+    axios.get(`http://localhost:5000${endpoint}`)
+      .then(res => {
+        // API trả về { items: [ { day: '12/10', orders: 15 }, ... ] }
+        const formatted = res.data.items.map(i => ({
+          name: i.day,
+          orders: Number(i.orders) || 0
+        }));
+        setData(formatted);
+      })
+      .catch(err => console.error("❌ Lỗi lấy dữ liệu LineChart:", err))
+      .finally(() => setLoading(false));
+  }, [endpoint]);
 
-  const yGrid = 4;
-  const gridLines = Array.from({ length: yGrid + 1 }, (_, i) => pad + (i * (viewHeight - pad * 2)) / yGrid);
+  if (loading)
+    return (
+      <Box textAlign="center" py={4}>
+        <CircularProgress size={20} />
+        <Typography variant="caption" display="block" sx={{ mt: 1 }}>Đang tải...</Typography>
+      </Box>
+    );
 
   return (
-    <svg viewBox={`0 0 ${viewWidth} ${viewHeight}`} width={width} height={height} style={{ display: 'block' }}>
-      {gridLines.map((y, i) => (
-        <line key={i} x1={pad} y1={y} x2={viewWidth - pad} y2={y} stroke="#eee" strokeWidth={1} />
-      ))}
-      <path d={pathD} fill="none" stroke={color} strokeWidth={3} />
-      {points.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={3} fill={color} />
-      ))}
-      {labels.map((t, i) => (
-        <text key={t} x={pad + i * stepX} y={viewHeight - 6} fontSize={12} fill="#9aa1a9" textAnchor="middle">{t}</text>
-      ))}
-    </svg>
+    <ResponsiveContainer width="100%" height={220}>
+      <LineChart data={data}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip formatter={(v) => `${v} đơn`} />
+        <Line
+          type="monotone"
+          dataKey="orders"
+          stroke="#2196f3"
+          strokeWidth={2}
+          dot={{ r: 3 }}
+          activeDot={{ r: 6 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
 };
 
 export default LineChartMini;
-
