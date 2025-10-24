@@ -4,9 +4,13 @@ import BackArrow from "@/components/shared/BackArrow";
 import HelpPopup from "@/components/shared/HelpPopup";
 import { auth } from "@/firebase/firebaseConfig";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { useId } from "react";
+import { OTPInput } from "input-otp";
+
+const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 const OTP = () => {
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(60);
   const [showHelpPopup, setShowHelpPopup] = useState(false);
@@ -17,8 +21,6 @@ const OTP = () => {
   const phone = location.state?.phone || "";
   const email = location.state?.email || "";
   const contact = phone || email;
-
-  const inputRefs = useRef([]);
 
   // ⏱️ Đếm ngược resend
   useEffect(() => {
@@ -43,7 +45,7 @@ const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
 
-  const otpCode = otp.join("");
+  const otpCode = otp;
   if (otpCode.length !== 6) {
     setError("Vui lòng nhập đủ 6 chữ số OTP");
     return;
@@ -87,53 +89,7 @@ const handleSubmit = async (e) => {
 
 
   // 📥 Nhập OTP từng ô
-  const handleOtpChange = (index, rawValue) => {
-    const clean = rawValue.replace(/\D/g, "");
-    const digit = clean.slice(-1) || "";
-
-    setOtp((prev) => {
-      const newOtp = [...prev];
-      newOtp[index] = digit;
-      return newOtp;
-    });
-
-    if (digit && index < otp.length - 1) {
-      setTimeout(() => inputRefs.current[index + 1]?.focus(), 50);
-    }
-  };
-
-  // ⌫ Backspace thông minh
-  const handleKeyDown = (index, e) => {
-    if (e.key === "Backspace") {
-      e.preventDefault();
-      setOtp((prev) => {
-        const newOtp = [...prev];
-
-        if (newOtp[index] !== "") {
-          // Nếu ô hiện tại có số → xoá chính nó
-          newOtp[index] = "";
-          setTimeout(() => inputRefs.current[index]?.focus(), 0);
-        } else if (index > 0) {
-          // Nếu ô hiện tại trống → xoá ô trước
-          newOtp[index - 1] = "";
-          setTimeout(() => inputRefs.current[index - 1]?.focus(), 0);
-        } else {
-          // Nếu đang ở ô đầu → focus lại ô đầu
-          setTimeout(() => inputRefs.current[0]?.focus(), 0);
-        }
-
-        return newOtp;
-      });
-    }
-  };
-
-  // 🚫 Ngăn người dùng focus tùy ý → luôn ở ô cuối cùng đã nhập hoặc tiếp theo
-  const handleFocus = (e) => {
-    const lastFilledIndex = otp.findLastIndex((digit) => digit !== "");
-    const nextIndex = lastFilledIndex === otp.length - 1 ? lastFilledIndex : lastFilledIndex + 1;
-    e.preventDefault();
-    inputRefs.current[nextIndex]?.focus();
-  };
+  // Removed old handlers, using OTPInput
 
   // 🔁 Gửi lại OTP
   const resendOtp = async () => {
@@ -155,11 +111,7 @@ const handleSubmit = async (e) => {
   };
 
   // 🔁 Auto focus ô cuối cùng mỗi khi otp thay đổi
-  useEffect(() => {
-    const lastFilledIndex = otp.findLastIndex((digit) => digit !== "");
-    const focusIndex = lastFilledIndex === -1 ? 0 : Math.min(lastFilledIndex + 1, otp.length - 1);
-    inputRefs.current[focusIndex]?.focus();
-  }, [otp]);
+  // Removed, handled by OTPInput
 
   return (
     <div
@@ -261,55 +213,19 @@ const handleSubmit = async (e) => {
             width: "300px",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              gap: "6px",
-              justifyContent: "center",
-              marginBottom: "16px",
-            }}
-          >
-            {otp.map((_, index) => (
-              <div
-                key={index}
-                style={{
-                  width: "45px",
-                  height: "48px",
-                  background: "#F2F2F2",
-                  borderRadius: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <input
-                  key={index + otp[index]}
-                  ref={(el) => (inputRefs.current[index] = el)}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  autoComplete="one-time-code"
-                  value={otp[index] || ""}
-                  onChange={(e) => handleOtpChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  onFocus={handleFocus} // ✅ ép focus đúng ô
-                  maxLength={1}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    border: "none",
-                    outline: "none",
-                    backgroundColor: "transparent",
-                    textAlign: "center",
-                    color: "black",
-                    fontSize: 24,
-                    fontFamily: 'Be Vietnam Pro',
-                    fontWeight: "600",
-                  }}
-                />
+          <OTPInput
+            maxLength={6}
+            value={otp}
+            onChange={setOtp}
+            containerClassName="flex items-center gap-3 has-disabled:opacity-50"
+            render={({ slots }) => (
+              <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginBottom: "16px" }}>
+                {slots.map((slot, idx) => (
+                  <Slot key={idx} {...slot} />
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          />
 
           {error && <div style={{ color: "red", marginBottom: "16px" }}>{error}</div>}
 
@@ -382,5 +298,25 @@ const handleSubmit = async (e) => {
     </div>
   );
 };
+
+function Slot(props) {
+  return (
+    <div
+      style={{
+        width: "45px",
+        height: "48px",
+        background: "#F2F2F2",
+        borderRadius: 8,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: props.isActive ? "2px solid #F9704B" : "1px solid #ccc",
+        transition: "border-color 0.2s",
+      }}
+    >
+      {props.char !== null && <div style={{ fontSize: 24, fontWeight: "600", color: "black" }}>{props.char}</div>}
+    </div>
+  );
+}
 
 export default OTP;

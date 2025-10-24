@@ -1,6 +1,7 @@
 // dao/cart_itemDao.js
 const GenericDao = require("./generic_dao");
 const CartItem = require("../models/cart_item");
+const pool = require("../config/db");
 
 class CartItemDao extends GenericDao {
   constructor() {
@@ -15,11 +16,29 @@ class CartItemDao extends GenericDao {
    */
   async getByCartId(cartId) {
     const query = `
-      SELECT * FROM cart_items
-      WHERE cart_id = $1
-      ORDER BY created_at DESC;
-    `;
-    const result = await this.db.query(query, [cartId]);
+    SELECT 
+      ci.id AS cart_item_id,
+      ci.cart_id,
+      ci.shop_id,
+      ci.product_id,
+      ci.quantity,
+      ci.unit_price,
+      ci.line_total,
+      ci.created_at,
+      ci.updated_at,
+      p.name AS product_name,
+      p.description AS product_description,
+      p.image_url AS product_image,
+      p.price AS product_price,
+      p.category,
+      s.shop_name
+    FROM cart_items ci
+    JOIN products p ON ci.product_id = p.product_id
+    JOIN shop_profiles s ON p.shop_id = s.id
+    WHERE ci.cart_id = $1
+    ORDER BY ci.created_at DESC;
+  `;
+    const result = await pool.query(query, [cartId]);
     return result.rows;
   }
 }

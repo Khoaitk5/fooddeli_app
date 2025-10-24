@@ -1,96 +1,78 @@
-// dao/videoLikeDao.js
-const GenericDao = require("./generic_dao");
-const VideoLike = require("../models/video_like");
+const pool = require("../config/db");
 
-class VideoLikeDao extends GenericDao {
-  constructor() {
-    super("video_likes", VideoLike);
-  }
+const videoLikeDao = {
+  // ❤️ Thêm tym
+  async likeVideo(video_id, user_id) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-  /**
-   * 📊 Lấy danh sách tất cả người đã like 1 video
-   * @param {number} videoId - ID video
-   * @returns {Promise<object[]>} - Danh sách lượt thích
-   */
-  async getLikesByVideoId(videoId) {
-    const query = `
-      SELECT vl.*, u.username, u.avatar_url
-      FROM video_likes vl
-      JOIN users u ON vl.user_id = u.id
-      WHERE vl.video_id = $1
-      ORDER BY vl.id DESC;
-    `;
-    const result = await this.db.query(query, [videoId]);
-    return result.rows;
-  }
+      // Kiểm tra nếu đã tym rồi
+      const checkQuery = `
+        SELECT 1 FROM video_likes WHERE video_id = $1 AND user_id = $2;
+      `;
+      const check = await client.query(checkQuery, [video_id, user_id]);
+      if (check.rowCount === 0) {
+        // Thêm tym
+        await client.query(
+          `INSERT INTO video_likes (video_id, user_id) VALUES ($1, $2);`,
+          [video_id, user_id]
+        );
 
-  /**
-   * 👍 Kiểm tra xem user đã like video chưa
-   * @param {number} videoId - ID video
-   * @param {number} userId - ID người dùng
-   * @returns {Promise<boolean>} - true nếu đã like, false nếu chưa
-   */
-  async hasUserLiked(videoId, userId) {
+        // +1 vào video
+        await client.query(
+          `UPDATE videos SET likes_count = likes_count + 1 WHERE video_id = $1;`,
+          [video_id]
+        );
+      }
+
+      await client.query("COMMIT");
+      return true;
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  },
+
+  // 💔 Bỏ tym
+  async unlikeVideo(video_id, user_id) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const delRes = await client.query(
+        `DELETE FROM video_likes WHERE video_id = $1 AND user_id = $2;`,
+        [video_id, user_id]
+      );
+
+      if (delRes.rowCount > 0) {
+        await client.query(
+          `UPDATE videos SET likes_count = GREATEST(likes_count - 1, 0) WHERE video_id = $1;`,
+          [video_id]
+        );
+      }
+
+      await client.query("COMMIT");
+      return delRes.rowCount > 0;
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  },
+
+  // 🔍 Kiểm tra đã tym chưa
+  async isLiked(video_id, user_id) {
     const query = `
       SELECT 1 FROM video_likes
-      WHERE video_id = $1 AND user_id = $2
-      LIMIT 1;
-    `;
-    const result = await this.db.query(query, [videoId, userId]);
-    return result.rowCount > 0;
-  }
-
-  /**
-   * ❤️ Thêm lượt thích mới (nếu chưa like)
-   * @param {number} videoId - ID video
-   * @param {number} userId - ID người dùng
-   * @returns {Promise<object>} - Bản ghi like mới
-   */
-  async addLike(videoId, userId) {
-    // Kiểm tra nếu đã like rồi thì không thêm nữa
-    const alreadyLiked = await this.hasUserLiked(videoId, userId);
-    if (alreadyLiked) {
-      throw new Error("User already liked this video");
-    }
-
-    const query = `
-      INSERT INTO video_likes (video_id, user_id)
-      VALUES ($1, $2)
-      RETURNING *;
-    `;
-    const result = await this.db.query(query, [videoId, userId]);
-    return result.rows[0];
-  }
-
-  /**
-   * 💔 Gỡ lượt thích (unlike)
-   * @param {number} videoId - ID video
-   * @param {number} userId - ID người dùng
-   * @returns {Promise<boolean>} - true nếu đã xóa, false nếu không có gì để xóa
-   */
-  async removeLike(videoId, userId) {
-    const query = `
-      DELETE FROM video_likes
       WHERE video_id = $1 AND user_id = $2;
     `;
-    const result = await this.db.query(query, [videoId, userId]);
+    const result = await pool.query(query, [video_id, user_id]);
     return result.rowCount > 0;
-  }
+  },
+};
 
-  /**
-   * 🔢 Đếm tổng số lượt thích của video
-   * @param {number} videoId - ID video
-   * @returns {Promise<number>} - Tổng lượt thích
-   */
-  async countLikes(videoId) {
-    const query = `
-      SELECT COUNT(*)::int AS total_likes
-      FROM video_likes
-      WHERE video_id = $1;
-    `;
-    const result = await this.db.query(query, [videoId]);
-    return result.rows[0]?.total_likes || 0;
-  }
-}
-
-module.exports = new VideoLikeDao();
+module.exports = videoLikeDao;

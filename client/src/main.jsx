@@ -13,7 +13,7 @@ const theme = createTheme({
     mode: "light",
     primary: { main: "#F9704B" },
     secondary: { main: "#FFB199" },
-    background: { default: "#fafafa", paper: "#ffffff" },
+    background: { default: "#fff", paper: "#ffffff" },
   },
   shape: { borderRadius: 10 },
   typography: { fontFamily: "'Be Vietnam Pro', 'Roboto', sans-serif" },

@@ -9,7 +9,9 @@ export default function Categories() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/products/categories");
+        const res = await fetch(
+          "http://localhost:5000/api/products/categories"
+        );
         const data = await res.json();
         setCategories(data);
       } catch (err) {
@@ -19,27 +21,32 @@ export default function Categories() {
     fetchCategories();
   }, []);
 
+
   // 🔹 Gắn sẵn ảnh và màu FE (BE chỉ gửi name)
   const categoryStyleMap = {
-    "Thức ăn": {
+    Combo: {
       image:
-        "https://images.unsplash.com/photo-1600891963939-a8d3d8f3c09a",
-      bgColor: "#fff7ed",
+        "https://firebasestorage.googleapis.com/v0/b/fooddeli-6d394.firebasestorage.app/o/images%2Fcategories%2Fcombo.jpg?alt=media&token=76fd243e-c2e1-4e01-85ba-85ce710c2499",
+      bgColor: "#dcfce7",
     },
     "Đồ uống": {
       image:
-        "https://images.unsplash.com/photo-1670468642364-6cacadfb7bb0",
+        "https://firebasestorage.googleapis.com/v0/b/fooddeli-6d394.firebasestorage.app/o/images%2Fcategories%2Fdrinks.jpg?alt=media&token=06c97145-4b18-40bd-ad24-71de14155a1d",
       bgColor: "#fce7f3",
+    },
+    "Thức ăn": {
+      image:
+        "https://firebasestorage.googleapis.com/v0/b/fooddeli-6d394.firebasestorage.app/o/images%2Fcategories%2Ffood.jpg?alt=media&token=6662a500-34e5-4e5d-b0e2-f91f094003e8",
+      bgColor: "#fff7ed",
     },
     "Tráng miệng": {
       image:
-        "https://images.unsplash.com/photo-1565958011705-44e211c07f4c",
+        "https://firebasestorage.googleapis.com/v0/b/fooddeli-6d394.firebasestorage.app/o/images%2Fcategories%2Fdessert.jpg?alt=media&token=289b3d12-bdf3-44a0-ab8b-24076825fa83",
       bgColor: "#f3e8ff",
     },
-    "Khác": {
-      image:
-        "https://images.unsplash.com/photo-1606787366850-de6330128bfc",
-      bgColor: "#dcfce7",
+    Khác: {
+      image: "https://images.unsplash.com/photo-1606787366850-de6330128bfc",
+      bgColor: "#e0f2fe",
     },
   };
 

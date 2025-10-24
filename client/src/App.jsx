@@ -5,6 +5,8 @@ import MobileShipperLayout from './components/layout/MobileShipperLayout';
 import DesktopLayout from './components/layout/DesktopLayout';
 import DesktopAdminLayout from './components/layout/DesktopAdminLayout';
 import { AuthProvider } from './contexts/AuthContext';
+import SplashScreen from './components/shared/SplashScreen';
+import { useState } from 'react';
 
 // Admin
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -31,7 +33,7 @@ import DeliveryManCallScreen from './pages/Customer/DeliveryManCallScreen';
 import DeliveryManMessageScreen from './pages/Customer/DeliveryManMessageScreen';
 import OrderPlaced from './pages/Customer/OrderPlaced';
 import Notifications from './pages/Customer/Notifications';
-import RestaurantDetailPage from './pages/Customer/RestaurantDetailPage';
+import RestaurantDetail from './components/role-specific/Customer/RestaurantDetail';
 import { UserProfile } from './pages/Customer/UserProfile';
 import SearchPage from './pages/Customer/SearchPage';
 import SearchResults from './components/role-specific/Customer/SearchResults';
@@ -70,6 +72,15 @@ import ShipperWallet from './pages/Shipper/Wallet';
 // 🧠 App Component
 function App() {
   console.log("🧠DEBUG: [App] Rendered!");
+  const [showSplash, setShowSplash] = useState(true);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
   return (
     <AuthProvider>
       <Routes>
@@ -101,9 +112,8 @@ function App() {
           <Route path="delivery-man-message" element={<DeliveryManMessageScreen />} />
           <Route path="order-placed" element={<OrderPlaced />} />
           <Route path="notifications" element={<Notifications />} />
-          <Route path="restaurant/:id" element={<RestaurantDetailPage />} />
+          <Route path="restaurant-details" element={<RestaurantDetail />} />
           <Route path="profile" element={<UserProfile />} />
-          <Route path="discover" element={<Discover />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="search-results" element={<SearchResults />} />
           <Route path="filters" element={<FoodFilters />} />

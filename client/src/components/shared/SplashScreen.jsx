@@ -6,7 +6,7 @@ const SplashScreen = ({ onComplete }) => {
   React.useEffect(() => {
     const timer = setTimeout(() => {
       onComplete();
-    }, 5000); // Hiển thị splash screen trong 2.5 giây
+    }, 5000); // Hiển thị splash screen trong 5 giây
 
     return () => clearTimeout(timer);
   }, [onComplete]);
@@ -18,10 +18,11 @@ const SplashScreen = ({ onComplete }) => {
           position: 'fixed',
           top: 0,
           left: 0,
-          width: '360px',
-          height: '800px',
+          width: '100%',
+          height: '100%',
           zIndex: 9999,
           overflow: 'hidden',
+          backgroundColor: 'white', // Nền trắng
         }}
       >
         {/* Background Image */}
@@ -37,9 +38,9 @@ const SplashScreen = ({ onComplete }) => {
             objectFit: 'cover',
           }}
           onError={(e) => {
-            // Fallback background nếu không load được
+            // Fallback background nếu không load được - nền trắng
             e.target.style.display = 'none';
-            e.target.parentElement.style.background = 'linear-gradient(135deg, #fe724c 0%, #ff9a7a 100%)';
+            e.target.parentElement.style.backgroundColor = 'white';
           }}
         />
 
@@ -56,35 +57,8 @@ const SplashScreen = ({ onComplete }) => {
             animation: 'fadeIn 1s ease-in-out',
           }}
         >
-          <Logo
-            width="120px"
-            height="120px"
-          />
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: '3rem',
-              fontWeight: 'bold',
-              color: 'white',
-              display: 'none', // Ẩn mặc định, chỉ hiện khi logo lỗi
-            }}
-          >
-            🍽️
-          </Typography>
+          <Logo/>
         </Box>
-
-        <style jsx>{`
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: scale(0.8);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-        `}</style>
       </Box>
     </Fade>
   );

@@ -7,6 +7,7 @@ let userController;
 try {
   userController = require("../controllers/userController");
   console.log("✅ userController.js loaded!");
+  console.log("✅ Controller path:", require.resolve("../controllers/userController"));
 } catch (err) {
   console.error("❌ Lỗi khi require userController.js:", err);
 }

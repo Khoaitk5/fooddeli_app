@@ -28,6 +28,17 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
@@ -44,7 +55,6 @@
 
 html {
   font-size: calc(100vw / 36);
-  /* baseline 360px -> 1rem ≈ 10px */
 }
 
 @media (min-width: 768px) {

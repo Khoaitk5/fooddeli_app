@@ -1,38 +1,41 @@
-import React from "react";
-import { pxW, pxH } from "../../utils/scale.js";
+import React, { useState } from "react";
 import StarIcon from "../../components/shared/StarIcon";
-import HeartIcon2 from "../../components/shared/HeartIcon2";
 import MoreIcon from "../../components/shared/MoreIcon";
+import ReportForm from "./ReportForm";
 
-const MessagePopup = ({ isVisible, onClose, reviewCount = 10, reviews = [
-  {
-    userName: "someone",
-    reviewText: "ngon lắm nha, phần này siêu nhiều, 2 người ăn không hết đâu",
-    timeAgo: "6 tiếng trước",
-    likeCount: 461,
-    avatarSrc: "https://placehold.co/33x33",
-    imageSrc: null,
-    rating: 5
-  },
-  {
-    userName: "user2",
-    reviewText: "Đồ ăn rất ngon, phục vụ nhanh chóng!",
-    timeAgo: "2 giờ trước",
-    likeCount: 123,
-    avatarSrc: "https://placehold.co/34x34",
-    imageSrc: null,
-    rating: 4
-  },
-  {
-    userName: "foodie123",
-    reviewText: "Giá cả hợp lý, sẽ quay lại lần sau.",
-    timeAgo: "1 ngày trước",
-    likeCount: 89,
-    avatarSrc: "https://placehold.co/35x35",
-    imageSrc: null,
-    rating: 5
-  }
-] }) => {
+const MessagePopup = ({
+  isVisible,
+  onClose,
+  reviewCount = 10,
+  reviews = [
+    {
+      userName: "someone",
+      reviewText: "ngon lắm nha, phần này siêu nhiều, 2 người ăn không hết đâu",
+      timeAgo: "6 tiếng trước",
+      avatarSrc: "https://placehold.co/33x33",
+      imageSrc: null,
+      rating: 5,
+    },
+    {
+      userName: "user2",
+      reviewText: "Đồ ăn rất ngon, phục vụ nhanh chóng!",
+      timeAgo: "2 giờ trước",
+      avatarSrc: "https://placehold.co/34x34",
+      imageSrc: null,
+      rating: 4,
+    },
+    {
+      userName: "foodie123",
+      reviewText: "Giá cả hợp lý, sẽ quay lại lần sau.",
+      timeAgo: "1 ngày trước",
+      avatarSrc: "https://placehold.co/35x35",
+      imageSrc: null,
+      rating: 5,
+    },
+  ],
+}) => {
+  const [showMorePopup, setShowMorePopup] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
   if (!isVisible) return null;
 
   const primaryTextStyle = {
@@ -137,7 +140,9 @@ const MessagePopup = ({ isVisible, onClose, reviewCount = 10, reviews = [
 
         {reviews.map((review, index) => {
           const baseHeight = review.imageSrc ? 32 : 16; // approximate height in vh
-          const offset = reviews.slice(0, index).reduce((acc, r) => acc + (r.imageSrc ? 32 : 16), 0);
+          const offset = reviews
+            .slice(0, index)
+            .reduce((acc, r) => acc + (r.imageSrc ? 32 : 16), 0);
           return (
             <>
               <img
@@ -168,7 +173,9 @@ const MessagePopup = ({ isVisible, onClose, reviewCount = 10, reviews = [
                   position: "absolute",
                   top: `calc(6.625vh + ${offset}vh)`,
                   right: "5.17vw",
+                  cursor: "pointer",
                 }}
+                onClick={() => setShowMorePopup(true)}
               >
                 <MoreIcon />
               </div>
@@ -211,7 +218,10 @@ const MessagePopup = ({ isVisible, onClose, reviewCount = 10, reviews = [
                 }}
               >
                 {Array.from({ length: 5 }, (_, i) => (
-                  <StarIcon key={i} fill={i < review.rating ? "#FFD700" : "#D9D9D9"} />
+                  <StarIcon
+                    key={i}
+                    fill={i < review.rating ? "#FFD700" : "#D9D9D9"}
+                  />
                 ))}
               </div>
 
@@ -225,31 +235,69 @@ const MessagePopup = ({ isVisible, onClose, reviewCount = 10, reviews = [
               >
                 {review.timeAgo}
               </div>
-
-              <div
-                style={{
-                  position: "absolute",
-                  top: `calc(${review.imageSrc ? 30.75 : 14.875}vh + ${offset}vh)`,
-                  right: "12.22vw",
-                }}
-              >
-                <HeartIcon2 />
-              </div>
-
-              <div
-                style={{
-                  ...secondaryTextStyle,
-                  position: "absolute",
-                  top: `calc(${review.imageSrc ? 30.625 : 14.75}vh + ${offset}vh)`,
-                  right: "5.56vw",
-                }}
-              >
-                {review.likeCount}
-              </div>
             </>
           );
         })}
+        {showMorePopup && (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: '9.125vh',
+                background: 'rgba(0, 0, 0, 0.3)',
+                zIndex: 5,
+              }}
+              onClick={() => setShowMorePopup(false)}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: '-20px',
+                width: 'calc(100% + 40px)',
+                height: '9.125vh',
+                background: 'white',
+                borderTopLeftRadius: 22,
+                borderTopRightRadius: 22,
+                zIndex: 10,
+              }}
+              onClick={() => setShowMorePopup(false)} // Close on click
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: 'calc(8.33vw + 20px)',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5.5rem',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowReportForm(true)}
+              >
+                <svg width="1.5rem" height="1.5rem" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.25 10.8539V10.8611M7.25 3.63889V8.69444M13.75 7.25C13.75 10.8399 10.8399 13.75 7.25 13.75C3.66015 13.75 0.75 10.8399 0.75 7.25C0.75 3.66015 3.66015 0.75 7.25 0.75C10.8399 0.75 13.75 3.66015 13.75 7.25Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div
+                  style={{
+                    color: 'black',
+                    fontSize: '1.5rem',
+                    fontWeight: '400',
+                    wordWrap: 'break-word',
+                  }}
+                >
+                  Báo cáo nhận xét này
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+      <ReportForm isVisible={showReportForm} onClose={() => setShowReportForm(false)} />
     </div>
   );
 };

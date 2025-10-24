@@ -18,7 +18,7 @@ const cartItemService = {
   },
 
   async getCartItemById(itemId) {
-    return await cart_itemDao.findById(itemId);
+    return await cart_itemDao.findById("id", itemId);
   },
 
   async getAllCartItems() {
@@ -26,11 +26,11 @@ const cartItemService = {
   },
 
   async updateCartItem(itemId, updateData) {
-    return await cart_itemDao.update(itemId, updateData);
+    return await cart_itemDao.update("id", itemId, updateData);
   },
 
   async deleteCartItem(itemId) {
-    return await cart_itemDao.delete(itemId);
+    return await cart_itemDao.delete("id", itemId);
   },
 
   /**

@@ -194,7 +194,7 @@ function setupSession(app) {
             cookie: {
                 maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ngày
                 httpOnly: true,
-                sameSite: 'lax',
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 secure: process.env.NODE_ENV === 'production',
             },
         })

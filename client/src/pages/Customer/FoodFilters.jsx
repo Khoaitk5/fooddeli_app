@@ -80,7 +80,7 @@ const FoodFilters = () => {
       <div
         style={{
           position: "absolute",
-          top: "6.75vh",
+          top: "2.75vh",
           left: "7.5vw",
         }}
         onClick={() => window.location.href = '/customer/search-results'}
@@ -90,7 +90,7 @@ const FoodFilters = () => {
       <div
         style={{
           position: "absolute",
-          top: "13.75vh",
+          top: "9.75vh",
           left: "4.17vw",
           justifyContent: "center",
           display: "flex",
@@ -109,7 +109,7 @@ const FoodFilters = () => {
           key={index}
           style={{
             position: "absolute",
-            top: `${19 + index * 4.625}vh`,
+            top: `${15 + index * 4.625}vh`,
           }}
         >
           <div
@@ -166,7 +166,7 @@ const FoodFilters = () => {
       <div
         style={{
           position: "absolute",
-          top: "39.125vh",
+          top: "35.125vh",
           width: "100%",
           height: "100%",
           outline: "1px #E7E7E7 solid",
@@ -176,7 +176,7 @@ const FoodFilters = () => {
       <div
         style={{
           position: "absolute",
-          top: "42vh",
+          top: "38vh",
           left: "4.17vw",
           justifyContent: "center",
           display: "flex",
@@ -195,7 +195,7 @@ const FoodFilters = () => {
           key={index}
           style={{
             position: "absolute",
-            top: `${48 + index * 4.625}vh`,
+            top: `${44 + index * 4.625}vh`,
           }}
         >
           <div
@@ -261,7 +261,7 @@ const FoodFilters = () => {
       <div
         style={{
           position: "absolute",
-          top: "63.5vh",
+          top: "59.5vh",
           width: "100%",
           height: "100%",
           outline: "1px #E7E7E7 solid",
@@ -271,7 +271,7 @@ const FoodFilters = () => {
       <div
         style={{
           position: "absolute",
-          top: "66vh",
+          top: "62vh",
           left: "4.17vw",
           justifyContent: "center",
           display: "flex",
@@ -290,7 +290,7 @@ const FoodFilters = () => {
           key={index}
           style={{
             position: "absolute",
-            top: `${72 + index * 4.625}vh`,
+            top: `${68 + index * 4.625}vh`,
           }}
         >
           <div

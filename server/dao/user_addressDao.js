@@ -18,15 +18,16 @@ class UserAddressDao extends GenericDao {
    */
   async getAddressesByUserId(userId) {
     const query = `
-      SELECT a.*, ua.is_primary
-      FROM user_addresses ua
-      JOIN addresses a ON ua.address_id = a.address_id
-      WHERE ua.user_id = $1
-      ORDER BY ua.created_at DESC;
-    `;
+    SELECT a.*, ua.is_primary
+    FROM user_addresses ua
+    JOIN addresses a ON ua.address_id = a.address_id
+    WHERE ua.user_id = $1
+    ORDER BY ua.is_primary DESC, ua.created_at DESC;
+  `;
     const res = await pool.query(query, [userId]);
     return res.rows.map(row => new Address(row));
   }
+
 
   /**
    * Lấy địa chỉ mặc định (is_primary = TRUE)

@@ -139,7 +139,7 @@ const Notifications = () => {
               left: "6.11vw",
               width: "42.78vw",
               height: "4.125vh",
-              background: isNotificationActive ? "rgba(249, 112, 75, 0.10)" : "#F9704B",
+              background: isNotificationActive ? "rgba(249, 112, 75, 0.10)" : "#54A312",
               borderRadius: 16.5,
               justifyContent: "center",
               display: "flex",
@@ -151,7 +151,7 @@ const Notifications = () => {
           >
             <div
               style={{
-                color: isNotificationActive ? "#F9704B" : "white",
+                color: isNotificationActive ? "#54A312" : "white",
                 fontSize: "1.3rem",
                 fontWeight: "500",
                 wordWrap: "break-word",
@@ -168,7 +168,7 @@ const Notifications = () => {
               right: "6.11vw",
               width: "42.78vw",
               height: "4.125vh",
-              background: isNotificationActive ? "#F9704B" : "rgba(249, 112, 75, 0.10)",
+              background: isNotificationActive ? "#54A312" : "rgba(249, 112, 75, 0.10)",
               borderRadius: 16.5,
               justifyContent: "center",
               display: "flex",
@@ -183,7 +183,7 @@ const Notifications = () => {
                 justifyContent: "center",
                 display: "flex",
                 flexDirection: "column",
-                color: isNotificationActive ? "white" : "#F9704B",
+                color: isNotificationActive ? "white" : "#54A312",
                 fontSize: "1.3rem",
                 fontWeight: "500",
                 wordWrap: "break-word",
