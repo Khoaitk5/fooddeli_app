@@ -6,7 +6,6 @@ import PhoneButton from "@/components/shared/PhoneButton";
 import SubmitButton from "@/components/shared/SubmitButton";
 import MiniLogo from "@/components/shared/MiniLogo";
 import BurgerBG from "@/components/shared/BurgerBG";
-import { pxW, pxH } from "../../utils/scale.js";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/firebase/firebaseConfig";
 
@@ -60,14 +59,13 @@ const Register = () => {
         position: "fixed",
         top: 0,
         left: 0,
-        width: pxW(360),
-        height: pxH(800),
+        width: "100%",
+        height: "100%",
         background: "#fff",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "20px 0",
         overflow: "hidden",
       }}
     >
@@ -75,7 +73,7 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "8.875vh",
+          top: "2.82vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -88,7 +86,7 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "21.37vh",
+          top: "17.12vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 5,
@@ -97,11 +95,11 @@ const Register = () => {
         <BurgerBG></BurgerBG>
       </div>
 
-      {/* 🔹 Nút “Tiếp tục với tư cách khách” */}
+      {/* 🔹 Nút "Tiếp tục với tư cách khách" */}
       <div
         style={{
           position: "absolute",
-          top: "72.125vh",
+          top: "65.75vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -109,8 +107,8 @@ const Register = () => {
       >
         <SubmitButton
           style={{
-            width: "89.4vw",
-            height: "6.375vh",
+            width: "89.3vw",
+            height: "6.4vh",
           }}
           onClick={() => navigate("/customer/home")}
         >
@@ -122,7 +120,7 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "79.75vh",
+          top: "75vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -131,50 +129,42 @@ const Register = () => {
           justifyContent: "center",
           color: "#70756B",
           fontSize: "1.5rem",
-          fontFamily: 'Be Vietnam Pro',
           fontWeight: "600",
-          lineHeight: "25.5px",
           wordWrap: "break-word",
         }}
       >
         hoặc
       </div>
 
-      {/* 🔹 Nút Google */}
+      {/* Button Group */}
       <div
         style={{
           position: "absolute",
-          top: "84.375vh",
-          left: "5.27vw",
+          top: "80.125vh",
+          left: 0,
+          right: 0,
           zIndex: 10,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingLeft: "5.27vw",
+          paddingRight: "5.27vw",
         }}
       >
-        <GoogleButton onClick={handleGoogleRegister} />
-      </div>
+        {/* Google Login Button */}
+        <div>
+          <GoogleButton onClick={handleGoogleRegister} />
+        </div>
 
-      {/* 🔹 Nút đăng ký bằng email */}
-      <div
-        style={{
-          position: "absolute",
-          top: "84.375vh",
-          right: "5.27vw",
-          zIndex: 10,
-        }}
-      >
-        <MessageButton onClick={() => navigate("/register/email")} />
-      </div>
+        {/* Phone Button */}
+        <div>
+          <PhoneButton onClick={() => navigate("/register/phone")} />
+        </div>
 
-      {/* 🔹 Nút đăng ký bằng số điện thoại */}
-      <div
-        style={{
-          position: "absolute",
-          top: "84.375vh",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 10,
-        }}
-      >
-        <PhoneButton onClick={() => navigate("/register/phone")} />
+        {/* Message Button */}
+        <div>
+          <MessageButton onClick={() => navigate("/register/email")} />
+        </div>
       </div>
 
       {/* 🔹 Footer */}
