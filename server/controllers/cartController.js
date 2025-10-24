@@ -89,14 +89,39 @@ const cartController = {
           .status(400)
           .json({ success: false, message: "Thiếu itemId trong request body" });
 
-      const updatedItem = await cartItemService.updateCartItem(itemId, {
-        quantity,
-        unit_price,
-      });
+      // ✅ Chỉ update field nào có giá trị thật sự
+      const updateData = {};
+      if (quantity !== undefined) updateData.quantity = quantity;
+      if (unit_price !== undefined) updateData.unit_price = unit_price;
 
+      if (Object.keys(updateData).length === 0)
+        return res
+          .status(400)
+          .json({ success: false, message: "Không có dữ liệu cần cập nhật" });
+
+      // ✅ Gọi service để update
+      const updatedItem = await cartItemService.updateCartItem(
+        itemId,
+        updateData
+      );
+
+      // ✅ Nếu service return null → báo lỗi
+      if (!updatedItem)
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message: "Không tìm thấy sản phẩm để cập nhật",
+          });
+
+      // ✅ Tính lại subtotal + items_count
       const items = await cartItemService.getItemsByCartId(updatedItem.cart_id);
       const subtotal = items.reduce((sum, i) => sum + Number(i.line_total), 0);
-      await cartService.updateCartSummary(updatedItem.cart_id, subtotal, items.length);
+      await cartService.updateCartSummary(
+        updatedItem.cart_id,
+        subtotal,
+        items.length
+      );
 
       return res.status(200).json({
         success: true,
@@ -130,7 +155,10 @@ const cartController = {
       if (!item)
         return res
           .status(404)
-          .json({ success: false, message: "Không tìm thấy sản phẩm trong giỏ" });
+          .json({
+            success: false,
+            message: "Không tìm thấy sản phẩm trong giỏ",
+          });
 
       await cartItemService.deleteCartItem(itemId);
 

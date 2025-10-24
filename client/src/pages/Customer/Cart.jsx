@@ -18,26 +18,45 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
           headers: { "Content-Type": "application/json" },
         });
         const data = await res.json();
-        if (data.success && data.data?.items) setCartItems(data.data.items);
-        else console.warn("⚠️ Không lấy được dữ liệu giỏ hàng:", data.message);
+
+        if (data.success && data.data?.items) {
+          // ✅ Chuẩn hoá data trước khi lưu
+          const normalizedItems = data.data.items.map((item) => ({
+            id: item.id || item.cart_item_id, // đảm bảo luôn có id
+            product_name: item.product_name,
+            product_description: item.product_description,
+            product_image: item.product_image,
+            quantity: item.quantity,
+            unit_price: Number(item.unit_price),
+            line_total: Number(item.line_total),
+          }));
+
+          setCartItems(normalizedItems);
+        } else {
+          console.warn("⚠️ Không lấy được dữ liệu giỏ hàng:", data.message);
+        }
       } catch (err) {
         console.error("❌ Lỗi khi fetch giỏ hàng:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchCart();
   }, []);
 
   const formatPrice = (price) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
 
   const updateQuantity = async (itemId, delta) => {
     const item = cartItems.find((i) => i.id === itemId);
     if (!item) return;
     const newQty = Math.max(1, item.quantity + delta);
     try {
-      const res = await fetch("/api/cart/items", {
+      const res = await fetch("http://localhost:5000/api/cart/items", {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -55,14 +74,15 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
 
   const removeItem = async (itemId) => {
     try {
-      const res = await fetch("/api/cart/items", {
+      const res = await fetch("http://localhost:5000/api/cart/items", {
         method: "DELETE",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId }),
       });
       const data = await res.json();
-      if (data.success) setCartItems((prev) => prev.filter((i) => i.id !== itemId));
+      if (data.success)
+        setCartItems((prev) => prev.filter((i) => i.id !== itemId));
     } catch (err) {
       console.error("❌ Lỗi khi xóa item:", err);
     }
@@ -72,8 +92,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
     (sum, i) => sum + Number(i.line_total || i.unit_price * i.quantity),
     0
   );
-  const deliveryFee = 15000;
-  const total = subtotal + deliveryFee;
+  const total = subtotal;
 
   if (loading)
     return (
@@ -144,11 +163,13 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-3px)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(0,0,0,0.1)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(0,0,0,0.06)";
                 }}
               >
                 <img
@@ -196,18 +217,36 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                         </p>
                       )}
                     </div>
+                    {/* Nút xóa */}
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Xóa "${item.product_name}" khỏi giỏ hàng?`
+                          )
+                        ) {
+                          removeItem(item.id);
+                        }
+                      }}
                       style={{
-                        background: "none",
-                        border: "none",
+                        background: "#fff5f5",
+                        border: "1px solid #ffe0e0",
                         color: "#ef4444",
                         fontSize: "1.25rem",
                         cursor: "pointer",
-                        transition: "transform 0.2s ease",
+                        borderRadius: "8px",
+                        padding: "6px 8px",
+                        transition: "all 0.2s ease",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.2)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#ffe8e8";
+                        e.currentTarget.style.transform = "scale(1.1)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#fff5f5";
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                      title="Xóa khỏi giỏ hàng"
                     >
                       🗑️
                     </button>
@@ -250,7 +289,8 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                           border: "none",
                           background: item.quantity <= 1 ? "#ddd" : "#fff",
                           color: item.quantity <= 1 ? "#999" : "#333",
-                          cursor: item.quantity <= 1 ? "not-allowed" : "pointer",
+                          cursor:
+                            item.quantity <= 1 ? "not-allowed" : "pointer",
                           fontSize: "1rem",
                           fontWeight: 600,
                         }}
@@ -301,10 +341,6 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Tạm tính:</span>
                 <span>{formatPrice(subtotal)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Phí giao hàng:</span>
-                <span>{formatPrice(deliveryFee)}</span>
               </div>
               <hr style={{ margin: "0.5rem 0", borderColor: "#eee" }} />
               <div
@@ -368,11 +404,13 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 6px 16px rgba(238,77,45,0.4)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 16px rgba(238,77,45,0.4)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(238,77,45,0.3)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(238,77,45,0.3)";
             }}
           >
             Đặt hàng • {formatPrice(total)}
