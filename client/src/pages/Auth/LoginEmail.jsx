@@ -8,13 +8,41 @@ import BlackOutline from "@/components/shared/BlackOutline";
 import MiniLogo from "@/components/shared/MiniLogo";
 import { auth } from "@/firebase/firebaseConfig";
 import { sendSignInLinkToEmail } from "firebase/auth";
-import { pxW, pxH } from "../../utils/scale.js";
 
 const LoginEmail = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
+
+  // Common styles
+  const labelStyle = {
+    justifyContent: "center",
+    display: "flex",
+    flexDirection: "column",
+    fontSize: "1.5rem",
+    fontWeight: "500",
+    wordWrap: "break-word",
+  };
+
+  const activeLabelStyle = {
+    ...labelStyle,
+    color: "#000000", // Black for active
+  };
+
+  const inactiveLabelStyle = {
+    ...labelStyle,
+    color: "#868686", // Gray for inactive
+  };
+
+  const outlineStyle = {
+    position: "absolute",
+    top: "4vh",
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 1,
+  };
 
   // 📤 Gửi liên kết xác thực qua email
   const handleSubmit = async (e) => {
@@ -57,107 +85,92 @@ const LoginEmail = () => {
     setEmail(value.toLowerCase());
   };
 
-  const buttonBackground =
+  const isValidEmail =
     email &&
     (email.toLowerCase().endsWith("@gmail.com") ||
       email.toLowerCase().endsWith("@outlook.com") ||
-      email.toLowerCase().endsWith("@hotmail.com"))
-      ? "rgba(249, 112, 75, 1)"
-      : "rgba(249, 112, 75, 0.5)";
+      email.toLowerCase().endsWith("@hotmail.com"));
 
   return (
     <div
       style={{
-        width: pxW(360),
-        height: pxH(800),
+        width: "100%",
+        height: "100%",
         position: "relative",
         background: "white",
       }}
     >
-      {/* Logo */}
+      {/* Header Group */}
       <div
         style={{
           position: "absolute",
-          top: "7.09vh",
-          left: "50%",
-          transform: "translateX(-50%)",
+          top: "5vh",
+          left: 0,
+          right: 0,
           zIndex: 10,
+          display: "flex",
+          alignItems: "center",
         }}
       >
-        <MiniLogo></MiniLogo>
-      </div>
-
-      {/* Back Arrow */}
-      <div
-        style={{
-          position: "absolute",
-          left: "5.85vw",
-          top: "7.85vh",
-          cursor: "pointer",
-        }}
-        onClick={() => navigate("/login")}
-      >
-        <BackArrow />
-      </div>
-
-      {/* Phone Label */}
-      <div
-        style={{
-          position: "absolute",
-          left: "19.72vw",
-          top: "12.98vh",
-          cursor: "pointer",
-        }}
-        onClick={() => navigate("/login/phone")}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "#868686",
-            fontSize: "1.4rem",
-            fontFamily: 'Be Vietnam Pro',
-            fontWeight: "500",
-            wordWrap: "break-word",
-          }}
-        >
-          Điện thoại
-        </div>
-      </div>
-
-      {/* Email Label */}
-      <div
-        style={{
-          position: "absolute",
-          right: "19.86vw",
-          top: "12.98vh",
-        }}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "#868686",
-            fontSize: "1.4rem",
-            fontFamily: 'Be Vietnam Pro',
-            fontWeight: "500",
-            wordWrap: "break-word",
-          }}
-        >
-          Email
-        </div>
+        {/* Back Arrow */}
         <div
           style={{
             position: "absolute",
-            top: "3.02vh",
+            left: "5.85vw",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate("/login")}
+        >
+          <BackArrow />
+        </div>
+
+        {/* Logo */}
+        <div
+          style={{
+            position: "absolute",
             left: "50%",
             transform: "translateX(-50%)",
-            zIndex: 1,
           }}
         >
-          <BlackOutline />
+          <MiniLogo></MiniLogo>
+        </div>
+      </div>
+
+      {/* Tab Labels Group */}
+      <div
+        style={{
+          position: "absolute",
+          top: "8.75vh",
+          left: 0,
+          right: 0,
+          zIndex: 10,
+        }}
+      >
+        {/* Phone Label */}
+        <div
+          style={{
+            position: "absolute",
+            left: "25%",
+            transform: "translateX(-50%)",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate("/login/phone")}
+        >
+          <div style={inactiveLabelStyle}>Điện thoại</div>
+        </div>
+
+        {/* Email Label */}
+        <div
+          style={{
+            position: "absolute",
+            left: "75%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          <div style={activeLabelStyle}>Email</div>
+          <div style={outlineStyle}>
+            <BlackOutline width="80px" />
+          </div>
         </div>
       </div>
 
@@ -165,7 +178,7 @@ const LoginEmail = () => {
       <div
         style={{
           position: "absolute",
-          top: "16vh",
+          top: "13vh",
         }}
       >
         <OutlineBorder />
@@ -177,16 +190,21 @@ const LoginEmail = () => {
         style={{
           position: "absolute",
           left: "50%",
-          top: "18.75vh",
+          top: "15.875vh",
           transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <InputFrame>
+        <InputFrame isFocused={isFocused}>
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={handleEmailChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={(e) => {
               if (e.key === " ") e.preventDefault();
             }}
@@ -195,9 +213,8 @@ const LoginEmail = () => {
               border: "none",
               outline: "none",
               fontSize: "1.4rem",
-              fontWeight: "400",
-              fontFamily: 'Be Vietnam Pro',
-              color: "#aaaaae",
+              fontWeight: "500",
+              color: "#000000",
               backgroundColor: "transparent",
             }}
           />
@@ -212,6 +229,7 @@ const LoginEmail = () => {
               transform: "translateX(-50%)",
               width: "267px",
               color: "red",
+              textAlign: "center",
             }}
           >
             {error}
@@ -227,6 +245,7 @@ const LoginEmail = () => {
               transform: "translateX(-50%)",
               width: "267px",
               color: "green",
+              textAlign: "center",
             }}
           >
             {success}
@@ -234,29 +253,23 @@ const LoginEmail = () => {
         )}
 
         <SubmitButton
+          isValid={isValidEmail}
           style={{
-            background: buttonBackground,
-            marginTop: "64.625vh",
-            marginLeft: "auto",
-            marginRight: "auto",
+            marginTop: "64.625vh"
           }}
         >
           <div
             style={{
-              width: "100%",
-              height: "100%",
               textAlign: "center",
               justifyContent: "center",
               display: "flex",
               flexDirection: "column",
-              color: "white",
-              fontSize: "1.3rem",
-              fontFamily: 'Be Vietnam Pro',
+              fontSize: "1.5rem",
               fontWeight: "600",
               wordWrap: "break-word",
             }}
           >
-            Gửi liên kết đăng nhập
+            Tiếp tục
           </div>
         </SubmitButton>
       </form>

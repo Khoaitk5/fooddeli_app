@@ -1,14 +1,27 @@
-import Button from './Button';
-import PhoneIcon from './PhoneIcon';
+import Button from "./Button";
+
+const PhoneIcon = ({ size = "1.5rem", color = "#60635E" }) => (
+  <svg
+    viewBox="0 0 14 13"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ width: size, height: "auto" }}
+  >
+    <path
+      d="M0.574777 3.25289C0.574777 7.23081 5.85082 12.5 9.82478 12.5C10.6946 12.5 11.5071 12.172 12.106 11.5732L12.6269 10.9744C13.231 10.3705 13.231 9.34994 12.6008 8.71993C12.5852 8.70431 11.33 7.74107 11.33 7.74107C10.705 7.14751 9.72061 7.14751 9.10082 7.74107L8.3404 8.35026C6.67374 7.64214 5.49144 6.45501 4.73103 4.73159L5.33519 3.97142C5.93415 3.35182 5.93415 2.36254 5.33519 1.74294C5.33519 1.74294 4.37165 0.488129 4.35603 0.472509C3.72582 -0.157503 2.70498 -0.157503 2.07478 0.472509L1.5279 0.946319C0.902902 1.56592 0.574777 2.37816 0.574777 3.24768V3.25289Z"
+      fill={color}
+    />
+  </svg>
+);
 
 const PhoneButton = ({ onClick, style, ...props }) => (
   <Button
     onClick={onClick}
     style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...style
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      ...style,
     }}
     {...props}
   >

@@ -5,6 +5,8 @@ import MobileShipperLayout from './components/layout/MobileShipperLayout';
 import DesktopLayout from './components/layout/DesktopLayout';
 import DesktopAdminLayout from './components/layout/DesktopAdminLayout';
 import { AuthProvider } from './contexts/AuthContext';
+import SplashScreen from './components/shared/SplashScreen';
+import { useState } from 'react';
 
 // Admin
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -70,6 +72,15 @@ import ShipperWallet from './pages/Shipper/Wallet';
 // 🧠 App Component
 function App() {
   console.log("🧠DEBUG: [App] Rendered!");
+  const [showSplash, setShowSplash] = useState(true);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
   return (
     <AuthProvider>
       <Routes>

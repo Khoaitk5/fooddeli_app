@@ -8,12 +8,40 @@ import BlackOutline from "@/components/shared/BlackOutline";
 import { auth } from "@/firebase/firebaseConfig";
 import MiniLogo from "@/components/shared/MiniLogo";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { pxW, pxH } from "../../utils/scale.js";
 
 const LoginPhone = () => {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
+
+  // Common styles
+  const labelStyle = {
+    justifyContent: "center",
+    display: "flex",
+    flexDirection: "column",
+    fontSize: "1.5rem",
+    fontWeight: "700",
+    wordWrap: "break-word",
+  };
+
+  const activeLabelStyle = {
+    ...labelStyle,
+    color: "#363A33", // Black for active
+  };
+
+  const inactiveLabelStyle = {
+    ...labelStyle,
+    color: "#868686", // Gray for inactive
+  };
+
+  const outlineStyle = {
+    position: "absolute",
+    top: "4vh",
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 1,
+  };
 
   useEffect(() => {
     if (!window.recaptchaVerifier) {
@@ -97,102 +125,86 @@ const LoginPhone = () => {
     setPhone(value);
   };
 
-  const buttonBackground =
-    phone.length === 10 ? "rgba(249, 112, 75, 1)" : "rgba(249, 112, 75, 0.5)";
-
   return (
     <div
       style={{
-        width: pxW(360),
-        height: pxH(800),
+        width: "100%",
+        height: "100%",
         position: "relative",
-        background: "white",
+        background: "#fff",
       }}
     >
-      {/* Logo */}
+      {/* Header Group */}
       <div
         style={{
           position: "absolute",
-          top: "7.09vh",
-          left: "50%",
-          transform: "translateX(-50%)",
+          top: "5vh",
+          left: 0,
+          right: 0,
           zIndex: 10,
+          display: "flex",
+          alignItems: "center",
         }}
       >
-        <MiniLogo></MiniLogo>
-      </div>
-
-      {/* Back Arrow */}
-      <div
-        style={{
-          position: "absolute",
-          left: "5.85vw",
-          top: "7.85vh",
-          cursor: "pointer",
-        }}
-        onClick={() => navigate("/login")}
-      >
-        <BackArrow />
-      </div>
-
-      {/* Phone Label */}
-      <div
-        style={{
-          position: "absolute",
-          left: "19.72vw",
-          top: "12.98vh",
-        }}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "#868686",
-            fontSize: "1.4rem",
-            fontFamily: "Be Vietnam Pro",
-            fontWeight: "500",
-            wordWrap: "break-word",
-          }}
-        >
-          Điện thoại
-        </div>
+        {/* Back Arrow */}
         <div
           style={{
             position: "absolute",
-            top: "3.02vh",
+            left: "5.85vw",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate("/login")}
+        >
+          <BackArrow />
+        </div>
+
+        {/* Logo */}
+        <div
+          style={{
+            position: "absolute",
             left: "50%",
             transform: "translateX(-50%)",
-            zIndex: 1,
           }}
         >
-          <BlackOutline />
+          <MiniLogo></MiniLogo>
         </div>
       </div>
 
-      {/* Email Label */}
+      {/* Tab Labels Group */}
       <div
         style={{
           position: "absolute",
-          right: "19.86vw",
-          top: "12.98vh",
-          cursor: "pointer",
+          top: "8.75vh",
+          left: 0,
+          right: 0,
+          zIndex: 10,
         }}
-        onClick={() => navigate("/login/email")}
       >
+        {/* Phone Label */}
         <div
           style={{
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "#868686",
-            fontSize: "1.4rem",
-            fontFamily: "Be Vietnam Pro",
-            fontWeight: "500",
-            wordWrap: "break-word",
+            position: "absolute",
+            left: "25%",
+            transform: "translateX(-50%)",
           }}
         >
-          Email
+          <div style={activeLabelStyle}>Điện thoại</div>
+          <div style={outlineStyle}>
+            <BlackOutline width="120px" />
+          </div>
+        </div>
+
+        {/* Email Label */}
+        <div
+          style={{
+            position: "absolute",
+            left: "75%",
+            transform: "translateX(-50%)",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate("/login/email")}
+        >
+          <div style={inactiveLabelStyle}>Email</div>
         </div>
       </div>
 
@@ -200,7 +212,7 @@ const LoginPhone = () => {
       <div
         style={{
           position: "absolute",
-          top: "16vh",
+          top: "13vh",
         }}
       >
         <OutlineBorder />
@@ -214,24 +226,32 @@ const LoginPhone = () => {
         style={{
           position: "absolute",
           left: "50%",
-          top: "18.75vh",
+          top: "15.875vh",
           transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <InputFrame>
+        <InputFrame isFocused={isFocused} style={{
+          position: "absolute",
+          left: "50%",
+          transform: "translateX(-50%)"
+        }}>
           <input
             type="tel"
             placeholder="Số điện thoại"
             value={phone}
             onChange={handlePhoneChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             style={{
               width: "100%",
               border: "none",
               outline: "none",
-              fontSize: "1.4rem",
-              fontWeight: "400",
-              fontFamily: "Be Vietnam Pro",
-              color: "#aaaaae",
+              fontSize: "1.5rem",
+              fontWeight: "500",
+              color: "#000000",
               backgroundColor: "transparent",
             }}
           />
@@ -251,11 +271,11 @@ const LoginPhone = () => {
           </div>
         )}
         <SubmitButton
+          isValid={phone.length === 10}
           style={{
-            background: buttonBackground,
-            marginTop: "64.625vh",
             marginLeft: "auto",
             marginRight: "auto",
+            marginTop: "64.625vh"
           }}
         >
           <div
@@ -266,9 +286,7 @@ const LoginPhone = () => {
               justifyContent: "center",
               display: "flex",
               flexDirection: "column",
-              color: "white",
-              fontSize: "1.3rem",
-              fontFamily: "Be Vietnam Pro",
+              fontSize: "1.5rem",
               fontWeight: "600",
               wordWrap: "break-word",
             }}
