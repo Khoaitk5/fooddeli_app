@@ -1,16 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 // ❌ Sửa lỗi import alias sang đường dẫn tương đối (Relative Paths)
-import { auth, googleProvider } from "../firebase/firebaseConfig"; 
-import FooterBar from "../components/shared/FooterBar";
-import GoogleButton from "../components/shared/GoogleButton";
-import MessageButton from "../components/shared/MessageButton";
-import PhoneButton from "../components/shared/PhoneButton";
-import SubmitButton from "../components/shared/SubmitButton";
-import MiniLogo from "../components/shared/MiniLogo";
-import BurgerBG from "../components/shared/BurgerBG";
-import { pxW, pxH } from "../utils/scale.js";
-import "../App.css"; // ❌ Sửa lỗi import CSS
+import { auth, googleProvider } from "@/firebase/firebaseConfig"; 
+import FooterBar from "@/components/shared/FooterBar";
+import GoogleButton from "@/components/shared/GoogleButton";
+import MessageButton from "@/components/shared/MessageButton";
+import PhoneButton from "@/components/shared/PhoneButton";
+import SubmitButton from "@/components/shared/SubmitButton";
+import MiniLogo from "@/components/shared/MiniLogo";
+import BurgerBG from "@/components/shared/BurgerBG";
+import "@/App.css"; // ❌ Sửa lỗi import CSS
 
 const Login = () => {
   const navigate = useNavigate();

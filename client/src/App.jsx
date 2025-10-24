@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import MobileLayout from './components/layout/MobileLayout';
 import MobileShopLayout from './components/layout/MobileShopLayout';
 import MobileShipperLayout from './components/layout/MobileShipperLayout';
-import DesktopLayout from './components/layout/DesktopLayout'; // Import này không dùng trong Routes nhưng vẫn giữ
+import DesktopLayout from './components/layout/DesktopLayout';
 import DesktopAdminLayout from './components/layout/DesktopAdminLayout';
 import { AuthProvider } from './contexts/AuthContext';
 import SplashScreen from './components/shared/SplashScreen';
@@ -33,8 +33,7 @@ import DeliveryManCallScreen from './pages/Customer/DeliveryManCallScreen';
 import DeliveryManMessageScreen from './pages/Customer/DeliveryManMessageScreen';
 import OrderPlaced from './pages/Customer/OrderPlaced';
 import Notifications from './pages/Customer/Notifications';
-// Sử dụng tên import từ đoạn code đầu tiên: RestaurantDetailPage
-import RestaurantDetailPage from './pages/Customer/RestaurantDetailPage';
+import RestaurantDetail from './components/role-specific/Customer/RestaurantDetail';
 import { UserProfile } from './pages/Customer/UserProfile';
 import SearchPage from './pages/Customer/SearchPage';
 import SearchResults from './components/role-specific/Customer/SearchResults';
@@ -73,7 +72,6 @@ import ShipperWallet from './pages/Shipper/Wallet';
 // 🧠 App Component
 function App() {
   console.log("🧠DEBUG: [App] Rendered!");
-  // Thêm logic SplashScreen
   const [showSplash, setShowSplash] = useState(true);
 
   const handleSplashComplete = () => {
@@ -81,10 +79,8 @@ function App() {
   };
 
   if (showSplash) {
-    // Lưu ý: Nếu SplashScreen chưa được định nghĩa, nó sẽ được tạo bên dưới
     return <SplashScreen onComplete={handleSplashComplete} />;
   }
-
   return (
     <AuthProvider>
       <Routes>
@@ -116,14 +112,11 @@ function App() {
           <Route path="delivery-man-message" element={<DeliveryManMessageScreen />} />
           <Route path="order-placed" element={<OrderPlaced />} />
           <Route path="notifications" element={<Notifications />} />
-          {/* Sửa route để khớp với cấu trúc path params */}
-          <Route path="restaurant/:id" element={<RestaurantDetailPage />} />
+          <Route path="restaurant-details" element={<RestaurantDetail />} />
           <Route path="profile" element={<UserProfile />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="search-results" element={<SearchResults />} />
           <Route path="filters" element={<FoodFilters />} />
-          {/* Loại bỏ route discover bị trùng lặp */}
-          <Route path="*" element={<Navigate to="home" />} />
         </Route>
 
         {/* Shipper Routes */}
@@ -163,7 +156,7 @@ function App() {
           <Route path="*" element={<Navigate to="/admin/dashboard" />} />
         </Route>
 
-        {/* Default redirect: Đã sửa lỗi khoảng trắng trong "/login " */}
+        {/* Default redirect */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </AuthProvider>
