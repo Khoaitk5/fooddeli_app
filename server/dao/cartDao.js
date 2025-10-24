@@ -1,6 +1,8 @@
 // dao/cartDao.js
 const GenericDao = require("./generic_dao");
 const Cart = require("../models/cart");
+const pool = require("../config/db");
+
 
 class CartDao extends GenericDao {
   constructor() {
@@ -19,7 +21,7 @@ class CartDao extends GenericDao {
       WHERE user_id = $1
       LIMIT 1;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rows[0] || null;
   }
   /**
@@ -38,7 +40,7 @@ class CartDao extends GenericDao {
       WHERE cart_id = $3
       RETURNING *;
     `;
-    const result = await this.db.query(query, [subtotal, itemsCount, cartId]);
+    const result = await pool.query(query, [subtotal, itemsCount, cartId]);
     return result.rows[0];
   }
 }
