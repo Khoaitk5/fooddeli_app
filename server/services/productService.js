@@ -5,23 +5,31 @@ const VALID_CATEGORIES = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác
 const productService = {
   /**
    * ➕ Tạo sản phẩm mới
-   * @param {object} productData - { shop_id, name, description, price, image_url, is_available, category }
+   * @param {object} productData - { shop_id, name, description, price, image_url, is_available, category, prep_minutes }
    * @returns {Promise<object>}
    */
   async createProduct(productData) {
-    const { name, price, shop_id, category } = productData;
+    const { name, price, shop_id, category, prep_minutes } = productData;
 
     if (!name || !price || !shop_id) {
       throw new Error("Thiếu thông tin bắt buộc: name, price, shop_id");
     }
 
     if (category && !VALID_CATEGORIES.includes(category)) {
-      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+      throw new Error(
+        `Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`
+      );
+    }
+
+    if (prep_minutes !== undefined) {
+      if (!Number.isInteger(prep_minutes) || prep_minutes < 0) {
+        throw new Error("prep_minutes phải là số nguyên không âm");
+      }
     }
 
     return await productDao.create({
       ...productData,
-      category: category || "Thức ăn", // default nếu không có
+      category: category || "Thức ăn",
     });
   },
 
@@ -50,12 +58,21 @@ const productService = {
    */
   async updateProduct(productId, updateData) {
     const existing = await productDao.findById(productId);
-    if (!existing) {
-      throw new Error("Sản phẩm không tồn tại");
-    }
+    if (!existing) throw new Error("Sản phẩm không tồn tại");
 
     if (updateData.category && !VALID_CATEGORIES.includes(updateData.category)) {
-      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+      throw new Error(
+        `Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`
+      );
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updateData, "prep_minutes")) {
+      if (
+        updateData.prep_minutes !== null &&
+        (!Number.isInteger(updateData.prep_minutes) || updateData.prep_minutes < 0)
+      ) {
+        throw new Error("prep_minutes phải là số nguyên không âm hoặc null");
+      }
     }
 
     return await productDao.update(productId, updateData);
@@ -68,23 +85,24 @@ const productService = {
    */
   async deleteProduct(productId) {
     const existing = await productDao.findById(productId);
-    if (!existing) {
-      throw new Error("Sản phẩm không tồn tại");
-    }
+    if (!existing) throw new Error("Sản phẩm không tồn tại");
     return await productDao.delete(productId);
   },
 
   /**
-   * 🔄 Cập nhật trạng thái sản phẩm (còn bán / ngừng bán)
+   * 🔄 Cập nhật trạng thái còn bán / ngừng bán
    * @param {number} productId
    * @param {boolean} isAvailable
    * @returns {Promise<object>}
    */
   async updateAvailability(productId, isAvailable) {
-    const existing = await productDao.findById(productId);
-    if (!existing) {
-      throw new Error("Sản phẩm không tồn tại");
+    if (typeof isAvailable !== "boolean") {
+      throw new Error("isAvailable phải là boolean");
     }
+
+    const existing = await productDao.findById(productId);
+    if (!existing) throw new Error("Sản phẩm không tồn tại");
+
     return await productDao.updateAvailability(productId, isAvailable);
   },
 
@@ -96,19 +114,36 @@ const productService = {
    */
   async updateCategory(productId, category) {
     if (!VALID_CATEGORIES.includes(category)) {
-      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+      throw new Error(
+        `Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`
+      );
     }
 
     const existing = await productDao.findById(productId);
-    if (!existing) {
-      throw new Error("Sản phẩm không tồn tại");
-    }
+    if (!existing) throw new Error("Sản phẩm không tồn tại");
 
     return await productDao.updateCategory(productId, category);
   },
 
   /**
-   * 🏪 Lấy tất cả sản phẩm của một shop
+   * ⏱️ Cập nhật thời gian chuẩn bị (prep_minutes)
+   * @param {number} productId
+   * @param {number} prepMinutes
+   * @returns {Promise<object>}
+   */
+  async updatePrepMinutes(productId, prepMinutes) {
+    if (!Number.isInteger(prepMinutes) || prepMinutes < 0) {
+      throw new Error("prep_minutes phải là số nguyên không âm");
+    }
+
+    const existing = await productDao.findById(productId);
+    if (!existing) throw new Error("Sản phẩm không tồn tại");
+
+    return await productDao.updatePrepMinutes(productId, prepMinutes);
+  },
+
+  /**
+   * 🏪 Lấy tất cả sản phẩm của 1 shop
    * @param {number} shopId
    * @returns {Promise<object[]>}
    */
@@ -125,7 +160,9 @@ const productService = {
    */
   async getProductsByCategory(category, limit = 20, offset = 0) {
     if (!VALID_CATEGORIES.includes(category)) {
-      throw new Error(`Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`);
+      throw new Error(
+        `Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`
+      );
     }
 
     return await productDao.getProductsByCategory(category, limit, offset);
@@ -133,7 +170,7 @@ const productService = {
 
   /**
    * 🔍 Tìm kiếm sản phẩm theo tên
-   * @param {string} keyword - từ khóa tìm kiếm
+   * @param {string} keyword
    * @param {number} [limit=20]
    * @param {number} [offset=0]
    * @returns {Promise<object[]>}
@@ -142,6 +179,7 @@ const productService = {
     if (!keyword || keyword.trim() === "") {
       throw new Error("Từ khóa tìm kiếm không được để trống");
     }
+
     return await productDao.searchProducts(keyword, limit, offset);
   },
 
@@ -154,18 +192,17 @@ const productService = {
   },
 
   /**
- * 📂 Lấy tất cả danh mục sản phẩm (chỉ 4 cái)
- * @returns {Promise<object[]>}
- */
-async getAllCategories() {
-  try {
-    return await productDao.getAllCategories();
-  } catch (err) {
-    console.error("❌ Lỗi khi lấy danh mục sản phẩm:", err);
-    throw new Error("Không thể lấy danh mục sản phẩm");
-  }
-}
-
+   * 📂 Lấy tất cả danh mục sản phẩm (4 loại)
+   * @returns {Promise<object[]>}
+   */
+  async getAllCategories() {
+    try {
+      return await productDao.getAllCategories();
+    } catch (err) {
+      console.error("❌ Lỗi khi lấy danh mục sản phẩm:", err);
+      throw new Error("Không thể lấy danh mục sản phẩm");
+    }
+  },
 };
 
 module.exports = productService;

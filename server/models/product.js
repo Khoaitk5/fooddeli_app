@@ -7,7 +7,8 @@ class Product {
     price,
     image_url,
     is_available,
-    category,      // ✅ thêm mới
+    category,
+    prep_minutes,      // ✅ mới theo DB
     updated_at,
   }) {
     this.product_id = product_id;
@@ -17,7 +18,8 @@ class Product {
     this.price = price;
     this.image_url = image_url;
     this.is_available = is_available;
-    this.category = category;  // ✅ thêm mới
+    this.category = category;
+    this.prep_minutes = prep_minutes;  // ✅
     this.updated_at = updated_at;
   }
 }
