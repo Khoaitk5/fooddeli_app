@@ -20,19 +20,38 @@ router.post('/shippers/:id/verify', ctrl.verifyShipper);
 // =============================
 // 👤 QUẢN LÝ KHÁCH HÀNG
 // =============================
+// Lấy toàn bộ khách hàng
 router.get('/customers', ctrl.getCustomers);
+
+// Lấy chi tiết 1 khách hàng
+router.get('/customers/:id', ctrl.getCustomerById);
+
+// Khóa tài khoản khách hàng
 router.post('/customers/:id/ban', ctrl.banCustomer);
+
+// Mở khóa tài khoản khách hàng
+router.post('/customers/:id/unban', ctrl.unbanCustomer);
+
+// Thống kê top khách hàng theo tổng chi tiêu
+router.get('/customers/stats/revenue', ctrl.getCustomerRevenueStats);
 
 // =============================
 // 📊 DASHBOARD STATS (mini charts)
 // =============================
+// Tổng quan (4 thẻ đầu Dashboard)
 router.get('/stats/overview', ctrl.getOverview);
+
+// Doanh thu theo tháng (Bar chart)
 router.get('/stats/dashboard/monthly', ctrl.getDashboardMonthlyRevenue);
+
+// Đơn hàng theo tuần (Line chart)
 router.get('/stats/dashboard/weekly', ctrl.getWeeklyOrders);
+
+// Phân bố người dùng (Pie chart)
 router.get('/stats/dashboard/users', ctrl.getUserDistribution);
 
 // =============================
-// 💹 REVENUE PAGE (đã rút gọn theo yêu cầu)
+// 💹 REVENUE PAGE (Revenue.jsx)
 // =============================
 // So sánh doanh thu Shop vs Shipper
 router.get('/stats/revenue/comparison', ctrl.getRevenueComparison);

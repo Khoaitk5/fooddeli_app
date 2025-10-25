@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -14,45 +14,86 @@ import {
   Chip,
   IconButton,
   InputAdornment,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
+import { getCustomers, banCustomer, unbanCustomer } from "../../api/adminApi";
 
 const Customers = () => {
-  const customers = [
-    {
-      id: 1,
-      name: "Nguyễn Văn An",
-      email: "nguyenvanan@email.com",
-      phone: "0123456789",
-      orders: 45,
-      total: "2.500.000 ₫",
-      status: "Hoạt động",
-      lastOrder: "28/9/2024",
-    },
-    {
-      id: 2,
-      name: "Trần Thị Bình",
-      email: "tranthibinh@email.com",
-      phone: "0987654321",
-      orders: 32,
-      total: "1.800.000 ₫",
-      status: "Hoạt động",
-      lastOrder: "30/9/2024",
-    },
-    {
-      id: 3,
-      name: "Lê Minh Cường",
-      email: "leminhcuong@email.com",
-      phone: "0765432198",
-      orders: 18,
-      total: "950.000 ₫",
-      status: "Không hoạt động",
-      lastOrder: "15/8/2024",
-    },
-  ];
+  const [customers, setCustomers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
+  // 🧭 Lấy danh sách khách hàng từ DB
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const data = await getCustomers();
+        setCustomers(data);
+      } catch (error) {
+        console.error("❌ Lỗi khi tải danh sách khách hàng:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  // 🔍 Lọc theo ô tìm kiếm
+  const filtered = customers.filter((c) => {
+    const keyword = search.toLowerCase();
+    return (
+      c.username?.toLowerCase().includes(keyword) ||
+      c.email?.toLowerCase().includes(keyword) ||
+      c.phone?.includes(search)
+    );
+  });
+
+  // 🚫 / 🔓 Khóa hoặc mở khóa khách hàng
+  const handleToggleBan = async (customer) => {
+    const action =
+      customer.status === "banned" ? "mở khóa" : "khóa tài khoản";
+    if (
+      !window.confirm(
+        `Bạn có chắc muốn ${action} khách hàng "${customer.username}" không?`
+      )
+    )
+      return;
+
+    try {
+      if (customer.status === "banned") {
+        await unbanCustomer(customer.id);
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.id === customer.id ? { ...c, status: "active" } : c
+          )
+        );
+      } else {
+        await banCustomer(customer.id);
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.id === customer.id ? { ...c, status: "banned" } : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi cập nhật trạng thái khách hàng:", error);
+    }
+  };
+
+  // 📊 Tính toán thống kê
+  const totalCustomers = customers.length;
+  const activeCustomers = customers.filter((c) => c.status === "active").length;
+  const bannedCustomers = customers.filter((c) => c.status === "banned").length;
+  const avgRating =
+    (
+      customers.reduce((a, b) => a + (b.rating || 0), 0) /
+      (customers.length || 1)
+    ).toFixed(1) || "0.0";
+
+  // 🟩 Thẻ thống kê
   const StatCard = ({ title, value, sub }) => (
     <Paper
       elevation={0}
@@ -76,6 +117,18 @@ const Customers = () => {
     </Paper>
   );
 
+  // 🕓 Hiển thị Loading
+  if (loading) {
+    return (
+      <Stack alignItems="center" sx={{ mt: 6 }}>
+        <CircularProgress size={40} />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Đang tải danh sách khách hàng...
+        </Typography>
+      </Stack>
+    );
+  }
+
   return (
     <Box>
       {/* Header */}
@@ -90,19 +143,36 @@ const Customers = () => {
       <Grid
         container
         spacing={2}
-        sx={{ display: "flex", justifyContent: "space-between", flexWrap: "nowrap", mb: 3 }}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          flexWrap: "nowrap",
+          mb: 3,
+        }}
       >
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Tổng khách hàng" value="1,250" sub="+8.2% tháng này" />
+          <StatCard
+            title="Tổng khách hàng"
+            value={totalCustomers}
+            sub="+8.2% tháng này"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Khách hàng VIP" value="89" sub="+12% tháng này" />
+          <StatCard
+            title="Đang hoạt động"
+            value={activeCustomers}
+            sub="Khách hàng khả dụng"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Khách hàng mới" value="156" sub="+23% tuần này" />
+          <StatCard title="Bị khóa" value={bannedCustomers} sub="Cần xem xét" />
         </Grid>
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Giá trị TB/khách" value="2.1M" sub="+5.3% tháng này" />
+          <StatCard
+            title="Đánh giá TB"
+            value={avgRating}
+            sub="Điểm trung bình từ đánh giá"
+          />
         </Grid>
       </Grid>
 
@@ -119,6 +189,8 @@ const Customers = () => {
         placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
         fullWidth
         sx={{ mb: 2, maxWidth: 400 }}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -128,57 +200,86 @@ const Customers = () => {
         }}
       />
 
-      <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Khách hàng</TableCell>
               <TableCell>Liên hệ</TableCell>
-              <TableCell>Đơn hàng</TableCell>
-              <TableCell>Tổng chi tiêu</TableCell>
               <TableCell>Trạng thái</TableCell>
-              <TableCell>Lần cuối đặt</TableCell>
+              <TableCell>Đánh giá</TableCell>
               <TableCell align="right">Thao tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {customers.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell>
-                  <Typography fontWeight={500}>{c.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Tham gia: {c.lastOrder}
+            {filtered.length > 0 ? (
+              filtered.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <Typography fontWeight={500}>{c.username}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {c.id}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{c.email}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {c.phone}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={
+                        c.status === "active"
+                          ? "Hoạt động"
+                          : c.status === "banned"
+                          ? "Bị khóa"
+                          : "Khác"
+                      }
+                      color={
+                        c.status === "active"
+                          ? "success"
+                          : c.status === "banned"
+                          ? "error"
+                          : "default"
+                      }
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>{c.rating ?? "—"}</TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <IconButton size="small" color="primary">
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color={c.status === "banned" ? "success" : "error"}
+                        onClick={() => handleToggleBan(c)}
+                      >
+                        <BlockIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  <Typography variant="body2" color="text.secondary">
+                    Không tìm thấy khách hàng phù hợp.
                   </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">{c.email}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {c.phone}
-                  </Typography>
-                </TableCell>
-                <TableCell>{c.orders} đơn</TableCell>
-                <TableCell>{c.total}</TableCell>
-                <TableCell>
-                  <Chip
-                    size="small"
-                    label={c.status}
-                    color={c.status === "Hoạt động" ? "success" : "default"}
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>{c.lastOrder}</TableCell>
-                <TableCell align="right">
-                  <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <IconButton size="small" color="primary">
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error">
-                      <BlockIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </Paper>

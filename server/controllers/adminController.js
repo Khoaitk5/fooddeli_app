@@ -54,8 +54,21 @@ async function verifyShipper(req, res, next) {
 // =============================
 async function getCustomers(req, res, next) {
   try {
-    res.json(await service.listCustomers());
+    const data = await service.listCustomers();
+    res.json(data);
   } catch (err) {
+    console.error('❌ getCustomers error:', err);
+    next(err);
+  }
+}
+
+async function getCustomerById(req, res, next) {
+  try {
+    const { id } = req.params;
+    const customer = await service.getCustomerById(id);
+    res.json(customer);
+  } catch (err) {
+    console.error('❌ getCustomerById error:', err);
     next(err);
   }
 }
@@ -65,6 +78,27 @@ async function banCustomer(req, res, next) {
     await service.banCustomer(req.params.id);
     res.json({ message: 'Customer banned' });
   } catch (err) {
+    console.error('❌ banCustomer error:', err);
+    next(err);
+  }
+}
+
+async function unbanCustomer(req, res, next) {
+  try {
+    await service.unbanCustomer(req.params.id);
+    res.json({ message: 'Customer unbanned' });
+  } catch (err) {
+    console.error('❌ unbanCustomer error:', err);
+    next(err);
+  }
+}
+
+async function getCustomerRevenueStats(req, res, next) {
+  try {
+    const stats = await service.getCustomerRevenueStats();
+    res.json({ items: stats });
+  } catch (err) {
+    console.error('❌ getCustomerRevenueStats error:', err);
     next(err);
   }
 }
@@ -170,7 +204,10 @@ module.exports = {
 
   // CUSTOMER
   getCustomers,
+  getCustomerById,
   banCustomer,
+  unbanCustomer,
+  getCustomerRevenueStats,
 
   // DASHBOARD
   getOverview,
