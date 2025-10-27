@@ -7,7 +7,7 @@ if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     // Giữ nguyên bucket bạn đang dùng (vì upload của bạn đã chạy ổn)
-    storageBucket: "gs://fooddeli-6d394.firebasestorage.app",
+    storageBucket: "fooddeli-6d394.firebasestorage.app",
   });
 }
 
