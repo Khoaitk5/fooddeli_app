@@ -84,9 +84,11 @@ const productService = {
    * @returns {Promise<boolean>}
    */
   async deleteProduct(productId) {
-    const existing = await productDao.findById(productId);
-    if (!existing) throw new Error("Sản phẩm không tồn tại");
-    return await productDao.delete(productId);
+    const ok = await productDao.deleteByProductId(productId);
+    if (!ok) {
+      throw new Error("Sản phẩm không tồn tại");
+    }
+    return true;
   },
 
   /**
@@ -203,6 +205,17 @@ const productService = {
       throw new Error("Không thể lấy danh mục sản phẩm");
     }
   },
+
+  async toggleProductStatus(productId) {
+    const existing = await productDao.findById(productId);
+    if (!existing) throw new Error("Sản phẩm không tồn tại");
+    const newStatus = !existing.is_available;
+    const updated = await productDao.updateAvailability(productId, newStatus);
+    return {
+      message: `Đã ${newStatus ? "mở bán" : "ngừng bán"} sản phẩm thành công`,
+      product: updated,
+    };
+  }
 };
 
 module.exports = productService;

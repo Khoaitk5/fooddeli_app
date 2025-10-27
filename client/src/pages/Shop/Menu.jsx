@@ -232,8 +232,27 @@ const MenuManagement = () => {
     setImagePreview("");
   };
 
-  const handleDelete = (id) => {
-    setMenuItems((items) => items.filter((i) => i.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này không?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Không thể xóa sản phẩm!");
+        return;
+      }
+
+      setMenuItems((items) => items.filter((i) => i.id !== id));
+      setSuccessMessage("🗑️ Sản phẩm đã được xóa thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi xóa sản phẩm:", err);
+      alert("Đã xảy ra lỗi khi kết nối đến server!");
+    }
   };
 
   return (
