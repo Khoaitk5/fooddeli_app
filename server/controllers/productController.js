@@ -74,17 +74,19 @@ exports.deleteProduct = async (req, res) => {
 };
 
 
-// 🔄 Cập nhật trạng thái (còn bán / ngừng bán)
-exports.updateAvailability = async (req, res) => {
+// ✅ Toggle trạng thái (mở bán / ngừng bán)
+exports.toggleStatus = async (req, res) => {
+  const productId = Number(req.params.id);
+  if (!Number.isInteger(productId) || productId <= 0) {
+    return res.status(400).json({ error: "ID không hợp lệ" });
+  }
+
   try {
-    const result = await ProductService.updateAvailability(
-      req.params.id,
-      req.body.isAvailable
-    );
-    if (!result) return res.status(404).json({ message: "Product not found" });
+    const result = await ProductService.toggleProductStatus(productId);
     res.status(200).json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ [Controller] Lỗi toggle status:", err);
+    res.status(500).json({ error: err.message || "Lỗi máy chủ" });
   }
 };
 

@@ -206,16 +206,24 @@ const productService = {
     }
   },
 
+  /**
+   * 🔄 Đổi trạng thái sản phẩm (mở bán ↔ ngừng bán)
+   * @param {number} productId
+   */
   async toggleProductStatus(productId) {
-    const existing = await productDao.findById(productId);
-    if (!existing) throw new Error("Sản phẩm không tồn tại");
-    const newStatus = !existing.is_available;
-    const updated = await productDao.updateAvailability(productId, newStatus);
-    return {
-      message: `Đã ${newStatus ? "mở bán" : "ngừng bán"} sản phẩm thành công`,
-      product: updated,
-    };
+    try {
+      const updatedProduct = await productDao.toggleProductStatus(productId);
+      return {
+        message: `Đã ${updatedProduct.is_available ? "mở bán" : "ngừng bán"} sản phẩm`,
+        product: updatedProduct,
+      };
+    } catch (err) {
+      console.error("❌ [Service] Lỗi toggleProductStatus:", err.message);
+      throw err; // Controller sẽ bắt và trả 500
+    }
   }
+
+
 };
 
 module.exports = productService;

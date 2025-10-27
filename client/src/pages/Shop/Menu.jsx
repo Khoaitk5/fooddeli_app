@@ -255,6 +255,43 @@ const MenuManagement = () => {
     }
   };
 
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${id}/toggle-status`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Không thể đổi trạng thái sản phẩm!");
+        return;
+      }
+
+      const result = await res.json();
+
+      setMenuItems((items) =>
+        items.map((item) =>
+          item.id === id
+            ? {
+              ...item,
+              status: result.product.is_available ? "active" : "inactive",
+            }
+            : item
+        )
+      );
+
+      setSuccessMessage(
+        result.product.is_available
+          ? "✅ Sản phẩm đã được mở bán!"
+          : "🚫 Sản phẩm đã được ngừng bán!"
+      );
+    } catch (err) {
+      console.error("❌ Lỗi khi đổi trạng thái sản phẩm:", err);
+      alert("Đã xảy ra lỗi khi kết nối đến server!");
+    }
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Header */}
@@ -340,9 +377,24 @@ const MenuManagement = () => {
                 >
                   Sửa
                 </Button>
-                <IconButton color="error" onClick={() => handleDelete(item.id)}>
-                  <DeleteIcon />
-                </IconButton>
+
+                <Box>
+                  {/* 🔄 Nút Toggle trạng thái */}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color={item.status === "active" ? "success" : "warning"}
+                    onClick={() => handleToggleStatus(item.id, item.status)}
+                    sx={{ mr: 1 }}
+                  >
+                    {item.status === "active" ? "Ngừng bán" : "Mở bán"}
+                  </Button>
+
+                  {/* 🗑️ Nút Xóa */}
+                  <IconButton color="error" onClick={() => handleDelete(item.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
               </Box>
             </Card>
           ))}

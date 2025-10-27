@@ -195,6 +195,18 @@ class ProductDao extends GenericDao {
     );
     return updated.rows[0];
   }
+
+  /**
+   * 🔍 Lấy sản phẩm theo product_id
+   * @param {number} productId
+   * @returns {object|null}
+   */
+  async findByProductId(productId) {
+    const query = "SELECT * FROM products WHERE product_id = $1;";
+    const result = await pool.query(query, [productId]);
+    return result.rows[0] || null;
+  }
+
 }
 
 
