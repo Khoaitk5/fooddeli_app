@@ -21,7 +21,9 @@ exports.uploadImage = async (req, res) => {
     });
 
     blobStream.on("finish", async () => {
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+      const encodedPath = encodeURIComponent(blob.name);
+      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media`;
+
       console.log(`✅ Uploaded to Firebase: ${publicUrl}`);
       res.status(200).json({ imageUrl: publicUrl });
     });

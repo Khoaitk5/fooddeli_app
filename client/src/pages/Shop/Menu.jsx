@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from "react";
 import {
   Box,
   Typography,
   Button,
   IconButton,
   TextField,
-  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -13,63 +12,103 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Chip
-} from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+  Chip,
+  CircularProgress,
+  Snackbar,
+  Alert,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
+import { MenuItem } from "@mui/material";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
+import { ShopContext } from "../../contexts/ShopContext";
+
+const API_URL = "http://localhost:5000/api/images/upload";
+const VALID_CATEGORIES = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác", "Combo"];
 
 const MenuManagement = () => {
-  const [menuItems, setMenuItems] = useState([
-    {
-      id: 1,
-      name: 'Phở bò',
-      description: 'Phở bò truyền thống với nước dùng đậm đà',
-      price: 50000,
-      category: 'Món chính',
-      image: 'https://images.unsplash.com/photo-1677837914128-2367031a11e7?auto=format&fit=crop&w=1200&q=80',
-      status: 'active',
-      hasVideo: true,
-      preparationTime: 15
-    },
-    {
-      id: 2,
-      name: 'Bánh mì thịt nướng',
-      description: 'Bánh mì giòn với thịt nướng thơm lừng',
-      price: 25000,
-      category: 'Món nhẹ',
-      image: 'https://images.unsplash.com/photo-1599719455360-ff0be7c4dd06?auto=format&fit=crop&w=1200&q=80',
-      status: 'active',
-      hasVideo: false,
-      preparationTime: 10
-    },
-    {
-      id: 3,
-      name: 'Bún bò Huế',
-      description: 'Bún bò Huế cay nồng đặc trưng miền Trung',
-      price: 55000,
-      category: 'Món chính',
-      image: 'https://images.unsplash.com/photo-1710702418104-6bf5419ab03d?auto=format&fit=crop&w=1200&q=80',
-      status: 'active',
-      hasVideo: true,
-      preparationTime: 20
-    }
-  ]);
+  const shopId = useContext(ShopContext);
 
+  const [menuItems, setMenuItems] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: '',
-    image: '',
-    preparationTime: ''
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    image: "",
+    preparationTime: "",
   });
-  const [imagePreview, setImagePreview] = useState('');
+  const [imagePreview, setImagePreview] = useState("");
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  // 🔹 Load sản phẩm theo shopId từ context
+  useEffect(() => {
+    if (!shopId) return; // đợi context load xong
+
+    const loadProductsByShop = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/products/by-shop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ shopId: Number(shopId) }),
+        });
+        const data = await res.json();
+
+        const products = Array.isArray(data?.data) ? data.data : [];
+        const active = products.filter((p) => p?.is_available === true);
+        const formatted = active.map((p) => ({
+          id: p.product_id,
+          name: p.name || "",
+          description: p.description || "",
+          price: Number(p.price) || 0,
+          image: p.image_url || "",
+          category: p.category || "Khác",
+          preparationTime: Number(p.prep_minutes) || 0,
+          status: p.is_available ? "active" : "inactive",
+          hasVideo: false,
+        }));
+        setMenuItems(formatted);
+      } catch (err) {
+        console.error("❌ Lỗi loadProductsByShop:", err);
+      }
+    };
+
+    loadProductsByShop();
+  }, [shopId]);
+
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      maximumFractionDigits: 0,
+    }).format(price);
+
+  const handleAdd = () => {
+    setEditingItem(null);
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      category: "",
+      image: "",
+      preparationTime: "",
+    });
+    setImagePreview("");
+    setSelectedImageFile(null);
+    setUploadError("");
+    setIsDialogOpen(true);
+  };
 
   const handleEdit = (item) => {
     setEditingItem(item);
@@ -79,182 +118,396 @@ const MenuManagement = () => {
       price: String(item.price),
       category: item.category,
       image: item.image,
-      preparationTime: String(item.preparationTime)
+      preparationTime: String(item.preparationTime),
     });
     setImagePreview(item.image);
+    setSelectedImageFile(null);
+    setUploadError("");
     setIsDialogOpen(true);
   };
 
-  const handleAdd = () => {
-    setEditingItem(null);
-    setFormData({ name: '', description: '', price: '', category: '', image: '', preparationTime: '' });
-    setImagePreview('');
-    setIsDialogOpen(true);
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setUploadError("");
   };
 
-  const handleSave = () => {
-    if (!formData.name || !formData.price) {
-      setIsDialogOpen(false);
+  const handleSave = async () => {
+    if (!selectedImageFile && !formData.image) {
+      setUploadError("⚠️ Vui lòng chọn ảnh sản phẩm trước khi lưu!");
       return;
     }
-    if (editingItem) {
-      setMenuItems((items) => items.map((it) => (
-        it.id === editingItem.id
-          ? {
-              ...it,
-              ...formData,
-              price: parseInt(formData.price, 10) || 0,
-              preparationTime: parseInt(formData.preparationTime, 10) || 0
-            }
-          : it
-      )));
-    } else {
-      const newItem = {
-        id: Date.now(),
-        ...formData,
-        price: parseInt(formData.price, 10) || 0,
-        preparationTime: parseInt(formData.preparationTime, 10) || 0,
-        status: 'active',
-        hasVideo: false
-      };
-      setMenuItems((items) => [newItem, ...items]);
+    if (!formData.name.trim() || !formData.price.trim()) {
+      alert("Vui lòng nhập đầy đủ tên món và giá!");
+      return;
     }
-    setIsDialogOpen(false);
-  };
+    if (!shopId) {
+      alert("Không tìm thấy shopId trong context!");
+      return;
+    }
 
-  const handleDelete = (id) => setMenuItems((items) => items.filter((it) => it.id !== id));
+    let imageUrl = formData.image;
+    if (selectedImageFile) {
+      setUploading(true);
+      const formDataUpload = new FormData();
+      formDataUpload.append("image", selectedImageFile);
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: formDataUpload,
+        });
+        const data = await res.json();
+        if (!res.ok || !data.imageUrl) {
+          setUploadError(data?.error || "Upload thất bại!");
+          setUploading(false);
+          return;
+        }
+        imageUrl = data.imageUrl;
+      } catch (err) {
+        console.error("❌ Lỗi upload:", err);
+        setUploadError("Không thể upload ảnh lên server!");
+        setUploading(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
 
-  const toggleStatus = (id) => {
-    setMenuItems((items) => items.map((it) => (
-      it.id === id ? { ...it, status: it.status === 'active' ? 'inactive' : 'active' } : it
-    )));
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageData = reader.result;
-      setFormData((prev) => ({ ...prev, image: imageData }));
-      setImagePreview(imageData);
+    const newProductData = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      price: parseInt(formData.price, 10) || 0,
+      category: formData.category.trim() || "Khác",
+      image_url: imageUrl,
+      prep_minutes: parseInt(formData.preparationTime, 10) || 0,
+      is_available: true,
+      shop_id: Number(shopId),
     };
-    reader.readAsDataURL(file);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(newProductData),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        alert(result?.error || "Không thể thêm món!");
+        return;
+      }
+
+      const addedItem = {
+        id: result.product_id || result.id || Date.now(),
+        name: result.name || newProductData.name,
+        description: result.description || newProductData.description,
+        price: Number(result.price) || newProductData.price,
+        image: result.image_url || imageUrl,
+        category: result.category || newProductData.category,
+        preparationTime:
+          Number(result.prep_minutes) || newProductData.prep_minutes,
+        status: result.is_available ? "active" : "inactive",
+        hasVideo: false,
+      };
+      setMenuItems((items) => [addedItem, ...items]);
+      setSuccessMessage("✅ Món ăn đã được thêm thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi tạo sản phẩm:", err);
+      alert("Đã xảy ra lỗi khi kết nối đến server!");
+      return;
+    }
+
+    setIsDialogOpen(false);
+    setSelectedImageFile(null);
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      category: "",
+      image: "",
+      preparationTime: "",
+    });
+    setImagePreview("");
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này không?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Không thể xóa sản phẩm!");
+        return;
+      }
+
+      setMenuItems((items) => items.filter((i) => i.id !== id));
+      setSuccessMessage("🗑️ Sản phẩm đã được xóa thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi xóa sản phẩm:", err);
+      alert("Đã xảy ra lỗi khi kết nối đến server!");
+    }
+  };
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${id}/toggle-status`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Không thể đổi trạng thái sản phẩm!");
+        return;
+      }
+
+      const result = await res.json();
+
+      setMenuItems((items) =>
+        items.map((item) =>
+          item.id === id
+            ? {
+              ...item,
+              status: result.product.is_available ? "active" : "inactive",
+            }
+            : item
+        )
+      );
+
+      setSuccessMessage(
+        result.product.is_available
+          ? "✅ Sản phẩm đã được mở bán!"
+          : "🚫 Sản phẩm đã được ngừng bán!"
+      );
+    } catch (err) {
+      console.error("❌ Lỗi khi đổi trạng thái sản phẩm:", err);
+      alert("Đã xảy ra lỗi khi kết nối đến server!");
+    }
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {/* Header */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Box>
           <Typography variant="h6">Quản lý món ăn</Typography>
-          <Typography variant="body2" color="text.secondary">Quản lý menu và món ăn của shop</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Quản lý menu và món ăn của shop
+          </Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd} sx={{ bgcolor: '#ff6900', '&:hover': { bgcolor: '#e55a3a' } }}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleAdd}
+          sx={{ bgcolor: "#ff6900", "&:hover": { bgcolor: "#e55a3a" } }}
+        >
           Thêm món mới
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
-        {menuItems.map((item) => (
-          <Grid item xs={12} sm={6} md={4} key={item.id}>
-            <Card sx={{ overflow: 'hidden' }}>
-              <Box sx={{ position: 'relative' }}>
-                <CardMedia component="img" height="200" image={item.image} alt={item.name} />
-                {item.hasVideo && (
-                  <Chip size="small" color="error" icon={<VideoLibraryIcon sx={{ fontSize: 16 }} />} label="Video" sx={{ position: 'absolute', top: 8, right: 8 }} />
-                )}
-              </Box>
-              <CardContent>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  <Box>
-                    <Typography fontWeight={600} noWrap>{item.name}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {item.description}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Chip label={item.category} variant="outlined" size="small" />
-                    <Chip label={item.status === 'active' ? 'Đang bán' : 'Tạm ngưng'} size="small" color={item.status === 'active' ? 'success' : 'default'} />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'text.secondary' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AttachMoneyIcon sx={{ fontSize: 18 }} />
-                      <Typography color="text.primary" fontWeight={500}>{formatPrice(item.price)}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AccessTimeIcon sx={{ fontSize: 18 }} />
-                      <Typography>{item.preparationTime} phút</Typography>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: 1, pt: 1 }}>
-                    <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => handleEdit(item)} sx={{ flex: 1 }}>Sửa</Button>
-                    <Button variant="outlined" size="small" onClick={() => toggleStatus(item.id)}>
-                      {item.status === 'active' ? 'Ẩn' : 'Bán'}
-                    </Button>
-                    <IconButton size="small" onClick={() => handleDelete(item.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
+      {/* Danh sách món ăn */}
+      {menuItems.length === 0 ? (
+        <Box
+          sx={{
+            textAlign: "center",
+            py: 5,
+            color: "text.secondary",
+            border: "1px dashed rgba(0,0,0,0.2)",
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="body1">📭 Chưa có sản phẩm nào</Typography>
+          <Typography variant="body2">Hãy nhấn “Thêm món mới” để bắt đầu.</Typography>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+              lg: "repeat(4, 1fr)",
+            },
+          }}
+        >
+          {menuItems.map((item) => (
+            <Card key={item.id} sx={{ display: "flex", flexDirection: "column" }}>
+              <CardMedia
+                component="img"
+                height="160"
+                image={item.image}
+                alt={item.name}
+                sx={{ objectFit: "cover" }}
+              />
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Typography fontWeight="bold">{item.name}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {item.description}
+                </Typography>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+                  <Chip label={item.category} size="small" />
+                  <Chip
+                    label={item.status === "active" ? "Đang bán" : "Tạm ngưng"}
+                    size="small"
+                    color={item.status === "active" ? "success" : "default"}
+                  />
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mt: 1, gap: 1 }}>
+                  <AttachMoneyIcon sx={{ fontSize: 18 }} />
+                  <Typography>{formatPrice(item.price)}</Typography>
+                  <AccessTimeIcon sx={{ fontSize: 18, ml: 1 }} />
+                  <Typography>{item.preparationTime} phút</Typography>
                 </Box>
               </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              <Box sx={{ display: "flex", justifyContent: "space-between", p: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleEdit(item)}
+                >
+                  Sửa
+                </Button>
 
-      {menuItems.length === 0 && (
-        <Card sx={{ p: 6, textAlign: 'center' }}>
-          <Typography fontWeight={600} sx={{ mb: 1 }}>Chưa có món ăn nào</Typography>
-          <Typography color="text.secondary" sx={{ mb: 2 }}>Hãy thêm món ăn đầu tiên cho menu của bạn</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd} sx={{ bgcolor: '#ff6900', '&:hover': { bgcolor: '#e55a3a' } }}>Thêm món đầu tiên</Button>
-        </Card>
+                <Box>
+                  {/* 🔄 Nút Toggle trạng thái */}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color={item.status === "active" ? "success" : "warning"}
+                    onClick={() => handleToggleStatus(item.id, item.status)}
+                    sx={{ mr: 1 }}
+                  >
+                    {item.status === "active" ? "Ngừng bán" : "Mở bán"}
+                  </Button>
+
+                  {/* 🗑️ Nút Xóa */}
+                  <IconButton color="error" onClick={() => handleDelete(item.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Card>
+          ))}
+        </Box>
       )}
 
-      <Dialog
-        open={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        slotProps={{ backdrop: { sx: { zIndex: 1500 } } }}
-        sx={{ '& .MuiDialog-paper': { zIndex: 1600 } }}
-      >
-        <DialogTitle>{editingItem ? 'Chỉnh sửa món ăn' : 'Thêm món ăn mới'}</DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField label="Tên món" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} fullWidth size="small" />
-            <TextField label="Mô tả" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} fullWidth size="small" multiline minRows={3} />
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField type="number" label="Giá (VND)" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} fullWidth size="small" />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField type="number" label="Thời gian (phút)" value={formData.preparationTime} onChange={(e) => setFormData({ ...formData, preparationTime: e.target.value })} fullWidth size="small" />
-              </Grid>
-            </Grid>
-            <TextField label="Danh mục" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} fullWidth size="small" />
-            <Box>
-              <Typography variant="body2" sx={{ mb: 1 }}>Hình ảnh</Typography>
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ width: '100%' }} />
+      {/* Dialog thêm / sửa */}
+      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} fullWidth>
+        <DialogTitle>{editingItem ? "Chỉnh sửa món ăn" : "Thêm món ăn mới"}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              label="Tên món"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Mô tả"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              fullWidth
+              multiline
+              minRows={3}
+              size="small"
+            />
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                label="Giá (VND)"
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                fullWidth
+                size="small"
+                inputProps={{ step: 1000, min: 0 }}
+              />
+
+              <TextField
+                label="Thời gian làm (phút)"
+                type="number"
+                value={formData.preparationTime}
+                onChange={(e) =>
+                  setFormData({ ...formData, preparationTime: e.target.value })
+                }
+                fullWidth
+                size="small"
+                inputProps={{ step: 5, min: 0 }}
+              />
             </Box>
-            {imagePreview && (
-              <Box sx={{ mt: 1, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 1, overflow: 'hidden' }}>
-                <img src={imagePreview} alt="Preview" style={{ width: '100%', height: 160, objectFit: 'cover' }} />
-              </Box>
-            )}
+            <TextField
+              select
+              label="Danh mục"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              fullWidth
+              size="small"
+              SelectProps={{ native: false }}
+            >
+              {VALID_CATEGORIES.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Hình ảnh sản phẩm
+              </Typography>
+              <input type="file" accept="image/*" onChange={handleImageSelect} />
+              {uploading && (
+                <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                  <CircularProgress size={20} sx={{ mr: 1 }} />
+                  <Typography>Đang tải ảnh lên...</Typography>
+                </Box>
+              )}
+              {uploadError && (
+                <Typography color="error" sx={{ mt: 1 }}>
+                  {uploadError}
+                </Typography>
+              )}
+              {imagePreview && (
+                <Box sx={{ mt: 1 }}>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{ width: "100%", borderRadius: "8px" }}
+                  />
+                </Box>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleSave} variant="contained">{editingItem ? 'Cập nhật' : 'Thêm món'}</Button>
-          <Button onClick={() => setIsDialogOpen(false)} variant="outlined">Hủy</Button>
+          <Button onClick={handleSave} variant="contained">
+            {editingItem ? "Cập nhật" : "Thêm"}
+          </Button>
+          <Button onClick={() => setIsDialogOpen(false)}>Hủy</Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage("")}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity="success" onClose={() => setSuccessMessage("")}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
 
 export default MenuManagement;
-
-

@@ -84,9 +84,11 @@ const productService = {
    * @returns {Promise<boolean>}
    */
   async deleteProduct(productId) {
-    const existing = await productDao.findById(productId);
-    if (!existing) throw new Error("Sản phẩm không tồn tại");
-    return await productDao.delete(productId);
+    const ok = await productDao.deleteByProductId(productId);
+    if (!ok) {
+      throw new Error("Sản phẩm không tồn tại");
+    }
+    return true;
   },
 
   /**
@@ -203,6 +205,25 @@ const productService = {
       throw new Error("Không thể lấy danh mục sản phẩm");
     }
   },
+
+  /**
+   * 🔄 Đổi trạng thái sản phẩm (mở bán ↔ ngừng bán)
+   * @param {number} productId
+   */
+  async toggleProductStatus(productId) {
+    try {
+      const updatedProduct = await productDao.toggleProductStatus(productId);
+      return {
+        message: `Đã ${updatedProduct.is_available ? "mở bán" : "ngừng bán"} sản phẩm`,
+        product: updatedProduct,
+      };
+    } catch (err) {
+      console.error("❌ [Service] Lỗi toggleProductStatus:", err.message);
+      throw err; // Controller sẽ bắt và trả 500
+    }
+  }
+
+
 };
 
 module.exports = productService;

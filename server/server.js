@@ -19,21 +19,51 @@ dotenv.config();
 const app = express();
 app.set("trust proxy", 1);
 
+// ✅ Cho phép nhiều origin (local + production)
+const allowedOrigins = [
+  "http://localhost:5173", // local React dev
+  "https://yourdomain.com", // tên miền production của bạn
+  "https://www.yourdomain.com",
+];
+
+// ✅ Cấu hình CORS linh hoạt
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      // Nếu không có origin (ví dụ request nội bộ hoặc Postman), vẫn cho phép
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`❌ Blocked by CORS: ${origin}`);
+        callback(new Error("CORS not allowed for this origin"));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
+// ✅ Đảm bảo server phản hồi preflight (OPTIONS)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 app.use(express.json());
 setupSession(app);
 
+// 🧭 Log request đơn giản để debug
 app.use((req, res, next) => {
-    console.log(`📡 ${req.method} ${req.originalUrl}`);
-    next();
+  console.log(`📡 ${req.method} ${req.originalUrl}`);
+  next();
 });
 
 // ✅ Import routes
@@ -59,10 +89,14 @@ app.use("/api/video-likes", videoLikeRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/admin", adminRoutes);
 
+// ✅ Debug route
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));
 app.get("/", (req, res) => res.send("✅ API hoạt động ổn định!"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+  // console.log(`🌐 CORS allowed origins:`, allowedOrigins);
+});
 
 export default app;

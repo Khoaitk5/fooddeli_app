@@ -161,6 +161,53 @@ class ProductDao extends GenericDao {
       throw err;
     }
   }
+
+  /**
+ * 🗑️ Xóa sản phẩm theo product_id (an toàn, không ảnh hưởng phần khác)
+ * @param {number} productId
+ * @returns {boolean} true nếu xóa thành công, false nếu không tìm thấy
+ */
+  async deleteByProductId(productId) {
+    const query = "DELETE FROM products WHERE product_id = $1;";
+    const result = await pool.query(query, [productId]);
+    return result.rowCount > 0;
+  }
+
+  /**
+   * 🔄 Đổi trạng thái sản phẩm (true ↔ false)
+   * @param {number} productId
+   * @returns {object} sản phẩm sau khi cập nhật
+   */
+  async toggleProductStatus(productId) {
+    const existing = await pool.query(
+      "SELECT is_available FROM products WHERE product_id = $1;",
+      [productId]
+    );
+    if (existing.rows.length === 0) throw new Error("Sản phẩm không tồn tại");
+
+    const newStatus = !existing.rows[0].is_available;
+    const updated = await pool.query(
+      `UPDATE products
+     SET is_available = $1, updated_at = NOW()
+     WHERE product_id = $2
+     RETURNING *;`,
+      [newStatus, productId]
+    );
+    return updated.rows[0];
+  }
+
+  /**
+   * 🔍 Lấy sản phẩm theo product_id
+   * @param {number} productId
+   * @returns {object|null}
+   */
+  async findByProductId(productId) {
+    const query = "SELECT * FROM products WHERE product_id = $1;";
+    const result = await pool.query(query, [productId]);
+    return result.rows[0] || null;
+  }
+
 }
+
 
 module.exports = new ProductDao();
