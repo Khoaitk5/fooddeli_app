@@ -2,47 +2,129 @@ import { useState, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
+import SubmitButton from "../../components/shared/SubmitButton";
 
 export function CartPage({ isMobile, isTablet, onCheckout }) {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 📦 Lấy giỏ hàng từ backend
+  // 📦 Lấy giỏ hàng từ backend (tạm thời comment để test FE)
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/cart", {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json();
+    // const fetchCart = async () => {
+    //   try {
+    //     const res = await fetch("http://localhost:5000/api/cart", {
+    //       method: "GET",
+    //       credentials: "include",
+    //       headers: { "Content-Type": "application/json" },
+    //     });
+    //     const data = await res.json();
 
-        if (data.success && data.data?.items) {
-          // ✅ Chuẩn hoá data trước khi lưu
-          const normalizedItems = data.data.items.map((item) => ({
-            id: item.id || item.cart_item_id, // đảm bảo luôn có id
-            product_name: item.product_name,
-            product_description: item.product_description,
-            product_image: item.product_image,
-            quantity: item.quantity,
-            unit_price: Number(item.unit_price),
-            line_total: Number(item.line_total),
-          }));
+    //     if (data.success && data.data?.items) {
+    //       // ✅ Chuẩn hoá data trước khi lưu
+    //       const normalizedItems = data.data.items.map((item) => ({
+    //         id: item.id || item.cart_item_id, // đảm bảo luôn có id
+    //         product_name: item.product_name,
+    //         product_description: item.product_description,
+    //         product_image: item.product_image,
+    //         quantity: item.quantity,
+    //         unit_price: Number(item.unit_price),
+    //         line_total: Number(item.line_total),
+    //       }));
 
-          setCartItems(normalizedItems);
-        } else {
-          console.warn("⚠️ Không lấy được dữ liệu giỏ hàng:", data.message);
-        }
-      } catch (err) {
-        console.error("❌ Lỗi khi fetch giỏ hàng:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    //       setCartItems(normalizedItems);
+    //     } else {
+    //       console.warn("⚠️ Không lấy được dữ liệu giỏ hàng:", data.message);
+    //     }
+    //   } catch (err) {
+    //     console.error("❌ Lỗi khi fetch giỏ hàng:", err);
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // };
 
-    fetchCart();
+    // fetchCart();
+
+    // Mock data để test FE
+    const mockCartItems = [
+      {
+        id: 1,
+        product_name: "Phở Bò Hà Nội",
+        product_description: "Phở bò truyền thống với thịt bò tái, tái chín và bánh phở tươi",
+        product_image: "https://production-cdn.pharmacity.io/digital/original/plain/blog/71cd32d87719cbe042825c70cd7cbfe11746987312.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAUYXZVMJM5QUYWSVO%2F20250602%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250602T095922Z&X-Amz-SignedHeaders=host&X-Amz-Expires=600&X-Amz-Signature=66239f5b681036deaf303cda2b1a5513d21d163a824a0a2d25ff2b4ab9c4d8b7",
+        quantity: 2,
+        unit_price: 45000,
+        line_total: 90000,
+      },
+      {
+        id: 2,
+        product_name: "Bún Bò Huế",
+        product_description: "Bún bò Huế cay với thịt bò và các loại gia vị đặc trưng",
+        product_image: "https://example.com/bun-bo-hue.jpg",
+        quantity: 1,
+        unit_price: 55000,
+        line_total: 55000,
+      },
+      {
+        id: 3,
+        product_name: "Cơm Tấm Sườn Bì",
+        product_description: "Cơm tấm với sườn nướng, bì và trứng ốp la",
+        product_image: "https://example.com/com-tam.jpg",
+        quantity: 3,
+        unit_price: 35000,
+        line_total: 105000,
+      },
+      {
+        id: 4,
+        product_name: "Gỏi Cuốn",
+        product_description: "Gỏi cuốn tươi với tôm, thịt, rau sống và nước mắm chua ngọt",
+        product_image: "https://example.com/goi-cuon.jpg",
+        quantity: 4,
+        unit_price: 25000,
+        line_total: 100000,
+      },
+      {
+        id: 5,
+        product_name: "Bánh Mì Thịt Nướng",
+        product_description: "Bánh mì nướng với thịt heo, rau thơm và nước tương",
+        product_image: "https://example.com/banh-mi.jpg",
+        quantity: 2,
+        unit_price: 30000,
+        line_total: 60000,
+      },
+      {
+        id: 6,
+        product_name: "Cà Phê Sữa Đá",
+        product_description: "Cà phê đen pha sữa đá truyền thống Việt Nam",
+        product_image: "https://example.com/ca-phe-sua-da.jpg",
+        quantity: 1,
+        unit_price: 25000,
+        line_total: 25000,
+      },
+      {
+        id: 7,
+        product_name: "Bánh Xèo",
+        product_description: "Bánh xèo miền Trung với tôm, thịt và rau sống",
+        product_image: "https://example.com/banh-xeo.jpg",
+        quantity: 2,
+        unit_price: 40000,
+        line_total: 80000,
+      },
+      {
+        id: 8,
+        product_name: "Chè Ba Màu",
+        product_description: "Chè thập cẩm với đậu xanh, đậu đỏ và thạch dừa",
+        product_image: "https://example.com/che-ba-mau.jpg",
+        quantity: 1,
+        unit_price: 35000,
+        line_total: 35000,
+      },
+    ];
+
+    setTimeout(() => {
+      setCartItems(mockCartItems);
+      setLoading(false);
+    }, 1000); // Simulate loading delay
   }, []);
 
   const formatPrice = (price) =>
@@ -55,37 +137,48 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
     const item = cartItems.find((i) => i.id === itemId);
     if (!item) return;
     const newQty = Math.max(1, item.quantity + delta);
-    try {
-      const res = await fetch("http://localhost:5000/api/cart/items", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, quantity: newQty }),
-      });
-      const data = await res.json();
-      if (data.success)
-        setCartItems((prev) =>
-          prev.map((i) => (i.id === itemId ? { ...i, quantity: newQty } : i))
-        );
-    } catch (err) {
-      console.error("❌ Lỗi khi cập nhật số lượng:", err);
-    }
+
+    // Comment tạm thời API call để test FE
+    // try {
+    //   const res = await fetch("http://localhost:5000/api/cart/items", {
+    //     method: "PUT",
+    //     credentials: "include",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ itemId, quantity: newQty }),
+    //   });
+    //   const data = await res.json();
+    //   if (data.success)
+    //     setCartItems((prev) =>
+    //       prev.map((i) => (i.id === itemId ? { ...i, quantity: newQty, line_total: newQty * i.unit_price } : i))
+    //     );
+    // } catch (err) {
+    //   console.error("❌ Lỗi khi cập nhật số lượng:", err);
+    // }
+
+    // Update local state để test FE
+    setCartItems((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, quantity: newQty, line_total: newQty * i.unit_price } : i))
+    );
   };
 
   const removeItem = async (itemId) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/cart/items", {
-        method: "DELETE",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId }),
-      });
-      const data = await res.json();
-      if (data.success)
-        setCartItems((prev) => prev.filter((i) => i.id !== itemId));
-    } catch (err) {
-      console.error("❌ Lỗi khi xóa item:", err);
-    }
+    // Comment tạm thời API call để test FE
+    // try {
+    //   const res = await fetch("http://localhost:5000/api/cart/items", {
+    //     method: "DELETE",
+    //     credentials: "include",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ itemId }),
+    //   });
+    //   const data = await res.json();
+    //   if (data.success)
+    //     setCartItems((prev) => prev.filter((i) => i.id !== itemId));
+    // } catch (err) {
+    //   console.error("❌ Lỗi khi xóa item:", err);
+    // }
+
+    // Remove from local state để test FE
+    setCartItems((prev) => prev.filter((i) => i.id !== itemId));
   };
 
   const subtotal = cartItems.reduce(
@@ -115,8 +208,10 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
       {/* Header */}
       <div
         style={{
-          position: "sticky",
+          position: "fixed",
           top: 0,
+          left: 0,
+          right: 0,
           background: "#fff",
           padding: "1rem",
           display: "flex",
@@ -125,7 +220,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
           fontWeight: 700,
           fontSize: "1.25rem",
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          zIndex: 100,
+          zIndex: 1100,
         }}
       >
         <button
@@ -144,7 +239,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
       </div>
 
       {/* Nội dung */}
-      <div style={{ padding: "1rem", paddingBottom: "8rem" }}>
+      <div style={{ padding: "1rem", paddingTop: "5rem", paddingBottom: "8rem" }}>
         {cartItems.length > 0 ? (
           <>
             {cartItems.map((item) => (
@@ -217,39 +312,6 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                         </p>
                       )}
                     </div>
-                    {/* Nút xóa */}
-                    <button
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            `Xóa "${item.product_name}" khỏi giỏ hàng?`
-                          )
-                        ) {
-                          removeItem(item.id);
-                        }
-                      }}
-                      style={{
-                        background: "#fff5f5",
-                        border: "1px solid #ffe0e0",
-                        color: "#ef4444",
-                        fontSize: "1.25rem",
-                        cursor: "pointer",
-                        borderRadius: "8px",
-                        padding: "6px 8px",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#ffe8e8";
-                        e.currentTarget.style.transform = "scale(1.1)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#fff5f5";
-                        e.currentTarget.style.transform = "scale(1)";
-                      }}
-                      title="Xóa khỏi giỏ hàng"
-                    >
-                      🗑️
-                    </button>
                   </div>
 
                   <div
@@ -280,22 +342,23 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                       }}
                     >
                       <button
-                        onClick={() => updateQuantity(item.id, -1)}
-                        disabled={item.quantity <= 1}
+                        onClick={() => item.quantity <= 1 ? removeItem(item.id) : updateQuantity(item.id, -1)}
                         style={{
                           width: "28px",
                           height: "28px",
                           borderRadius: "6px",
                           border: "none",
-                          background: item.quantity <= 1 ? "#ddd" : "#fff",
-                          color: item.quantity <= 1 ? "#999" : "#333",
-                          cursor:
-                            item.quantity <= 1 ? "not-allowed" : "pointer",
-                          fontSize: "1rem",
+                          background: "#fff",
+                          color: item.quantity <= 1 ? "#ef4444" : "#333",
+                          cursor: "pointer",
+                          fontSize: item.quantity <= 1 ? "1.2rem" : "1rem",
                           fontWeight: 600,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        −
+                        {item.quantity <= 1 ? "🗑️" : "−"}
                       </button>
                       <span
                         style={{
@@ -381,40 +444,36 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
             bottom: 0,
             left: 0,
             right: 0,
-            background: "#fff",
-            borderTop: "1px solid #eee",
-            boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
             padding: "1rem",
+            paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+            display: "flex",
+            justifyContent: "center",
+            zIndex: 1000,
           }}
         >
-          <button
+          <SubmitButton
+            isValid={cartItems.length > 0}
             onClick={onCheckout}
             style={{
-              width: "100%",
-              padding: "1rem",
-              border: "none",
-              borderRadius: "0.75rem",
-              background: "linear-gradient(135deg, #ee4d2d, #ff6b35)",
-              color: "#fff",
-              fontSize: "1.2rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(238,77,45,0.3)",
-              transition: "transform 0.2s ease, box-shadow 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 16px rgba(238,77,45,0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(238,77,45,0.3)";
+              marginTop: "0"
             }}
           >
-            Đặt hàng • {formatPrice(total)}
-          </button>
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                textAlign: "center",
+                justifyContent: "center",
+                display: "flex",
+                flexDirection: "column",
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                wordWrap: "break-word",
+              }}
+            >
+              Thanh toán • {formatPrice(total)}
+            </div>
+          </SubmitButton>
         </div>
       )}
     </div>
