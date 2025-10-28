@@ -34,6 +34,11 @@ export async function verifyShipper(id) {
   return res.data;
 }
 
+export async function suspendShipper(id) {
+  const res = await axios.post(`${API_URL}/shippers/${id}/suspend`);
+  return res.data;
+}
+
 // =============================
 // 👤 CUSTOMERS
 // =============================
@@ -47,7 +52,6 @@ export async function banCustomer(id) {
   return res.data;
 }
 
-// 🟢 Mở khóa (unban)
 export async function unbanCustomer(id) {
   const res = await axios.post(`${API_URL}/customers/${id}/unban`);
   return res.data;
