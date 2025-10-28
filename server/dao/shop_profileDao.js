@@ -32,12 +32,12 @@ class ShopProfileDao extends GenericDao {
     `;
     const result = await pool.query(query, [shopId]);
     if (result.rows[0]) {
-    const shop = new ShopProfile(result.rows[0]);
-    shop.user_id = result.rows[0].user_id; // ✅ Thêm dòng này
-    return shop;
-  }
+      const shop = new ShopProfile(result.rows[0]);
+      shop.user_id = result.rows[0].user_id; // ✅ Thêm dòng này
+      return shop;
+    }
 
-  return null;
+    return null;
   }
 
   /**
@@ -87,6 +87,34 @@ class ShopProfileDao extends GenericDao {
     const result = await pool.query(query, [latitude, longitude, radiusKm]);
     return result.rows.map((r) => new ShopProfile(r));
   }
+
+  /**
+ * ✏️ Cập nhật thông tin cửa hàng (override update generic)
+ *  → Tránh lỗi multiple assignments to same column "updated_at"
+ */
+  async updateShopInfo(shopId, data) {
+    // ⚙️ Loại bỏ các trường tự động
+    delete data.updated_at;
+    delete data.created_at;
+
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+
+    if (!keys.length) return null;
+
+    const setClause = keys.map((k, i) => `${k}=$${i + 1}`).join(", ");
+
+    const query = `
+    UPDATE shop_profiles
+    SET ${setClause}, updated_at=NOW()
+    WHERE id=$${keys.length + 1}
+    RETURNING *;
+  `;
+
+    const result = await pool.query(query, [...values, shopId]);
+    return result.rows[0] ? new ShopProfile(result.rows[0]) : null;
+  }
+
 }
 
 module.exports = new ShopProfileDao();
