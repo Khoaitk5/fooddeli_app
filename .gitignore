@@ -49,3 +49,7 @@ AUTOFILL_FINAL_REPORT.md
 AUTOFILL_IMPLEMENTATION_SUMMARY.md
 AUTOFILL_TEST_GUIDE.md
 QUICK_START_AUTOFILL.md
+
+# ===== Database Files =====
+Database/Table_query.sql
+Database/Data_query.sql

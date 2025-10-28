@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Store, Phone, Mail, CreditCard, FileText, Camera, MapPin, Clock, Tag, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import ShopTermsModal from '../../components/shared/ShopTermsModal';
+import FileUploadBox from '../../components/shared/FileUploadBox';
 import { getCurrentUser, getMyShop } from '../../api/userApi';
 import React from 'react';
 
@@ -12,6 +13,7 @@ export default function ShopRegistration() {
   const [autoFillLoading, setAutoFillLoading] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [registrationStatus, setRegistrationStatus] = useState(null); // null | 'already_shop' | 'shipper_restriction' | 'allowed'
   const [formData, setFormData] = useState({
     shopName: '',
     shopDescription: '',
@@ -56,53 +58,96 @@ export default function ShopRegistration() {
     'Khác'
   ];
 
-  // Auto-fill user information on component mount
+  // Auto-fill user information and check registration eligibility on component mount
   React.useEffect(() => {
     const autoFillUserInfo = async () => {
       try {
         setAutoFillLoading(true);
-        console.log('🔄 Bắt đầu autofill...');
+        console.log('🔄 [ShopRegistration] Bắt đầu auto-fill và kiểm tra role...');
         
         const userData = await getCurrentUser();
-        console.log('👤 User data:', userData);
+        console.log('📥 [ShopRegistration] User API Response:', userData);
         
-        if (userData?.user) {
-          setFormData(prev => ({
-            ...prev,
-            email: prev.email || userData.user.email || '',
-            phone: prev.phone || userData.user.phone || '',
-            bankAccountName: prev.bankAccountName || userData.user.full_name || '',
-            shopAddress: prev.shopAddress || (userData.user.addresses?.[0]?.address_line?.detail ? 
-              `${userData.user.addresses[0].address_line.detail}, ${userData.user.addresses[0].address_line.ward}, ${userData.user.addresses[0].address_line.district}, ${userData.user.addresses[0].address_line.city}` 
-              : ''),
-          }));
-        }
-
-        // Lấy thông tin shop hiện tại (nếu đã tạo)
-        console.log('🔍 Đang lấy shop data...');
-        const shopData = await getMyShop();
-        console.log('📦 Shop data từ API:', shopData);
-        
-        if (shopData) {
-          console.log('✅ Đã lấy shop data, autofill:', {
-            shopName: shopData.shop_name,
-            description: shopData.description,
-            openHours: shopData.open_hours,
-            closedHours: shopData.closed_hours
-          });
+        if (userData && typeof userData === 'object' && userData.user) {
+          console.log('✅ [ShopRegistration] User data hợp lệ');
+          const user = userData.user;
           
+          // 🔍 Kiểm tra role và profile để xác định trạng thái đăng ký
+          const hasShopProfile = user.shop_profile && typeof user.shop_profile === 'object';
+          const hasShipperProfile = user.shipper_profile && typeof user.shipper_profile === 'object';
+          const isShopRole = user.role === 'shop';
+          const isShipperRole = user.role === 'shipper';
+
+          console.log('🔍 [ShopRegistration] Role Check:', {
+            role: user.role,
+            hasShopProfile,
+            hasShipperProfile,
+            isShopRole,
+            isShipperRole
+          });
+
+          // Xác định trạng thái đăng ký
+          if (isShopRole || hasShopProfile) {
+            console.log('⚠️ [ShopRegistration] User đã là shop owner');
+            setRegistrationStatus('already_shop');
+          } else if (isShipperRole) {
+            console.log('⚠️ [ShopRegistration] Shipper không thể đăng ký làm shop');
+            setRegistrationStatus('shipper_restriction');
+          } else {
+            console.log('✅ [ShopRegistration] User được phép đăng ký làm shop');
+            setRegistrationStatus('allowed');
+          }
+          
+          // Auto-fill thông tin cơ bản
           setFormData(prev => ({
             ...prev,
-            shopName: shopData.shop_name || '',
-            shopDescription: shopData.description || '',
-            openingTime: shopData.open_hours || '',
-            closingTime: shopData.closed_hours || '',
+            email: prev.email || (user.email ? String(user.email).trim() : ''),
+            phone: prev.phone || (user.phone ? String(user.phone).trim() : ''),
+            bankAccountName: prev.bankAccountName || (user.full_name ? String(user.full_name).trim() : ''),
+            shopAddress: prev.shopAddress || (
+              user.addresses && Array.isArray(user.addresses) && user.addresses.length > 0
+                ? (() => {
+                    try {
+                      const addr = user.addresses[0];
+                      if (addr && addr.address_line) {
+                        const parts = [
+                          addr.address_line.detail,
+                          addr.address_line.ward,
+                          addr.address_line.district,
+                          addr.address_line.city
+                        ].filter(p => p && String(p).trim());
+                        return parts.join(', ');
+                      }
+                      return '';
+                    } catch (e) {
+                      console.warn('⚠️ [ShopRegistration] Error parsing address:', e);
+                      return '';
+                    }
+                  })()
+                : ''
+            ),
           }));
+
+          // Nếu có shop_profile, auto-fill các trường shop
+          if (hasShopProfile) {
+            const shopData = user.shop_profile;
+            console.log('📦 [ShopRegistration] Auto-fill từ shop_profile:', shopData);
+            
+            setFormData(prev => ({
+              ...prev,
+              shopName: shopData.shop_name ? String(shopData.shop_name).trim() : prev.shopName,
+              shopDescription: shopData.description ? String(shopData.description).trim() : prev.shopDescription,
+              openingTime: shopData.open_hours ? String(shopData.open_hours).trim() : prev.openingTime,
+              closingTime: shopData.closed_hours ? String(shopData.closed_hours).trim() : prev.closingTime,
+            }));
+          }
         } else {
-          console.log('ℹ️ Không có shop data hoặc user chưa tạo hồ sơ shop');
+          console.warn('⚠️ [ShopRegistration] User data không hợp lệ:', userData);
+          setRegistrationStatus('allowed'); // Default cho phép nếu không lấy được thông tin
         }
       } catch (error) {
-        console.error('❌ Error auto-filling user info:', error);
+        console.error('❌ [ShopRegistration] Error auto-filling user info:', error);
+        setRegistrationStatus('allowed'); // Default cho phép nếu có lỗi
       } finally {
         setAutoFillLoading(false);
       }
@@ -123,6 +168,19 @@ export default function ShopRegistration() {
         ? prev.foodCategories.filter(c => c !== category)
         : [...prev.foodCategories, category]
     }));
+  };
+
+  const handleSafeNavigate = (path) => {
+    try {
+      if (!path || typeof path !== 'string' || path.trim() === '') {
+        console.error('❌ [ShopRegistration] Invalid path:', path);
+        return;
+      }
+      console.log('✅ [ShopRegistration] Navigating to:', path);
+      navigate(path);
+    } catch (error) {
+      console.error('❌ [ShopRegistration] Navigation error:', error);
+    }
   };
 
   const handleFileChange = (e, fieldName) => {
@@ -188,7 +246,7 @@ export default function ShopRegistration() {
       });
 
       alert('✅ Đăng ký thành công! Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48 giờ.');
-      navigate('/customer/profile');
+      handleSafeNavigate('/customer/profile');
     } catch (error) {
       alert('❌ Đăng ký thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
@@ -196,62 +254,142 @@ export default function ShopRegistration() {
     }
   };
 
-  const FileUploadBox = ({ label, fieldName, icon: Icon, required = true, aspectRatio = 'square' }) => (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <label style={{
-        display: 'block',
-        marginBottom: '0.5rem',
-        fontSize: '0.9375rem',
-        fontWeight: '500',
-        color: '#333'
-      }}>
-        {label} {required && <span style={{ color: '#ee4d2d' }}>*</span>}
-      </label>
+  // Render "Already Shop Owner" message
+  const renderAlreadyShopMessage = () => (
+    <div style={{
+      maxWidth: '48rem',
+      margin: '2rem auto',
+      padding: '1.5rem 1rem'
+    }}>
       <div style={{
-        border: '0.125rem dashed #ddd',
-        borderRadius: '0.75rem',
-        padding: '1.5rem',
+        background: '#fff',
+        borderRadius: '1rem',
+        padding: '2rem',
         textAlign: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        background: previews[fieldName] ? '#f9f9f9' : '#fff'
-      }}
-      onClick={() => document.getElementById(fieldName).click()}
-      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#10b981'}
-      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#ddd'}
-      >
-        <input
-          id={fieldName}
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleFileChange(e, fieldName)}
-          style={{ display: 'none' }}
-        />
-        {previews[fieldName] ? (
-          <div>
-            <img src={previews[fieldName]} alt="Preview" style={{
-              maxWidth: '100%',
-              maxHeight: aspectRatio === 'wide' ? '10rem' : '12rem',
-              borderRadius: '0.5rem',
-              marginBottom: '0.5rem'
-            }} />
-            <div style={{ fontSize: '0.875rem', color: '#666' }}>
-              Nhấn để thay đổi ảnh
-            </div>
-          </div>
-        ) : (
-          <div>
-            <Icon size={40} color="#ddd" style={{ marginBottom: '0.5rem' }} />
-            <div style={{ fontSize: '0.9375rem', color: '#666' }}>
-              Nhấn để tải ảnh lên
-            </div>
-            {aspectRatio === 'wide' && (
-              <div style={{ fontSize: '0.8125rem', color: '#999', marginTop: '0.25rem' }}>
-                Khuyến nghị tỷ lệ 16:9
-              </div>
-            )}
-          </div>
-        )}
+        boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)'
+      }}>
+        <div style={{
+          width: '5rem',
+          height: '5rem',
+          borderRadius: '50%',
+          background: '#d1fae5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 1.5rem'
+        }}>
+          <Store size={40} color="#10b981" />
+        </div>
+        <h2 style={{
+          fontSize: '1.5rem',
+          fontWeight: '600',
+          color: '#333',
+          marginBottom: '1rem'
+        }}>
+          Bạn đã là chủ Shop rồi! 🎉
+        </h2>
+        <p style={{
+          fontSize: '1rem',
+          color: '#666',
+          marginBottom: '2rem'
+        }}>
+          Tài khoản của bạn đã được đăng ký làm chủ Shop. Hãy chuyển đến trang quản lý Shop để bắt đầu kinh doanh.
+        </p>
+        <button
+          onClick={() => handleSafeNavigate('/shop/dashboard')}
+          style={{
+            padding: '1rem 2rem',
+            background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0.75rem',
+            fontSize: '1rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            boxShadow: '0 0.25rem 1rem rgba(16, 185, 129, 0.3)',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-0.125rem)';
+            e.currentTarget.style.boxShadow = '0 0.375rem 1.25rem rgba(16, 185, 129, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 0.25rem 1rem rgba(16, 185, 129, 0.3)';
+          }}
+        >
+          Đi đến Dashboard Shop
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render "Shipper Restriction" message
+  const renderShipperRestriction = () => (
+    <div style={{
+      maxWidth: '48rem',
+      margin: '2rem auto',
+      padding: '1.5rem 1rem'
+    }}>
+      <div style={{
+        background: '#fff',
+        borderRadius: '1rem',
+        padding: '2rem',
+        textAlign: 'center',
+        boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)'
+      }}>
+        <div style={{
+          width: '5rem',
+          height: '5rem',
+          borderRadius: '50%',
+          background: '#fee2e2',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 1.5rem'
+        }}>
+          <Store size={40} color="#ef4444" />
+        </div>
+        <h2 style={{
+          fontSize: '1.5rem',
+          fontWeight: '600',
+          color: '#333',
+          marginBottom: '1rem'
+        }}>
+          Shipper không thể đăng ký làm Shop
+        </h2>
+        <p style={{
+          fontSize: '1rem',
+          color: '#666',
+          marginBottom: '2rem'
+        }}>
+          Tài khoản Shipper không được phép đăng ký trở thành chủ Shop. Vui lòng sử dụng tài khoản User để đăng ký.
+        </p>
+        <button
+          onClick={() => handleSafeNavigate('/customer/profile')}
+          style={{
+            padding: '1rem 2rem',
+            background: '#fff',
+            color: '#ef4444',
+            border: '0.125rem solid #ef4444',
+            borderRadius: '0.75rem',
+            fontSize: '1rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#ef4444';
+            e.currentTarget.style.color = '#fff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#fff';
+            e.currentTarget.style.color = '#ef4444';
+          }}
+        >
+          Quay lại Trang Cá Nhân
+        </button>
       </div>
     </div>
   );
@@ -277,10 +415,11 @@ export default function ShopRegistration() {
           alignItems: 'center',
           gap: '1rem',
           maxWidth: '48rem',
-          margin: '0 auto'
+          margin: '0 auto',
+          padding: '0 1rem'
         }}>
           <button
-            onClick={() => navigate('/customer/profile')}
+            onClick={() => handleSafeNavigate('/customer/profile')}
             style={{
               background: 'rgba(255, 255, 255, 0.2)',
               border: 'none',
@@ -311,12 +450,27 @@ export default function ShopRegistration() {
         </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} style={{
-        maxWidth: '48rem',
-        margin: '0 auto',
-        padding: '1.5rem 1rem'
-      }}>
+      {/* Conditional Content Based on Registration Status */}
+      {autoFillLoading ? (
+        <div style={{
+          maxWidth: '48rem',
+          margin: '2rem auto',
+          padding: '2rem',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '1.25rem', color: '#666' }}>⏳ Đang kiểm tra thông tin...</div>
+        </div>
+      ) : registrationStatus === 'already_shop' ? (
+        renderAlreadyShopMessage()
+      ) : registrationStatus === 'shipper_restriction' ? (
+        renderShipperRestriction()
+      ) : (
+        /* Form */
+        <form onSubmit={handleSubmit} style={{
+          maxWidth: '48rem',
+          margin: '0 auto',
+          padding: '1.5rem 1rem'
+        }}>
         {/* Auto-fill Notification */}
         {!autoFillLoading && (
           <div style={{
@@ -580,7 +734,14 @@ export default function ShopRegistration() {
             Giờ hoạt động
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '1rem',
+            '@media (max-width: 600px)': {
+              gridTemplateColumns: '1fr'
+            }
+          }}>
             <div>
               <label style={{
                 display: 'block',
@@ -669,7 +830,7 @@ export default function ShopRegistration() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(10rem, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
             gap: '0.75rem'
           }}>
             {foodCategoryOptions.map((category) => (
@@ -856,9 +1017,30 @@ export default function ShopRegistration() {
             Hình ảnh cửa hàng
           </h2>
 
-          <FileUploadBox label="Logo cửa hàng" fieldName="shopLogo" icon={Store} aspectRatio="square" />
-          <FileUploadBox label="Ảnh bìa cửa hàng" fieldName="shopCover" icon={Camera} aspectRatio="wide" />
-          <FileUploadBox label="Ảnh giấy phép kinh doanh" fieldName="businessLicense" icon={FileText} aspectRatio="square" />
+          <FileUploadBox 
+            label="Logo cửa hàng" 
+            fieldName="shopLogo" 
+            icon={Store} 
+            aspectRatio="square"
+            preview={previews.shopLogo}
+            onFileChange={(e) => handleFileChange(e, 'shopLogo')}
+          />
+          <FileUploadBox 
+            label="Ảnh bìa cửa hàng" 
+            fieldName="shopCover" 
+            icon={Camera} 
+            aspectRatio="wide"
+            preview={previews.shopCover}
+            onFileChange={(e) => handleFileChange(e, 'shopCover')}
+          />
+          <FileUploadBox 
+            label="Ảnh giấy phép kinh doanh" 
+            fieldName="businessLicense" 
+            icon={FileText} 
+            aspectRatio="square"
+            preview={previews.businessLicense}
+            onFileChange={(e) => handleFileChange(e, 'businessLicense')}
+          />
         </div>
 
         {/* Terms Agreement */}
@@ -921,11 +1103,19 @@ export default function ShopRegistration() {
         </div>
 
         {/* Button Group */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+          gap: '1rem', 
+          marginBottom: '1rem',
+          '@media (max-width: 600px)': {
+            gridTemplateColumns: '1fr'
+          }
+        }}>
           {/* Cancel Button */}
           <button
             type="button"
-            onClick={() => navigate('/customer/profile')}
+            onClick={() => handleSafeNavigate('/customer/profile')}
             disabled={loading}
             style={{
               padding: '1rem',
@@ -938,7 +1128,8 @@ export default function ShopRegistration() {
               cursor: loading ? 'not-allowed' : 'pointer',
               boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)',
               transition: 'all 0.2s',
-              opacity: loading ? 0.6 : 1
+              opacity: loading ? 0.6 : 1,
+              minHeight: '44px'
             }}
             onMouseEnter={(e) => {
               if (!loading) {
@@ -970,7 +1161,8 @@ export default function ShopRegistration() {
               fontWeight: '600',
               cursor: loading || !agreedToTerms ? 'not-allowed' : 'pointer',
               boxShadow: loading || !agreedToTerms ? 'none' : '0 0.25rem 1rem rgba(16, 185, 129, 0.3)',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              minHeight: '44px'
             }}
             onMouseEnter={(e) => {
               if (!loading && agreedToTerms) {
@@ -989,6 +1181,7 @@ export default function ShopRegistration() {
           </button>
         </div>
       </form>
+      )}
 
       {/* Terms Modal */}
       <ShopTermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
