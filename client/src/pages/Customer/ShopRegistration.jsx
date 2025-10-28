@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Store, Phone, Mail, CreditCard, FileText, Camera, MapPin, Clock, Tag } from 'lucide-react';
+import { ArrowLeft, Store, Phone, Mail, CreditCard, FileText, Camera, MapPin, Clock, Tag, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
+import ShopTermsModal from '../../components/shared/ShopTermsModal';
 
 export default function ShopRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formData, setFormData] = useState({
     shopName: '',
     shopDescription: '',
@@ -84,6 +87,11 @@ export default function ShopRegistration() {
     // Validation
     if (!formData.shopName || !formData.phone || !formData.email || !formData.shopAddress) {
       alert('⚠️ Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      alert('⚠️ Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục');
       return;
     }
 
@@ -771,6 +779,65 @@ export default function ShopRegistration() {
           <FileUploadBox label="Ảnh giấy phép kinh doanh" fieldName="businessLicense" icon={FileText} aspectRatio="square" />
         </div>
 
+        {/* Terms Agreement */}
+        <div style={{
+          background: '#fff',
+          borderRadius: '1rem',
+          padding: '1.5rem',
+          marginBottom: '1rem',
+          boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: '600',
+            color: '#333',
+            marginTop: 0,
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <CheckCircle2 size={20} color="#10b981" />
+            Điều khoản dịch vụ
+          </h2>
+          <p style={{ fontSize: '0.9375rem', color: '#666', marginBottom: '1.5rem' }}>
+            Vui lòng đọc và đồng ý với các điều khoản dịch vụ trước khi đăng ký.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
+            <input
+              type="checkbox"
+              id="termsAgreement"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', marginTop: '0.25rem', cursor: 'pointer' }}
+            />
+            <label htmlFor="termsAgreement" style={{ fontSize: '0.9375rem', color: '#333', cursor: 'pointer' }}>
+              Tôi đã đọc và đồng ý với&nbsp;
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#10b981',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '0.9375rem',
+                  fontWeight: '600',
+                  padding: 0
+                }}
+              >
+                Điều khoản dịch vụ Shop
+              </button>
+            </label>
+          </div>
+          {!agreedToTerms && (
+            <p style={{ fontSize: '0.875rem', color: '#ee4d2d', marginTop: '0.75rem' }}>
+              ⚠️ Vui lòng đồng ý với điều khoản trước khi đăng ký
+            </p>
+          )}
+        </div>
+
         {/* Button Group */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
           {/* Cancel Button */}
@@ -810,27 +877,27 @@ export default function ShopRegistration() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !agreedToTerms}
             style={{
               padding: '1rem',
-              background: loading ? '#ccc' : 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+              background: loading || !agreedToTerms ? '#ccc' : 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
               color: '#fff',
               border: 'none',
               borderRadius: '0.75rem',
               fontSize: '1rem',
               fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: loading ? 'none' : '0 0.25rem 1rem rgba(16, 185, 129, 0.3)',
+              cursor: loading || !agreedToTerms ? 'not-allowed' : 'pointer',
+              boxShadow: loading || !agreedToTerms ? 'none' : '0 0.25rem 1rem rgba(16, 185, 129, 0.3)',
               transition: 'all 0.2s'
             }}
             onMouseEnter={(e) => {
-              if (!loading) {
+              if (!loading && agreedToTerms) {
                 e.currentTarget.style.transform = 'translateY(-0.125rem)';
                 e.currentTarget.style.boxShadow = '0 0.375rem 1.25rem rgba(16, 185, 129, 0.4)';
               }
             }}
             onMouseLeave={(e) => {
-              if (!loading) {
+              if (!loading && agreedToTerms) {
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = '0 0.25rem 1rem rgba(16, 185, 129, 0.3)';
               }
@@ -840,6 +907,9 @@ export default function ShopRegistration() {
           </button>
         </div>
       </form>
+
+      {/* Terms Modal */}
+      <ShopTermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </div>
   );
 }
