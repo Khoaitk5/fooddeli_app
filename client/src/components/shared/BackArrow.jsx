@@ -1,11 +1,12 @@
-const BackArrow = ({ width = "0.9rem", height = "1.4rem", onClick }) => (
+const BackArrow = ({ width = "0.9rem", height = "1.4rem", onClick, style = {} }) => (
   <svg
     viewBox="0 0 9 14"
     xmlns="http://www.w3.org/2000/svg"
     style={{
       width,
       height,
-      cursor: onClick ? 'pointer' : 'default'
+      cursor: onClick ? 'pointer' : 'default',
+      ...style
     }}
     onClick={onClick}
   >

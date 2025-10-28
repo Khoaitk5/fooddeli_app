@@ -33,7 +33,7 @@ import Order from "./pages/Customer/Order";
 import OrderTracking from "./pages/Customer/OrderTracking";
 import { CartPage as Cart } from "./pages/Customer/Cart";
 import Checkout from "./pages/Customer/Checkout";
-import Payment from "./pages/Customer/Payment";
+import ConfirmOrder from "./pages/Customer/ConfirmOrder";
 import AddCoupon from "./pages/Customer/AddCoupon";
 import OrderHistory from "./pages/Customer/OrderHistory";
 import DeliveryManCallScreen from "./pages/Customer/DeliveryManCallScreen";
@@ -113,7 +113,7 @@ function App() {
           <Route path="discover" element={<Discover />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
-          <Route path="payment" element={<Payment />} />
+          <Route path="ConfirmOrder" element={<ConfirmOrder />} />
           <Route path="add-coupon" element={<AddCoupon />} />
           <Route path="orders" element={<Order />} />
           <Route path="order-tracking" element={<OrderTracking />} />

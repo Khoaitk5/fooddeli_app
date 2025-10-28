@@ -6,9 +6,6 @@ import CommentIcon from "../../components/shared/CommentIcon";
 import BookmarkIcon from "../../components/shared/BookmarkIcon";
 import ShareIcon from "../../components/shared/ShareIcon";
 import SearchIcon from "../../components/shared/SearchIcon";
-// Sử dụng tên ProductCardForVideo từ file mới, nhưng import gốc là ProductCart
-import ProductCardForVideo from "../../components/role-specific/Customer/ProductCardForVideo.jsx"; 
-import { pxW, pxH } from "../../utils/scale.js"; // Giữ lại import này nếu style inline vẫn cần. Tuy nhiên tôi sẽ loại bỏ nó ở JSX để dùng vh/vw
 import TabItem from "../../components/role-specific/Customer/TabItem.jsx";
 import MessagePopup from "../../components/shared/MessagePopup";
 
@@ -465,34 +462,6 @@ const Home = () => {
                 {/* Dùng video.comments_count từ API gốc */}
                 <div style={countStyle}>{formatCount(video.comments_count || 0)}</div>
               </div>
-
-              {/* Bookmark */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '73.25vh', 
-                  right: '5.56vw',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '1.25vh'
-                }}
-              >
-                <BookmarkIcon
-                  fill={bookmarkedVideos.has(index) ? "#F9CE13" : "white"}
-                  onClick={(e) => handleBookmarkClick(index, e)}
-                  style={{ cursor: "pointer" }}
-                />
-                <div style={countStyle}>
-                  {/* Dùng bookmarkCounts[index] || video.bookmark_counts || 0 */}
-                  {formatCount(
-                    bookmarkCounts[index] !== undefined
-                      ? bookmarkCounts[index]
-                      : video.bookmark_counts || 0
-                  )}
-                </div>
-              </div>
-
               {/* Share */}
               <div style={{
                 position: 'absolute',
@@ -508,16 +477,6 @@ const Home = () => {
               }}>
                 {/* Dùng giá trị mặc định từ file mới */}
                 <div style={countStyle}>{shareCountDefault}</div>
-              </div>
-
-              {/* Product Card */}
-              <div style={{
-                position: 'absolute',
-                top: '80.5vh', 
-                left: '2.78vw'
-              }}>
-                {/* Dùng ProductCardForVideo (từ file mới) thay cho ProductCart (từ file gốc) */}
-                <ProductCardForVideo />
               </div>
             </section>
           ))}

@@ -6,7 +6,7 @@ const SplashScreen = ({ onComplete }) => {
   React.useEffect(() => {
     const timer = setTimeout(() => {
       onComplete();
-    }, 5000); // Hiển thị splash screen trong 5 giây
+    }, 1000); // Hiển thị splash screen trong 5 giây
 
     return () => clearTimeout(timer);
   }, [onComplete]);
