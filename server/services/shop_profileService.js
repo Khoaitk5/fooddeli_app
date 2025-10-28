@@ -90,18 +90,15 @@ class ShopProfileService {
   /**
    * ✏️ Cập nhật thông tin cửa hàng
    */
-  async updateShopInfo(shopId, updateData) {
-    try {
-      const shop = await shopProfileDao.update("id", shopId, {
-        ...updateData,
-        updated_at: new Date(),
-      });
-      return shop;
-    } catch (err) {
-      console.error("[ShopProfileService:updateShopInfo]", err.message);
-      throw new Error("Không thể cập nhật thông tin cửa hàng.");
-    }
+async updateShopInfo(shopId, updateData) {
+  try {
+    const shop = await shopProfileDao.updateShopInfo(shopId, updateData);
+    return shop;
+  } catch (err) {
+    console.error("[ShopProfileService:updateShopInfo]", err.message);
+    throw new Error("Không thể cập nhật thông tin cửa hàng.");
   }
+}
 
   /**
    * 🔄 Cập nhật trạng thái cửa hàng (open / closed / pending)
