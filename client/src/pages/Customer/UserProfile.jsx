@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, CreditCard, Clock, Gift, Settings, ChevronRight, LogOut, Edit3 } from 'lucide-react';
+import { MapPin, CreditCard, Clock, Gift, Settings, ChevronRight, LogOut, Edit3, Truck, Store } from 'lucide-react';
 import { EditProfileDialog } from '@/components/role-specific/Customer/EditProfileDialog';
 import { AddressesDialog } from '@/components/role-specific/Customer/AddressesDialog';
 import { PaymentMethodsDialog } from '@/components/role-specific/Customer/PaymentMethodsDialog';
@@ -56,6 +56,18 @@ export function UserProfile({ isMobile, isTablet }) {
       title: 'Voucher & Ưu đãi',
       color: '#ec4899',
       onClick: () => setShowVouchers(true)
+    },
+    {
+      icon: Truck,
+      title: 'Đăng kí trở thành Shipper',
+      color: '#f97316',
+      onClick: () => navigate('/customer/register-shipper')
+    },
+    {
+      icon: Store,
+      title: 'Đăng kí trở thành chủ Shop',
+      color: '#10b981',
+      onClick: () => navigate('/customer/register-shop')
     },
     {
       icon: Settings,
