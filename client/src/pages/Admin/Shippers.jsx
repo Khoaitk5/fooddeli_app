@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -14,6 +14,7 @@ import {
   Chip,
   IconButton,
   InputAdornment,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -21,56 +22,44 @@ import BlockIcon from "@mui/icons-material/Block";
 import StarIcon from "@mui/icons-material/Star";
 import PedalBikeIcon from "@mui/icons-material/PedalBike";
 import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
+import { getShippers } from "../../api/adminApi";
 
 const Shippers = () => {
-  const shippers = [
-    {
-      id: 1,
-      name: "Nguyễn Văn Tốc",
-      address: "Quận 1, TP.HCM",
-      email: "nguyenvantoc@email.com",
-      phone: "0123456789",
-      vehicle: "Xe máy",
-      plate: "59H1-12345",
-      rating: 4.8,
-      deliveries: 1250,
-      income: "45.000.000 ₫",
-      complete: "98.5%",
-      performance: "Xuất sắc",
-      status: "Hoạt động",
-    },
-    {
-      id: 2,
-      name: "Trần Thị Nhanh",
-      address: "Quận 3, TP.HCM",
-      email: "tranthinhanh@email.com",
-      phone: "0987654321",
-      vehicle: "Xe máy",
-      plate: "59G1-67890",
-      rating: 4.6,
-      deliveries: 890,
-      income: "32.000.000 ₫",
-      complete: "96.2%",
-      performance: "Xuất sắc",
-      status: "Hoạt động",
-    },
-    {
-      id: 3,
-      name: "Lê Minh Chậm",
-      address: "Quận 7, TP.HCM",
-      email: "leminhcham@email.com",
-      phone: "0765432198",
-      vehicle: "Xe đạp",
-      plate: "",
-      rating: 4.2,
-      deliveries: 567,
-      income: "18.000.000 ₫",
-      complete: "92.1%",
-      performance: "Tốt",
-      status: "Không hoạt động",
-    },
-  ];
+  const [shippers, setShippers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
+  // 🧭 Lấy danh sách shipper từ DB
+  useEffect(() => {
+    const fetchShippers = async () => {
+      try {
+        const data = await getShippers();
+        setShippers(data);
+      } catch (error) {
+        console.error("❌ Lỗi khi tải danh sách shipper:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchShippers();
+  }, []);
+
+  // 🔍 Lọc theo ô tìm kiếm
+  const filtered = shippers.filter((s) => {
+    const keyword = search.toLowerCase();
+    return (
+      s.username?.toLowerCase().includes(keyword) ||
+      s.vehicle_type?.toLowerCase().includes(keyword)
+    );
+  });
+
+  // 📊 Tính toán thống kê
+  const totalShippers = shippers.length;
+  const activeShippers = shippers.filter((s) => s.status === "approved").length;
+  const pendingShippers = shippers.filter((s) => s.status === "pending").length;
+  const avgRating = "4.7"; // tạm fix nếu chưa có cột rating
+
+  // 🟩 Thẻ thống kê
   const StatCard = ({ title, value, sub, color }) => (
     <Paper
       elevation={0}
@@ -95,6 +84,18 @@ const Shippers = () => {
     </Paper>
   );
 
+  // 🕓 Hiển thị Loading
+  if (loading) {
+    return (
+      <Stack alignItems="center" sx={{ mt: 6 }}>
+        <CircularProgress size={40} />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Đang tải danh sách shipper...
+        </Typography>
+      </Stack>
+    );
+  }
+
   return (
     <Box>
       {/* Tiêu đề */}
@@ -109,23 +110,45 @@ const Shippers = () => {
       <Grid
         container
         spacing={2}
-        sx={{ display: "flex", justifyContent: "space-between", flexWrap: "nowrap", mb: 3 }}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          flexWrap: "nowrap",
+          mb: 3,
+        }}
       >
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Tổng Shipper" value="156" sub="+12 shipper mới" />
+          <StatCard
+            title="Tổng Shipper"
+            value={totalShippers}
+            sub="+12 shipper mới"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Đang hoạt động" value="89" sub="57% tổng số" />
+          <StatCard
+            title="Đang hoạt động"
+            value={activeShippers}
+            sub="Shipper đã duyệt"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Chờ duyệt" value="15" sub="Cần xử lý" color="warning.main" />
+          <StatCard
+            title="Chờ duyệt"
+            value={pendingShippers}
+            sub="Cần xử lý"
+            color="warning.main"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3} sx={{ flex: 1 }}>
-          <StatCard title="Đánh giá TB" value="4.7" sub="+0.1 điểm" />
+          <StatCard
+            title="Đánh giá TB"
+            value={avgRating}
+            sub="+0.1 điểm"
+          />
         </Grid>
       </Grid>
 
-      {/* Danh sách shipper */}
+      {/* Danh sách Shipper */}
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
         Danh sách Shipper
       </Typography>
@@ -138,6 +161,8 @@ const Shippers = () => {
         placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
         fullWidth
         sx={{ mb: 2, maxWidth: 400 }}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -147,85 +172,103 @@ const Shippers = () => {
         }}
       />
 
-      <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Shipper</TableCell>
-              <TableCell>Liên hệ</TableCell>
               <TableCell>Phương tiện</TableCell>
-              <TableCell>Đánh giá</TableCell>
-              <TableCell>Giao hàng</TableCell>
-              <TableCell>Thu nhập</TableCell>
-              <TableCell>Hoàn thành</TableCell>
               <TableCell>Trạng thái</TableCell>
+              <TableCell>Online</TableCell>
               <TableCell align="right">Thao tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {shippers.map((s) => (
-              <TableRow key={s.id}>
-                <TableCell>
-                  <Typography fontWeight={500}>{s.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {s.address}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">{s.email}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {s.phone}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={0.5} alignItems="center">
-                    {s.vehicle === "Xe máy" ? (
-                      <TwoWheelerIcon fontSize="small" color="primary" />
-                    ) : (
-                      <PedalBikeIcon fontSize="small" color="secondary" />
-                    )}
-                    <Typography variant="body2">{s.vehicle}</Typography>
-                  </Stack>
-                  {s.plate && (
+            {filtered.length > 0 ? (
+              filtered.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell>
+                    <Typography fontWeight={500}>{s.username}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {s.plate}
+                      ID: {s.id}
                     </Typography>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={0.5} alignItems="center">
-                    <StarIcon fontSize="small" sx={{ color: "warning.main" }} />
-                    <Typography variant="body2">{s.rating}</Typography>
-                  </Stack>
-                </TableCell>
-                <TableCell>{s.deliveries} đơn hàng</TableCell>
-                <TableCell>{s.income}</TableCell>
-                <TableCell>
-                  <Typography variant="body2">{s.complete}</Typography>
-                  <Typography variant="caption" color="success.main">
-                    {s.performance}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      {s.vehicle_type === "Xe máy" ? (
+                        <TwoWheelerIcon fontSize="small" color="primary" />
+                      ) : (
+                        <PedalBikeIcon fontSize="small" color="secondary" />
+                      )}
+                      <Typography variant="body2">
+                        {s.vehicle_type || "Không rõ"}
+                      </Typography>
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={
+                        s.status === "approved"
+                          ? "Đã duyệt"
+                          : s.status === "rejected"
+                          ? "Từ chối"
+                          : "Chờ duyệt"
+                      }
+                      color={
+                        s.status === "approved"
+                          ? "success"
+                          : s.status === "rejected"
+                          ? "error"
+                          : "warning"
+                      }
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={
+                        s.online_status === "online"
+                          ? "Online"
+                          : "Offline"
+                      }
+                      color={
+                        s.online_status === "online"
+                          ? "success"
+                          : "default"
+                      }
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <IconButton size="small" color="primary">
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error">
+                        <BlockIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  <Typography variant="body2" color="text.secondary">
+                    Không tìm thấy shipper phù hợp.
                   </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    size="small"
-                    label={s.status}
-                    color={s.status === "Hoạt động" ? "success" : "default"}
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <IconButton size="small" color="primary">
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error">
-                      <BlockIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </Paper>

@@ -13,18 +13,26 @@ async function getAllShops() {
     GROUP BY sp.id, u.username, u.status
     ORDER BY sp.created_at DESC;
   `;
+  console.log('🧩 [DAO] getAllShops()');
   const { rows } = await pool.query(sql);
   return rows;
 }
 
 async function updateShopStatus(id, status) {
-  await pool.query(`UPDATE shop_profiles SET status = $1 WHERE id = $2`, [status, id]);
+  console.log(`🧩 [DAO] updateShopStatus(${id}, ${status})`);
+  const result = await pool.query(
+    `UPDATE shop_profiles SET status = $1 WHERE id = $2 RETURNING id, status`,
+    [status, id]
+  );
+  console.log('✅ [DAO] Shop updated:', result.rows[0]);
+  return result.rows[0];
 }
 
 /* ============================================
  🚚 SHIPPER DAO
 ============================================ */
 async function getAllShippers() {
+  console.log('🧩 [DAO] getAllShippers()');
   const sql = `
     SELECT s.id, u.username, s.vehicle_type, s.status, s.online_status
     FROM shipper_profiles s
@@ -36,13 +44,20 @@ async function getAllShippers() {
 }
 
 async function updateShipperStatus(id, status) {
-  await pool.query(`UPDATE shipper_profiles SET status = $1 WHERE id = $2`, [status, id]);
+  console.log(`🧩 [DAO] updateShipperStatus(${id}, ${status})`);
+  const result = await pool.query(
+    `UPDATE shipper_profiles SET status = $1 WHERE id = $2 RETURNING id, status`,
+    [status, id]
+  );
+  console.log('✅ [DAO] Shipper updated:', result.rows[0]);
+  return result.rows[0];
 }
 
 /* ============================================
  👤 CUSTOMER DAO
 ============================================ */
 async function getAllCustomers() {
+  console.log('🧩 [DAO] getAllCustomers()');
   const { rows } = await pool.query(`
     SELECT id, username, email, phone, status, rating, created_at
     FROM users
@@ -53,6 +68,7 @@ async function getAllCustomers() {
 }
 
 async function getCustomerById(id) {
+  console.log(`🧩 [DAO] getCustomerById(${id})`);
   const { rows } = await pool.query(
     `SELECT id, username, email, phone, status, rating, created_at
      FROM users WHERE id = $1 AND role = 'user'`,
@@ -61,13 +77,18 @@ async function getCustomerById(id) {
   return rows[0];
 }
 
-// ⚙️ Dùng chung cho ban / unban / block
 async function updateUserStatus(id, status) {
   console.log(`🧩 [DAO] updateUserStatus(${id}, ${status})`);
-  await pool.query(`UPDATE users SET status = $1 WHERE id = $2`, [status, id]);
+  const result = await pool.query(
+    `UPDATE users SET status = $1 WHERE id = $2 RETURNING id, status`,
+    [status, id]
+  );
+  console.log('✅ [DAO] User updated:', result.rows[0]);
+  return result.rows[0];
 }
 
 async function getCustomerRevenueStats() {
+  console.log('🧩 [DAO] getCustomerRevenueStats()');
   const { rows } = await pool.query(`
     SELECT 
       u.id,
@@ -89,6 +110,7 @@ async function getCustomerRevenueStats() {
  📊 DASHBOARD STATS
 ============================================ */
 async function getOverviewStats() {
+  console.log('🧩 [DAO] getOverviewStats()');
   const [orders] = (
     await pool.query(`
       SELECT COUNT(*)::int AS total_orders,
@@ -97,17 +119,26 @@ async function getOverviewStats() {
     `)
   ).rows;
 
-  const [shops] = (await pool.query(`SELECT COUNT(*)::int AS total_shops FROM shop_profiles`)).rows;
-  const [shippers] = (await pool.query(`SELECT COUNT(*)::int AS total_shippers FROM shipper_profiles`)).rows;
-  const [users] = (await pool.query(`SELECT COUNT(*)::int AS total_customers FROM users WHERE role='user'`)).rows;
+  const [shops] = (
+    await pool.query(`SELECT COUNT(*)::int AS total_shops FROM shop_profiles`)
+  ).rows;
+
+  const [shippers] = (
+    await pool.query(`SELECT COUNT(*)::int AS total_shippers FROM shipper_profiles`)
+  ).rows;
+
+  const [users] = (
+    await pool.query(`SELECT COUNT(*)::int AS total_customers FROM users WHERE role='user'`)
+  ).rows;
 
   return { ...orders, ...shops, ...shippers, ...users };
 }
 
 /* ============================================
- 📊 CHARTS: Monthly, Weekly, Users
+ 📊 CHARTS
 ============================================ */
 async function getMonthlyRevenue() {
+  console.log('🧩 [DAO] getMonthlyRevenue()');
   const { rows } = await pool.query(`
     SELECT 
       TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YYYY') AS month,
@@ -121,6 +152,7 @@ async function getMonthlyRevenue() {
 }
 
 async function getWeeklyOrders() {
+  console.log('🧩 [DAO] getWeeklyOrders()');
   const { rows } = await pool.query(`
     SELECT 
       TO_CHAR(DATE_TRUNC('day', created_at), 'DD/MM') AS day,
@@ -134,6 +166,7 @@ async function getWeeklyOrders() {
 }
 
 async function getUserDistribution() {
+  console.log('🧩 [DAO] getUserDistribution()');
   const { rows } = await pool.query(`
     SELECT role, COUNT(*)::int AS count
     FROM users
@@ -146,6 +179,7 @@ async function getUserDistribution() {
  💹 REVENUE PAGE DAO
 ============================================ */
 async function getRevenueComparison() {
+  console.log('🧩 [DAO] getRevenueComparison()');
   const { rows } = await pool.query(`
     SELECT 
       TO_CHAR(DATE_TRUNC('month', created_at), 'Mon') AS month,
@@ -160,6 +194,7 @@ async function getRevenueComparison() {
 }
 
 async function getTopRevenueShops() {
+  console.log('🧩 [DAO] getTopRevenueShops()');
   const { rows } = await pool.query(`
     SELECT 
       sp.shop_name,
@@ -175,6 +210,7 @@ async function getTopRevenueShops() {
 }
 
 async function getTopRevenueShippers() {
+  console.log('🧩 [DAO] getTopRevenueShippers()');
   const { rows } = await pool.query(`
     SELECT 
       u.username,
