@@ -66,7 +66,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Routes
+// ✅ Import routes
+const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const productRoutes = require("./routes/productRoutes");
+const videoRoutes = require("./routes/videoRoutes");
+const shopRoutes = require("./routes/shopRoutes");
+const followRoutes = require("./routes/followRoutes");
+const videoLikeRoutes = require("./routes/videoLikeRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+// ✅ Mount routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
@@ -76,7 +87,7 @@ app.use("/api/shops", shopRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/video-likes", videoLikeRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/images", imageUploadRouter);
+app.use("/api/admin", adminRoutes);
 
 // ✅ Debug route
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));
