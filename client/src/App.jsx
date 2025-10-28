@@ -45,6 +45,8 @@ import { UserProfile } from "./pages/Customer/UserProfile";
 import SearchPage from "./pages/Customer/SearchPage";
 import SearchResults from "./components/role-specific/Customer/SearchResults";
 import FoodFilters from "./pages/Customer/FoodFilters";
+import ShipperRegistration from "./pages/Customer/ShipperRegistration";
+import ShopRegistration from "./pages/Customer/ShopRegistration";
 
 // ====================== AUTH ======================
 import Login from "./pages/Auth/Login";
@@ -127,6 +129,8 @@ function App() {
           <Route path="search" element={<SearchPage />} />
           <Route path="search-results" element={<SearchResults />} />
           <Route path="filters" element={<FoodFilters />} />
+          <Route path="register-shipper" element={<ShipperRegistration />} />
+          <Route path="register-shop" element={<ShopRegistration />} />
         </Route>
 
         {/* ========== SHIPPER ========== */}
