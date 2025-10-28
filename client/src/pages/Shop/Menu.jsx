@@ -66,8 +66,7 @@ const MenuManagement = () => {
         const data = await res.json();
 
         const products = Array.isArray(data?.data) ? data.data : [];
-        const active = products.filter((p) => p?.is_available === true);
-        const formatted = active.map((p) => ({
+        const formatted = products.map((p) => ({
           id: p.product_id,
           name: p.name || "",
           description: p.description || "",
@@ -79,11 +78,12 @@ const MenuManagement = () => {
           hasVideo: false,
         }));
         setMenuItems(formatted);
+
+        setMenuItems(formatted);
       } catch (err) {
         console.error("❌ Lỗi loadProductsByShop:", err);
       }
     };
-
     loadProductsByShop();
   }, [shopId]);
 
