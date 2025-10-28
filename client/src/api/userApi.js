@@ -36,6 +36,15 @@ export const updateShopStatus = async (userId, status) => {
   return updateUser(userId, { shop_profile: { status } });
 };
 
+export const getMyShop = async () => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/shop/me`, axiosConfig);
+    return res.data?.data || null;
+  } catch {
+    return null;
+  }
+};
+
 export const getAllShops = async (params = {}) => {
   const res = await axios.get(`${API_BASE_URL}/users`, {
     params: { role: "shop", ...params },

@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Truck, User, Phone, Mail, CreditCard, FileText, Camera, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import ShipperTermsModal from '../../components/shared/ShipperTermsModal';
+import { getCurrentUser } from '../../api/userApi';
+import React from 'react';
 
 export default function ShipperRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [autoFillLoading, setAutoFillLoading] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,6 +42,32 @@ export default function ShipperRegistration() {
     drivingLicense: null,
     proofImage: null
   });
+
+  // Auto-fill user information on component mount
+  React.useEffect(() => {
+    const autoFillUserInfo = async () => {
+      try {
+        setAutoFillLoading(true);
+        const userData = await getCurrentUser();
+        
+        if (userData?.user) {
+          setFormData(prev => ({
+            ...prev,
+            fullName: prev.fullName || userData.user.full_name || '',
+            email: prev.email || userData.user.email || '',
+            phone: prev.phone || userData.user.phone || '',
+            bankAccountName: prev.bankAccountName || userData.user.full_name || '',
+          }));
+        }
+      } catch (error) {
+        console.error('Error auto-filling user info:', error);
+      } finally {
+        setAutoFillLoading(false);
+      }
+    };
+
+    autoFillUserInfo();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -223,6 +252,30 @@ export default function ShipperRegistration() {
         margin: '0 auto',
         padding: '1.5rem 1rem'
       }}>
+        {/* Auto-fill Notification */}
+        {!autoFillLoading && (
+          <div style={{
+            background: '#fed7aa',
+            border: '0.0625rem solid #f97316',
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem'
+          }}>
+            <div style={{ color: '#f97316', marginTop: '0.125rem' }}>ℹ️</div>
+            <div>
+              <div style={{ fontWeight: '600', color: '#92400e', marginBottom: '0.25rem' }}>
+                Thông tin đã được điền tự động
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#b45309' }}>
+                Chúng tôi đã điền các thông tin từ tài khoản của bạn. Vui lòng kiểm tra và điền thêm các thông tin còn thiếu.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Personal Information */}
         <div style={{
           background: '#fff',

@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Store, Phone, Mail, CreditCard, FileText, Camera, MapPin, Clock, Tag, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import ShopTermsModal from '../../components/shared/ShopTermsModal';
+import { getCurrentUser, getMyShop } from '../../api/userApi';
+import React from 'react';
 
 export default function ShopRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [autoFillLoading, setAutoFillLoading] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,6 +55,61 @@ export default function ShopRegistration() {
     'Hải sản',
     'Khác'
   ];
+
+  // Auto-fill user information on component mount
+  React.useEffect(() => {
+    const autoFillUserInfo = async () => {
+      try {
+        setAutoFillLoading(true);
+        console.log('🔄 Bắt đầu autofill...');
+        
+        const userData = await getCurrentUser();
+        console.log('👤 User data:', userData);
+        
+        if (userData?.user) {
+          setFormData(prev => ({
+            ...prev,
+            email: prev.email || userData.user.email || '',
+            phone: prev.phone || userData.user.phone || '',
+            bankAccountName: prev.bankAccountName || userData.user.full_name || '',
+            shopAddress: prev.shopAddress || (userData.user.addresses?.[0]?.address_line?.detail ? 
+              `${userData.user.addresses[0].address_line.detail}, ${userData.user.addresses[0].address_line.ward}, ${userData.user.addresses[0].address_line.district}, ${userData.user.addresses[0].address_line.city}` 
+              : ''),
+          }));
+        }
+
+        // Lấy thông tin shop hiện tại (nếu đã tạo)
+        console.log('🔍 Đang lấy shop data...');
+        const shopData = await getMyShop();
+        console.log('📦 Shop data từ API:', shopData);
+        
+        if (shopData) {
+          console.log('✅ Đã lấy shop data, autofill:', {
+            shopName: shopData.shop_name,
+            description: shopData.description,
+            openHours: shopData.open_hours,
+            closedHours: shopData.closed_hours
+          });
+          
+          setFormData(prev => ({
+            ...prev,
+            shopName: shopData.shop_name || '',
+            shopDescription: shopData.description || '',
+            openingTime: shopData.open_hours || '',
+            closingTime: shopData.closed_hours || '',
+          }));
+        } else {
+          console.log('ℹ️ Không có shop data hoặc user chưa tạo hồ sơ shop');
+        }
+      } catch (error) {
+        console.error('❌ Error auto-filling user info:', error);
+      } finally {
+        setAutoFillLoading(false);
+      }
+    };
+
+    autoFillUserInfo();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -259,6 +317,30 @@ export default function ShopRegistration() {
         margin: '0 auto',
         padding: '1.5rem 1rem'
       }}>
+        {/* Auto-fill Notification */}
+        {!autoFillLoading && (
+          <div style={{
+            background: '#d1fae5',
+            border: '0.0625rem solid #10b981',
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem'
+          }}>
+            <div style={{ color: '#10b981', marginTop: '0.125rem' }}>ℹ️</div>
+            <div>
+              <div style={{ fontWeight: '600', color: '#065f46', marginBottom: '0.25rem' }}>
+                Thông tin đã được điền tự động
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#047857' }}>
+                Chúng tôi đã điền các thông tin từ tài khoản của bạn. Vui lòng kiểm tra và điền thêm các thông tin còn thiếu.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Shop Information */}
         <div style={{
           background: '#fff',

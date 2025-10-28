@@ -18,6 +18,9 @@ build/
 # ===== Environment Files =====
 .env
 
+# ===== Firebase Config =====
+server/config/serviceAccountKey.json
+
 # ===== Editor Directories & Files =====
 .vscode/*
 !.vscode/extensions.json
@@ -39,3 +42,10 @@ server/node_modules/
 server/build/
 server/.env
 client/.env
+
+# ===== Documentation (Autofill Feature) =====
+AUTOFILL_DOCUMENTATION_INDEX.md
+AUTOFILL_FINAL_REPORT.md
+AUTOFILL_IMPLEMENTATION_SUMMARY.md
+AUTOFILL_TEST_GUIDE.md
+QUICK_START_AUTOFILL.md
