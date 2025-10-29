@@ -23,6 +23,7 @@ import {
   Info as InfoIcon,
   AccessTime as AccessTimeIcon,
   LocalPhone as LocalPhoneIcon,
+  SwapHoriz as SwapHorizIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import AddAddress from "../Auth/AddAdress";
@@ -378,6 +379,35 @@ const ShopSettings = () => {
 
         </DialogContent>
       </Dialog>
+
+      {/* Nút chuyển sang Customer */}
+      <Box sx={{ mt: 4, textAlign: 'center' }}>
+        <Button
+          fullWidth
+          startIcon={<SwapHorizIcon />}
+          onClick={() => navigate('/customer/home')}
+          sx={{
+            maxWidth: 400,
+            mx: 'auto',
+            background: "linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)",
+            border: "2px solid #c084fc",
+            borderRadius: 4,
+            color: "#7c3aed",
+            fontWeight: 800,
+            textTransform: "none",
+            py: 2,
+            fontSize: 15,
+            boxShadow: "0 4px 12px rgba(124,58,237,0.2)",
+            transition: 'all 0.2s ease',
+            "&:hover": {
+              transform: 'translateY(-2px)',
+              boxShadow: "0 8px 20px rgba(124,58,237,0.3)",
+            },
+          }}
+        >
+          Chuyển qua Customer
+        </Button>
+      </Box>
 
       {/* Snackbar thông báo */}
       <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>

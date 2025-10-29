@@ -6,6 +6,9 @@ const shopController = require("../controllers/shopController");
 // 🏪 Tạo cửa hàng mới (dành cho user có role = 'shop')
 router.post("/create", shopController.createShopProfile);
 
+// 🔍 Lấy thông tin shop của user hiện tại
+router.get("/me", shopController.getMyShop);
+
 // 📋 Lấy danh sách tất cả cửa hàng
 router.get("/list", shopController.getAllShops);
 

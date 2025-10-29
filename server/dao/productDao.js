@@ -11,27 +11,6 @@ class ProductDao extends GenericDao {
   VALID_CATEGORIES = ["Thức ăn", "Đồ uống", "Tráng miệng", "Khác", "Combo"];
 
   /**
-   * 🔄 Cập nhật trạng thái còn bán / ngừng bán
-   * @param {number} productId
-   * @param {boolean} isAvailable
-   */
-  async updateAvailability(productId, isAvailable) {
-    if (typeof isAvailable !== "boolean") {
-      throw new Error("isAvailable phải là boolean");
-    }
-
-    const query = `
-      UPDATE products
-      SET is_available = $1,
-          updated_at = NOW()
-      WHERE product_id = $2
-      RETURNING *;
-    `;
-    const result = await pool.query(query, [isAvailable, productId]);
-    return result.rows[0];
-  }
-
-  /**
    * 🏷️ Cập nhật danh mục sản phẩm
    * @param {number} productId
    * @param {string} category
