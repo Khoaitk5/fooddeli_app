@@ -1,10 +1,10 @@
 // controllers/shipperController.js
-const ShipperService = require("../services/shipperService");
+const ShipperProfileService = require("../services/shipper_profileService");
 
 // ➕ Tạo shipper mới
 exports.createShipper = async (req, res) => {
   try {
-    const result = await ShipperService.createShipper(req.body);
+    const result = await ShipperProfileService.createShipperProfile(req.body.user_id, req.body);
     res.status(201).json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -14,7 +14,7 @@ exports.createShipper = async (req, res) => {
 // 📄 Lấy danh sách shipper
 exports.getAllShippers = async (req, res) => {
   try {
-    const result = await ShipperService.getAllShippers();
+    const result = await ShipperProfileService.getAllShippers();
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -24,7 +24,7 @@ exports.getAllShippers = async (req, res) => {
 // 🔍 Lấy shipper theo ID
 exports.getShipperById = async (req, res) => {
   try {
-    const result = await ShipperService.getShipperById(req.params.id);
+    const result = await ShipperProfileService.getShipperById(req.params.id);
     if (!result) return res.status(404).json({ message: "Shipper not found" });
     res.status(200).json(result);
   } catch (err) {
@@ -35,7 +35,7 @@ exports.getShipperById = async (req, res) => {
 // ✏️ Cập nhật shipper
 exports.updateShipper = async (req, res) => {
   try {
-    const result = await ShipperService.updateShipper(req.params.id, req.body);
+    const result = await ShipperProfileService.updateShipper(req.params.id, req.body);
     if (!result) return res.status(404).json({ message: "Shipper not found" });
     res.status(200).json(result);
   } catch (err) {
@@ -46,10 +46,82 @@ exports.updateShipper = async (req, res) => {
 // ❌ Xóa shipper
 exports.deleteShipper = async (req, res) => {
   try {
-    const result = await ShipperService.deleteShipper(req.params.id);
+    const result = await ShipperProfileService.deleteShipper(req.params.id);
     if (!result) return res.status(404).json({ message: "Shipper not found" });
     res.status(200).json({ message: "Shipper deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// 📊 Lấy thống kê hiệu suất của shipper
+exports.getShipperStats = async (req, res) => {
+  try {
+    const { shipperId } = req.params;
+    if (!shipperId) {
+      return res.status(400).json({ error: "shipperId is required" });
+    }
+    const stats = await ShipperProfileService.getShipperStatistics(shipperId);
+    res.status(200).json(stats);
+  } catch (err) {
+    console.error("❌ Error fetching shipper stats:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 💰 Lấy doanh thu theo khoảng thời gian
+exports.getShipperEarnings = async (req, res) => {
+  try {
+    const { shipperId } = req.params;
+    const { period = "month" } = req.query;
+
+    if (!shipperId) {
+      return res.status(400).json({ error: "shipperId is required" });
+    }
+
+    const allowed = ["today", "week", "month", "all"];
+    if (!allowed.includes(period)) {
+      return res.status(400).json({ error: "Invalid period. Allowed: today, week, month, all" });
+    }
+
+    const earnings = await ShipperProfileService.getEarningsByPeriod(shipperId, period);
+    res.status(200).json(earnings);
+  } catch (err) {
+    console.error("❌ Error fetching shipper earnings:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 👤 Lấy thông tin shipper profile của user hiện tại
+exports.getMyShipperProfile = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({
+        success: false,
+        message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+      });
+    }
+
+    const shipperProfile = await ShipperProfileService.getShipperByUserId(sessionUser.id);
+    
+    if (!shipperProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy hồ sơ shipper.",
+        data: null
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: shipperProfile,
+    });
+  } catch (err) {
+    console.error("❌ Error fetching my shipper profile:", err.message);
+    res.status(500).json({ 
+      success: false,
+      error: err.message 
+    });
   }
 };

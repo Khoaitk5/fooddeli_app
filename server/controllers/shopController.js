@@ -20,6 +20,32 @@ exports.createShopProfile = async (req, res) => {
 };
 
 /**
+ * 🔍 Lấy thông tin shop của user hiện tại (từ session/cookie)
+ */
+exports.getMyShop = async (req, res) => {
+  try {
+    const userId = req.session?.user?.id;
+    console.log("[shopController:getMyShop] userId từ session:", userId);
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Bạn chưa đăng nhập" });
+    }
+
+    const shop = await shopService.getShopByUserId(userId);
+    console.log("[shopController:getMyShop] shop data:", shop);
+    
+    if (!shop) {
+      return res.status(404).json({ success: false, message: "Bạn chưa tạo hồ sơ cửa hàng" });
+    }
+
+    res.status(200).json({ success: true, data: shop });
+  } catch (err) {
+    console.error("[ShopController:getMyShop]", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
  * 📋 Lấy danh sách tất cả cửa hàng
  */
 exports.getAllShops = async (req, res) => {

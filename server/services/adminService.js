@@ -1,54 +1,46 @@
-const dao = require('../dao/adminDao.js');
+const dao = require("../dao/adminDao.js");
 
 /* ============================================
  🏪 SHOP SERVICES
 ============================================ */
 async function listShops() {
-  console.log('📦 [Service] listShops() → Fetching all shops');
+  console.log("📦 [Service] listShops()");
   return await dao.getAllShops();
 }
 
 async function approveShop(id) {
-  console.log(`🟢 [Service] approveShop(${id}) → Opening shop`);
-  const result = await dao.updateShopStatus(id, 'open');
-  console.log('✅ [Service] Shop approved:', result);
-  return result;
+  console.log(`🟢 [Service] approveShop(${id})`);
+  return await dao.updateShopStatus(id, "open");
 }
 
 async function suspendShop(id) {
-  console.log(`🔴 [Service] suspendShop(${id}) → Closing shop`);
-  const result = await dao.updateShopStatus(id, 'closed');
-  console.log('✅ [Service] Shop suspended:', result);
-  return result;
+  console.log(`🔴 [Service] suspendShop(${id})`);
+  return await dao.updateShopStatus(id, "closed");
 }
 
 /* ============================================
  🚚 SHIPPER SERVICES
 ============================================ */
 async function listShippers() {
-  console.log('🚚 [Service] listShippers() → Fetching all shippers');
+  console.log("🚚 [Service] listShippers()");
   return await dao.getAllShippers();
 }
 
 async function verifyShipper(id) {
-  console.log(`🟢 [Service] verifyShipper(${id}) → Approving shipper`);
-  const result = await dao.updateShipperStatus(id, 'approved');
-  console.log('✅ [Service] Shipper verified:', result);
-  return result;
+  console.log(`🟢 [Service] verifyShipper(${id})`);
+  return await dao.updateShipperStatus(id, "approved");
 }
 
 async function suspendShipper(id) {
-  console.log(`🔴 [Service] suspendShipper(${id}) → Rejecting shipper`);
-  const result = await dao.updateShipperStatus(id, 'rejected');
-  console.log('✅ [Service] Shipper suspended:', result);
-  return result;
+  console.log(`🔴 [Service] suspendShipper(${id})`);
+  return await dao.updateShipperStatus(id, "rejected");
 }
 
 /* ============================================
  👤 CUSTOMER SERVICES
 ============================================ */
 async function listCustomers() {
-  console.log('👥 [Service] listCustomers() → Fetching all customers');
+  console.log("👥 [Service] listCustomers()");
   return await dao.getAllCustomers();
 }
 
@@ -58,21 +50,17 @@ async function getCustomerById(id) {
 }
 
 async function banCustomer(id) {
-  console.log(`🚫 [Service] banCustomer(${id}) → Banning user`);
-  const result = await dao.updateUserStatus(id, 'banned');
-  console.log('✅ [Service] Customer banned:', result);
-  return result;
+  console.log(`🚫 [Service] banCustomer(${id})`);
+  return await dao.updateUserStatus(id, "banned");
 }
 
 async function unbanCustomer(id) {
-  console.log(`🔓 [Service] unbanCustomer(${id}) → Activating user`);
-  const result = await dao.updateUserStatus(id, 'active');
-  console.log('✅ [Service] Customer unbanned:', result);
-  return result;
+  console.log(`🔓 [Service] unbanCustomer(${id})`);
+  return await dao.updateUserStatus(id, "active");
 }
 
 async function getCustomerRevenueStats() {
-  console.log('📊 [Service] getCustomerRevenueStats()');
+  console.log("📊 [Service] getCustomerRevenueStats()");
   return await dao.getCustomerRevenueStats();
 }
 
@@ -80,28 +68,19 @@ async function getCustomerRevenueStats() {
  📊 DASHBOARD STATS
 ============================================ */
 async function getStats() {
-  console.log('📈 [Service] getStats() → Fetching overview stats');
+  console.log("📈 [Service] getStats()");
   return await dao.getOverviewStats();
-}
-
-async function getTopShops() {
-  console.log('🏪 [Service] getTopShops() → Fetching top revenue shops');
-  return await dao.getTopRevenueShops();
-}
-
-async function getTopShippers() {
-  console.log('🚚 [Service] getTopShippers() → Fetching top revenue shippers');
-  return await dao.getTopRevenueShippers();
 }
 
 /* ============================================
  💰 SETTLEMENT SERVICES
 ============================================ */
 async function doSettlement() {
-  console.log('💰 [Service] doSettlement() → Performing settlement process');
+  console.log("💰 [Service] doSettlement()");
+
   const orders = await dao.getPendingOrders?.();
-  if (!orders) {
-    console.warn('⚠️ [Service] No pending orders found');
+  if (!orders || !orders.length) {
+    console.warn("⚠️ [Service] No pending orders found");
     return 0;
   }
 
@@ -112,7 +91,12 @@ async function doSettlement() {
       o.food_price * o.merchant_commission_rate +
       o.delivery_fee * o.shipper_commission_rate;
 
-    await dao.updateOrderSettlement(o.order_id, merchant_earn, shipper_earn, admin_earn);
+    await dao.updateOrderSettlement(
+      o.order_id,
+      merchant_earn,
+      shipper_earn,
+      admin_earn
+    );
   }
 
   console.log(`✅ [Service] Settled ${orders.length} orders`);
@@ -122,18 +106,19 @@ async function doSettlement() {
 /* ============================================
  📊 DASHBOARD CHARTS (Dashboard.jsx)
 ============================================ */
-async function getMonthlyRevenue() {
-  console.log('📊 [Service] getMonthlyRevenue()');
-  return await dao.getMonthlyRevenue();
+async function getMonthlyRevenue(months = 6, year = new Date().getFullYear()) {
+  console.log(`📊 [Service] getMonthlyRevenue(${months}, ${year})`);
+  return await dao.getMonthlyRevenue(months, year);
 }
 
+
 async function getWeeklyOrders() {
-  console.log('📅 [Service] getWeeklyOrders()');
+  console.log("📅 [Service] getWeeklyOrders()");
   return await dao.getWeeklyOrders();
 }
 
 async function getUserDistribution() {
-  console.log('🧩 [Service] getUserDistribution()');
+  console.log("🧩 [Service] getUserDistribution()");
   const rows = await dao.getUserDistribution();
   const summary = {};
   rows.forEach((r) => (summary[r.role] = r.count));
@@ -144,17 +129,17 @@ async function getUserDistribution() {
  💹 REVENUE PAGE (Revenue.jsx)
 ============================================ */
 async function getRevenueComparison() {
-  console.log('💹 [Service] getRevenueComparison()');
+  console.log("💹 [Service] getRevenueComparison()");
   return await dao.getRevenueComparison();
 }
 
 async function getTopRevenueShops() {
-  console.log('🏪 [Service] getTopRevenueShops()');
+  console.log("🏪 [Service] getTopRevenueShops()");
   return await dao.getTopRevenueShops();
 }
 
 async function getTopRevenueShippers() {
-  console.log('🚚 [Service] getTopRevenueShippers()');
+  console.log("🚚 [Service] getTopRevenueShippers()");
   return await dao.getTopRevenueShippers();
 }
 
@@ -181,8 +166,6 @@ module.exports = {
 
   // 📊 DASHBOARD / STATS
   getStats,
-  getTopShops,
-  getTopShippers,
 
   // 💰 SETTLEMENT
   doSettlement,

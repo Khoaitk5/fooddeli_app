@@ -1,15 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme, useMediaQuery } from '@mui/material';
 import { MapPin, CreditCard, Clock, Gift, Settings, ChevronRight, LogOut, Edit3, Truck, Store } from 'lucide-react';
 import { EditProfileDialog } from '@/components/role-specific/Customer/EditProfileDialog';
 import { AddressesDialog } from '@/components/role-specific/Customer/AddressesDialog';
 import { PaymentMethodsDialog } from '@/components/role-specific/Customer/PaymentMethodsDialog';
 import { VouchersDialog } from '@/components/role-specific/Customer/VouchersDialog';
 import { SettingsDialog } from '@/components/role-specific/Customer/SettingsDialog';
+import { useAuth } from '../../hooks/useAuth';
 import Navbar from '../../components/shared/Navbar';
 
-export function UserProfile({ isMobile, isTablet }) {
+export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) {
   const navigate = useNavigate();
+  const { logout, user: authUser } = useAuth();
+  const theme = useTheme();
+  
+  // Use Material-UI's useMediaQuery for responsive detection
+  const detectedIsMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const detectedIsTablet = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Use provided props if available, otherwise use detected values
+  const isMobile = propIsMobile !== undefined ? propIsMobile : detectedIsMobile;
+  const isTablet = propIsTablet !== undefined ? propIsTablet : detectedIsTablet;
+
   const [userData, setUserData] = useState({
     name: 'Nguyễn Thị Lan Anh',
     phone: '0901234567',
@@ -27,11 +40,24 @@ export function UserProfile({ isMobile, isTablet }) {
   const [showVouchers, setShowVouchers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
+  // Check user roles and profiles
+  const hasShopProfile = authUser?.shop_profile && typeof authUser.shop_profile === 'object';
+  const hasShipperProfile = authUser?.shipper_profile && typeof authUser.shipper_profile === 'object';
+  const isShopRole = authUser?.role === 'shop';
+  const isShipperRole = authUser?.role === 'shipper';
+
   const handleSaveProfile = (formData) => {
     setUserData(prev => ({ ...prev, ...formData }));
     setShowEditProfile(false);
   };
 
+  const handleLogout = () => {
+    console.log("👋 [UserProfile] Logging out...");
+    logout();
+    navigate("/login");
+  };
+
+  // Dynamic menu items based on user role and profiles
   const menuItems = [
     {
       icon: MapPin,
@@ -57,18 +83,30 @@ export function UserProfile({ isMobile, isTablet }) {
       color: '#ec4899',
       onClick: () => setShowVouchers(true)
     },
-    {
+    // Shipper menu item - hiển thị nếu có profile hoặc role shipper
+    ...(isShipperRole || hasShipperProfile ? [{
+      icon: Truck,
+      title: 'Chuyển đến trang Shipper',
+      color: '#f97316',
+      onClick: () => navigate('/shipper/dashboard')
+    }] : isShopRole ? [] : [{
       icon: Truck,
       title: 'Đăng kí trở thành Shipper',
       color: '#f97316',
       onClick: () => navigate('/customer/register-shipper')
-    },
-    {
+    }]),
+    // Shop menu item - hiển thị nếu có profile hoặc role shop
+    ...(isShopRole || hasShopProfile ? [{
+      icon: Store,
+      title: 'Chuyển đến trang Shop',
+      color: '#10b981',
+      onClick: () => navigate('/shop/dashboard')
+    }] : isShipperRole ? [] : [{
       icon: Store,
       title: 'Đăng kí trở thành chủ Shop',
       color: '#10b981',
       onClick: () => navigate('/customer/register-shop')
-    },
+    }]),
     {
       icon: Settings,
       title: 'Cài đặt',
@@ -288,6 +326,7 @@ export function UserProfile({ isMobile, isTablet }) {
           e.currentTarget.style.background = '#fff';
           e.currentTarget.style.color = '#ee4d2d';
         }}
+        onClick={handleLogout}
         >
           <LogOut size={isMobile ? 20 : 22} strokeWidth={2.5} />
           Đăng xuất
