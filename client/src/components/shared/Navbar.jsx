@@ -16,6 +16,19 @@ const Navbar = ({ isProfilePage = false }) => {
     console.log("Navbar location:", location.pathname);
   }, [location.pathname]);
 
+  const handleNavigation = (path) => {
+    if (!path || typeof path !== "string" || path.trim() === "") {
+      console.error("❌ [Navbar] Invalid path:", path);
+      return;
+    }
+    console.log("✅ [Navbar] Navigating to:", path);
+    try {
+      navigate(path);
+    } catch (error) {
+      console.error("❌ [Navbar] Navigation error:", error);
+    }
+  };
+
   return (
     <div
       style={{
@@ -39,31 +52,31 @@ const Navbar = ({ isProfilePage = false }) => {
         icon={HomeIcon}
         label="Trang chủ"
         isActive={location.pathname === "/customer/home"}
-        onClick={() => navigate("/customer/home")}
+        onClick={() => handleNavigation("/customer/home")}
       />
       <NavbarItem
         icon={DiscoverIcon}
         label="Khám phá"
         isActive={location.pathname === "/customer/discover"}
-        onClick={() => navigate("/customer/discover")}
+        onClick={() => handleNavigation("/customer/discover")}
       />
       <NavbarItem
         icon={OrderIcon}
         label="Đơn hàng"
         isActive={location.pathname === "/customer/orders"}
-        onClick={() => navigate("/customer/orders")}
+        onClick={() => handleNavigation("/customer/orders")}
       />
       <NavbarItem
         icon={NotificationIcon}
         label="Thông báo"
         isActive={location.pathname === "/customer/notifications"}
-        onClick={() => navigate("/customer/notifications")}
+        onClick={() => handleNavigation("/customer/notifications")}
       />
       <NavbarItem
         icon={ProfileIcon}
         label="Hồ sơ"
         isActive={isProfilePage || location.pathname.endsWith("/profile")}
-        onClick={() => navigate("/customer/profile")}
+        onClick={() => handleNavigation("/customer/profile")}
       />
     </div>
   );

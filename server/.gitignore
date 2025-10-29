@@ -6,6 +6,7 @@ build/
 
 # ===== Environment =====
 .env
+server/config/serviceAccountKey.json
 
 # ===== Logs =====
 logs/
