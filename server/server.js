@@ -13,7 +13,6 @@ import followRoutes from "./routes/followRoutes.js";
 import videoLikeRoutes from "./routes/videoLikeRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import imageUploadRouter from "./routes/imageUploadRouter.js";
-
 dotenv.config();
 
 const app = express();
@@ -77,6 +76,7 @@ app.use("/api/follows", followRoutes);
 app.use("/api/video-likes", videoLikeRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/images", imageUploadRouter);
+
 
 // ✅ Debug route
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));

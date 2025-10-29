@@ -4,10 +4,11 @@ const videoService = require("../services/videoService");
 /**
  * ➕ Tạo video mới
  */
-exports.createVideo = async (req, res) => {
+const createVideo = async (req, res) => {
   try {
     const videoData = req.body;
     const newVideo = await videoService.createVideo(videoData);
+
     res.status(201).json({
       success: true,
       message: "Tạo video thành công",
@@ -22,7 +23,7 @@ exports.createVideo = async (req, res) => {
 /**
  * 📦 Lấy tất cả video
  */
-exports.getAllVideos = async (req, res) => {
+const getAllVideos = async (req, res) => {
   try {
     const videos = await videoService.getAllVideos();
     res.status(200).json({
@@ -39,13 +40,14 @@ exports.getAllVideos = async (req, res) => {
 /**
  * 🔍 Lấy video theo ID
  */
-exports.getVideoById = async (req, res) => {
+const getVideoById = async (req, res) => {
   try {
     const videoId = parseInt(req.params.id);
     const video = await videoService.getVideoById(videoId);
-    if (!video) {
+
+    if (!video)
       return res.status(404).json({ success: false, message: "Không tìm thấy video" });
-    }
+
     res.status(200).json({ success: true, data: video });
   } catch (error) {
     console.error("❌ Lỗi khi lấy video:", error);
@@ -56,11 +58,12 @@ exports.getVideoById = async (req, res) => {
 /**
  * ✏️ Cập nhật video
  */
-exports.updateVideo = async (req, res) => {
+const updateVideo = async (req, res) => {
   try {
     const videoId = parseInt(req.params.id);
     const updateData = req.body;
     const updated = await videoService.updateVideo(videoId, updateData);
+
     res.status(200).json({
       success: true,
       message: "Cập nhật video thành công",
@@ -75,13 +78,14 @@ exports.updateVideo = async (req, res) => {
 /**
  * 🗑️ Xóa video
  */
-exports.deleteVideo = async (req, res) => {
+const deleteVideo = async (req, res) => {
   try {
     const videoId = parseInt(req.params.id);
     const deleted = await videoService.deleteVideo(videoId);
-    if (!deleted) {
+
+    if (!deleted)
       return res.status(404).json({ success: false, message: "Video không tồn tại" });
-    }
+
     res.status(200).json({ success: true, message: "Đã xóa video thành công" });
   } catch (error) {
     console.error("❌ Lỗi khi xóa video:", error);
@@ -90,12 +94,13 @@ exports.deleteVideo = async (req, res) => {
 };
 
 /**
- * 📜 Lấy tất cả video do một user đăng
+ * 📜 Lấy tất cả video của user
  */
-exports.getVideosByUser = async (req, res) => {
+const getVideosByUser = async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     const videos = await videoService.getVideosByUser(userId);
+
     res.status(200).json({
       success: true,
       count: videos.length,
@@ -108,12 +113,13 @@ exports.getVideosByUser = async (req, res) => {
 };
 
 /**
- * 🔥 Lấy video phổ biến nhất
+ * 🔥 Lấy video phổ biến
  */
-exports.getMostLikedVideos = async (req, res) => {
+const getMostLikedVideos = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const videos = await videoService.getMostLikedVideos(limit);
+
     res.status(200).json({
       success: true,
       count: videos.length,
@@ -126,15 +132,16 @@ exports.getMostLikedVideos = async (req, res) => {
 };
 
 /**
- * 🔍 Tìm kiếm video theo tiêu đề hoặc mô tả
+ * 🔍 Tìm kiếm video theo tiêu đề/mô tả
  */
-exports.searchVideos = async (req, res) => {
+const searchVideos = async (req, res) => {
   try {
     const keyword = req.query.q || "";
     const limit = parseInt(req.query.limit) || 20;
     const offset = parseInt(req.query.offset) || 0;
 
     const results = await videoService.searchVideos(keyword, limit, offset);
+
     res.status(200).json({
       success: true,
       count: results.length,
@@ -149,10 +156,11 @@ exports.searchVideos = async (req, res) => {
 /**
  * 📈 Tăng lượt xem video
  */
-exports.incrementViews = async (req, res) => {
+const incrementViews = async (req, res) => {
   try {
     const videoId = parseInt(req.params.id);
     const updatedVideo = await videoService.incrementViews(videoId);
+
     res.status(200).json({
       success: true,
       message: "Đã tăng lượt xem video",
@@ -167,10 +175,11 @@ exports.incrementViews = async (req, res) => {
 /**
  * 🆕 Lấy video mới nhất
  */
-exports.getLatestVideos = async (req, res) => {
+const getLatestVideos = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const videos = await videoService.getLatestVideos(limit);
+
     res.status(200).json({
       success: true,
       count: videos.length,
@@ -183,12 +192,9 @@ exports.getLatestVideos = async (req, res) => {
 };
 
 /**
- * 🗺️ Lấy video feed trong bán kính 10km (theo vị trí người dùng)
- *  - Lọc video có shop nằm trong 10km tính theo đường chim bay
- *  - Sắp xếp theo rating shop giảm dần
- *  - Trả 10 video đầu tiên cho queue feed
+ * 🗺️ Lấy video feed gần người dùng (10km)
  */
-exports.getVideosFeed = async (req, res) => {
+const getVideosFeed = async (req, res) => {
   try {
     const { lat, lng } = req.query;
     if (!lat || !lng)
@@ -199,14 +205,11 @@ exports.getVideosFeed = async (req, res) => {
       lng: parseFloat(lng),
     });
 
-    // 🟡 Thêm log debug tại đây
-    //console.log("🎬 DEBUG FEED VIDEOS:", videos);
-
     res.status(200).json({
       success: true,
       message: "Lấy danh sách video gần bạn",
       count: videos.length,
-      data: videos.slice(0, 10), // 10 video đầu tiên
+      data: videos.slice(0, 10),
     });
   } catch (err) {
     console.error("❌ Lỗi getVideosFeed:", err);
@@ -214,7 +217,10 @@ exports.getVideosFeed = async (req, res) => {
   }
 };
 
-exports.getNextVideo = async (req, res) => {
+/**
+ * ⏭️ Lấy video kế tiếp trong feed
+ */
+const getNextVideo = async (req, res) => {
   try {
     const { lat, lng, viewed } = req.query;
     if (!lat || !lng)
@@ -228,9 +234,7 @@ exports.getNextVideo = async (req, res) => {
     });
 
     const next = videos.find(v => !viewedIds.includes(v.video_id));
-
-    if (!next)
-      return res.status(404).json({ message: "Không còn video mới" });
+    if (!next) return res.status(404).json({ message: "Không còn video mới" });
 
     res.status(200).json({ success: true, data: next });
   } catch (err) {
@@ -239,3 +243,18 @@ exports.getNextVideo = async (req, res) => {
   }
 };
 
+// ✅ Export chuẩn theo CommonJS
+module.exports = {
+  createVideo,
+  getAllVideos,
+  getVideoById,
+  updateVideo,
+  deleteVideo,
+  getVideosByUser,
+  getMostLikedVideos,
+  searchVideos,
+  incrementViews,
+  getLatestVideos,
+  getVideosFeed,
+  getNextVideo,
+};
