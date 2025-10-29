@@ -137,19 +137,34 @@ async function getOverviewStats() {
 /* ============================================
  📊 CHARTS
 ============================================ */
-async function getMonthlyRevenue() {
-  console.log('🧩 [DAO] getMonthlyRevenue()');
-  const { rows } = await pool.query(`
+async function getMonthlyRevenue(months = 6, year = new Date().getFullYear()) {
+  console.log(`🧩 [DAO] getMonthlyRevenue(${months}, ${year}) → Lấy ${months} tháng gần nhất của năm ${year}`);
+
+  const query = `
+    WITH filtered_orders AS (
+      SELECT 
+        DATE_TRUNC('month', created_at) AS month_date,
+        SUM(total_price) AS revenue
+      FROM orders
+      WHERE status = 'completed'
+        AND EXTRACT(YEAR FROM created_at)::INT = $2::INT
+        AND EXTRACT(MONTH FROM created_at)::INT BETWEEN
+            GREATEST(EXTRACT(MONTH FROM NOW())::INT - ($1 - 1), 1)
+            AND EXTRACT(MONTH FROM NOW())::INT
+      GROUP BY DATE_TRUNC('month', created_at)
+    )
     SELECT 
-      TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YYYY') AS month,
-      COALESCE(SUM(total_price), 0)::numeric AS revenue
-    FROM orders
-    WHERE status = 'completed'
-    GROUP BY DATE_TRUNC('month', created_at)
-    ORDER BY DATE_TRUNC('month', created_at);
-  `);
+      TO_CHAR(month_date, 'Mon YYYY') AS month,
+      COALESCE(revenue, 0)::numeric AS revenue
+    FROM filtered_orders
+    ORDER BY month_date ASC;
+  `;
+
+  const { rows } = await pool.query(query, [months, year]);
+  console.log("✅ Dữ liệu doanh thu trả về:", rows);
   return rows;
 }
+
 
 async function getWeeklyOrders() {
   console.log('🧩 [DAO] getWeeklyOrders()');

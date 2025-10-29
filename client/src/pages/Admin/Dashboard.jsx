@@ -1,4 +1,3 @@
-// src/pages/admin/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import {
   Typography,
@@ -12,7 +11,6 @@ import {
 } from "@mui/material";
 import {
   getOverviewStats,
-  getMonthlyRevenue,
   getWeeklyOrders,
   getUserDistribution,
 } from "../../api/adminApi";
@@ -23,6 +21,7 @@ import PieChartMini from "../../components/admin/charts/PieChartMini";
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeMonths, setActiveMonths] = useState(6); // ✅ Thêm state để chọn số tháng
 
   // 🧭 Lấy dữ liệu tổng quan khi trang load
   useEffect(() => {
@@ -143,15 +142,8 @@ const Dashboard = () => {
       </Grid>
 
       {/* 🔹 Biểu đồ doanh thu & đơn hàng */}
-      <Grid
-        container
-        spacing={2}
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          flexWrap: "nowrap",
-        }}
-      >
+      <Grid container spacing={2} sx={{ flexWrap: "nowrap" }}>
+        {/* 💰 Biểu đồ doanh thu */}
         <Grid item xs={12} sm={6} md={6} sx={{ flex: 1, minWidth: 0 }}>
           <Paper
             elevation={0}
@@ -173,17 +165,30 @@ const Dashboard = () => {
                 Doanh thu theo tháng
               </Typography>
               <Stack direction="row" spacing={1}>
-                <Chip size="small" label="6 tháng" color="primary" variant="outlined" />
-                <Chip size="small" label="12 tháng" variant="outlined" />
+                <Chip
+                  size="small"
+                  label="6 tháng"
+                  color={activeMonths === 6 ? "primary" : "default"}
+                  variant={activeMonths === 6 ? "filled" : "outlined"}
+                  onClick={() => setActiveMonths(6)}
+                />
+                <Chip
+                  size="small"
+                  label="12 tháng"
+                  color={activeMonths === 12 ? "primary" : "default"}
+                  variant={activeMonths === 12 ? "filled" : "outlined"}
+                  onClick={() => setActiveMonths(12)}
+                />
               </Stack>
             </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Thống kê doanh thu gần đây
             </Typography>
-            <BarChartMini fetchData={getMonthlyRevenue} />
+            <BarChartMini months={activeMonths} />
           </Paper>
         </Grid>
 
+        {/* 📦 Biểu đồ đơn hàng */}
         <Grid item xs={12} sm={6} md={6} sx={{ flex: 1, minWidth: 0 }}>
           <Paper
             elevation={0}
@@ -219,15 +224,7 @@ const Dashboard = () => {
 
       {/* 🔹 Biểu đồ phân bố người dùng & hoạt động */}
       <Box sx={{ mt: 3 }}>
-        <Grid
-          container
-          spacing={2}
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexWrap: "nowrap",
-          }}
-        >
+        <Grid container spacing={2} sx={{ flexWrap: "nowrap" }}>
           <Grid item xs={12} md={6} lg={6} sx={{ flex: 1, minWidth: 0 }}>
             <Paper
               elevation={0}
@@ -267,7 +264,7 @@ const Dashboard = () => {
                 Các sự kiện mới nhất trong hệ thống
               </Typography>
               <Stack spacing={1}>
-                {[
+                {[ 
                   'Cửa hàng "Phở Hà Nội" đã đăng ký thành công',
                   "Shipper Nguyễn Văn A đã hoàn thành 10 đơn hàng",
                   "Có 3 đăng ký shipper chờ duyệt",
