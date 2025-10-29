@@ -13,6 +13,7 @@ import followRoutes from "./routes/followRoutes.js";
 import videoLikeRoutes from "./routes/videoLikeRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import imageUploadRouter from "./routes/imageUploadRouter.js";
+import map4dRoutes from "./routes/map4dRoutes.js";
 
 dotenv.config();
 
@@ -77,6 +78,7 @@ app.use("/api/follows", followRoutes);
 app.use("/api/video-likes", videoLikeRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/images", imageUploadRouter);
+app.use("/api/map4d", map4dRoutes);
 
 // ✅ Debug route
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));
