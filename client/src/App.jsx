@@ -117,7 +117,7 @@ function App() {
           <Route path="discover" element={<Discover />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
-          <Route path="ConfirmOrder" element={<ConfirmOrder />} />
+          <Route path="confirm-order" element={<ConfirmOrder />} />
           <Route path="add-coupon" element={<AddCoupon />} />
           <Route path="orders" element={<Order />} />
           <Route path="order-tracking" element={<OrderTracking />} />
