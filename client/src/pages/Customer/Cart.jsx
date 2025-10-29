@@ -386,7 +386,11 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
         >
           <SubmitButton
             isValid={cartItems.length > 0}
-            onClick={onCheckout}
+            onClick={() => {
+              navigate("/customer/confirm-order", {
+                state: { cartItems, total },
+              });
+            }}
             style={{
               marginTop: "0",
             }}
