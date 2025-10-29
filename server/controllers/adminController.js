@@ -148,10 +148,17 @@ async function getOverview(req, res, next) {
     next(err);
   }
 }
-
 async function getDashboardMonthlyRevenue(req, res, next) {
   try {
-    const data = await service.getMonthlyRevenue();
+    // ✅ Lấy tham số months từ query, mặc định = 6
+    const months = parseInt(req.query.months) || 6;
+    const year = parseInt(req.query.year) || new Date().getFullYear();
+    console.log(
+      `📊 [Controller] GET /api/admin/stats/dashboard/monthly?months=${months}&year=${year}`
+    );
+
+    const data = await service.getMonthlyRevenue(months, year);
+
     res.json({ items: data });
   } catch (err) {
     console.error("❌ getDashboardMonthlyRevenue error:", err);
