@@ -98,11 +98,14 @@ const VideoManagement = () => {
 
   const handleUpload = async () => {
     if (!isValid) {
-      setToast({ open: true, message: "Vui lòng chọn video và nhập tiêu đề", severity: "warning" });
+      setToast({
+        open: true,
+        message: "Vui lòng chọn video và nhập tiêu đề",
+        severity: "warning",
+      });
       return;
     }
 
-    // ✅ Bắt buộc phải có shop_id từ context
     if (!shopId) {
       setToast({
         open: true,
@@ -113,67 +116,97 @@ const VideoManagement = () => {
     }
 
     try {
+      console.log("[DEBUG] 🚀 Bắt đầu upload video...");
       setUploading(true);
-      setProgress(20);
+      setProgress(10);
 
-      // Gửi formData lên server
+      // === 1️⃣ UPLOAD VIDEO FILE LÊN FIREBASE ===
       const formData = new FormData();
-      formData.append("video", videoFile);      // 👈 tên field phải là 'video'
+      formData.append("video", videoFile);
       formData.append("title", title);
       formData.append("shop_id", shopId);
+
+      console.log("[DEBUG] [STEP 1] formData ready:", {
+        title,
+        shopId,
+        videoFile: videoFile?.name,
+      });
 
       const uploadRes = await fetch("http://localhost:5000/api/videos/upload", {
         method: "POST",
         body: formData,
       });
-      const uploadData = await uploadRes.json();
-      console.log("[UPLOAD_VIDEO] uploadData =", uploadData);
 
-      setProgress(70);
+      console.log("[DEBUG] [STEP 1] uploadRes.ok =", uploadRes.ok, "status =", uploadRes.status);
 
-      // 2) Gửi metadata + shop_id để lưu DB
+      let uploadData;
+      try {
+        uploadData = await uploadRes.json();
+      } catch (err) {
+        console.error("[DEBUG] ❌ Lỗi parse JSON uploadRes:", err);
+        throw new Error("Phản hồi upload không hợp lệ từ server");
+      }
+
+      console.log("[DEBUG] [STEP 1] uploadData =", uploadData);
+
+      // ⚙️ FIX: đọc đúng key backend trả về (videoUrl hoặc video_url)
+      const videoUrl = uploadData.video_url || uploadData.videoUrl;
+      if (!uploadRes.ok || !videoUrl) {
+        console.error("[DEBUG] ❌ Upload thất bại hoặc không có video URL:", uploadData);
+        throw new Error("Upload video thất bại hoặc thiếu video URL trong phản hồi");
+      }
+
+      console.log("[DEBUG] ✅ Upload thành công, nhận videoUrl =", videoUrl);
+      setProgress(60);
+
+      // === 2️⃣ GỬI METADATA ĐỂ LƯU DB ===
       const newVideoData = {
         title: title.trim(),
         description: description.trim() || "—",
-        video_url: uploadData.videoUrl,
+        video_url: videoUrl, // ✅ gửi đúng field backend cần
         duration: duration || "0:00",
-        shop_id: Number(shopId), // ✅ LẤY TỪ SHOP CONTEXT
+        shop_id: Number(shopId),
       };
 
-      // 🔎 DEBUG: xác minh payload gửi lên
-      console.log("[VIDEO] shopId from context =", shopId, "typeof:", typeof shopId);
-      console.log("[VIDEO] newVideoData =", newVideoData);
+      console.log("[DEBUG] [STEP 2] Gửi metadata lên /api/videos:");
+      console.table(newVideoData);
 
       const saveRes = await fetch("http://localhost:5000/api/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // nếu backend cần session
         body: JSON.stringify(newVideoData),
       });
 
-      // 🔎 DEBUG: đọc raw text khi lỗi để thấy thông báo cụ thể
+      console.log("[DEBUG] [STEP 2] saveRes.ok =", saveRes.ok, "status =", saveRes.status);
       if (!saveRes.ok) {
         const raw = await saveRes.text();
-        console.error("[VIDEO] /api/videos FAILED:", saveRes.status, raw);
-        throw new Error(raw || "Không thể lưu video");
+        console.error("[DEBUG] ❌ Lỗi lưu DB:", raw);
+        throw new Error("Không thể lưu video vào database");
       }
 
       const saveData = await saveRes.json();
-      console.log("[VIDEO] /api/videos OK:", saveData);
-      if (!saveRes.ok) throw new Error(saveData.message || "Không thể lưu video");
+      console.log("[DEBUG] ✅ Video đã lưu DB:", saveData);
 
       setProgress(100);
-      setVideos((list) => [saveData.data, ...list]);
+      setVideos((prev) => [saveData.data, ...prev]);
+
+      console.log("[DEBUG] 🎉 Upload và lưu video hoàn tất!");
       setToast({ open: true, message: "✅ Đã upload và lưu video!", severity: "success" });
-      setOpenUpload(false);
       resetForm();
+      setOpenUpload(false);
     } catch (err) {
-      console.error("❌ Lỗi:", err);
-      setToast({ open: true, message: err.message || "Lỗi upload video", severity: "error" });
+      console.error("[DEBUG] ❌ Lỗi trong handleUpload:", err);
+      setToast({
+        open: true,
+        message: err.message || "Lỗi upload video",
+        severity: "error",
+      });
     } finally {
+      console.log("[DEBUG] 🧹 Dọn dẹp trạng thái upload");
       setUploading(false);
     }
   };
+
 
   // ======= HANDLERS (EDIT MODAL – read-only duration) =======
   const openEditModal = (video) => {

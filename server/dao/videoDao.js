@@ -1,30 +1,143 @@
-// dao/videoDao.js
 const GenericDao = require("./generic_dao");
-const pool = require("../config/db");
 const Video = require("../models/video");
+const pool = require("../config/db");
 
 class VideoDao extends GenericDao {
   constructor() {
-    // ✅ gọi GenericDao cho bảng "videos"
     super("videos", Video);
   }
 
-  // 🧠 (Tuỳ chọn) — nếu cần query đặc biệt, có thể thêm ở đây
-
-  // Lấy tất cả video theo shop_id
-  async getByShopId(shopId) {
-    try {
-      const query = `SELECT * FROM ${this.table} WHERE shop_id = $1 ORDER BY created_at DESC`;
-      const result = await pool.query(query, [shopId]);
-      console.log(`[VideoDao] getByShopId(${shopId}) -> ${result.rowCount} rows`);
-      return result.rows.map((row) => new this.Model(row));
-    } catch (err) {
-      console.error("[VideoDao] getByShopId error:", err);
-      throw err;
-    }
+  /**
+   * 📜 Lấy tất cả video mà một người dùng đã đăng
+   */
+  async getVideosByUser(userId) {
+    const query = `
+      SELECT * FROM videos
+      WHERE user_id = $1
+      ORDER BY created_at DESC;
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
   }
 
-  // Cập nhật video theo id
+  /**
+   * 🏬 Lấy video theo shop_id (có status = 'approved')
+   */
+  async getVideosByShop(shopId) {
+    const query = `
+      SELECT v.video_id, v.title, v.video_url, v.likes_count, v.views_count, v.comments_count
+      FROM videos v
+      WHERE v.shop_id = $1 AND v.status = 'approved'
+      ORDER BY v.created_at DESC;
+    `;
+    const result = await pool.query(query, [shopId]);
+    return result.rows;
+  }
+
+  /**
+   * 🔥 Lấy danh sách video phổ biến nhất (dựa theo lượt thích)
+   */
+  async getMostLikedVideos(limit = 10) {
+    const query = `
+      SELECT v.*, COUNT(vl.video_id) AS like_count
+      FROM videos v
+      LEFT JOIN video_likes vl ON v.video_id = vl.video_id
+      GROUP BY v.video_id
+      ORDER BY like_count DESC, v.created_at DESC
+      LIMIT $1;
+    `;
+    const result = await pool.query(query, [limit]);
+    return result.rows;
+  }
+
+  /**
+   * 🔍 Tìm kiếm video theo tiêu đề hoặc mô tả
+   */
+  async searchVideos(keyword, limit = 20, offset = 0) {
+    const query = `
+      SELECT * FROM videos
+      WHERE LOWER(title) LIKE LOWER($1) OR LOWER(description) LIKE LOWER($1)
+      ORDER BY created_at DESC
+      LIMIT $2 OFFSET $3;
+    `;
+    const result = await pool.query(query, [`%${keyword}%`, limit, offset]);
+    return result.rows;
+  }
+
+  /**
+   * 📈 Tăng lượt xem video thêm 1
+   */
+  async incrementViews(videoId) {
+    const query = `
+      UPDATE videos
+      SET views_count = views_count + 1,
+          updated_at = NOW()
+      WHERE video_id = $1
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [videoId]);
+    return result.rows[0];
+  }
+
+  /**
+   * 🆕 Lấy danh sách video mới nhất
+   */
+  async getLatestVideos(limit = 10) {
+    const query = `
+      SELECT * FROM videos
+      ORDER BY created_at DESC
+      LIMIT $1;
+    `;
+    const result = await pool.query(query, [limit]);
+    return result.rows;
+  }
+
+  /**
+   * 🗺️ Lấy toàn bộ video có thông tin vị trí của shop (lat/lon, rating)
+   * Dùng cho thuật toán lọc theo khoảng cách
+   */
+  async getVideosWithShopData() {
+    const query = `
+      SELECT 
+        v.video_id, v.title, v.video_url,
+        v.views_count, v.likes_count, v.comments_count, 
+        s.id AS shop_id, s.shop_name, s.description AS shop_description,
+        u.rating AS shop_rating,
+        u.avatar_url AS shop_avatar,
+        a.lat_lon->>'lat' AS lat,
+        a.lat_lon->>'lon' AS lng
+      FROM videos v
+      JOIN shop_profiles s ON v.shop_id = s.id
+      JOIN users u ON s.user_id = u.id
+      LEFT JOIN addresses a ON s.shop_address_id = a.address_id
+      WHERE v.status = 'approved'
+        AND u.status = 'active'
+        AND a.lat_lon IS NOT NULL;
+    `;
+
+    const res = await pool.query(query);
+
+    return res.rows.map(row => ({
+      ...row,
+      lat: row.lat ? parseFloat(row.lat) : null,
+      lng: row.lng ? parseFloat(row.lng) : null,
+      shop_rating: parseFloat(row.shop_rating || 0),
+    }));
+  }
+
+  /**
+   * 🧭 Lấy video của các shop trong bán kính 10km quanh vị trí người dùng
+   * (Dựa vào danh sách video + vị trí + rating)
+   * ⚠️ Tính toán khoảng cách ở tầng service (để tách logic)
+   */
+  async getVideosNearby(userLocation, maxDistanceKm = 10) {
+    const allVideos = await this.getVideosWithShopData();
+    return allVideos; // lọc ở tầng service
+  }
+
+  /**
+   * ✏️ Cập nhật video theo id
+   */
   async updateById(id, data) {
     try {
       const keys = Object.keys(data);
@@ -46,7 +159,9 @@ class VideoDao extends GenericDao {
     }
   }
 
-  // Xoá video theo id
+  /**
+   * ❌ Xoá video theo id
+   */
   async deleteById(id) {
     try {
       const query = `DELETE FROM ${this.table} WHERE id = $1 RETURNING *`;
@@ -59,41 +174,42 @@ class VideoDao extends GenericDao {
     }
   }
 
-  // dao/videoDao.js
+  /**
+   * 📍 Lấy video gần vị trí (SQL tính toán khoảng cách)
+   */
   async getNearbyVideos(lat, lng, radiusKm = 10) {
     try {
       const query = `
-      SELECT 
-        v.*, 
-        sp.shop_name,
-        a.lat_lon ->> 'lat' AS lat,
-        a.lat_lon ->> 'lng' AS lng,
-        (
-          6371 * acos(
-            cos(radians($1)) * 
-            cos(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION))) *
-            cos(radians(CAST(a.lat_lon ->> 'lng' AS DOUBLE PRECISION)) - radians($2)) +
-            sin(radians($1)) * 
-            sin(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION)))
-          )
-        ) AS distance_km
-      FROM ${this.table} v
-      JOIN shop_profiles sp ON v.shop_id = sp.id
-      JOIN addresses a ON sp.shop_address_id = a.address_id
-      WHERE 
-        (
-          6371 * acos(
-            cos(radians($1)) * 
-            cos(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION))) *
-            cos(radians(CAST(a.lat_lon ->> 'lng' AS DOUBLE PRECISION)) - radians($2)) +
-            sin(radians($1)) * 
-            sin(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION)))
-          )
-        ) <= $3
-      ORDER BY distance_km ASC, v.created_at DESC
-      LIMIT 50;
-    `;
-
+        SELECT 
+          v.*, 
+          sp.shop_name,
+          a.lat_lon ->> 'lat' AS lat,
+          a.lat_lon ->> 'lng' AS lng,
+          (
+            6371 * acos(
+              cos(radians($1)) * 
+              cos(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION))) *
+              cos(radians(CAST(a.lat_lon ->> 'lng' AS DOUBLE PRECISION)) - radians($2)) +
+              sin(radians($1)) * 
+              sin(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION)))
+            )
+          ) AS distance_km
+        FROM ${this.table} v
+        JOIN shop_profiles sp ON v.shop_id = sp.id
+        JOIN addresses a ON sp.shop_address_id = a.address_id
+        WHERE 
+          (
+            6371 * acos(
+              cos(radians($1)) * 
+              cos(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION))) *
+              cos(radians(CAST(a.lat_lon ->> 'lng' AS DOUBLE PRECISION)) - radians($2)) +
+              sin(radians($1)) * 
+              sin(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION)))
+            )
+          ) <= $3
+        ORDER BY distance_km ASC, v.created_at DESC
+        LIMIT 50;
+      `;
       const result = await pool.query(query, [lat, lng, radiusKm]);
       console.log(`[VideoDao] getNearbyVideos -> ${result.rowCount} rows`);
       return result.rows.map((row) => new this.Model(row));
@@ -102,9 +218,6 @@ class VideoDao extends GenericDao {
       throw err;
     }
   }
-
 }
 
-// ✅ Export instance kế thừa GenericDao
-const videoDao = new VideoDao();
-module.exports = videoDao;
+module.exports = new VideoDao();

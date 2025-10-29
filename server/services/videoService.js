@@ -1,8 +1,9 @@
 // services/videoService.js
-const videoDao = require("../dao/videoDao");
+const videoDao = require("../dao/videoDao"); // dùng DAO mới
+const { filterShopsByDistance } = require("../utils/map4d");
 
 /**
- * ✅ Helper: chuyển "mm:ss" → tổng số giây
+ * Helper: chuyển "mm:ss" → số giây
  */
 function convertDurationToSeconds(duration) {
   if (!duration) return 0;
@@ -15,23 +16,23 @@ function convertDurationToSeconds(duration) {
 }
 
 class VideoService {
-  // 🧩 Tạo video mới
+  /**
+   * ➕ Tạo video mới
+   */
   async createVideo(videoData) {
     console.log("[SERVICE:createVideo] input =", videoData);
 
-    // ✅ Kiểm tra dữ liệu bắt buộc
+    // Kiểm tra dữ liệu bắt buộc
     const missing = [];
     if (!videoData?.title) missing.push("title");
     if (!videoData?.video_url) missing.push("video_url");
-    if (!videoData?.shop_id && !videoData?.user_id) missing.push("owner (shop_id hoặc user_id)");
-
+    if (!videoData?.shop_id && !videoData?.user_id)
+      missing.push("owner (shop_id hoặc user_id)");
     if (missing.length > 0) {
-      const msg = `Thiếu thông tin bắt buộc: ${missing.join(", ")}`;
-      console.warn("[SERVICE:createVideo] validation fail:", msg);
-      throw new Error(msg);
+      throw new Error("Thiếu thông tin bắt buộc: " + missing.join(", "));
     }
 
-    // ✅ Chuẩn hóa dữ liệu trước khi lưu
+    // Chuẩn hóa dữ liệu
     const payload = {
       title: videoData.title.trim(),
       description: videoData.description?.trim() || "",
@@ -44,116 +45,124 @@ class VideoService {
       comments_count: 0,
     };
 
-    console.log("[SERVICE:createVideo] persist payload =", payload);
-
-    try {
-      const created = await videoDao.create(payload);
-      console.log("[SERVICE:createVideo] ✅ created =", created);
-      return created;
-    } catch (err) {
-      console.error("[SERVICE:createVideo] ❌ error:", err.message);
-      throw err;
-    }
+    console.log("[SERVICE:createVideo] payload =", payload);
+    return await videoDao.create(payload);
   }
 
-  // 📋 Lấy tất cả video
+  /**
+   * 📜 Lấy tất cả video
+   */
   async getAllVideos() {
-    try {
-      console.log("[SERVICE:getAllVideos]");
-      return await videoDao.getAll();
-    } catch (err) {
-      console.error("[SERVICE:getAllVideos] error:", err.message);
-      throw err;
-    }
+    return await videoDao.findAll();
   }
 
-  // 📋 Lấy video theo ID
+  /**
+   * 🔎 Lấy video theo ID
+   */
   async getVideoById(id) {
-    try {
-      console.log("[SERVICE:getVideoById] id=", id);
-      return await videoDao.getById(id);
-    } catch (err) {
-      console.error("[SERVICE:getVideoById] error:", err.message);
-      throw err;
-    }
+    const video = await videoDao.getById(id);
+    if (!video) throw new Error("Video không tồn tại");
+    return video;
   }
 
-  // ✏️ Cập nhật video
+  /**
+   * ✏️ Cập nhật video theo ID
+   */
   async updateVideo(id, data) {
-    try {
-      console.log("[SERVICE:updateVideo] id=", id, "data=", data);
-      if (data.duration) data.duration = convertDurationToSeconds(data.duration);
-      return await videoDao.updateById(id, data);
-    } catch (err) {
-      console.error("[SERVICE:updateVideo] error:", err.message);
-      throw err;
+    const existing = await videoDao.getById(id);
+    if (!existing) throw new Error("Video không tồn tại");
+
+    if (data.duration) {
+      data.duration = convertDurationToSeconds(data.duration);
     }
+
+    const updated = await videoDao.updateById(id, data);
+    console.log("[SERVICE:updateVideo] ✅ updated =", updated);
+    return updated;
   }
 
-  // ❌ Xoá video
+  /**
+   * 🗑️ Xoá video theo ID
+   */
   async deleteVideo(id) {
-    try {
-      console.log("[SERVICE:deleteVideo] id=", id);
-      return await videoDao.deleteById(id);
-    } catch (err) {
-      console.error("[SERVICE:deleteVideo] error:", err.message);
-      throw err;
-    }
+    const existing = await videoDao.getById(id);
+    if (!existing) throw new Error("Video không tồn tại");
+
+    const deleted = await videoDao.deleteById(id);
+    console.log("[SERVICE:deleteVideo] ✅ deleted =", deleted);
+    return deleted;
   }
 
-  // 🔥 Lấy video phổ biến
+  /**
+   * 📜 Lấy tất cả video của user
+   */
+  async getVideosByUser(userId) {
+    return await videoDao.getVideosByUser(userId);
+  }
+
+  /**
+   * 🏪 Lấy video theo shop
+   */
+  async getVideosByShop(shopId) {
+    return await videoDao.getVideosByShop(shopId);
+  }
+
+  /**
+   * 🔥 Lấy video phổ biến nhất
+   */
   async getMostLikedVideos(limit = 10) {
-    try {
-      console.log(`[SERVICE:getMostLikedVideos] limit=${limit}`);
-      return await videoDao.getMostLikedVideos(limit);
-    } catch (err) {
-      console.error("[SERVICE:getMostLikedVideos] error:", err.message);
-      throw err;
-    }
+    return await videoDao.getMostLikedVideos(limit);
   }
 
-  // 🔍 Tìm kiếm video
+  /**
+   * 🔍 Tìm kiếm video
+   */
   async searchVideos(keyword, limit = 20, offset = 0) {
-    try {
-      console.log(`[SERVICE:searchVideos] keyword="${keyword}", limit=${limit}, offset=${offset}`);
-      return await videoDao.searchVideos(keyword, limit, offset);
-    } catch (err) {
-      console.error("[SERVICE:searchVideos] error:", err.message);
-      throw err;
+    if (!keyword || keyword.trim() === "") {
+      throw new Error("Từ khóa tìm kiếm không được để trống");
     }
+    return await videoDao.searchVideos(keyword, limit, offset);
   }
 
-  // 📈 Tăng lượt xem
+  /**
+   * 📈 Tăng lượt xem video
+   */
   async incrementViews(videoId) {
-    try {
-      console.log(`[SERVICE:incrementViews] videoId=${videoId}`);
-      return await videoDao.incrementViews(videoId);
-    } catch (err) {
-      console.error("[SERVICE:incrementViews] error:", err.message);
-      throw err;
-    }
+    const existing = await videoDao.getById(videoId);
+    if (!existing) throw new Error("Video không tồn tại");
+    return await videoDao.incrementViews(videoId);
   }
 
-  // 🆕 Lấy video mới nhất
+  /**
+   * 🆕 Lấy video mới nhất
+   */
   async getLatestVideos(limit = 10) {
-    try {
-      console.log(`[SERVICE:getLatestVideos] limit=${limit}`);
-      return await videoDao.getLatestVideos(limit);
-    } catch (err) {
-      console.error("[SERVICE:getLatestVideos] error:", err.message);
-      throw err;
-    }
+    return await videoDao.getLatestVideos(limit);
   }
 
-  // 🗺️ Lấy video gần vị trí người dùng
+  /**
+   * 🗺️ Lấy video gần vị trí người dùng (DAO mới có SQL tính sẵn)
+   */
   async getNearbyVideos({ lat, lng, radiusKm = 10 }) {
-    try {
-      console.log(`[SERVICE:getNearbyVideos] lat=${lat}, lng=${lng}, radius=${radiusKm}km`);
-      return await videoDao.getNearbyVideos(lat, lng, radiusKm);
-    } catch (err) {
-      console.error("[SERVICE:getNearbyVideos] error:", err.message);
-      throw err;
+    if (!lat || !lng) {
+      throw new Error("Thiếu tọa độ người dùng (lat, lng)");
     }
+    return await videoDao.getNearbyVideos(lat, lng, radiusKm);
+  }
+
+  /**
+   * 🗺️ Hoặc: Lấy video gần vị trí (lọc bằng map4d)
+   * Dùng nếu muốn lọc logic ngoài DB (giữ tương thích code cũ)
+   */
+  async getNearbyVideosByFilter(userLocation) {
+    if (!userLocation?.lat || !userLocation?.lng) {
+      throw new Error("Thiếu tọa độ người dùng (lat, lng)");
+    }
+
+    const videos = await videoDao.getVideosWithShopData();
+    const nearby = filterShopsByDistance(userLocation, videos, 20);
+    nearby.sort((a, b) => b.shop_rating - a.shop_rating);
+    return nearby.slice(0, 10);
   }
 }
 
