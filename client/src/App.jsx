@@ -33,7 +33,7 @@ import Order from "./pages/Customer/Order";
 import OrderTracking from "./pages/Customer/OrderTracking";
 import { CartPage as Cart } from "./pages/Customer/Cart";
 import Checkout from "./pages/Customer/Checkout";
-import Payment from "./pages/Customer/Payment";
+import ConfirmOrder from "./pages/Customer/ConfirmOrder";
 import AddCoupon from "./pages/Customer/AddCoupon";
 import OrderHistory from "./pages/Customer/OrderHistory";
 import DeliveryManCallScreen from "./pages/Customer/DeliveryManCallScreen";
@@ -45,6 +45,8 @@ import { UserProfile } from "./pages/Customer/UserProfile";
 import SearchPage from "./pages/Customer/SearchPage";
 import SearchResults from "./components/role-specific/Customer/SearchResults";
 import FoodFilters from "./pages/Customer/FoodFilters";
+import ShipperRegistration from "./pages/Customer/ShipperRegistration";
+import ShopRegistration from "./pages/Customer/ShopRegistration";
 
 // ====================== AUTH ======================
 import Login from "./pages/Auth/Login";
@@ -113,7 +115,7 @@ function App() {
           <Route path="discover" element={<Discover />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
-          <Route path="payment" element={<Payment />} />
+          <Route path="ConfirmOrder" element={<ConfirmOrder />} />
           <Route path="add-coupon" element={<AddCoupon />} />
           <Route path="orders" element={<Order />} />
           <Route path="order-tracking" element={<OrderTracking />} />
@@ -127,6 +129,8 @@ function App() {
           <Route path="search" element={<SearchPage />} />
           <Route path="search-results" element={<SearchResults />} />
           <Route path="filters" element={<FoodFilters />} />
+          <Route path="register-shipper" element={<ShipperRegistration />} />
+          <Route path="register-shop" element={<ShopRegistration />} />
         </Route>
 
         {/* ========== SHIPPER ========== */}
