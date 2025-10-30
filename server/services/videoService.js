@@ -1,152 +1,169 @@
 // services/videoService.js
-const videoDao = require("../dao/videoDao");
+const videoDao = require("../dao/videoDao"); // dùng DAO mới
 const { filterShopsByDistance } = require("../utils/map4d");
 
-const videoService = {
+/**
+ * Helper: chuyển "mm:ss" → số giây
+ */
+function convertDurationToSeconds(duration) {
+  if (!duration) return 0;
+  if (typeof duration === "number") return duration;
+  if (typeof duration === "string" && duration.includes(":")) {
+    const [min, sec] = duration.split(":").map(Number);
+    return min * 60 + sec;
+  }
+  return parseInt(duration) || 0;
+}
+
+class VideoService {
   /**
    * ➕ Tạo video mới
-   * @param {object} videoData - { title, description, user_id, video_url, thumbnail }
-   * @returns {Promise<object>}
    */
   async createVideo(videoData) {
-    if (!videoData.title || !videoData.user_id || !videoData.video_url) {
-      throw new Error("Thiếu thông tin bắt buộc để tạo video");
-    }
-    return await videoDao.create(videoData);
-  },
+    console.log("[SERVICE:createVideo] input =", videoData);
 
-  /**
-   * 📦 Lấy video theo ID
-   * @param {number} videoId
-   * @returns {Promise<object|null>}
-   */
-  async getVideoById(videoId) {
-    return await videoDao.findById(videoId);
-  },
+    // Kiểm tra dữ liệu bắt buộc
+    const missing = [];
+    if (!videoData?.title) missing.push("title");
+    if (!videoData?.video_url) missing.push("video_url");
+    if (!videoData?.shop_id && !videoData?.user_id)
+      missing.push("owner (shop_id hoặc user_id)");
+    if (missing.length > 0) {
+      throw new Error("Thiếu thông tin bắt buộc: " + missing.join(", "));
+    }
+
+    // Chuẩn hóa dữ liệu
+    const payload = {
+      title: videoData.title.trim(),
+      description: videoData.description?.trim() || "",
+      video_url: videoData.video_url.trim(),
+      duration: convertDurationToSeconds(videoData.duration),
+      shop_id: Number(videoData.shop_id),
+      status: videoData.status || "approved",
+      views_count: 0,
+      likes_count: 0,
+      comments_count: 0,
+    };
+
+    console.log("[SERVICE:createVideo] payload =", payload);
+    return await videoDao.create(payload);
+  }
 
   /**
    * 📜 Lấy tất cả video
-   * @returns {Promise<object[]>}
    */
   async getAllVideos() {
     return await videoDao.findAll();
-  },
+  }
 
   /**
-   * ✏️ Cập nhật thông tin video
-   * @param {number} videoId
-   * @param {object} updateData
-   * @returns {Promise<object>}
+   * 🔎 Lấy video theo ID
    */
-  async updateVideo(videoId, updateData) {
-    const existing = await videoDao.findById(videoId);
-    if (!existing) {
-      throw new Error("Video không tồn tại");
-    }
-    return await videoDao.update(videoId, updateData);
-  },
+  async getVideoById(id) {
+    const video = await videoDao.getById(id);
+    if (!video) throw new Error("Video không tồn tại");
+    return video;
+  }
 
   /**
-   * 🗑️ Xóa video
-   * @param {number} videoId
-   * @returns {Promise<boolean>}
+   * ✏️ Cập nhật video theo ID
    */
-  async deleteVideo(videoId) {
-    const existing = await videoDao.findById(videoId);
-    if (!existing) {
-      throw new Error("Video không tồn tại");
+  async updateVideo(id, data) {
+    const existing = await videoDao.getById(id);
+    if (!existing) throw new Error("Video không tồn tại");
+
+    if (data.duration) {
+      data.duration = convertDurationToSeconds(data.duration);
     }
-    return await videoDao.delete(videoId);
-  },
+
+    const updated = await videoDao.updateById(id, data);
+    console.log("[SERVICE:updateVideo] ✅ updated =", updated);
+    return updated;
+  }
 
   /**
-   * 📜 Lấy tất cả video do một user đăng
-   * @param {number} userId
-   * @returns {Promise<object[]>}
+   * 🗑️ Xoá video theo ID
+   */
+  async deleteVideo(id) {
+    const existing = await videoDao.getById(id);
+    if (!existing) throw new Error("Video không tồn tại");
+
+    const deleted = await videoDao.deleteById(id);
+    console.log("[SERVICE:deleteVideo] ✅ deleted =", deleted);
+    return deleted;
+  }
+
+  /**
+   * 📜 Lấy tất cả video của user
    */
   async getVideosByUser(userId) {
     return await videoDao.getVideosByUser(userId);
-  },
+  }
 
   /**
-   * 🏪 Lấy video theo cửa hàng
-   * @param {number} shopId
+   * 🏪 Lấy video theo shop
    */
   async getVideosByShop(shopId) {
     return await videoDao.getVideosByShop(shopId);
-  },
+  }
 
   /**
-   * 🔥 Lấy video phổ biến nhất (dựa theo lượt thích)
-   * @param {number} limit
-   * @returns {Promise<object[]>}
+   * 🔥 Lấy video phổ biến nhất
    */
   async getMostLikedVideos(limit = 10) {
     return await videoDao.getMostLikedVideos(limit);
-  },
+  }
 
   /**
-   * 🔍 Tìm kiếm video theo tiêu đề hoặc mô tả
-   * @param {string} keyword
-   * @param {number} limit
-   * @param {number} offset
-   * @returns {Promise<object[]>}
+   * 🔍 Tìm kiếm video
    */
   async searchVideos(keyword, limit = 20, offset = 0) {
     if (!keyword || keyword.trim() === "") {
       throw new Error("Từ khóa tìm kiếm không được để trống");
     }
     return await videoDao.searchVideos(keyword, limit, offset);
-  },
+  }
 
   /**
    * 📈 Tăng lượt xem video
-   * @param {number} videoId
-   * @returns {Promise<object>}
    */
   async incrementViews(videoId) {
-    const existing = await videoDao.findById(videoId);
-    if (!existing) {
-      throw new Error("Video không tồn tại");
-    }
+    const existing = await videoDao.getById(videoId);
+    if (!existing) throw new Error("Video không tồn tại");
     return await videoDao.incrementViews(videoId);
-  },
+  }
 
   /**
-   * 🆕 Lấy danh sách video mới nhất
-   * @param {number} limit
-   * @returns {Promise<object[]>}
+   * 🆕 Lấy video mới nhất
    */
   async getLatestVideos(limit = 10) {
     return await videoDao.getLatestVideos(limit);
-  },
+  }
 
   /**
-   * 🗺️ Lấy danh sách video trong bán kính 10km quanh vị trí người dùng
-   *  - Dùng để hiển thị feed kiểu TikTok
-   *  - Sắp xếp theo rating shop giảm dần
-   * @param {{ lat: number, lng: number }} userLocation
-   * @returns {Promise<object[]>}
+   * 🗺️ Lấy video gần vị trí người dùng (DAO mới có SQL tính sẵn)
    */
-  async getNearbyVideos(userLocation) {
-    if (!userLocation || !userLocation.lat || !userLocation.lng) {
+  async getNearbyVideos({ lat, lng, radiusKm = 10 }) {
+    if (!lat || !lng) {
+      throw new Error("Thiếu tọa độ người dùng (lat, lng)");
+    }
+    return await videoDao.getNearbyVideos(lat, lng, radiusKm);
+  }
+
+  /**
+   * 🗺️ Hoặc: Lấy video gần vị trí (lọc bằng map4d)
+   * Dùng nếu muốn lọc logic ngoài DB (giữ tương thích code cũ)
+   */
+  async getNearbyVideosByFilter(userLocation) {
+    if (!userLocation?.lat || !userLocation?.lng) {
       throw new Error("Thiếu tọa độ người dùng (lat, lng)");
     }
 
-    // Lấy tất cả video kèm dữ liệu shop
     const videos = await videoDao.getVideosWithShopData();
-    //console.log("📦 DEBUG ALL VIDEOS FROM DB:", videos);
-
-    // Lọc theo khoảng cách ≤ 10 km
     const nearby = filterShopsByDistance(userLocation, videos, 20);
-    //console.log("📍 DEBUG AFTER DISTANCE FILTER:", nearby);
-
-    // Sắp xếp theo rating giảm dần
     nearby.sort((a, b) => b.shop_rating - a.shop_rating);
-
-    // Lấy 10 video đầu tiên
     return nearby.slice(0, 10);
-  },
-};
+  }
+}
 
-module.exports = videoService;
+module.exports = new VideoService();

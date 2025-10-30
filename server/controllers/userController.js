@@ -42,9 +42,10 @@ const getCurrentUser = async (req, res) => {
     // 🧩 Lấy danh sách địa chỉ user
     let addresses = await addressService.getNormalizedUserAddresses(user.id);
     let shop_profile = null;
+    let shipper_profile = null;
 
-    // 🏪 Nếu user là shop → tách riêng địa chỉ shop
-    if (user.role === "shop" && user.shop_profile) {
+    // 🏪 Nếu user có shop_profile → tách riêng địa chỉ shop
+    if (user.shop_profile) {
       shop_profile = user.shop_profile;
 
       if (shop_profile.shop_address_id) {
@@ -58,6 +59,11 @@ const getCurrentUser = async (req, res) => {
           (a) => a.address_id !== shop_profile.shop_address_id
         );
       }
+    }
+
+    // 🚚 Nếu user có shipper_profile
+    if (user.shipper_profile) {
+      shipper_profile = user.shipper_profile;
     }
 
     // 🧹 Chỉ giữ lại 1 địa chỉ mặc định (is_primary = true)
@@ -76,7 +82,7 @@ const getCurrentUser = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: { ...safeUser, addresses, shop_profile },
+      user: { ...safeUser, addresses, shop_profile, shipper_profile },
       ongoing_role,
     });
   } catch (error) {

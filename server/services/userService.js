@@ -1,5 +1,6 @@
 const userDao = require("../dao/userDao");
 const shopProfileService = require("./shop_profileService");
+const shipperProfileService = require("./shipper_profileService");
 
 /**
  * @class UserService
@@ -26,7 +27,7 @@ class UserService {
   /**
   * @async
   * @function getUserById
-  * @description Lấy thông tin người dùng theo ID (bao gồm shop_profile nếu có)
+  * @description Lấy thông tin người dùng theo ID (bao gồm shop_profile và shipper_profile nếu có)
   * @param {number} id - ID người dùng
   * @returns {Promise<object|null>} - Thông tin user hoặc null nếu không có
   */
@@ -35,10 +36,13 @@ class UserService {
       const user = await userDao.findById(id);
       if (!user) return null;
 
-      if (user.role === "shop") {
-        const shopProfile = await shopProfileService.getShopByUserId(id);
-        if (shopProfile) user.shop_profile = shopProfile;
-      }
+      // Lấy shop_profile nếu user có role shop hoặc có hồ sơ shop
+      const shopProfile = await shopProfileService.getShopByUserId(id);
+      if (shopProfile) user.shop_profile = shopProfile;
+
+      // Lấy shipper_profile nếu user có role shipper hoặc có hồ sơ shipper
+      const shipperProfile = await shipperProfileService.getShipperByUserId(id);
+      if (shipperProfile) user.shipper_profile = shipperProfile;
 
       return user;
     } catch (err) {

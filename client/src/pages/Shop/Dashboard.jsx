@@ -126,7 +126,7 @@ const Dashboard = () => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 } }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, minmax(0, 1fr))', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 } }}>
         <StatCard title="Tổng món ăn" value="24" sub="Đang phục vụ" iconBg="#dbeafe" icon="🍲" />
         <StatCard title="Video Reviews" value="18" sub="Video đã upload" iconBg="#f3e8ff" icon="🎬" />
         <StatCard title="Đơn hàng hôm nay" value="42" sub="+12% so với hôm qua" iconBg="#dcfce7" icon="🧾" />
@@ -206,7 +206,7 @@ const Dashboard = () => {
         </Grid>
       </Paper>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: { xs: 2, sm: 3 } }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, minmax(0, 1fr))', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 2, sm: 3 } }}>
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', height: { xs: 'auto', md: '542px' }, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ mb: 3, flexShrink: 0 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '16px', sm: '18px' }, mb: 1, letterSpacing: '-0.3px' }}>

@@ -112,6 +112,55 @@ const shipperProfileService = {
   async getAvailableShippers() {
     return await shipperProfileDao.getAvailableShippers();
   },
+
+  /**
+   * @async
+   * @function deleteShipperProfile
+   * @description Xóa hồ sơ shipper (khi user bị xóa hoặc không còn hoạt động)
+   * @param {number} shipperId - ID shipper
+   * @returns {Promise<object>} - Hồ sơ shipper đã xóa
+   */
+  async deleteShipperProfile(shipperId) {
+    try {
+      return await shipperProfileDao.delete("id", shipperId);
+    } catch (err) {
+      console.error("❌ Error deleting shipper profile:", err.message);
+      throw new Error("Không thể xóa hồ sơ shipper.");
+    }
+  },
+
+  /**
+   * @async
+   * @function getShipperStatistics
+   * @description Lấy thống kê hiệu suất của shipper (tổng đơn, hoàn thành, thu nhập, rating)
+   * @param {number} shipperId - ID shipper profile
+   * @returns {Promise<object>} - Thống kê hiệu suất
+   */
+  async getShipperStatistics(shipperId) {
+    try {
+      return await shipperProfileDao.getStatistics(shipperId);
+    } catch (err) {
+      console.error("❌ Error fetching shipper statistics:", err.message);
+      throw new Error("Không thể lấy thống kê shipper.");
+    }
+  },
+
+  /**
+   * @async
+   * @function getEarningsByPeriod
+   * @description Lấy doanh thu của shipper theo khoảng thời gian
+   * @param {number} shipperId - ID shipper profile
+   * @param {string} period - "today", "week", "month", "all"
+   * @returns {Promise<object>} - Doanh thu và danh sách chi tiết
+   */
+  async getEarningsByPeriod(shipperId, period = "month") {
+    try {
+      return await shipperProfileDao.getEarningsByPeriod(shipperId, period);
+    } catch (err) {
+      console.error("❌ Error fetching shipper earnings:", err.message);
+      throw new Error("Không thể lấy doanh thu shipper.");
+    }
+  },
 };
 
 module.exports = shipperProfileService;

@@ -77,6 +77,8 @@ import ShipperHistory from "./pages/Shipper/History";
 import ShipperProfile from "./pages/Shipper/Profile";
 import EditProfile from "./pages/Shipper/EditProfile";
 import ShipperWallet from "./pages/Shipper/Wallet";
+import ShipperSettings from "./pages/Shipper/Settings";
+import ShipperEarnings from "./pages/Shipper/Earnings";
 
 // ====================== TEST ======================
 import UploadImageTest from "./pages/Test/UploadImageTest";
@@ -115,7 +117,7 @@ function App() {
           <Route path="discover" element={<Discover />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
-          <Route path="ConfirmOrder" element={<ConfirmOrder />} />
+          <Route path="confirm-order" element={<ConfirmOrder />} />
           <Route path="add-coupon" element={<AddCoupon />} />
           <Route path="orders" element={<Order />} />
           <Route path="order-tracking" element={<OrderTracking />} />
@@ -142,6 +144,8 @@ function App() {
           <Route path="profile" element={<ShipperProfile />} />
           <Route path="profile/edit" element={<EditProfile />} />
           <Route path="wallet" element={<ShipperWallet />} />
+          <Route path="settings" element={<ShipperSettings />} />
+          <Route path="earnings" element={<ShipperEarnings />} />
           <Route path="*" element={<Navigate to="/shipper/home" />} />
         </Route>
 
