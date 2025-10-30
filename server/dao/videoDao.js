@@ -179,7 +179,7 @@ class VideoDao extends GenericDao {
      * (Dựa vào danh sách video + vị trí + rating)
      * ⚠️ Tính toán khoảng cách ở tầng service (để tách logic)
      */
-  async getVideosNearby(userLocation, maxDistanceKm = 10) {
+  async getNearbyVideos(userLocation, maxDistanceKm = 10) {
     const allVideos = await this.getVideosWithShopData();
     // chỉ lọc ở tầng service — DAO chỉ fetch dữ liệu
     return allVideos;
