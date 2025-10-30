@@ -7,6 +7,8 @@ import {
   Typography,
   Stack,
   CircularProgress,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   ResponsiveContainer,
@@ -30,14 +32,21 @@ export default function Revenue() {
   const [topShippers, setTopShippers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🧭 Lấy dữ liệu từ API khi load trang
+  // ✅ Thêm lọc năm
+  const [year, setYear] = useState(new Date().getFullYear());
+  const years = React.useMemo(() => {
+    const cur = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => cur - i); // 5 năm gần nhất
+  }, []);
+
+  // 🧭 Lấy dữ liệu từ API khi load trang hoặc đổi năm
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [cmp, shops, shippers] = await Promise.all([
-          getRevenueComparison(),
-          getTopRevenueShops(),
-          getTopRevenueShippers(),
+          getRevenueComparison(year),
+          getTopRevenueShops(year),
+          getTopRevenueShippers(year),
         ]);
         setComparison(cmp || []);
         setTopShops(shops || []);
@@ -49,9 +58,9 @@ export default function Revenue() {
       }
     };
     fetchData();
-  }, []);
+  }, [year]);
 
-  // ⏳ Hiển thị loading trong khi chờ API
+  // ⏳ Loading
   if (loading)
     return (
       <Box textAlign="center" py={5}>
@@ -61,6 +70,9 @@ export default function Revenue() {
         </Typography>
       </Box>
     );
+
+  // ✅ Hàm format tiền tệ kiểu “M” (triệu)
+  const formatMoney = (v) => `${(v / 1_000_000).toFixed(2)}M ₫`;
 
   return (
     <Box sx={{ width: "100%", px: 2, pb: 5 }}>
@@ -83,9 +95,26 @@ export default function Revenue() {
           mb: 4,
         }}
       >
-        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-          So sánh doanh thu Shop và Shipper theo tháng
-        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="subtitle1" fontWeight={600}>
+            So sánh doanh thu Shop và Shipper theo tháng
+          </Typography>
+
+          {/* 🔹 Bộ lọc năm */}
+          <Select
+            size="small"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            sx={{ height: 32 }}
+          >
+            {years.map((y) => (
+              <MenuItem key={y} value={y}>
+                Năm {y}
+              </MenuItem>
+            ))}
+          </Select>
+        </Stack>
+
         {comparison.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
             Không có dữ liệu thống kê.
@@ -94,14 +123,27 @@ export default function Revenue() {
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={comparison}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 12 }}
+                tickFormatter={(v) => v.split(" ")[0]} // ✅ chỉ hiển thị tháng, bỏ năm
+              />
+              <YAxis
+                tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
+                tick={{ fontSize: 12 }}
+              />
               <Tooltip
-                formatter={(v) => `${Number(v).toLocaleString("vi-VN")} ₫`}
+                formatter={(v) => formatMoney(v)}
+                contentStyle={{
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                }}
+                labelStyle={{ fontWeight: "bold" }}
               />
               <Legend />
-              <Bar dataKey="shop_revenue" name="Shop" fill="#36A2EB" />
-              <Bar dataKey="shipper_revenue" name="Shipper" fill="#FFB347" />
+              <Bar dataKey="shop_revenue" name="Shop" fill="#36A2EB" barSize={35} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="shipper_revenue" name="Shipper" fill="#FFB347" barSize={35} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -130,21 +172,12 @@ export default function Revenue() {
             flexDirection: "column",
           }}
         >
-          <Typography
-            variant="subtitle1"
-            fontWeight={600}
-            gutterBottom
-            align="center"
-          >
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom align="center">
             🏪 Top 10 cửa hàng theo doanh thu
           </Typography>
 
           {topShops.length === 0 ? (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              textAlign="center"
-            >
+            <Typography variant="body2" color="text.secondary" textAlign="center">
               Không có dữ liệu.
             </Typography>
           ) : (
@@ -155,16 +188,13 @@ export default function Revenue() {
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
-                  sx={{
-                    py: 1.2,
-                    borderBottom: "1px solid #eee",
-                  }}
+                  sx={{ py: 1.2, borderBottom: "1px solid #eee" }}
                 >
                   <Typography variant="body2">
                     {i + 1}. {shop.shop_name}
                   </Typography>
                   <Typography variant="body2" color="success.main">
-                    {Number(shop.revenue).toLocaleString("vi-VN")} ₫
+                    {formatMoney(shop.revenue)}
                   </Typography>
                 </Stack>
               ))}
@@ -186,21 +216,12 @@ export default function Revenue() {
             flexDirection: "column",
           }}
         >
-          <Typography
-            variant="subtitle1"
-            fontWeight={600}
-            gutterBottom
-            align="center"
-          >
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom align="center">
             🚚 Top 10 shipper theo doanh thu
           </Typography>
 
           {topShippers.length === 0 ? (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              textAlign="center"
-            >
+            <Typography variant="body2" color="text.secondary" textAlign="center">
               Không có dữ liệu.
             </Typography>
           ) : (
@@ -211,16 +232,13 @@ export default function Revenue() {
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
-                  sx={{
-                    py: 1.2,
-                    borderBottom: "1px solid #eee",
-                  }}
+                  sx={{ py: 1.2, borderBottom: "1px solid #eee" }}
                 >
                   <Typography variant="body2">
                     {i + 1}. {s.username}
                   </Typography>
                   <Typography variant="body2" color="info.main">
-                    {Number(s.total_fee).toLocaleString("vi-VN")} ₫
+                    {formatMoney(s.total_fee)}
                   </Typography>
                 </Stack>
               ))}
