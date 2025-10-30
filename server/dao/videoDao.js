@@ -175,48 +175,14 @@ class VideoDao extends GenericDao {
   }
 
   /**
-   * 📍 Lấy video gần vị trí (SQL tính toán khoảng cách)
-   */
-  async getNearbyVideos(lat, lng, radiusKm = 10) {
-    try {
-      const query = `
-        SELECT 
-          v.*, 
-          sp.shop_name,
-          a.lat_lon ->> 'lat' AS lat,
-          a.lat_lon ->> 'lng' AS lng,
-          (
-            6371 * acos(
-              cos(radians($1)) * 
-              cos(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION))) *
-              cos(radians(CAST(a.lat_lon ->> 'lng' AS DOUBLE PRECISION)) - radians($2)) +
-              sin(radians($1)) * 
-              sin(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION)))
-            )
-          ) AS distance_km
-        FROM ${this.table} v
-        JOIN shop_profiles sp ON v.shop_id = sp.id
-        JOIN addresses a ON sp.shop_address_id = a.address_id
-        WHERE 
-          (
-            6371 * acos(
-              cos(radians($1)) * 
-              cos(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION))) *
-              cos(radians(CAST(a.lat_lon ->> 'lng' AS DOUBLE PRECISION)) - radians($2)) +
-              sin(radians($1)) * 
-              sin(radians(CAST(a.lat_lon ->> 'lat' AS DOUBLE PRECISION)))
-            )
-          ) <= $3
-        ORDER BY distance_km ASC, v.created_at DESC
-        LIMIT 50;
-      `;
-      const result = await pool.query(query, [lat, lng, radiusKm]);
-      console.log(`[VideoDao] getNearbyVideos -> ${result.rowCount} rows`);
-      return result.rows.map((row) => new this.Model(row));
-    } catch (err) {
-      console.error("[VideoDao] getNearbyVideos error:", err);
-      throw err;
-    }
+     * 🧭 Lấy video của các shop trong bán kính 10km quanh vị trí người dùng
+     * (Dựa vào danh sách video + vị trí + rating)
+     * ⚠️ Tính toán khoảng cách ở tầng service (để tách logic)
+     */
+  async getVideosNearby(userLocation, maxDistanceKm = 10) {
+    const allVideos = await this.getVideosWithShopData();
+    // chỉ lọc ở tầng service — DAO chỉ fetch dữ liệu
+    return allVideos;
   }
 }
 
