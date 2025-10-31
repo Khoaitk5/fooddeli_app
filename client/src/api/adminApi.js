@@ -83,18 +83,27 @@ export async function getUserDistribution() {
 // =============================
 // 💹 REVENUE PAGE
 // =============================
-export async function getRevenueComparison() {
-  const res = await axios.get(`${API_URL}/stats/revenue/comparison`);
+export async function getRevenueComparison(year) {
+  const url = year
+    ? `${API_URL}/stats/revenue/comparison?year=${year}`
+    : `${API_URL}/stats/revenue/comparison`;
+  const res = await axios.get(url);
   return res.data.items;
 }
 
-export async function getTopRevenueShops() {
-  const res = await axios.get(`${API_URL}/stats/revenue/topshops`);
+export async function getTopRevenueShops(year) {
+  const url = year
+    ? `${API_URL}/stats/revenue/topshops?year=${year}`
+    : `${API_URL}/stats/revenue/topshops`;
+  const res = await axios.get(url);
   return res.data.items;
 }
 
-export async function getTopRevenueShippers() {
-  const res = await axios.get(`${API_URL}/stats/revenue/topshippers`);
+export async function getTopRevenueShippers(year) {
+  const url = year
+    ? `${API_URL}/stats/revenue/topshippers?year=${year}`
+    : `${API_URL}/stats/revenue/topshippers`;
+  const res = await axios.get(url);
   return res.data.items;
 }
 

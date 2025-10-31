@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { searchAll } from "@/api/searchApi";
 import BackArrow from "../../../components/shared/BackArrow";
 import ClearIcon from "../../../components/shared/ClearIcon";
 import FilterIcon from "../../../components/shared/FilterIcon";
@@ -12,11 +13,60 @@ import AccountResultItem from "../../shared/AccountResultItem";
 
 const SearchResults = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("food");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryParam = searchParams.get("query") || "";
 
-  const getTabColor = (tabName) => {
-    return activeTab === tabName ? "black" : "#8A8B8F";
+  const [searchQuery, setSearchQuery] = useState(queryParam);
+  const [activeTab, setActiveTab] = useState("food");
+  const [products, setProducts] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // 🔍 Gọi API khi có query (tự động chạy lại nếu query thay đổi)
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!queryParam.trim()) return;
+      setLoading(true);
+      try {
+        const res = await searchAll(queryParam);
+        console.log("✅ API SearchAll Response:", res);
+        if (res?.success) {
+          setProducts(res.products || []);
+          setVideos(res.videos || []);
+          setAccounts(res.accounts || []);
+        } else {
+          setProducts([]);
+          setVideos([]);
+          setAccounts([]);
+        }
+      } catch (error) {
+        console.error("❌ Lỗi khi tìm kiếm:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSearchResults();
+  }, [queryParam]);
+
+  // 📌 Khi người dùng nhấn Enter → cập nhật URL và fetch kết quả mới
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() === "") return;
+    setSearchParams({ query: searchQuery });
   };
+
+  // 📌 Khi người dùng nhấn nút X → xóa input và kết quả
+  const handleClear = () => {
+    setSearchQuery("");
+    setSearchParams({});
+    setProducts([]);
+    setVideos([]);
+    setAccounts([]);
+  };
+
+  // --- UI phần tab ---
+  const getTabColor = (tabName) => (activeTab === tabName ? "black" : "#8A8B8F");
 
   const tabStyle = {
     position: "absolute",
@@ -27,9 +77,8 @@ const SearchResults = () => {
     fontSize: "1.4rem",
     fontFamily: "Be Vietnam Pro",
     fontWeight: "600",
-    wordWrap: "break-word",
     cursor: "pointer",
-    zIndex: 2, // Above separator line
+    zIndex: 2,
   };
 
   const tabs = [
@@ -38,44 +87,24 @@ const SearchResults = () => {
     { id: "account", label: "Tài khoản", left: "71.94vw" },
   ];
 
-  const getActiveTabIndicatorPosition = () => {
-    const positions = {
-      food: "0vw",
-      video: "31.39vw",
-      account: "auto",
-    };
-    return positions[activeTab] || "0vw";
-  };
-
   const getActiveTabIndicatorStyle = () => {
-    const baseStyle = {
+    const base = {
       position: "absolute",
       top: "11.5vh",
       height: "100%",
       outline: "2px black solid",
       outlineOffset: "-1px",
-      zIndex: 3, // Above tabs, below BackArrow
+      zIndex: 3,
     };
-
-    if (activeTab === "account") {
-      return {
-        ...baseStyle,
-        right: "0vw",
-        width: "37.5vw", // Special width for account tab
-      };
-    }
-
-    return {
-      ...baseStyle,
-      left: getActiveTabIndicatorPosition(),
-      width: "31.11vw", // Default width for other tabs
-    };
+    if (activeTab === "account") return { ...base, right: "0vw", width: "37.5vw" };
+    if (activeTab === "video") return { ...base, left: "31.39vw", width: "31.11vw" };
+    return { ...base, left: "0vw", width: "31.11vw" };
   };
 
   return (
     <div style={{ position: "relative" }}>
+      {/* ====== THANH SEARCH ====== */}
       <div style={{ position: "absolute", top: "1.625vh", left: "15.28vw" }}>
-        {/* Back Arrow */}
         <div
           style={{
             position: "absolute",
@@ -87,39 +116,55 @@ const SearchResults = () => {
           <BackArrow onClick={() => navigate(-1)} />
         </div>
 
-        {/* Search Bar */}
-        <div
+        <form
+          onSubmit={handleSearchSubmit}
           style={{
             position: "relative",
             width: "79.4vw",
             height: "4.5vh",
             background: "#F5F5F5",
             borderRadius: 10,
+            display: "flex",
+            alignItems: "center",
+            paddingLeft: "2vw",
           }}
         >
-          <div
+          <input
+            type="text"
+            placeholder="Tìm kiếm món ăn, video hoặc tài khoản..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             style={{
-              position: "absolute",
-              right: "3.61vw",
-              top: "50%",
-              transform: "translateY(-50%)",
+              flex: 1,
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              fontSize: "1.4rem",
+              color: "#333",
             }}
-          >
-            <ClearIcon />
-          </div>
-        </div>
+          />
+          {searchQuery && (
+            <div
+              style={{
+                position: "absolute",
+                right: "3.61vw",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            >
+              <ClearIcon onClick={handleClear} />
+            </div>
+          )}
+        </form>
       </div>
 
-      {/* Tabs */}
+      {/* ====== TABS ====== */}
       {tabs.map((tab) => (
         <div
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
-          style={{
-            ...tabStyle,
-            left: tab.left,
-            color: getTabColor(tab.id),
-          }}
+          style={{ ...tabStyle, left: tab.left, color: getTabColor(tab.id) }}
         >
           {tab.label}
         </div>
@@ -128,7 +173,7 @@ const SearchResults = () => {
       {/* Active Tab Indicator */}
       <div style={getActiveTabIndicatorStyle()} />
 
-      {/* Separator Line */}
+      {/* Separator */}
       <div
         style={{
           position: "absolute",
@@ -137,13 +182,13 @@ const SearchResults = () => {
           right: "0",
           width: "100%",
           height: "100%",
-          outline: "0.30px #E7E7E7 solid",
+          outline: "0.3px #E7E7E7 solid",
           outlineOffset: "-0.15px",
           zIndex: 1,
         }}
       />
 
-      {/* Filter Container - Scrollable */}
+      {/* ====== FILTER BAR (Đồ ăn) ====== */}
       {activeTab === "food" && (
         <div
           style={{
@@ -156,16 +201,11 @@ const SearchResults = () => {
             display: "flex",
             gap: "2.22vw",
             overflowX: "auto",
-            overflowY: "hidden",
-            scrollbarWidth: "none", // Firefox
-            msOverflowStyle: "none", // IE and Edge
-            paddingLeft: "4.17vw",
-            paddingRight: "4.17vw",
+            padding: "0 4.17vw",
             boxSizing: "border-box",
           }}
-          className="scrollbar-hide" // Custom class for webkit scrollbar
+          className="scrollbar-hide"
         >
-          {/* Filter Button 1 */}
           <div
             style={{
               minWidth: "12.22vw",
@@ -175,15 +215,12 @@ const SearchResults = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: "pointer",
               flexShrink: 0,
+              cursor: "pointer",
             }}
-            onClick={() => navigate("/customer/filters")}
           >
             <FilterIcon />
           </div>
-
-          {/* Filter Button 2 */}
           <div
             style={{
               minWidth: "34.72vw",
@@ -193,55 +230,15 @@ const SearchResults = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: "pointer",
               flexShrink: 0,
               position: "relative",
+              cursor: "pointer",
             }}
-            onClick={() => console.log("Filter clicked")}
           >
-            <div
-              style={{
-                position: "absolute",
-                left: "4.167vw",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <SortIcon />
-            </div>
-            <div
-              style={{
-                position: "absolute",
-                left: "10vw",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "black",
-                fontSize: "1.3rem",
-                fontWeight: "500",
-                wordWrap: "break-word",
-              }}
-            >
-              Lọc theo
-            </div>
-            <div
-              style={{
-                position: "absolute",
-                right: "4.167vw",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <DownArrow />
-            </div>
+            <SortIcon />
+            <span style={{ marginLeft: 6, fontSize: "1.3rem" }}>Lọc theo</span>
+            <DownArrow style={{ marginLeft: 4 }} />
           </div>
-
-          {/* Filter Button 3 */}
           <div
             style={{
               minWidth: "37.22vw",
@@ -251,89 +248,18 @@ const SearchResults = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: "pointer",
               flexShrink: 0,
               position: "relative",
-            }}
-            onClick={() => console.log("Filter clicked")}
-          >
-            <div
-              style={{
-                position: "absolute",
-                left: "4.167vw",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "black",
-                fontSize: "1.3rem",
-                fontWeight: "500",
-                wordWrap: "break-word",
-              }}
-            >
-              Phí giao hàng
-            </div>
-            <div
-              style={{
-                position: "absolute",
-                right: "4.167vw",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <DownArrow />
-            </div>
-          </div>
-
-          {/* Filter Button 4 */}
-          <div
-            style={{
-              minWidth: "37.22vw",
-              height: "100%",
-              borderRadius: 16,
-              border: "1px #B3B3B3 solid",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: "pointer",
-              flexShrink: 0,
-              position: "relative",
             }}
-            onClick={() => console.log("Filter clicked")}
           >
-            <div
-              style={{
-                position: "absolute",
-                left: "4.167vw",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <TagIcon />
-            </div>
-            <div
-              style={{
-                position: "absolute",
-                left: "10.28vw",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "black",
-                fontSize: "1.3rem",
-                fontWeight: "500",
-                wordWrap: "break-word",
-              }}
-            >
-              Khuyến mãi
-            </div>
+            <TagIcon />
+            <span style={{ marginLeft: 6, fontSize: "1.3rem" }}>Khuyến mãi</span>
           </div>
         </div>
       )}
 
-      {/* Search Results */}
+      {/* ====== KẾT QUẢ TÌM KIẾM ====== */}
       <div
         style={{
           position: "absolute",
@@ -342,17 +268,90 @@ const SearchResults = () => {
           right: "0",
           width: "100%",
           height:
-            activeTab === "food" ? "calc(100vh - 19vh)" : "calc(100vh - 13.375vh)",
+            activeTab === "food"
+              ? "calc(100vh - 19vh)"
+              : "calc(100vh - 13.375vh)",
           overflowY: "auto",
-          scrollbarWidth: "none", // Firefox
-          msOverflowStyle: "none", // IE and Edge
           boxSizing: "border-box",
         }}
-        className="scrollbar-hide" // Custom class for webkit scrollbar
+        className="scrollbar-hide"
       >
-        {activeTab === "food" && <FoodResults />}
-        {activeTab === "video" && <VideoResults />}
-        {activeTab === "account" && <AccountResultItem />}
+        {/* ===== ĐỒ ĂN ===== */}
+        {activeTab === "food" && (
+          <>
+            {loading ? (
+              <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+                Đang tải dữ liệu...
+              </p>
+            ) : products.length > 0 ? (
+              products.map((food) => (
+                <FoodResults
+                  key={food.product_id}
+                  storeName={`Cửa hàng #${food.shop_id}`}
+                  storeImage={food.image_url}
+                  rating={"4.5"}
+                  reviewCount={"50"}
+                  dishCategory={food.category}
+                  deliveryTime="30 phút"
+                  dishes={[
+                    {
+                      id: food.product_id,
+                      name: food.name,
+                      price: `${Number(food.price).toLocaleString()}đ`,
+                      image: food.image_url,
+                    },
+                  ]}
+                />
+              ))
+            ) : (
+              <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+                Không tìm thấy sản phẩm phù hợp
+              </p>
+            )}
+          </>
+        )}
+
+        {/* ===== VIDEO ===== */}
+        {activeTab === "video" && (
+          <>
+            {loading ? (
+              <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+                Đang tải dữ liệu...
+              </p>
+            ) : videos.length > 0 ? (
+              <VideoResults videos={videos} />
+            ) : (
+              <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+                Không có video phù hợp
+              </p>
+            )}
+          </>
+        )}
+
+        {/* ===== TÀI KHOẢN ===== */}
+        {activeTab === "account" && (
+          <>
+            {loading ? (
+              <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+                Đang tải dữ liệu...
+              </p>
+            ) : accounts.length > 0 ? (
+              accounts.map((acc) => (
+                <AccountResultItem
+                  key={acc.id}
+                  avatar={acc.avatar_url}
+                  name={acc.full_name || acc.username}
+                  email={acc.email}
+                  role={acc.role}
+                />
+              ))
+            ) : (
+              <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+                Không có tài khoản phù hợp
+              </p>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
