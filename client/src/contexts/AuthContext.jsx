@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
         const res = await getCurrentUser();
         console.log("📥DEBUG: [AuthContext] API Response:", res);
 
-        if (res.success && res.user) {
+        if (res?.success && res.user) {
           // Store complete user data including shop_profile and shipper_profile
           console.log("✅DEBUG: [AuthContext] User được lấy thành công:", {
             id: res.user.id,
@@ -24,8 +24,14 @@ export const AuthProvider = ({ children }) => {
             hasShipperProfile: !!res.user.shipper_profile
           });
           setUser(res.user);
+        } else if (res?.status === 401) {
+          console.warn("⚠️DEBUG: [AuthContext] Session hết hạn hoặc chưa đăng nhập");
+          setUser(null);
+        } else if (res?.success === false) {
+          console.warn("⚠️DEBUG: [AuthContext] Không thể lấy user:", res.message);
+          setUser(null);
         } else {
-          console.warn("⚠️DEBUG: [AuthContext] Không có user trong session");
+          console.warn("⚠️DEBUG: [AuthContext] getCurrentUser trả về dữ liệu không hợp lệ", res);
           setUser(null);
         }
       } catch (error) {
