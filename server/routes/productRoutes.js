@@ -7,6 +7,7 @@ router.get("/categories", ProductController.getAllCategories);
 router.post("/by-shop", ProductController.getProductsByShop);
 router.get("/search", ProductController.searchProducts);
 router.get("/available", ProductController.getAvailableProducts);
+router.get("/complete", ProductController.getCompleteProducts);
 
 // --- CRUD CHÍNH ---
 router.post("/", ProductController.createProduct);

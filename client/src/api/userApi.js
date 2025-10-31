@@ -13,8 +13,20 @@ export const getCurrentUser = async () => {
   try {
     const res = await axios.get(`${API_BASE_URL}/users/me`, axiosConfig);
     return res.data;
-  } catch {
-    return null;
+  } catch (error) {
+    if (error.response) {
+      return {
+        success: false,
+        status: error.response.status,
+        message: error.response.data?.message || "Không thể lấy thông tin người dùng",
+      };
+    }
+
+    return {
+      success: false,
+      status: null,
+      message: error.message || "Lỗi không xác định khi lấy thông tin người dùng",
+    };
   }
 };
 

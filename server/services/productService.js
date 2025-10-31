@@ -194,6 +194,16 @@ const productService = {
   },
 
   /**
+   * ✅ Lấy sản phẩm đủ thông tin (có ảnh, giá > 0, đang bán)
+   * @param {number} [limit=20]
+   * @param {number} [offset=0]
+   * @returns {Promise<object[]>}
+   */
+  async getCompleteProducts(limit = 20, offset = 0) {
+    return await productDao.getCompleteProducts(limit, offset);
+  },
+
+  /**
    * 📂 Lấy tất cả danh mục sản phẩm (4 loại)
    * @returns {Promise<object[]>}
    */
