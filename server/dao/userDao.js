@@ -108,6 +108,32 @@ class UserDao extends GenericDao {
     ]);
     return res.rows[0] ? new User(res.rows[0]) : null;
   }
+
+/**
+   * @async
+   * @function searchUsers
+   * @description Tìm kiếm người dùng theo tên, username hoặc email (dùng trong chức năng tìm kiếm tổng hợp)
+   * @param {string} keyword - Từ khóa tìm kiếm
+   * @returns {Promise<User[]>} - Danh sách người dùng phù hợp
+   */
+  async searchUsers(keyword) {
+    try {
+      const res = await pool.query(
+        `SELECT id, username, full_name, email, avatar_url, role
+         FROM users
+         WHERE username ILIKE $1
+            OR full_name ILIKE $1
+            OR email ILIKE $1
+         ORDER BY created_at DESC
+         LIMIT 50`,
+        [`%${keyword}%`]
+      );
+      return res.rows.map((row) => new User(row));
+    } catch (err) {
+      console.error("❌ [UserDao] Lỗi khi tìm kiếm người dùng:", err.message);
+      throw new Error("Không thể tìm kiếm người dùng trong cơ sở dữ liệu.");
+    }
+  }
 }
 
 module.exports = new UserDao();

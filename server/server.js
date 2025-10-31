@@ -15,6 +15,8 @@ import videoLikeRoutes from "./routes/videoLikeRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import imageUploadRouter from "./routes/imageUploadRouter.js";
 import map4dRoutes from "./routes/map4dRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";  
+import searchRoutes from "./routes/searchRoutes.js";
 
 dotenv.config();
 
@@ -81,6 +83,8 @@ app.use("/api/video-likes", videoLikeRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/images", imageUploadRouter);
 app.use("/api/map4d", map4dRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/search", searchRoutes);
 
 
 // ✅ Debug route

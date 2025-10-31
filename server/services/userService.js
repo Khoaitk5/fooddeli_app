@@ -181,6 +181,24 @@ class UserService {
       throw new Error("Không thể tìm người dùng theo email.");
     }
   }
+    /**
+   * @async
+   * @function searchUsers
+   * @description Tìm kiếm người dùng theo tên, username hoặc email
+   * @param {string} keyword - Từ khóa tìm kiếm
+   * @returns {Promise<object[]>} - Danh sách người dùng phù hợp
+   */
+  async searchUsers(keyword) {
+    try {
+      if (!keyword || keyword.trim() === "") {
+        throw new Error("Từ khóa tìm kiếm không được để trống.");
+      }
+      return await userDao.searchUsers(keyword);
+    } catch (err) {
+      console.error("❌ [UserService] Lỗi searchUsers:", err.message);
+      throw new Error("Không thể tìm kiếm người dùng.");
+    }
+  }
 }
 
 
