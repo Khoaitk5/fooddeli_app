@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';// mới thêm
 import Header from '@/components/role-specific/Customer/Header';
 import BannerCarousel from '@/components/role-specific/Customer/BannerCarousel';
 import Categories from '@/components/role-specific/Customer/Categories';
@@ -11,6 +12,7 @@ import Navbar from '@/components/shared/Navbar';
 import theme from '@/styles/theme';
 
 export default function App() {
+  const navigate = useNavigate();// mới thêm 
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [selectedFood, setSelectedFood] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -266,67 +268,47 @@ export default function App() {
   };
 
   // If search is active, show search results
-  if (searchQuery) {
-    return (
-      <>
-        <SearchResults
-          searchQuery={searchQuery}
-          onClose={() => setSearchQuery('')}
-          allFoods={foods}
-          allRestaurants={restaurants}
-          onFoodClick={(food) => {
-            setSelectedFood(food);
-            setSearchQuery('');
-          }}
-          onRestaurantClick={(restaurant) => {
-            setSelectedRestaurant(restaurant);
-            setSearchQuery('');
-          }}
-        />
-      </>
-    );
-  }
-
-  // If a restaurant is selected, show detail page
-  if (selectedRestaurant) {
-    return (
-      <div style={{ minHeight: '100vh', background: theme.colors.background }}>
-        <RestaurantDetail
-          {...selectedRestaurant}
-          onClose={() => setSelectedRestaurant(null)}
-        />
-      </div>
-    );
-  }
-
-  // If a food is selected, show food detail
-  if (selectedFood) {
-    return (
-      <div style={{ minHeight: '100vh', background: theme.colors.background }}>
-        <FoodDetail
-          {...selectedFood}
-          onClose={() => setSelectedFood(null)}
-        />
-      </div>
-    );
-  }
-
-  // Otherwise show home page
-  return (
+   return (
     <div style={styles.container}>
-      <Header onSearch={setSearchQuery} />
-      
+      <Header
+        onSearch={(term) => {
+          if (term.trim()) {
+            navigate(`/customer/search-results?query=${encodeURIComponent(term)}`);
+          }
+        }}
+      />
+
       <div style={styles.content}>
         <BannerCarousel />
         <Categories />
-        
+
         {/* Popular Foods Section */}
-        <div style={{ ...styles.section, background: 'linear-gradient(to bottom, #ffffff 0%, rgba(255, 92, 57, 0.05) 100%)' }}>
+        <div
+          style={{
+            ...styles.section,
+            background: 'linear-gradient(to bottom, #ffffff 0%, rgba(255, 92, 57, 0.05) 100%)',
+          }}
+        >
           <div style={styles.sectionHeader}>
             <div style={styles.sectionTitle}>
-              <div style={{ ...styles.iconBox, background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryLight} 100%)` }}>
-                <svg style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.white }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              <div
+                style={{
+                  ...styles.iconBox,
+                  background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryLight} 100%)`,
+                }}
+              >
+                <svg
+                  style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.white }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
+                  />
                 </svg>
               </div>
               <div style={styles.sectionInfo}>
@@ -336,41 +318,65 @@ export default function App() {
             </div>
             <button style={styles.viewAllButton}>Xem tất cả</button>
           </div>
-          
+
           <div style={styles.foodGrid}>
             {foods.map((food) => (
               <FoodCard key={food.id} {...food} onClick={() => setSelectedFood(food)} />
             ))}
           </div>
         </div>
-        
+
         {/* Deals Section */}
-        <div style={{ ...styles.section, background: 'linear-gradient(135deg, #fef2f2 0%, #fff7ed 50%, #fefce8 100%)' }}>
+        <div
+          style={{
+            ...styles.section,
+            background: 'linear-gradient(135deg, #fef2f2 0%, #fff7ed 50%, #fefce8 100%)',
+          }}
+        >
           <div style={styles.sectionHeader}>
             <div style={styles.sectionTitle}>
-              <div style={{ ...styles.iconBox, background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryLight} 100%)` }}>
-                <svg style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.white }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div
+                style={{
+                  ...styles.iconBox,
+                  background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryLight} 100%)`,
+                }}
+              >
+                <svg
+                  style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.white }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
               <div style={styles.sectionInfo}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
                   Deal Hời Hôm Nay
-                  <span style={{
-                    fontSize: theme.fontSize.sm,
-                    background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
-                    color: theme.colors.text.white,
-                    padding: `${theme.spacing.xs} ${theme.spacing.md}`,
-                    borderRadius: theme.borderRadius.full,
-                    boxShadow: theme.shadow.lg,
-                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                  }}>HOT</span>
+                  <span
+                    style={{
+                      fontSize: theme.fontSize.sm,
+                      background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
+                      color: theme.colors.text.white,
+                      padding: `${theme.spacing.xs} ${theme.spacing.md}`,
+                      borderRadius: theme.borderRadius.full,
+                      boxShadow: theme.shadow.lg,
+                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }}
+                  >
+                    HOT
+                  </span>
                 </h2>
                 <p style={styles.subtitle}>Ưu đãi có thời hạn</p>
               </div>
             </div>
           </div>
-          
+
           <div style={styles.dealsContainer}>
             {deals.map((deal) => (
               <div key={deal.id} style={styles.dealCard}>
@@ -379,14 +385,34 @@ export default function App() {
             ))}
           </div>
         </div>
-        
+
         {/* Main Restaurants Section */}
-        <div style={{ ...styles.section, background: 'linear-gradient(to bottom, #ffffff 0%, rgba(168, 85, 247, 0.05) 100%)' }}>
+        <div
+          style={{
+            ...styles.section,
+            background: 'linear-gradient(to bottom, #ffffff 0%, rgba(168, 85, 247, 0.05) 100%)',
+          }}
+        >
           <div style={styles.sectionHeader}>
             <div style={styles.sectionTitle}>
-              <div style={{ ...styles.iconBox, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)' }}>
-                <svg style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.white }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              <div
+                style={{
+                  ...styles.iconBox,
+                  background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                }}
+              >
+                <svg
+                  style={{ width: '1.5rem', height: '1.5rem', color: theme.colors.text.white }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
                 </svg>
               </div>
               <div style={styles.sectionInfo}>
@@ -396,7 +422,7 @@ export default function App() {
             </div>
             <button style={styles.viewAllButton}>Xem tất cả</button>
           </div>
-          
+
           <div style={styles.restaurantGrid}>
             {restaurants.map((restaurant) => (
               <RestaurantCard
@@ -408,7 +434,7 @@ export default function App() {
           </div>
         </div>
       </div>
-      
+
       <Navbar />
     </div>
   );

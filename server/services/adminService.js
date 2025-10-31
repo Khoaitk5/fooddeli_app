@@ -111,7 +111,6 @@ async function getMonthlyRevenue(months = 6, year = new Date().getFullYear()) {
   return await dao.getMonthlyRevenue(months, year);
 }
 
-
 async function getWeeklyOrders() {
   console.log("📅 [Service] getWeeklyOrders()");
   return await dao.getWeeklyOrders();
@@ -128,19 +127,19 @@ async function getUserDistribution() {
 /* ============================================
  💹 REVENUE PAGE (Revenue.jsx)
 ============================================ */
-async function getRevenueComparison() {
-  console.log("💹 [Service] getRevenueComparison()");
-  return await dao.getRevenueComparison();
+async function getRevenueComparison(year = new Date().getFullYear()) {
+  console.log(`💹 [Service] getRevenueComparison(${year})`);
+  return await dao.getRevenueComparison(year);
 }
 
-async function getTopRevenueShops() {
-  console.log("🏪 [Service] getTopRevenueShops()");
-  return await dao.getTopRevenueShops();
+async function getTopRevenueShops(year = new Date().getFullYear()) {
+  console.log(`🏪 [Service] getTopRevenueShops(${year})`);
+  return await dao.getTopRevenueShops(year);
 }
 
-async function getTopRevenueShippers() {
-  console.log("🚚 [Service] getTopRevenueShippers()");
-  return await dao.getTopRevenueShippers();
+async function getTopRevenueShippers(year = new Date().getFullYear()) {
+  console.log(`🚚 [Service] getTopRevenueShippers(${year})`);
+  return await dao.getTopRevenueShippers(year);
 }
 
 /* ============================================
