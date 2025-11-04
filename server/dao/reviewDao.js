@@ -18,7 +18,7 @@ class ReviewDao extends GenericDao {
       WHERE reviewer_id = $1
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [reviewerId]);
+    const result = await pool.query(query, [reviewerId]);
     return result.rows;
   }
 
@@ -34,7 +34,7 @@ class ReviewDao extends GenericDao {
       WHERE target_id = $1 AND target_type = $2
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [targetId, targetType]);
+    const result = await pool.query(query, [targetId, targetType]);
     return result.rows;
   }
 
@@ -50,7 +50,7 @@ class ReviewDao extends GenericDao {
       FROM reviews
       WHERE target_id = $1 AND target_type = $2;
     `;
-    const result = await this.db.query(query, [targetId, targetType]);
+    const result = await pool.query(query, [targetId, targetType]);
     return result.rows[0]?.avg_rating || null;
   }
 
@@ -67,7 +67,7 @@ class ReviewDao extends GenericDao {
       WHERE reviewer_id = $1 AND target_id = $2 AND target_type = $3
       LIMIT 1;
     `;
-    const result = await this.db.query(query, [reviewerId, targetId, targetType]);
+    const result = await pool.query(query, [reviewerId, targetId, targetType]);
     return result.rowCount > 0;
   }
 }

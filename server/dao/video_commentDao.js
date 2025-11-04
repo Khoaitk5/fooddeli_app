@@ -20,7 +20,7 @@ class VideoCommentDao extends GenericDao {
       WHERE vc.video_id = $1
       ORDER BY vc.created_at ASC;
     `;
-    const result = await this.db.query(query, [videoId]);
+    const result = await pool.query(query, [videoId]);
     return result.rows;
   }
 
@@ -35,7 +35,7 @@ class VideoCommentDao extends GenericDao {
       WHERE user_id = $1
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rows;
   }
 
@@ -50,7 +50,7 @@ class VideoCommentDao extends GenericDao {
       FROM video_comments
       WHERE video_id = $1;
     `;
-    const result = await this.db.query(query, [videoId]);
+    const result = await pool.query(query, [videoId]);
     return result.rows[0]?.total_comments || 0;
   }
 
@@ -64,7 +64,7 @@ class VideoCommentDao extends GenericDao {
       DELETE FROM video_comments
       WHERE video_id = $1;
     `;
-    const result = await this.db.query(query, [videoId]);
+    const result = await pool.query(query, [videoId]);
     return result.rowCount;
   }
 }

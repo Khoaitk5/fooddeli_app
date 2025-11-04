@@ -42,7 +42,7 @@ const AddAddress = ({ onSubmit }) => {
 
   // 🔹 Load danh sách tỉnh/thành
   useEffect(() => {
-    fetch("https://provinces.open-api.vn/api/p/")
+    fetch("https://provinces.open-api.vn/api/v2/p/")
       .then((res) => res.json())
       .then((data) => setProvinces(data))
       .catch((err) => console.error("⚠️ Lỗi tải tỉnh:", err));
@@ -85,7 +85,7 @@ const AddAddress = ({ onSubmit }) => {
 
       // 🔹 Lấy danh sách huyện thuộc tỉnh
       const provinceRes = await fetch(
-        `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
+        `https://provinces.open-api.vn/api/v2/p/${selectedProvince.code}?depth=2`
       );
       const provinceData = await provinceRes.json();
       console.log("📦 [autoSelectLocation] provinceData:", provinceData);
@@ -105,7 +105,7 @@ const AddAddress = ({ onSubmit }) => {
 
       // 🔹 Lấy danh sách phường/xã
       const districtRes = await fetch(
-        `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
+        `https://provinces.open-api.vn/api/v2/d/${selectedDistrict.code}?depth=2`
       );
       const districtData = await districtRes.json();
       console.log("📦 [autoSelectLocation] districtData:", districtData);
