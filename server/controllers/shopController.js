@@ -63,6 +63,29 @@ exports.getAllShops = async (req, res) => {
 };
 
 /**
+ * 🍱 Lấy shops theo loại món ăn
+ * Query param: ?foodType=Đồ Ăn Nhanh
+ */
+exports.getShopsByFoodType = async (req, res) => {
+  try {
+    const { foodType } = req.query;
+
+    if (!foodType) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu tham số foodType"
+      });
+    }
+
+    const shops = await shopService.getShopsByFoodType(foodType);
+    res.status(200).json({ success: true, data: shops });
+  } catch (err) {
+    console.error("[ShopController:getShopsByFoodType]", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
  * 🔍 Lấy thông tin chi tiết cửa hàng (ẩn ID khỏi URL)
  *  → frontend gửi shopId trong body
  */
@@ -185,7 +208,7 @@ exports.assignAddressToShop = async (req, res) => {
  */
 exports.deleteShop = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id} = req.params;
     const deleted = await shopService.deleteShop(id);
     if (!deleted) {
       return res

@@ -18,9 +18,9 @@ const VerifyIcon = () => {
       <path
         d="M4.87109 7.50003L6.46493 9.09387C6.55256 9.1815 6.69469 9.1815 6.78232 9.09387L10.1287 5.7475"
         stroke="white"
-        stroke-width="1.33"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.33"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

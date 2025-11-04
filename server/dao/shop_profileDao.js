@@ -15,17 +15,38 @@ class ShopProfileDao extends GenericDao {
    */
   async getByUserId(userId) {
     const query = `
-      SELECT * FROM shop_profiles
-      WHERE user_id = $1
+      SELECT sp.*, u.avatar_url, u.rating,
+        (SELECT p.image_url
+         FROM products p
+         WHERE p.shop_id = sp.id
+           AND p.image_url IS NOT NULL
+           AND TRIM(p.image_url) <> ''
+         ORDER BY p.updated_at DESC
+         LIMIT 1) AS shop_image
+      FROM shop_profiles sp
+      JOIN users u ON sp.user_id = u.id
+      WHERE sp.user_id = $1
       LIMIT 1;
     `;
     const result = await pool.query(query, [userId]);
-    return result.rows[0] ? new ShopProfile(result.rows[0]) : null;
+    if (result.rows[0]) {
+      const shop = new ShopProfile(result.rows[0]);
+      shop.shop_image = result.rows[0].shop_image;
+      return shop;
+    }
+    return null;
   }
 
   async findDetailsById(shopId) {
     const query = `
-      SELECT sp.*, u.avatar_url, u.rating
+      SELECT sp.*, u.avatar_url, u.rating,
+        (SELECT p.image_url
+         FROM products p
+         WHERE p.shop_id = sp.id
+           AND p.image_url IS NOT NULL
+           AND TRIM(p.image_url) <> ''
+         ORDER BY p.updated_at DESC
+         LIMIT 1) AS shop_image
       FROM shop_profiles sp
       JOIN users u ON sp.user_id = u.id
       WHERE sp.id = $1
@@ -33,7 +54,8 @@ class ShopProfileDao extends GenericDao {
     const result = await pool.query(query, [shopId]);
     if (result.rows[0]) {
       const shop = new ShopProfile(result.rows[0]);
-      shop.user_id = result.rows[0].user_id; // ✅ Thêm dòng này
+      shop.user_id = result.rows[0].user_id;
+      shop.shop_image = result.rows[0].shop_image; // ✅ Thêm ảnh shop từ product
       return shop;
     }
 
@@ -54,6 +76,132 @@ class ShopProfileDao extends GenericDao {
   return rows[0] ?? null;
 }
 
+
+  /**
+   * 📋 Override findAll() để lấy tất cả shops kèm đầy đủ thông tin
+   * Bao gồm: ảnh shop, rating, số đánh giá, số đơn hàng, địa chỉ
+   * @returns {Promise<object[]>} - Danh sách tất cả shops với metrics
+   */
+  async findAll() {
+    const query = `
+      SELECT
+        sp.*,
+        u.avatar_url,
+        u.rating,
+        -- Lấy ảnh từ sản phẩm mới nhất
+        (SELECT p.image_url
+         FROM products p
+         WHERE p.shop_id = sp.id
+           AND p.image_url IS NOT NULL
+           AND TRIM(p.image_url) <> ''
+         ORDER BY p.updated_at DESC
+         LIMIT 1) AS shop_image,
+        -- Đếm số đánh giá từ bảng reviews (target_type = 'shop')
+        (SELECT COUNT(*)::int
+         FROM reviews r
+         WHERE r.target_id = sp.id
+           AND r.target_type = 'shop') AS review_count,
+        -- Tính rating trung bình từ reviews
+        (SELECT COALESCE(AVG(r.rating), 0)::numeric(3,1)
+         FROM reviews r
+         WHERE r.target_id = sp.id
+           AND r.target_type = 'shop') AS avg_review_rating,
+        -- Đếm số đơn hàng đã hoàn thành
+        (SELECT COUNT(*)::int
+         FROM orders o
+         WHERE o.shop_id = sp.id
+           AND o.status = 'completed') AS completed_orders,
+        -- Lấy thông tin địa chỉ
+        a.address_line,
+        a.lat_lon
+      FROM shop_profiles sp
+      JOIN users u ON sp.user_id = u.id
+      LEFT JOIN addresses a ON sp.shop_address_id = a.address_id
+      WHERE sp.status = 'open'
+      ORDER BY sp.created_at DESC
+    `;
+    const result = await pool.query(query);
+    return result.rows.map(row => {
+      const shop = new ShopProfile(row);
+      shop.shop_image = row.shop_image;
+      shop.review_count = row.review_count || 0;
+      shop.avg_review_rating = row.avg_review_rating || 0;
+      shop.completed_orders = row.completed_orders || 0;
+      shop.address_line = row.address_line;
+      shop.lat_lon = row.lat_lon;
+      return shop;
+    });
+  }
+
+  /**
+   * 🍱 Lấy shops theo loại món ăn (category của products)
+   * @param {string} foodType - Loại món ăn (mapping từ UI categories)
+   * @returns {Promise<object[]>} - Danh sách shops bán loại món đó
+   */
+  async getShopsByFoodType(foodType) {
+    // Mapping từ UI categories sang product categories trong DB
+    const categoryMapping = {
+      "Đồ Ăn Nhanh": ["Thức ăn", "Combo"],
+      "Cơm - Xôi": ["Thức ăn"],
+      "Bún - Phở - Mỳ": ["Thức ăn"],
+      "Trà Sữa - Cà Phê": ["Đồ uống"],
+      "Tráng miệng": ["Tráng miệng"],
+    };
+
+    const categories = categoryMapping[foodType] || ["Thức ăn"];
+
+    const query = `
+      SELECT DISTINCT ON (sp.id)
+        sp.*,
+        u.avatar_url,
+        u.rating,
+        -- Lấy ảnh từ sản phẩm mới nhất
+        (SELECT p.image_url
+         FROM products p
+         WHERE p.shop_id = sp.id
+           AND p.image_url IS NOT NULL
+           AND TRIM(p.image_url) <> ''
+         ORDER BY p.updated_at DESC
+         LIMIT 1) AS shop_image,
+        -- Đếm số đánh giá
+        (SELECT COUNT(*)::int
+         FROM reviews r
+         WHERE r.target_id = sp.id
+           AND r.target_type = 'shop') AS review_count,
+        -- Tính rating trung bình
+        (SELECT COALESCE(AVG(r.rating), 0)::numeric(3,1)
+         FROM reviews r
+         WHERE r.target_id = sp.id
+           AND r.target_type = 'shop') AS avg_review_rating,
+        -- Đếm số đơn hàng đã hoàn thành
+        (SELECT COUNT(*)::int
+         FROM orders o
+         WHERE o.shop_id = sp.id
+           AND o.status = 'completed') AS completed_orders,
+        -- Lấy thông tin địa chỉ
+        a.address_line
+      FROM shop_profiles sp
+      JOIN users u ON sp.user_id = u.id
+      LEFT JOIN addresses a ON sp.shop_address_id = a.address_id
+      -- JOIN với products để filter theo category
+      INNER JOIN products p ON p.shop_id = sp.id
+      WHERE sp.status = 'open'
+        AND p.category = ANY($1::varchar[])
+        AND p.is_available = true
+      ORDER BY sp.id, sp.created_at DESC
+    `;
+
+    const result = await pool.query(query, [categories]);
+    return result.rows.map(row => {
+      const shop = new ShopProfile(row);
+      shop.shop_image = row.shop_image;
+      shop.review_count = row.review_count || 0;
+      shop.avg_review_rating = row.avg_review_rating || 0;
+      shop.completed_orders = row.completed_orders || 0;
+      shop.address_line = row.address_line;
+      return shop;
+    });
+  }
 
   /**
    * Cập nhật trạng thái cửa hàng (open/closed/pending)
