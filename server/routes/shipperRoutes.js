@@ -27,4 +27,7 @@ router.put("/:id", shipperController.updateShipper);
 // ❌ Xóa shipper
 router.delete("/:id", shipperController.deleteShipper);
 
+// lấy toàn bộ đơn của shipper kèm chi tiết, user, shop
+router.post("/orders/full", shipperController.getFullOrders);
+
 module.exports = router;

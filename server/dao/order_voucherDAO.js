@@ -20,7 +20,7 @@ class OrderVoucherDao extends GenericDao {
       JOIN vouchers v ON ov.voucher_id = v.voucher_id
       WHERE ov.order_id = $1;
     `;
-    const result = await this.db.query(query, [orderId]);
+    const result = await pool.query(query, [orderId]);
     return result.rows;
   }
 
@@ -36,7 +36,7 @@ class OrderVoucherDao extends GenericDao {
       VALUES ($1, $2)
       RETURNING *;
     `;
-    const result = await this.db.query(query, [orderId, voucherId]);
+    const result = await pool.query(query, [orderId, voucherId]);
     return result.rows[0];
   }
 
@@ -50,7 +50,7 @@ class OrderVoucherDao extends GenericDao {
       DELETE FROM order_vouchers
       WHERE order_id = $1;
     `;
-    const result = await this.db.query(query, [orderId]);
+    const result = await pool.query(query, [orderId]);
     return result.rowCount;
   }
 }

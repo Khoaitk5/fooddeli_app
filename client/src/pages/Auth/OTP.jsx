@@ -1,13 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import BackArrow from "@/components/shared/BackArrow";
 import HelpPopup from "@/components/shared/HelpPopup";
 import { auth } from "@/firebase/firebaseConfig";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { useId } from "react";
 import { OTPInput } from "input-otp";
-
-const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 const OTP = () => {
   const [otp, setOtp] = useState("");

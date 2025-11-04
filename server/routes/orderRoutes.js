@@ -2,18 +2,19 @@ const express = require("express");
 const router = express.Router();
 const orderController = require("../controllers/orderController");
 
-// CRUD
-router.post("/", orderController.createOrder);
-router.get("/", orderController.getAllOrders);
-router.get("/:id", orderController.getOrderById);
-router.put("/:id", orderController.updateOrder);
-router.delete("/:id", orderController.deleteOrder);
+// tất cả route đều dùng POST để không lộ id trên URL
+router.post("/get", orderController.getFull);
+router.post("/list-mine", orderController.listMine);
+router.post("/create", orderController.createEmpty);
+router.post("/assign-me", orderController.assignMeAsShipper);
+router.post("/update-status", orderController.updateStatus);
+router.post("/update-payment-status", orderController.updatePaymentStatus);
+router.post("/settled", orderController.markSettled);
 
-// Các API đặc biệt
-router.get("/user/:userId", orderController.getOrdersByUser);
-router.get("/shop/:shopId", orderController.getOrdersByShop);
-router.get("/shipper/:shipperId", orderController.getOrdersByShipper);
-router.patch("/:id/status", orderController.updateOrderStatus);
-router.patch("/:id/assign", orderController.assignShipper);
+// order details
+router.post("/details/list", orderController.listDetails);
+router.post("/details/add-bulk", orderController.addItems);
+router.post("/details/update-quantity", orderController.updateDetailQuantity);
+router.post("/details/delete-all", orderController.deleteDetailsByOrder);
 
 module.exports = router;
