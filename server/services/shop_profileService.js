@@ -88,6 +88,19 @@ class ShopProfileService {
   }
 
   /**
+   * 🍱 Lấy shops theo loại món ăn
+   * @param {string} foodType - Loại món ăn từ UI
+   */
+  async getShopsByFoodType(foodType) {
+    try {
+      return await shopProfileDao.getShopsByFoodType(foodType);
+    } catch (err) {
+      console.error("[ShopProfileService:getShopsByFoodType]", err.message);
+      throw new Error("Không thể lấy danh sách cửa hàng theo loại món ăn.");
+    }
+  }
+
+  /**
    * ✏️ Cập nhật thông tin cửa hàng
    */
 async updateShopInfo(shopId, updateData) {
