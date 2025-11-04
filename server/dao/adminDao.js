@@ -165,7 +165,6 @@ async function getMonthlyRevenue(months = 6, year = new Date().getFullYear()) {
   return rows;
 }
 
-
 async function getWeeklyOrders() {
   console.log('🧩 [DAO] getWeeklyOrders()');
   const { rows } = await pool.query(`
@@ -191,25 +190,26 @@ async function getUserDistribution() {
 }
 
 /* ============================================
- 💹 REVENUE PAGE DAO
+ 💹 REVENUE PAGE DAO (CÓ LỌC NĂM)
 ============================================ */
-async function getRevenueComparison() {
-  console.log('🧩 [DAO] getRevenueComparison()');
+async function getRevenueComparison(year = new Date().getFullYear()) {
+  console.log(`🧩 [DAO] getRevenueComparison(${year})`);
   const { rows } = await pool.query(`
     SELECT 
-      TO_CHAR(DATE_TRUNC('month', created_at), 'Mon') AS month,
-      SUM(CASE WHEN shop_id IS NOT NULL THEN total_price ELSE 0 END)::numeric AS shop_revenue,
-      SUM(CASE WHEN shipper_id IS NOT NULL THEN delivery_fee ELSE 0 END)::numeric AS shipper_revenue
-    FROM orders
-    WHERE status = 'completed'
-    GROUP BY DATE_TRUNC('month', created_at)
-    ORDER BY DATE_TRUNC('month', created_at);
-  `);
+      TO_CHAR(DATE_TRUNC('month', o.created_at), 'Mon YYYY') AS month,
+      SUM(o.food_price * o.merchant_commission_rate)::numeric AS shop_revenue,
+      SUM(o.delivery_fee * o.shipper_commission_rate)::numeric AS shipper_revenue
+    FROM orders o
+    WHERE o.status = 'completed'
+      AND EXTRACT(YEAR FROM o.created_at)::INT = $1
+    GROUP BY DATE_TRUNC('month', o.created_at)
+    ORDER BY DATE_TRUNC('month', o.created_at);
+  `, [year]);
   return rows;
 }
 
-async function getTopRevenueShops() {
-  console.log('🧩 [DAO] getTopRevenueShops()');
+async function getTopRevenueShops(year = new Date().getFullYear()) {
+  console.log(`🧩 [DAO] getTopRevenueShops(${year})`);
   const { rows } = await pool.query(`
     SELECT 
       sp.shop_name,
@@ -217,27 +217,29 @@ async function getTopRevenueShops() {
     FROM orders o
     JOIN shop_profiles sp ON sp.id = o.shop_id
     WHERE o.status = 'completed'
+      AND EXTRACT(YEAR FROM o.created_at)::INT = $1
     GROUP BY sp.shop_name
     ORDER BY revenue DESC
     LIMIT 10;
-  `);
+  `, [year]);
   return rows;
 }
 
-async function getTopRevenueShippers() {
-  console.log('🧩 [DAO] getTopRevenueShippers()');
+async function getTopRevenueShippers(year = new Date().getFullYear()) {
+  console.log(`🧩 [DAO] getTopRevenueShippers(${year})`);
   const { rows } = await pool.query(`
     SELECT 
       u.username,
-      SUM(o.delivery_fee)::numeric AS total_fee
+      SUM(o.delivery_fee * (1 - o.shipper_commission_rate))::numeric AS total_fee
     FROM orders o
     JOIN shipper_profiles s ON s.id = o.shipper_id
     JOIN users u ON u.id = s.user_id
     WHERE o.status = 'completed'
+      AND EXTRACT(YEAR FROM o.created_at)::INT = $1
     GROUP BY u.username
     ORDER BY total_fee DESC
     LIMIT 10;
-  `);
+  `, [year]);
   return rows;
 }
 

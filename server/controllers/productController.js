@@ -128,6 +128,23 @@ exports.getAvailableProducts = async (req, res) => {
   }
 };
 
+// ✅ Lấy sản phẩm đủ thông tin (có ảnh, giá > 0, đang bán)
+exports.getCompleteProducts = async (req, res) => {
+  try {
+    const rawLimit = Number.parseInt(req.query.limit, 10);
+    const rawOffset = Number.parseInt(req.query.offset, 10);
+
+    const limit = Number.isNaN(rawLimit) || rawLimit <= 0 ? 20 : rawLimit;
+    const offset = Number.isNaN(rawOffset) || rawOffset < 0 ? 0 : rawOffset;
+
+    const data = await ProductService.getCompleteProducts(limit, offset);
+    res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("❌ Lỗi getCompleteProducts:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // 📂 Lấy danh mục sản phẩm (4 cái)
 exports.getAllCategories = async (req, res) => {
   try {

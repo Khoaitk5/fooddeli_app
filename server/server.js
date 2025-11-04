@@ -15,6 +15,8 @@ import videoLikeRoutes from "./routes/videoLikeRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import imageUploadRouter from "./routes/imageUploadRouter.js";
 import map4dRoutes from "./routes/map4dRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";  
+import searchRoutes from "./routes/searchRoutes.js";
 
 dotenv.config();
 

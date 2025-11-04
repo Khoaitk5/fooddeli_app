@@ -1,43 +1,27 @@
 import React, { useRef, useState, useLayoutEffect } from "react";
 
-const VideoResultItem = ({}) => {
-  const videos = [
-    {
-      videoTitle: "🔥Combo 3 miếng gà + khoai + 2 Pepsi CHỈ 89k",
-      ownerName: "KFC Việt Nam",
-      videoSrc: "https://placehold.co/169x270",
-      avatarSrc: "https://placehold.co/19x19"
-    },
-    {
-      videoTitle: "🍔Burger siêu ngon chỉ 50k",
-      ownerName: "McDonald's VN",
-      videoSrc: "https://placehold.co/169x270",
-      avatarSrc: "https://placehold.co/19x19"
-    },
-    {
-      videoTitle: "🍕Pizza hải sản tươi ngon",
-      ownerName: "Domino's Pizza",
-      videoSrc: "https://placehold.co/169x270",
-      avatarSrc: "https://placehold.co/19x19"
-    },
-    {
-      videoTitle: "🥤Trà sữa trân châu đường đen",
-      ownerName: "Gong Cha",
-      videoSrc: "https://placehold.co/169x270",
-      avatarSrc: "https://placehold.co/19x19"
-    }
-  ];
+const VideoResultItem = ({ videos = [] }) => {
+  // 👉 Nếu không có dữ liệu thật, không render gì
+  if (!videos || videos.length === 0) {
+    return (
+      <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+        Không có video phù hợp
+      </p>
+    );
+  }
 
-  const renderVideoItem = (video, left, top) => {
-    const [truncatedText, setTruncatedText] = useState(video.videoTitle);
+  // Hàm cắt bớt chữ (giống logic cũ)
+  const renderVideoItem = (video) => {
+    const [truncatedText, setTruncatedText] = useState(video.title);
     const textRef = useRef(null);
 
     useLayoutEffect(() => {
       if (textRef.current) {
         const element = textRef.current;
-        const lineHeight = parseFloat(getComputedStyle(element).lineHeight) || 20;
+        const lineHeight =
+          parseFloat(getComputedStyle(element).lineHeight) || 20;
         const maxHeight = lineHeight * 2;
-        const text = video.videoTitle;
+        const text = video.title || "";
 
         element.textContent = text;
 
@@ -62,10 +46,11 @@ const VideoResultItem = ({}) => {
           setTruncatedText(best);
         }
       }
-    }, [video.videoTitle]);
+    }, [video.title]);
 
     return (
       <>
+        {/* Ảnh hoặc video thumbnail */}
         <img
           style={{
             position: "absolute",
@@ -74,10 +59,17 @@ const VideoResultItem = ({}) => {
             width: "46.94vw",
             height: "33.75vh",
             borderRadius: 6,
+            objectFit: "cover",
           }}
-          src={video.videoSrc}
+          src={
+            video.thumbnail_url ||
+            video.video_url ||
+            "https://placehold.co/169x270?text=No+Thumbnail"
+          }
+          alt={video.title}
         />
 
+        {/* Tiêu đề video */}
         <div
           ref={textRef}
           style={{
@@ -93,6 +85,7 @@ const VideoResultItem = ({}) => {
           {truncatedText}
         </div>
 
+        {/* Avatar + Tên cửa hàng */}
         <img
           style={{
             position: "absolute",
@@ -102,7 +95,8 @@ const VideoResultItem = ({}) => {
             height: "5.28vw",
             borderRadius: 9999,
           }}
-          src={video.avatarSrc}
+          src={"https://placehold.co/19x19"} // 🧠 Bạn có thể thay bằng video.avatar nếu có
+          alt="avatar"
         />
 
         <div
@@ -119,31 +113,43 @@ const VideoResultItem = ({}) => {
             wordWrap: "break-word",
           }}
         >
-          {video.ownerName}
+          {video.shopName || `Cửa hàng #${video.shop_id}`}
         </div>
       </>
     );
   };
 
+  // ✅ Giữ nguyên cách hiển thị 2 cột (như bạn đang có)
   const rows = Math.ceil(videos.length / 2);
-  const containerHeight = rows === 1 ? '45vh' : (rows - 1) * 47.75 + 45 + 'vh';
+  const containerHeight =
+    rows === 1 ? "45vh" : (rows - 1) * 47.75 + 45 + "vh";
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
-      <div style={{ position: 'relative', height: containerHeight, overflow: 'auto' }}>
-      {videos.map((video, index) => {
-        const isLeft = index % 2 === 0;
-        const left = isLeft ? '1.94vw' : undefined;
-        const right = !isLeft ? '1.94vw' : undefined;
-        const top = Math.floor(index / 2) * 47.75 + 'vh';
-        return (
-          <div key={index} style={{ position: 'absolute', left: left, right: right, top: top, width: '46.94vw', height: 'auto' }}>
-            {renderVideoItem(video)}
-          </div>
-        );
-      })}
-    </div>
+      <style dangerouslySetInnerHTML={{ __html: `::-webkit-scrollbar { display: none; }` }} />
+      <div style={{ position: "relative", height: containerHeight, overflow: "auto" }}>
+        {videos.map((video, index) => {
+          const isLeft = index % 2 === 0;
+          const left = isLeft ? "1.94vw" : undefined;
+          const right = !isLeft ? "1.94vw" : undefined;
+          const top = Math.floor(index / 2) * 47.75 + "vh";
+          return (
+            <div
+              key={video.video_id || index}
+              style={{
+                position: "absolute",
+                left: left,
+                right: right,
+                top: top,
+                width: "46.94vw",
+                height: "auto",
+              }}
+            >
+              {renderVideoItem(video)}
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 };

@@ -8,6 +8,8 @@ import {
   Avatar,
   Chip,
   CircularProgress,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   getOverviewStats,
@@ -21,9 +23,16 @@ import PieChartMini from "../../components/admin/charts/PieChartMini";
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeMonths, setActiveMonths] = useState(6); // ✅ Thêm state để chọn số tháng
+  const [activeMonths, setActiveMonths] = useState(6); // chọn số tháng
+  const [year, setYear] = useState(new Date().getFullYear()); // lọc năm đặt ở Dashboard
 
-  // 🧭 Lấy dữ liệu tổng quan khi trang load
+  // Danh sách năm: chỉ tới năm hiện tại (ví dụ 5 năm gần nhất)
+  const years = React.useMemo(() => {
+    const cur = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => cur - i); // [cur, cur-1, ...]
+  }, []);
+
+  // Lấy dữ liệu tổng quan khi load
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -38,7 +47,6 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  // 🟡 Hiển thị loading
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
@@ -47,7 +55,7 @@ const Dashboard = () => {
     );
   }
 
-  // 📊 Thẻ thống kê nhỏ
+  // Thẻ thống kê nhỏ
   const StatCard = ({ title, value, sub, icon }) => (
     <Paper
       elevation={0}
@@ -81,7 +89,7 @@ const Dashboard = () => {
 
   return (
     <Box>
-      {/* 🔹 Tiêu đề */}
+      {/* Tiêu đề */}
       <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
         Dashboard Tổng quan
       </Typography>
@@ -89,7 +97,7 @@ const Dashboard = () => {
         Tổng quan về hoạt động và hiệu quả kinh doanh hệ thống giao đồ ăn
       </Typography>
 
-      {/* 🔹 4 Thẻ thống kê */}
+      {/* 4 Thẻ thống kê */}
       <Grid
         container
         spacing={2}
@@ -141,7 +149,7 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {/* 🔹 Biểu đồ doanh thu & đơn hàng */}
+      {/* Biểu đồ doanh thu & đơn hàng */}
       <Grid container spacing={2} sx={{ flexWrap: "nowrap" }}>
         {/* 💰 Biểu đồ doanh thu */}
         <Grid item xs={12} sm={6} md={6} sx={{ flex: 1, minWidth: 0 }}>
@@ -155,16 +163,13 @@ const Dashboard = () => {
               height: "100%",
             }}
           >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 1 }}
-            >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
               <Typography variant="subtitle1" fontWeight={600}>
                 Doanh thu theo tháng
               </Typography>
-              <Stack direction="row" spacing={1}>
+
+              {/* Cùng hàng: 6 tháng / 12 tháng / Năm */}
+              <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
                   size="small"
                   label="6 tháng"
@@ -179,12 +184,26 @@ const Dashboard = () => {
                   variant={activeMonths === 12 ? "filled" : "outlined"}
                   onClick={() => setActiveMonths(12)}
                 />
+                <Select
+                  size="small"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  sx={{ height: 28, ml: 1 }}
+                >
+                  {years.map((y) => (
+                    <MenuItem key={y} value={y}>
+                      Năm {y}
+                    </MenuItem>
+                  ))}
+                </Select>
               </Stack>
             </Stack>
+
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Thống kê doanh thu gần đây
             </Typography>
-            <BarChartMini months={activeMonths} />
+
+            <BarChartMini months={activeMonths} year={year} />
           </Paper>
         </Grid>
 
@@ -200,12 +219,7 @@ const Dashboard = () => {
               height: "100%",
             }}
           >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 1 }}
-            >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
               <Typography variant="subtitle1" fontWeight={600}>
                 Đơn hàng trong tuần
               </Typography>
@@ -222,7 +236,7 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {/* 🔹 Biểu đồ phân bố người dùng & hoạt động */}
+      {/* Phân bố người dùng & hoạt động */}
       <Box sx={{ mt: 3 }}>
         <Grid container spacing={2} sx={{ flexWrap: "nowrap" }}>
           <Grid item xs={12} md={6} lg={6} sx={{ flex: 1, minWidth: 0 }}>
@@ -264,7 +278,7 @@ const Dashboard = () => {
                 Các sự kiện mới nhất trong hệ thống
               </Typography>
               <Stack spacing={1}>
-                {[ 
+                {[
                   'Cửa hàng "Phở Hà Nội" đã đăng ký thành công',
                   "Shipper Nguyễn Văn A đã hoàn thành 10 đơn hàng",
                   "Có 3 đăng ký shipper chờ duyệt",

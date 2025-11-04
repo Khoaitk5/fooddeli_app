@@ -122,6 +122,26 @@ class ProductDao extends GenericDao {
   }
 
   /**
+   * ✅ Lấy sản phẩm đủ thông tin (có ảnh, giá > 0, đang bán)
+   * @param {number} limit
+   * @param {number} offset
+   */
+  async getCompleteProducts(limit = 20, offset = 0) {
+    const query = `
+      SELECT *
+      FROM products
+      WHERE is_available = TRUE
+        AND price IS NOT NULL AND price > 0
+        AND image_url IS NOT NULL AND TRIM(image_url) <> ''
+        AND name IS NOT NULL AND TRIM(name) <> ''
+      ORDER BY updated_at DESC
+      LIMIT $1 OFFSET $2;
+    `;
+    const result = await pool.query(query, [limit, offset]);
+    return result.rows;
+  }
+
+  /**
    * 📂 Lấy danh mục sản phẩm (tối đa 4 loại)
    */
   async getAllCategories() {

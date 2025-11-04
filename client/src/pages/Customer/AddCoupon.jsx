@@ -1,228 +1,195 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+// File: src/pages/Customer/AddCoupon.jsx
 
-const COUPONS = [
-  { code: 'FOOD5', description: 'Giảm 5% giá món.' },
-  { code: 'FREESHIP100', description: 'Miễn phí giao hàng 100%.' }
+import React from "react"; // Bỏ useState
+import { useNavigate } from "react-router-dom"; // Bỏ useLocation
+import { useOrder } from "../../contexts/OrderContext"; // <-- 1. IMPORT CONTEXT
+import CloseIcon from "../../components/shared/CloseIcon";
+import SubmitButton from "../../components/shared/SubmitButton";
+import AddIcon from "../../components/shared/AddIcon";
+import CheckIcon from "../../components/shared/CheckIcon";
+
+// ==========================================================
+// ĐỊNH NGHĨA VÀ EXPORT LOGIC COUPON
+// ==========================================================
+const shippingImage = "https://amthanhhay.com.vn/wp-content/uploads/2024/03/free-shipping-icon.png";
+const foodImage = "https://cdn3d.iconscout.com/3d/premium/thumb/food-discount-3d-icon-png-download-10615902.png";
+
+// EXPORT mảng này để Context có thể import và sử dụng
+export const coupons = [
+  {
+    id: 0, // Dùng index làm ID
+    description: "Giảm 15K phí giao hàng cho đơn từ 50.000Đ",
+    status: "shipping",
+    image: shippingImage,
+    type: 'fixed',
+    value: 15000,
+    minOrder: 50000 
+  },
+  {
+    id: 1,
+    description: "Giảm 20% cho món ăn từ 100.000Đ, áp dụng cho tất cả",
+    status: "food",
+    image: foodImage,
+    type: 'percentage',
+    value: 20, // (as percent)
+    minOrder: 100000
+  },
+  {
+    id: 2,
+    description: "Miễn phí giao hàng cho đơn từ 30.000Đ",
+    status: "shipping",
+    image: shippingImage,
+    type: 'free',
+    value: 0,
+    minOrder: 30000
+  },
+  {
+    id: 3,
+    description: "Giảm 30% cho món ăn từ 200.000Đ",
+    status: "food",
+    image: foodImage,
+    type: 'percentage',
+    value: 30, // (as percent)
+    minOrder: 200000
+  }
 ];
+// ==========================================================
 
-export default function AddCoupon() {
+const AddCoupon = () => {
   const navigate = useNavigate();
-  const [selected, setSelected] = React.useState(() => localStorage.getItem('selectedCoupon') || '');
-  const [manual, setManual] = React.useState('');
 
-  const save = () => {
-    const code = (manual || selected).trim().toUpperCase();
-    if (!code) return navigate(-1);
-    localStorage.setItem('selectedCoupon', code);
-    navigate(-1);
+  // 2. Lấy state và setter từ context
+  const { selectedCoupons, setSelectedCoupons } = useOrder();
+
+  // 3. Cả hai nút "X" và "Xác nhận" đều chỉ cần quay về
+  const handleGoBack = () => {
+    navigate("/customer/confirm-order");
   };
-
-  const addManual = () => {
-    const code = manual.trim().toUpperCase();
-    if (!code) return;
-    localStorage.setItem('selectedCoupon', code);
-    navigate(-1);
-  };
-
-  const cancel = () => navigate(-1);
-  const canAdd = Boolean(manual && manual.trim());
 
   return (
-    <div className="bg-white">
-      <div className="mx-auto max-w-[390px] px-5 pt-5 pb-10">
-        {/* Header */}
-        <div className="mb-4 grid grid-cols-3 items-center">
-          <div
-            onClick={cancel}
-            style={{
-              position: 'absolute',
-              left: '5.28vw',
-              top: '6.625vh',
-              justifyContent: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              color: 'var(--Colors-Typography-400, #60655C)',
-              fontSize: '1.5rem',
-              fontFamily: 'Be Vietnam Pro',
-              fontWeight: '700',
-              wordWrap: 'break-word',
-              cursor: 'pointer'
-            }}
-          >
-            Hủy
-          </div>
-          <div
-            style={{
-              position: 'absolute',
-              top: '6.5vh',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              justifyContent: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              color: 'var(--Colors-Typography-500, #363A33)',
-              fontSize: '1.7rem',
-              fontFamily: 'Be Vietnam Pro',
-              fontWeight: '700',
-              wordWrap: 'break-word'
-            }}
-          >
-            Thêm mã giảm giá
-          </div>
-          <div
-            onClick={save}
-            style={{
-              position: 'absolute',
-              top: '6.625vh',
-              right: '5.28vw',
-              textAlign: 'right',
-              justifyContent: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              color: '#F9704B',
-              fontSize: '1.5rem',
-              fontFamily: 'Be Vietnam Pro',
-              fontWeight: '700',
-              wordWrap: 'break-word',
-              cursor: 'pointer'
-            }}
-          >
-            Lưu
-          </div>
+    <div style={{ position: "relative", height: "100vh" }}>
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <CloseIcon
+          style={{
+            position: "absolute",
+            left: "5vw",
+            top: "50%",
+            transform: "translateY(-50%)",
+            cursor: "pointer", // Thêm cursor
+          }}
+          onClick={handleGoBack} // Gắn sự kiện Hủy
+        />
+        <div
+          style={{
+            color: "black",
+            fontSize: "1.6rem",
+            fontWeight: "600",
+            wordWrap: "break-word",
+          }}
+        >
+          Ưu đãi
         </div>
-
-        {/* Constrain inner content to 322px like Figma */}
-        <div className="mx-auto w-[322px]">
-          {/* Manual code */}
-          <div className="flex" style={{position: 'absolute', top: '12.375vh', justifyContent: 'flex-end', gap: '2.5vw'}}>
-            <div style={{position: 'relative'}}>
-              <input
-                style={{
-                  width: '70vw',
-                  height: '5.875vh',
-                  background: 'white',
-                  borderRadius: 12,
-                  border: '1px #E8EBE6 solid',
-                  paddingLeft: '4.17vw',
-                  paddingRight: '1vw',
-                  fontSize: '1.5rem',
-                  color: '#363A33',
-                  outline: 'none',
-                  fontWeight: '400',
-                  fontFamily: 'Be Vietnam Pro'
-                }}
-                value={manual}
-                onChange={(e) => setManual(e.target.value)}
-              />
-              {!manual && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '4.17vw',
-                    transform: 'translateY(-50%)',
-                    justifyContent: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    color: 'var(--Colors-Typography-200, #91958E)',
-                    fontSize: '1.5rem',
-                    fontFamily: 'Be Vietnam Pro',
-                    fontWeight: '400',
-                    wordWrap: 'break-word',
-                    pointerEvents: 'none'
-                  }}
-                >
-                  Nhập mã giảm giá
-                </div>
-              )}
-            </div>
-            <div
-              onClick={canAdd ? addManual : undefined}
-              style={{
-                width: '16.94vw',
-                height: '5.875vh',
-                background: canAdd ? '#F9704B' : '#E8EBE6',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: canAdd ? 'white' : '#B6B8B6',
-                fontSize: '1.5rem',
-                fontFamily: 'Be Vietnam Pro',
-                fontWeight: '700',
-                cursor: canAdd ? 'pointer' : 'not-allowed',
-                marginRight: '5.28vw'
-              }}
-            >
-              Thêm
-            </div>
+      </div>
+      <div
+        style={{
+          width: "100%",
+          height: "0.30px",
+          backgroundColor: "#E7E7E7",
+          marginTop: "1.25vh",
+        }}
+      />
+      {coupons.map((coupon, index) => (
+        <div
+          key={index}
+          onClick={() => {
+            // 4. Logic cập nhật state trực tiếp từ context
+            const type = coupon.status;
+            // index ở đây chính là coupon.id
+            if (selectedCoupons[type] === index) {
+              setSelectedCoupons({ ...selectedCoupons, [type]: null });
+            } else {
+              setSelectedCoupons({ ...selectedCoupons, [type]: index });
+            }
+          }}
+          style={{
+            marginTop: index > 0 ? "1.875vh" : "1.875vh",
+            marginLeft: "50%",
+            transform: "translateX(-50%)",
+            width: "91.67vw",
+            height: "9.25vh",
+            borderRadius: 14,
+            border: selectedCoupons[coupon.status] === index ? "2px solid #2BCDD2" : "1px #D9D9D9 solid",
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
+        >
+          <img
+            src={coupon.image}
+            style={{
+              width: "4.9rem",
+              height: "4.9rem",
+              marginLeft: "3.33vw",
+            }}
+          />
+          <div
+            style={{
+              marginLeft: "3.33vw",
+              flex: 1,
+              marginRight: "3.33vw",
+              justifyContent: "center",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              color: "black",
+              fontSize: "1.3rem",
+              fontWeight: "500",
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
+            }}
+          >
+            {coupon.description}
           </div>
-
-          <div style={{position: 'absolute', top: '21.125vh'}}>
-            <div style={{width: '89.44vw', outline: '1px var(--Colors-Grey-200, #E8EBE6) solid', outlineOffset: '-0.50px'}}></div>
-
-          <div style={{position: 'absolute', top: '2.875vh', left: '7.5vw', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-300, #70756B)', fontSize: '1.2rem', fontFamily: 'Be Vietnam Pro', fontWeight: '600', wordWrap: 'break-word', whiteSpace: 'nowrap', zIndex: 10}}>Chọn một voucher</div>
-
-            <div style={{position: 'absolute', top: '6.25vh', display: 'flex', flexDirection: 'column', gap: '1.875vh'}}>
-              {COUPONS.map((c) => (
-                <div
-                  key={c.code}
-                  style={{
-                    width: '89.44vw',
-                    height: '8.625vh',
-                    background: '#F9FAF8',
-                    borderRadius: 8,
-                    paddingLeft: '16px',
-                    paddingRight: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    position: 'relative'
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-3 w-full">
-                    <div className="min-w-0">
-                      <div style={{position: 'absolute', top: '2vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-400, #60655C)', fontSize: '1.2rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>{c.code}</div>
-                      <div style={{position: 'absolute', top: '4.125vh', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: 'var(--Colors-Typography-500, #363A33)', fontSize: '1.5rem', fontFamily: 'Be Vietnam Pro', fontWeight: '400', wordWrap: 'break-word'}}>{c.description}</div>
-                    </div>
-                    <div
-                      onClick={() => setSelected(selected === c.code ? '' : c.code)}
-                      aria-label={`Chọn mã ${c.code}`}
-                      data-selected={selected === c.code ? "True" : "False"}
-                      data-type="Default"
-                      style={{
-                        width: '6.67vw',
-                        height: '3vh',
-                        position: 'relative',
-                        background: 'var(--Colors-Grey-100, #F4F7F2)',
-                        borderRadius: 24,
-                        border: '1px var(--Colors-Grey-200, #E8EBE6) solid',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        outline: selected === c.code ? '2px #F9704B solid' : 'none',
-                        outlineOffset: selected === c.code ? '-2px' : '0'
-                      }}
-                    >
-                      {selected === c.code ? (
-                        <div style={{
-                          width: '3.33vw',
-                          height: '1.5vh',
-                          background: '#F9704B',
-                          borderRadius: 9999
-                        }} />
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {selectedCoupons[coupon.status] === index ? (
+            <CheckIcon style={{
+              marginLeft: "auto",
+              marginRight: "3.33vw",
+            }}/>
+          ) : (
+            <AddIcon style={{
+              marginLeft: "auto",
+              marginRight: "3.33vw",
+            }}/>
+          )}
         </div>
+      ))}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <SubmitButton 
+          onClick={handleGoBack} // Gắn sự kiện Xác nhận
+          isValid={selectedCoupons.shipping !== null || selectedCoupons.food !== null}
+        >
+          {selectedCoupons.shipping !== null || selectedCoupons.food !== null ? "Dùng ngay" : "Bỏ qua"}
+        </SubmitButton>
       </div>
     </div>
   );
-}
+};
 
-
+export default AddCoupon;
