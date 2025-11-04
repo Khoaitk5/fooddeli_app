@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, useMediaQuery } from '@mui/material';
-import { MapPin, CreditCard, Clock, Gift, Settings, ChevronRight, LogOut, Edit3, Truck, Store } from 'lucide-react';
+// Đã xóa LogOut khỏi import
+import { MapPin, Clock, Gift, Settings, ChevronRight, Edit3, Truck, Store } from 'lucide-react';
 import { EditProfileDialog } from '@/components/role-specific/Customer/EditProfileDialog';
 import { AddressesDialog } from '@/components/role-specific/Customer/AddressesDialog';
-import { PaymentMethodsDialog } from '@/components/role-specific/Customer/PaymentMethodsDialog';
 import { VouchersDialog } from '@/components/role-specific/Customer/VouchersDialog';
 import { SettingsDialog } from '@/components/role-specific/Customer/SettingsDialog';
 import { useAuth } from '../../hooks/useAuth';
 import Navbar from '../../components/shared/Navbar';
+// THÊM IMPORT MỚI
+import AnimatedLogoutButton from '../../components/shared/AnimatedLogoutButton'; // (Hãy điều chỉnh đường dẫn này)
 
 export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) {
   const navigate = useNavigate();
@@ -24,10 +26,10 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
   const isTablet = propIsTablet !== undefined ? propIsTablet : detectedIsTablet;
 
   const [userData, setUserData] = useState({
-    name: 'Nguyễn Thị Lan Anh',
+    name: 'Nguyễn Văn A',
     phone: '0901234567',
-    email: 'lananh@email.com',
-    avatar: 'https://images.unsplash.com/photo-1589553009868-c7b2bb474531?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhc2lhbiUyMHdvbWFuJTIwcG9ydHJhaXR8ZW58MXx8fHwxNzU5OTYxMDk0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    email: 'vana@email.com',
+    avatar: 'https://upload.wikimedia.org/wikipedia/sco/thumb/b/bf/KFC_logo.svg/1200px-KFC_logo.svg.png',
     stats: {
       orders: 127,
       vouchers: 5
@@ -36,7 +38,6 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showAddresses, setShowAddresses] = useState(false);
-  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [showVouchers, setShowVouchers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -64,12 +65,6 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
       title: 'Địa chỉ của tôi',
       color: '#ee4d2d',
       onClick: () => setShowAddresses(true)
-    },
-    {
-      icon: CreditCard,
-      title: 'Phương thức thanh toán',
-      color: '#0ea5e9',
-      onClick: () => setShowPaymentMethods(true)
     },
     {
       icon: Clock,
@@ -122,7 +117,6 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
     <div style={{ width: '100%', height: '100%', background: '#f5f5f5' }}>
       {/* Header with gradient */}
       <div style={{
-        background: 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
         padding: `${isMobile ? '2rem' : isTablet ? '2.5rem' : '3rem'} ${padding}`,
         display: 'flex',
         flexDirection: 'column',
@@ -139,6 +133,8 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
             border: '0.25rem solid #fff',
             boxShadow: '0 0.5rem 1.5rem rgba(0, 0, 0, 0.2)'
           }}>
+            {/* Giả sử bạn có ảnh avatar, nếu không, div này sẽ trống */}
+             <img src={userData.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <button
             onClick={() => setShowEditProfile(true)}
@@ -176,14 +172,14 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
           margin: 0,
           fontSize: isMobile ? '1.25rem' : isTablet ? '1.5rem' : '1.75rem',
           fontWeight: '600',
-          color: '#fff',
+          color: '#000',
           marginBottom: '0.5rem'
         }}>
           {userData.name}
         </h2>
         <div style={{
           fontSize: isMobile ? '0.9375rem' : '1rem',
-          color: 'rgba(255, 255, 255, 0.9)'
+          color: '#000'
         }}>
           {userData.phone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3')}
         </div>
@@ -300,37 +296,19 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
           })}
         </div>
 
-        {/* Logout Button */}
-        <button style={{
-          width: '100%',
-          padding: isMobile ? '1.125rem' : isTablet ? '1.25rem' : '1.375rem',
-          background: '#fff',
-          border: '0.125rem solid #ee4d2d',
-          borderRadius: isMobile ? '1rem' : '1.25rem',
-          color: '#ee4d2d',
-          fontSize: isMobile ? '1rem' : '1.0625rem',
-          fontWeight: '600',
-          cursor: 'pointer',
+        {/* --- THAY THẾ NÚT LOGOUT --- */}
+        {/* Thêm một wrapper để căn giữa nút (vì nút mới có width cố định 130px) */}
+        <div style={{
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.625rem',
-          boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)',
-          transition: 'all 0.2s'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#ee4d2d';
-          e.currentTarget.style.color = '#fff';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = '#fff';
-          e.currentTarget.style.color = '#ee4d2d';
-        }}
-        onClick={handleLogout}
-        >
-          <LogOut size={isMobile ? 20 : 22} strokeWidth={2.5} />
-          Đăng xuất
-        </button>
+          alignItems: 'center',
+          width: '100%',
+          marginTop: '1rem' // Thêm khoảng cách
+        }}>
+          <AnimatedLogoutButton onLogout={handleLogout} />
+        </div>
+        {/* --- KẾT THÚC THAY THẾ --- */}
+        
       </div>
 
       {/* Dialogs */}
@@ -345,12 +323,6 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
       <AddressesDialog
         isOpen={showAddresses}
         onClose={() => setShowAddresses(false)}
-        isMobile={isMobile}
-        isTablet={isTablet}
-      />
-      <PaymentMethodsDialog
-        isOpen={showPaymentMethods}
-        onClose={() => setShowPaymentMethods(false)}
         isMobile={isMobile}
         isTablet={isTablet}
       />
