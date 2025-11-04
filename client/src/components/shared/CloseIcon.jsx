@@ -1,28 +1,28 @@
-const CloseIcon = () => {
-  return (
-    <svg
-      width="1.5rem"
-      height="1.5rem"
-      viewBox="0 0 15 15"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M14 1L1 14"
-        stroke="black"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M1 1L14 14"
-        stroke="black"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-};
+const CloseIcon = ({
+  width = "1.5rem",
+  height = "1.5rem",
+  onClick,
+  style = {},
+}) => (
+  <svg
+    width={width}
+    height={height}
+    viewBox="0 0 15 15"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{
+      cursor: onClick ? "pointer" : "default",
+      ...style,
+    }}
+    onClick={onClick}
+  >
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M1.92348 0.330392C1.48409 -0.110131 0.769787 -0.110131 0.330392 0.330392C-0.110131 0.769787 -0.110131 1.48409 0.330392 1.92348L5.90733 7.50042L0.330392 13.0774C-0.110131 13.5168 -0.110131 14.2299 0.330392 14.6705C0.769787 15.1098 1.48409 15.1098 1.92348 14.6705L7.50042 9.09351L13.0774 14.6705C13.5168 15.1098 14.2299 15.1098 14.6705 14.6705C15.1098 14.2299 15.1098 13.5168 14.6705 13.0774L9.09351 7.50042L14.6705 1.92348C15.1098 1.48409 15.1098 0.769787 14.6705 0.330392C14.2299 -0.110131 13.5168 -0.110131 13.0774 0.330392L7.50042 5.90733L1.92348 0.330392Z"
+      fill="black"
+    />
+  </svg>
+);
 
 export default CloseIcon;
