@@ -30,6 +30,8 @@ router.post("/assign-address", shopController.assignAddressToShop);
 // ❌ Xóa cửa hàng (ẩn ID)
 router.delete("/delete", shopController.deleteShop);
 
+router.get("/shop-with-address", shopController.getShopProfilesAndAddressesByShopId);
+
 
 
 module.exports = router;

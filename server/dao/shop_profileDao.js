@@ -40,6 +40,21 @@ class ShopProfileDao extends GenericDao {
     return null;
   }
 
+  async getShopProfilesAndAddressesByShopId(shopId) {
+  const sql = `
+    SELECT 
+      sp.*,
+      CASE WHEN a.address_id IS NULL THEN NULL ELSE to_jsonb(a) END AS address
+    FROM shop_profiles sp
+    LEFT JOIN addresses a ON a.address_id = sp.shop_address_id
+    WHERE sp.id = $1
+    LIMIT 1;
+  `;
+  const { rows } = await pool.query(sql, [shopId]);
+  return rows[0] ?? null;
+}
+
+
   /**
    * Cập nhật trạng thái cửa hàng (open/closed/pending)
    * @param {number} shopId - ID shop

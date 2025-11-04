@@ -14,7 +14,9 @@ class ShopProfileService {
       const user = await userDao.findById("id", userId);
       if (!user) throw new Error("Người dùng không tồn tại.");
       if (user.role !== "shop") {
-        throw new Error("Chỉ người dùng có role = 'shop' mới được tạo cửa hàng.");
+        throw new Error(
+          "Chỉ người dùng có role = 'shop' mới được tạo cửa hàng."
+        );
       }
 
       // Tạo hồ sơ shop
@@ -90,15 +92,15 @@ class ShopProfileService {
   /**
    * ✏️ Cập nhật thông tin cửa hàng
    */
-async updateShopInfo(shopId, updateData) {
-  try {
-    const shop = await shopProfileDao.updateShopInfo(shopId, updateData);
-    return shop;
-  } catch (err) {
-    console.error("[ShopProfileService:updateShopInfo]", err.message);
-    throw new Error("Không thể cập nhật thông tin cửa hàng.");
+  async updateShopInfo(shopId, updateData) {
+    try {
+      const shop = await shopProfileDao.updateShopInfo(shopId, updateData);
+      return shop;
+    } catch (err) {
+      console.error("[ShopProfileService:updateShopInfo]", err.message);
+      throw new Error("Không thể cập nhật thông tin cửa hàng.");
+    }
   }
-}
 
   /**
    * 🔄 Cập nhật trạng thái cửa hàng (open / closed / pending)
@@ -117,7 +119,11 @@ async updateShopInfo(shopId, updateData) {
    */
   async getNearbyShops(latitude, longitude, radiusKm = 5) {
     try {
-      return await shopProfileDao.findNearbyShops(latitude, longitude, radiusKm);
+      return await shopProfileDao.findNearbyShops(
+        latitude,
+        longitude,
+        radiusKm
+      );
     } catch (err) {
       console.error("[ShopProfileService:getNearbyShops]", err.message);
       throw new Error("Không thể lấy danh sách cửa hàng gần bạn.");
@@ -154,6 +160,11 @@ async updateShopInfo(shopId, updateData) {
       console.error("[ShopProfileService:deleteShop]", err.message);
       throw new Error("Không thể xóa hồ sơ cửa hàng.");
     }
+  }
+
+  async getShopProfilesAndAddressesByShopId(shopId) {
+    if (!shopId) throw new Error("shopId is required");
+    return await shopProfileDao.getShopProfilesAndAddressesByShopId(shopId);
   }
 }
 

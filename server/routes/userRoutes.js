@@ -17,8 +17,8 @@ router.get("/ping", (req, res) => {
   res.send("✅ userRoutes hoạt động!");
 });
 
-// 📌 Lấy tất cả user (chỉ admin mới được dùng nếu cần)
-router.get("/", userController.getAllUsers);
+// // 📌 Lấy tất cả user (chỉ admin mới được dùng nếu cần)
+// router.get("/", userController.getAllUsers);
 
 // 📌 Lấy thông tin user hiện tại từ session
 router.get("/me", userController.getCurrentUser);

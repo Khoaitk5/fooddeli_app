@@ -1,117 +1,136 @@
+// services/orderService.js
 const orderDao = require("../dao/orderDao");
+const orderDetailDao = require("../dao/order_detailDao");
 
-const orderService = {
+class OrderService {
   /**
-   * ➕ Tạo đơn hàng mới
-   * @param {object} orderData - { user_id, shop_id, food_price, delivery_fee, total_price, payment_method, ... }
+   * Lấy danh sách đơn theo shipper_id (+ lọc + phân trang)
+   * Chỉ gọi DAO, không query trong service
    */
-  async createOrder(orderData) {
-    // Tự tính chia tiền (nếu cần)
-    const merchant_commission_rate = orderData.merchant_commission_rate || 0.25;
-    const shipper_commission_rate = orderData.shipper_commission_rate || 0.15;
+  async listByShipper(shipperId, { status, limit = 20, offset = 0, full = false } = {}) {
+    const sid = Number(shipperId);
+    if (!sid) throw new Error("shipperId is required");
 
-    const merchant_earn = (orderData.food_price || 0) * (1 - merchant_commission_rate);
-    const shipper_earn = (orderData.delivery_fee || 0) * (1 - shipper_commission_rate);
-    const admin_earn = (orderData.total_price || 0) - (merchant_earn + shipper_earn);
-
-    return await orderDao.create({
-      ...orderData,
-      merchant_commission_rate,
-      shipper_commission_rate,
-      merchant_earn,
-      shipper_earn,
-      admin_earn,
+    if (full) {
+      return await orderDao.getFullOrdersByShipperId(sid, {
+        status,
+        limit: Number(limit),
+        offset: Number(offset),
+      });
+    }
+    return await orderDao.getOrdersByShipperId(sid, {
+      status,
+      limit: Number(limit),
+      offset: Number(offset),
     });
-  },
+  }
 
   /**
-   * 📦 Lấy đơn hàng theo ID
+   * Lấy full 1 đơn (order + details + user/shop info)
    */
-  async getOrderById(orderId) {
-    return await orderDao.findById("order_id", orderId);
-  },
+  async getFull(orderId) {
+    const id = Number(orderId);
+    if (!id) throw new Error("orderId is required");
+    const data = await orderDao.getOrderFullById(id);
+    if (!data) throw new Error("Order not found");
+    return data;
+  }
 
   /**
-   * 📜 Lấy tất cả đơn hàng
-   */
-  async getAllOrders() {
-    return await orderDao.findAll();
-  },
-
-  /**
-   * 📍 Lấy đơn hàng của user
-   */
-  async getOrdersByUserId(userId) {
-    return await orderDao.getOrdersByUserId(userId);
-  },
-
-  /**
-   * 🏪 Lấy đơn hàng của shop
-   */
-  async getOrdersByShopId(shopId) {
-    return await orderDao.getOrdersByShopId(shopId);
-  },
-
-  /**
-   * 🚚 Lấy đơn hàng của shipper
-   */
-  async getOrdersByShipperId(shipperId) {
-    return await orderDao.getOrdersByShipperId(shipperId);
-  },
-
-  /**
-   * ✏️ Cập nhật thông tin đơn hàng
-   */
-  async updateOrder(orderId, updateData) {
-    const updated = await orderDao.update("order_id", orderId, updateData);
-    if (!updated) throw new Error("Đơn hàng không tồn tại");
-    return updated;
-  },
-
-  /**
-   * 🗑️ Xóa đơn hàng
-   */
-  async deleteOrder(orderId) {
-    const deleted = await orderDao.delete("order_id", orderId);
-    if (!deleted) throw new Error("Đơn hàng không tồn tại");
-    return deleted;
-  },
-
-  /**
-   * 🔄 Cập nhật trạng thái đơn hàng
-   */
-  async updateOrderStatus(orderId, status) {
-    const updated = await orderDao.updateStatus(orderId, status);
-    if (!updated) throw new Error("Đơn hàng không tồn tại hoặc không thể cập nhật trạng thái");
-    return updated;
-  },
-
-  /**
-   * 🚚 Gán shipper cho đơn hàng
+   * Gán shipper cho đơn
    */
   async assignShipper(orderId, shipperId) {
-    const updated = await orderDao.assignShipper(orderId, shipperId);
-    if (!updated) throw new Error("Đơn hàng không tồn tại hoặc không thể gán shipper");
-    return updated;
-  },
+    const id = Number(orderId);
+    const sid = Number(shipperId);
+    if (!id || !sid) throw new Error("orderId and shipperId are required");
+    return await orderDao.assignShipper(id, sid);
+  }
 
   /**
-   * 💰 Cập nhật trạng thái thanh toán
+   * Cập nhật trạng thái đơn
    */
-  async updatePaymentStatus(orderId, paymentStatus, paymentId = null) {
-    const updated = await orderDao.updatePaymentStatus(orderId, paymentStatus, paymentId);
-    if (!updated) throw new Error("Không thể cập nhật trạng thái thanh toán");
-    return updated;
-  },
+  async updateStatus(orderId, status) {
+    const id = Number(orderId);
+    if (!id || !status) throw new Error("orderId and status are required");
+    return await orderDao.updateStatus(id, status);
+  }
 
   /**
-   * ✅ Đánh dấu đơn hàng đã settle (chia tiền xong)
+   * Cập nhật trạng thái thanh toán
+   */
+  async updatePaymentStatus(orderId, paymentStatus) {
+    const id = Number(orderId);
+    if (!id || !paymentStatus) throw new Error("orderId and paymentStatus are required");
+    return await orderDao.updatePaymentStatus(id, paymentStatus);
+  }
+
+  /**
+   * Đánh dấu settle
    */
   async markSettled(orderId) {
-    const updated = await orderDao.markSettled(orderId);
-    if (!updated) throw new Error("Không thể đánh dấu settle cho đơn hàng");
-    return updated;
-  },
-};
+    const id = Number(orderId);
+    if (!id) throw new Error("orderId is required");
+    return await orderDao.markSettled(id);
+  }
 
-module.exports = orderService;
+  /**
+   * 🧮 Tính lại tổng tiền đơn từ order_details
+   */
+  async recalcTotals(orderId) {
+    const id = Number(orderId);
+    if (!id) throw new Error("orderId is required");
+    return await orderDao.recalcTotals(id);
+  }
+
+  /**
+   * Tạo 1 order trống (dùng GenericDao.create), rồi FE có thể add items sau
+   */
+  async createEmptyOrder({ user_id, shop_id, payment_method = "COD", delivery_fee = 0 }) {
+    const uid = Number(user_id);
+    const sid = Number(shop_id);
+    if (!uid || !sid) throw new Error("user_id and shop_id are required");
+
+    // Tạo order rỗng, total_price = delivery_fee (chưa có món)
+    return await orderDao.create({
+      user_id: uid,
+      shop_id: sid,
+      shipper_id: null,
+
+      food_price: 0,
+      delivery_fee: Number(delivery_fee) || 0,
+      total_price: Number(delivery_fee) || 0,
+
+      merchant_commission_rate: 0.25,
+      shipper_commission_rate: 0.15,
+
+      merchant_earn: 0,
+      shipper_earn: 0,
+      admin_earn: 0,
+
+      status: "pending",
+      payment_method,
+      payment_status: "unpaid",
+
+      is_settled: false,
+    });
+  }
+
+  /**
+   * Thêm nhiều item vào order_details (gọi DAO) rồi recalc tổng (gọi DAO)
+   */
+  async addItems(orderId, items, { useProvidedUnitPrice = false } = {}) {
+    const id = Number(orderId);
+    if (!id) throw new Error("orderId is required");
+    if (!Array.isArray(items) || items.length === 0) throw new Error("items is empty");
+
+    const result = await orderDetailDao.addMany(id, items, {
+      mergeDuplicates: true,
+      useProvidedUnitPrice,
+    });
+
+    const updatedOrder = await orderDao.recalcTotals(id);
+    return { ...result, order: updatedOrder };
+  }
+}
+
+module.exports = new OrderService();
