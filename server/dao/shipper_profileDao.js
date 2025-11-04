@@ -5,7 +5,6 @@ const pool = require("../config/db");
 class ShipperProfileDao extends GenericDao {
   constructor() {
     super("shipper_profiles", ShipperProfile);
-    this.db = pool;
   }
 
   /**
@@ -13,14 +12,30 @@ class ShipperProfileDao extends GenericDao {
    * @param {number} userId - ID người dùng
    * @returns {Promise<ShipperProfile|null>}
    */
+  // DAO
   async getByUserId(userId) {
-    const query = `
-      SELECT * FROM shipper_profiles
-      WHERE user_id = $1
-      LIMIT 1;
-    `;
-    const result = await this.db.query(query, [userId]);
-    return result.rows[0] ? new ShipperProfile(result.rows[0]) : null;
+    const sql = `
+    SELECT id, user_id, vehicle_type, vehicle_number, identity_card,
+           status, online_status, created_at, updated_at
+    FROM shipper_profiles
+    WHERE user_id = $1
+  `;
+    const { rows } = await pool.query(sql, [userId]);
+    if (!rows[0]) return null;
+
+    const r = rows[0];
+    // Trả về plain object, đảm bảo có 'id'
+    return {
+      id: r.id,
+      user_id: r.user_id,
+      vehicle_type: r.vehicle_type,
+      vehicle_number: r.vehicle_number,
+      identity_card: r.identity_card,
+      status: r.status,
+      online_status: r.online_status,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    };
   }
 
   /**
@@ -34,8 +49,8 @@ class ShipperProfileDao extends GenericDao {
       WHERE online_status = $1
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [status]);
-    return result.rows.map(row => new ShipperProfile(row));
+    const result = await pool.query(query, [status]);
+    return result.rows.map((row) => new ShipperProfile(row));
   }
 
   /**
@@ -57,7 +72,7 @@ class ShipperProfileDao extends GenericDao {
       WHERE id = $2
       RETURNING *;
     `;
-    const result = await this.db.query(query, [status, shipperId]);
+    const result = await pool.query(query, [status, shipperId]);
     return result.rows[0] ? new ShipperProfile(result.rows[0]) : null;
   }
 
@@ -76,7 +91,7 @@ class ShipperProfileDao extends GenericDao {
       WHERE id = $3
       RETURNING *;
     `;
-    const result = await this.db.query(query, [latitude, longitude, shipperId]);
+    const result = await pool.query(query, [latitude, longitude, shipperId]);
     return result.rows[0] ? new ShipperProfile(result.rows[0]) : null;
   }
 
@@ -90,8 +105,8 @@ class ShipperProfileDao extends GenericDao {
       WHERE status = 'approved' AND online_status = 'online'
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query);
-    return result.rows.map(row => new ShipperProfile(row));
+    const result = await pool.query(query);
+    return result.rows.map((row) => new ShipperProfile(row));
   }
 
   /**
@@ -112,7 +127,7 @@ class ShipperProfileDao extends GenericDao {
       FROM orders o
       WHERE o.shipper_id = $1;
     `;
-    const result = await this.db.query(query, [shipperId]);
+    const result = await pool.query(query, [shipperId]);
     return result.rows[0] || {};
   }
 
@@ -124,7 +139,7 @@ class ShipperProfileDao extends GenericDao {
    */
   async getEarningsByPeriod(shipperId, period = "month") {
     let dateFilter = "NOW()";
-    
+
     if (period === "today") {
       dateFilter = "NOW() - INTERVAL '1 day'";
     } else if (period === "week") {
@@ -146,17 +161,23 @@ class ShipperProfileDao extends GenericDao {
       GROUP BY DATE(o.created_at)
       ORDER BY DATE(o.created_at) DESC;
     `;
-    
-    const result = await this.db.query(query, [shipperId]);
-    
-    const total = result.rows.reduce((sum, row) => sum + (parseFloat(row.daily_earnings) || 0), 0);
-    const totalOrders = result.rows.reduce((sum, row) => sum + (row.orders_count || 0), 0);
-    
+
+    const result = await pool.query(query, [shipperId]);
+
+    const total = result.rows.reduce(
+      (sum, row) => sum + (parseFloat(row.daily_earnings) || 0),
+      0
+    );
+    const totalOrders = result.rows.reduce(
+      (sum, row) => sum + (row.orders_count || 0),
+      0
+    );
+
     return {
       period,
       total_earnings: total,
       total_orders: totalOrders,
-      details: result.rows
+      details: result.rows,
     };
   }
 }

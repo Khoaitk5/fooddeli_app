@@ -1,6 +1,10 @@
 // services/shipperProfileService.js
 const shipperProfileDao = require("../dao/shipper_profileDao");
-
+const orderService = require("./orderService");
+const orderDetailService = require("./order_detailService");
+const addressService = require("./addressService");
+const shopService = require("./shop_profileService");
+const map4dService = require("../services/map4dService");
 const shipperProfileService = {
   /**
    * ➕ Tạo hồ sơ shipper mới
@@ -161,6 +165,97 @@ const shipperProfileService = {
       throw new Error("Không thể lấy doanh thu shipper.");
     }
   },
+
+  /**
+   * Lấy danh sách đơn (theo shipper_id) kèm đầy đủ thông tin:
+   * - order
+   * - order_details (withProduct)
+   * - user_addresses
+   * - shop_info (có address)
+   */
+  // services/shipper_profileService.js
+async listFullOrders(shipperId, { status, limit = 10, offset = 0 } = {}) {
+  if (!shipperId) throw new Error("shipper_id is required");
+
+  // helper: gộp address_line.{detail, ward, district, city} => address
+  const composeAddress = (addrLine = {}) => {
+    if (addrLine.address && addrLine.address.trim()) return addrLine.address;
+    const { detail, ward, district, city } = addrLine;
+    return [detail, ward, district, city].filter(Boolean).join(", ");
+  };
+
+  // helper: chọn 1 địa chỉ hợp lệ, ưu tiên is_primary
+  const pickOneAndNormalize = (addresses = []) => {
+    if (!Array.isArray(addresses) || addresses.length === 0) return [];
+    const chosen = addresses.find(a => a.is_primary) || addresses[0];
+    const normalized = {
+      ...chosen,
+      address_line: {
+        ...(chosen.address_line || {}),
+        address: composeAddress(chosen.address_line || {}),
+      },
+    };
+    return [normalized];
+  };
+
+  // 1️⃣ lấy danh sách order
+  const orders = await orderService.listByShipper(shipperId, { status, limit, offset });
+
+  // 2️⃣ enrich từng order
+  const items = await Promise.all(
+    orders.map(async (order) => {
+      const [details, userAddressesRaw, shopInfoRaw] = await Promise.all([
+        orderDetailService.list(order.order_id, { withProduct: true }),
+        addressService.getUserAddresses(order.user_id),
+        shopService.getShopProfilesAndAddressesByShopId(order.shop_id),
+      ]);
+
+      const user_addresses = pickOneAndNormalize(userAddressesRaw);
+      const shop_info = shopInfoRaw
+        ? {
+            ...shopInfoRaw,
+            address: shopInfoRaw.address
+              ? {
+                  ...shopInfoRaw.address,
+                  address_line: {
+                    ...(shopInfoRaw.address.address_line || {}),
+                    address: composeAddress(shopInfoRaw.address.address_line || {}),
+                  },
+                }
+              : null,
+          }
+        : null;
+
+      // 🧭 Tính khoảng cách (distance) & thời gian (duration)
+      let distance = null;
+      let duration = null;
+      try {
+        const shopLatLon = shop_info?.address?.lat_lon;
+        const userLatLon = user_addresses[0]?.lat_lon;
+        if (shopLatLon && userLatLon) {
+          const origin = `${shopLatLon.lat},${shopLatLon.lon}`;
+          const destination = `${userLatLon.lat},${userLatLon.lon}`;
+          const route = await map4dService.getRoute(origin, destination);
+          const routeInfo = route?.result?.routes?.[0];
+          if (routeInfo) {
+            distance = routeInfo.distance?.text || null;
+            duration = routeInfo.duration?.text || null;
+          }
+        }
+      } catch (err) {
+        console.warn("⚠️ Không tính được khoảng cách cho order:", order.order_id, err.message);
+      }
+
+      return { order, details, user_addresses, shop_info, distance, duration };
+    })
+  );
+
+  return items;
+}
+
 };
+
+
+
 
 module.exports = shipperProfileService;

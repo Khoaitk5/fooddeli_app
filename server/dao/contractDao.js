@@ -33,7 +33,7 @@ class ContractDao extends GenericDao {
       WHERE contract_id = $1
       RETURNING *;
     `;
-    const result = await this.db.query(query, [contractId]);
+    const result = await pool.query(query, [contractId]);
     return result.rows[0];
   }
 
@@ -48,7 +48,7 @@ class ContractDao extends GenericDao {
       WHERE user_id = $1
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rows;
   }
 }

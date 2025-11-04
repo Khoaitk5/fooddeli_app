@@ -125,3 +125,21 @@ exports.getMyShipperProfile = async (req, res) => {
     });
   }
 };
+
+
+exports.getFullOrders = async (req, res) => {
+  try {
+    const { shipper_id, status, limit, offset } = req.body || {};
+
+    const items = await ShipperProfileService.listFullOrders(shipper_id, {
+      status,
+      limit: Number(limit) || 10,
+      offset: Number(offset) || 0,
+    });
+
+    res.status(200).json({ success: true, data: items });
+  } catch (err) {
+    console.error("[ShipperController:getFullOrders]", err.message);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
