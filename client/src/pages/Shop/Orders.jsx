@@ -251,44 +251,24 @@ const ShopOrders = () => {
   const [tab, setTab] = useState("all");
 
   const fetchOrders = useCallback(async () => {
-    if (!shopId) return;
-    setLoading(true);
     try {
-      const res = await axios.post(
-        `${API_BASE}/list-mine`,
-        { shop_id: shopId, full: true },
-        { withCredentials: true }
-      );
+      const res = await axios.post(`${API_BASE}/list-mine`, { shop_id: shopId, full: true }, { withCredentials: true });
+      const newOrders = res.data.items || [];
 
-      const data = res.data.items || [];
-      const mapped = data.map((item) => {
+      // Chuyển đổi dữ liệu (mapping)
+      const mapped = newOrders.map((item) => {
         const o = item.order || item;
         const details = item.details || [];
         const customer = {
-          name:
-            o.user_full_name ||
-            o.full_name ||
-            o.username ||
-            o.recipient_name ||
-            "Khách hàng",
-          phone:
-            o.user_phone ||
-            o.phone ||
-            o.recipient_phone ||
-            o.receiver_phone ||
-            "—",
+          name: o.user_full_name || o.full_name || "Khách hàng",
+          phone: o.user_phone || o.phone || "—",
         };
-
         const items = details.map((d) => ({
           name: d.product_name,
           price: d.product_price,
           qty: d.quantity,
         }));
-
-        const total =
-          o.total_price ??
-          details.reduce((sum, d) => sum + d.product_price * d.quantity, 0);
-
+        const total = o.total_price ?? details.reduce((s, d) => s + d.product_price * d.quantity, 0);
         return {
           id: o.order_id,
           status: o.status || "pending",
@@ -301,17 +281,29 @@ const ShopOrders = () => {
         };
       });
 
-      setOrders(mapped);
+      // 🔄 Chỉ update nếu khác dữ liệu cũ
+      setOrders((prev) => {
+        const same = JSON.stringify(prev) === JSON.stringify(mapped);
+        if (!same) console.log("[Orders] 🟢 Có thay đổi → cập nhật UI");
+        else console.log("[Orders] ⏸ Dữ liệu giống cũ → bỏ qua render");
+        return same ? prev : mapped;
+      });
     } catch (err) {
-      console.error("❌ Lỗi khi lấy orders:", err);
-    } finally {
-      setLoading(false);
+      console.error("❌ Lỗi fetchOrders:", err);
     }
   }, [shopId]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (!shopId) return;
+    fetchOrders(); // Gọi ngay lần đầu
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 5000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [shopId, fetchOrders]);
+
 
   const handleAdvanceStatus = async (orderId, currentStatus) => {
     let nextStatus = null;
