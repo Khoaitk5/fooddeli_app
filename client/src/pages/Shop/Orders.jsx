@@ -133,6 +133,7 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
               </Typography>
             </Stack>
           </Grid>
+
           <Grid item xs={12} md={6}>
             <Typography sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>
               Món đã đặt:
@@ -143,12 +144,23 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
                 direction="row"
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ mb: 0.5 }}
+                sx={{
+                  mb: 0.5,
+                  px: 0.5,
+                  gap: 2,
+                }}
               >
-                <Typography sx={{ fontSize: 14 }}>
+                <Typography sx={{ fontSize: 14, flex: 1 }}>
                   {it.name} × {it.qty}
                 </Typography>
-                <Typography sx={{ fontSize: 14 }}>
+                <Typography
+                  sx={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    minWidth: "100px",
+                    textAlign: "right",
+                  }}
+                >
                   {it.price.toLocaleString("vi-VN")} ₫
                 </Typography>
               </Stack>
@@ -156,9 +168,7 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
             <Divider sx={{ my: 1.5 }} />
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography sx={{ fontSize: 16 }}>Tổng cộng:</Typography>
-              <Typography
-                sx={{ fontSize: 16, color: "#00a63e", fontWeight: 600 }}
-              >
+              <Typography sx={{ fontSize: 16, color: "#00a63e", fontWeight: 700 }}>
                 {order.total.toLocaleString("vi-VN")} ₫
               </Typography>
             </Stack>
@@ -178,14 +188,7 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
               py: 1.5,
             }}
           >
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: 14,
-                mr: 1,
-                display: "inline",
-              }}
-            >
+            <Typography sx={{ fontWeight: 700, fontSize: 14, display: "inline" }}>
               Ghi chú:
             </Typography>
             <Typography sx={{ fontSize: 14, display: "inline" }}>
@@ -257,21 +260,10 @@ const ShopOrders = () => {
         { withCredentials: true }
       );
 
-      // [debug] Log raw response từ server
-      console.groupCollapsed("[debug] /list-mine response");
-      console.log("raw data:", res?.data);
-      console.groupEnd();
-
       const data = res.data.items || [];
       const mapped = data.map((item) => {
         const o = item.order || item;
         const details = item.details || [];
-
-        // [debug] log từng order trước khi xử lý
-        console.groupCollapsed(`[debug] Order ID: ${o?.order_id ?? o?.id}`);
-        console.log("raw order object:", o);
-        console.log("raw details array:", details);
-
         const customer = {
           name:
             o.user_full_name ||
@@ -287,32 +279,27 @@ const ShopOrders = () => {
             "—",
         };
 
-        console.log("→ derived customer:", customer);
-        console.groupEnd();
-
         const items = details.map((d) => ({
           name: d.product_name,
           price: d.product_price,
           qty: d.quantity,
         }));
+
         const total =
           o.total_price ??
           details.reduce((sum, d) => sum + d.product_price * d.quantity, 0);
+
         return {
           id: o.order_id,
           status: o.status || "pending",
           customer,
           total,
           items,
-          payment: o.payment_method || "Tiền mặt",
+          payment: o.payment_method || "COD",
           note: o.note || "",
           createdAt: o.created_at,
         };
       });
-
-      // [debug] tổng kết dữ liệu đã map
-      console.info("[debug] mapped orders:", mapped);
-      window.__lastOrders = mapped;
 
       setOrders(mapped);
     } catch (err) {
@@ -326,11 +313,6 @@ const ShopOrders = () => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // [debug] Log mỗi khi orders thay đổi
-  useEffect(() => {
-    console.log("[debug] Orders state updated:", orders);
-  }, [orders]);
-
   const handleAdvanceStatus = async (orderId, currentStatus) => {
     let nextStatus = null;
     if (currentStatus === "pending") nextStatus = "cooking";
@@ -338,15 +320,10 @@ const ShopOrders = () => {
     else if (currentStatus === "shipping") nextStatus = "completed";
     else return;
     try {
-      await axios.post(
-        `${API_BASE}/update-status`,
-        { order_id: orderId, status: nextStatus },
-        { withCredentials: true }
-      );
+      await axios.post(`${API_BASE}/update-status`, { order_id: orderId, status: nextStatus });
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus } : o))
       );
-      console.log(`[debug] Updated order ${orderId} → ${nextStatus}`);
     } catch (err) {
       console.error("❌ Lỗi khi cập nhật trạng thái:", err);
     }
@@ -354,15 +331,10 @@ const ShopOrders = () => {
 
   const handleCancelOrder = async (orderId) => {
     try {
-      await axios.post(
-        `${API_BASE}/update-status`,
-        { order_id: orderId, status: "cancelled" },
-        { withCredentials: true }
-      );
+      await axios.post(`${API_BASE}/update-status`, { order_id: orderId, status: "cancelled" });
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o))
       );
-      console.log(`[debug] Cancelled order ${orderId}`);
     } catch (err) {
       console.error("❌ Lỗi khi huỷ đơn:", err);
     }
@@ -417,24 +389,9 @@ const ShopOrders = () => {
             mb: 2.5,
           }}
         >
-          <StatCard
-            label="Chờ xác nhận"
-            value={counts.pending}
-            color="#d08700"
-            icon={<ScheduleIcon sx={{ color: "#d08700" }} />}
-          />
-          <StatCard
-            label="Đang chế biến"
-            value={counts.cooking}
-            color="#155dfc"
-            icon={<CookingIcon sx={{ color: "#155dfc" }} />}
-          />
-          <StatCard
-            label="Đang giao / Hoàn tất / Huỷ"
-            value={counts.done}
-            color="#00a63e"
-            icon={<ShippingIcon sx={{ color: "#00a63e" }} />}
-          />
+          <StatCard label="Chờ xác nhận" value={counts.pending} color="#d08700" icon={<ScheduleIcon sx={{ color: "#d08700" }} />} />
+          <StatCard label="Đang chế biến" value={counts.cooking} color="#155dfc" icon={<CookingIcon sx={{ color: "#155dfc" }} />} />
+          <StatCard label="Đang giao / Hoàn tất / Huỷ" value={counts.done} color="#00a63e" icon={<ShippingIcon sx={{ color: "#00a63e" }} />} />
         </Box>
 
         <Box
@@ -475,12 +432,7 @@ const ShopOrders = () => {
 
         <Stack spacing={2.5}>
           {filtered.map((o) => (
-            <OrderCard
-              key={o.id}
-              order={o}
-              onAdvance={handleAdvanceStatus}
-              onCancel={handleCancelOrder}
-            />
+            <OrderCard key={o.id} order={o} onAdvance={handleAdvanceStatus} onCancel={handleCancelOrder} />
           ))}
         </Stack>
       </Box>
