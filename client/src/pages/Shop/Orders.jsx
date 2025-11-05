@@ -80,7 +80,14 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
   const { pct, color } = getProgress(order.status);
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: "14px", border: "0.8px solid rgba(0,0,0,0.1)", overflow: "hidden" }}>
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: "14px",
+        border: "0.8px solid rgba(0,0,0,0.1)",
+        overflow: "hidden",
+      }}
+    >
       <Box sx={{ px: 3, pt: 3 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -94,8 +101,23 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
           </Typography>
         </Stack>
 
-        <Box sx={{ height: 8, backgroundColor: "rgba(3,2,19,0.12)", borderRadius: 99, mt: 2 }}>
-          <Box sx={{ height: 8, borderRadius: 99, backgroundColor: color, width: `${pct}%`, transition: "width 300ms ease" }} />
+        <Box
+          sx={{
+            height: 8,
+            backgroundColor: "rgba(3,2,19,0.12)",
+            borderRadius: 99,
+            mt: 2,
+          }}
+        >
+          <Box
+            sx={{
+              height: 8,
+              borderRadius: 99,
+              backgroundColor: color,
+              width: `${pct}%`,
+              transition: "width 300ms ease",
+            }}
+          />
         </Box>
       </Box>
 
@@ -109,9 +131,6 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
               <Typography sx={{ fontSize: 14 }}>
                 <strong>SĐT:</strong> {order.customer.phone}
               </Typography>
-              <Typography sx={{ fontSize: 14 }}>
-                <strong>Địa chỉ:</strong> {order.customer.address}
-              </Typography>
             </Stack>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -119,7 +138,13 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
               Món đã đặt:
             </Typography>
             {order.items.map((it, idx) => (
-              <Stack key={idx} direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
+              <Stack
+                key={idx}
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 0.5 }}
+              >
                 <Typography sx={{ fontSize: 14 }}>
                   {it.name} × {it.qty}
                 </Typography>
@@ -131,7 +156,9 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
             <Divider sx={{ my: 1.5 }} />
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography sx={{ fontSize: 16 }}>Tổng cộng:</Typography>
-              <Typography sx={{ fontSize: 16, color: "#00a63e", fontWeight: 600 }}>
+              <Typography
+                sx={{ fontSize: 16, color: "#00a63e", fontWeight: 600 }}
+              >
                 {order.total.toLocaleString("vi-VN")} ₫
               </Typography>
             </Stack>
@@ -142,9 +169,28 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
         </Grid>
 
         {order.note && (
-          <Box sx={{ mt: 2, backgroundColor: "#fff7db", borderRadius: "10px", px: 1.5, py: 1.5 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: 14, mr: 1, display: "inline" }}>Ghi chú:</Typography>
-            <Typography sx={{ fontSize: 14, display: "inline" }}>{order.note}</Typography>
+          <Box
+            sx={{
+              mt: 2,
+              backgroundColor: "#fff7db",
+              borderRadius: "10px",
+              px: 1.5,
+              py: 1.5,
+            }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+                mr: 1,
+                display: "inline",
+              }}
+            >
+              Ghi chú:
+            </Typography>
+            <Typography sx={{ fontSize: 14, display: "inline" }}>
+              {order.note}
+            </Typography>
           </Box>
         )}
 
@@ -156,14 +202,19 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
                 variant="outlined"
                 color="error"
                 startIcon={<CancelIcon />}
-                sx={{ borderRadius: "10px", height: 38, px: 2.2, textTransform: "none", fontWeight: 600, borderWidth: "2px" }}
+                sx={{
+                  borderRadius: "10px",
+                  height: 38,
+                  px: 2.2,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderWidth: "2px",
+                }}
                 onClick={() => onCancel(order.id)}
               >
                 Huỷ đơn
               </Button>
             )}
-            {/* Chỉ hiện nút cho pending và cooking */}
-            {/* ✅ Chỉ hiển thị nút cho pending */}
             {order.status === "pending" && (
               <Button
                 variant="contained"
@@ -183,7 +234,6 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
                 Xác nhận đơn
               </Button>
             )}
-
           </Box>
         </Box>
       </Box>
@@ -206,15 +256,40 @@ const ShopOrders = () => {
         { shop_id: shopId, full: true },
         { withCredentials: true }
       );
+
+      // [debug] Log raw response từ server
+      console.groupCollapsed("[debug] /list-mine response");
+      console.log("raw data:", res?.data);
+      console.groupEnd();
+
       const data = res.data.items || [];
       const mapped = data.map((item) => {
         const o = item.order || item;
         const details = item.details || [];
+
+        // [debug] log từng order trước khi xử lý
+        console.groupCollapsed(`[debug] Order ID: ${o?.order_id ?? o?.id}`);
+        console.log("raw order object:", o);
+        console.log("raw details array:", details);
+
         const customer = {
-          name: o.user_full_name || "Khách hàng",
-          phone: o.user_phone || "—",
-          address: o.delivery_address || "—",
+          name:
+            o.user_full_name ||
+            o.full_name ||
+            o.username ||
+            o.recipient_name ||
+            "Khách hàng",
+          phone:
+            o.user_phone ||
+            o.phone ||
+            o.recipient_phone ||
+            o.receiver_phone ||
+            "—",
         };
+
+        console.log("→ derived customer:", customer);
+        console.groupEnd();
+
         const items = details.map((d) => ({
           name: d.product_name,
           price: d.product_price,
@@ -234,6 +309,11 @@ const ShopOrders = () => {
           createdAt: o.created_at,
         };
       });
+
+      // [debug] tổng kết dữ liệu đã map
+      console.info("[debug] mapped orders:", mapped);
+      window.__lastOrders = mapped;
+
       setOrders(mapped);
     } catch (err) {
       console.error("❌ Lỗi khi lấy orders:", err);
@@ -242,6 +322,15 @@ const ShopOrders = () => {
     }
   }, [shopId]);
 
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // [debug] Log mỗi khi orders thay đổi
+  useEffect(() => {
+    console.log("[debug] Orders state updated:", orders);
+  }, [orders]);
+
   const handleAdvanceStatus = async (orderId, currentStatus) => {
     let nextStatus = null;
     if (currentStatus === "pending") nextStatus = "cooking";
@@ -249,10 +338,15 @@ const ShopOrders = () => {
     else if (currentStatus === "shipping") nextStatus = "completed";
     else return;
     try {
-      await axios.post(`${API_BASE}/update-status`, { order_id: orderId, status: nextStatus }, { withCredentials: true });
+      await axios.post(
+        `${API_BASE}/update-status`,
+        { order_id: orderId, status: nextStatus },
+        { withCredentials: true }
+      );
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus } : o))
       );
+      console.log(`[debug] Updated order ${orderId} → ${nextStatus}`);
     } catch (err) {
       console.error("❌ Lỗi khi cập nhật trạng thái:", err);
     }
@@ -260,18 +354,19 @@ const ShopOrders = () => {
 
   const handleCancelOrder = async (orderId) => {
     try {
-      await axios.post(`${API_BASE}/update-status`, { order_id: orderId, status: "cancelled" }, { withCredentials: true });
+      await axios.post(
+        `${API_BASE}/update-status`,
+        { order_id: orderId, status: "cancelled" },
+        { withCredentials: true }
+      );
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o))
       );
+      console.log(`[debug] Cancelled order ${orderId}`);
     } catch (err) {
       console.error("❌ Lỗi khi huỷ đơn:", err);
     }
   };
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
 
   const counts = useMemo(() => {
     const pending = orders.filter((o) => o.status === "pending").length;
@@ -299,7 +394,13 @@ const ShopOrders = () => {
     );
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f9fafb", p: { xs: 2, sm: 3, md: 4 } }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: "#f9fafb",
+        p: { xs: 2, sm: 3, md: 4 },
+      }}
+    >
       <Box sx={{ maxWidth: 1200, mx: "auto" }}>
         <Typography variant="h4" sx={{ fontWeight: 700, fontSize: 24, mb: 0.5 }}>
           Quản lý đơn hàng
@@ -308,13 +409,46 @@ const ShopOrders = () => {
           Theo dõi và xử lý đơn hàng của khách
         </Typography>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: { xs: 2, sm: 3 }, mb: 2.5 }}>
-          <StatCard label="Chờ xác nhận" value={counts.pending} color="#d08700" icon={<ScheduleIcon sx={{ color: "#d08700" }} />} />
-          <StatCard label="Đang chế biến" value={counts.cooking} color="#155dfc" icon={<CookingIcon sx={{ color: "#155dfc" }} />} />
-          <StatCard label="Đang giao / Hoàn tất / Huỷ" value={counts.done} color="#00a63e" icon={<ShippingIcon sx={{ color: "#00a63e" }} />} />
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: { xs: 2, sm: 3 },
+            mb: 2.5,
+          }}
+        >
+          <StatCard
+            label="Chờ xác nhận"
+            value={counts.pending}
+            color="#d08700"
+            icon={<ScheduleIcon sx={{ color: "#d08700" }} />}
+          />
+          <StatCard
+            label="Đang chế biến"
+            value={counts.cooking}
+            color="#155dfc"
+            icon={<CookingIcon sx={{ color: "#155dfc" }} />}
+          />
+          <StatCard
+            label="Đang giao / Hoàn tất / Huỷ"
+            value={counts.done}
+            color="#00a63e"
+            icon={<ShippingIcon sx={{ color: "#00a63e" }} />}
+          />
         </Box>
 
-        <Box sx={{ backgroundColor: "#ececf0", borderRadius: "14px", height: 36, px: 0.5, mb: 3, display: "flex", alignItems: "center", justifyContent: "space-around" }}>
+        <Box
+          sx={{
+            backgroundColor: "#ececf0",
+            borderRadius: "14px",
+            height: 36,
+            px: 0.5,
+            mb: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-around",
+          }}
+        >
           {[
             { key: "all", label: `Tất cả (${counts.all})` },
             { key: "pending", label: `Chờ (${counts.pending})` },
@@ -330,7 +464,8 @@ const ShopOrders = () => {
                 borderRadius: "10px",
                 backgroundColor: tab === tabItem.key ? "#fff" : "transparent",
                 fontWeight: 600,
-                boxShadow: tab === tabItem.key ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+                boxShadow:
+                  tab === tabItem.key ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
               }}
             >
               {tabItem.label}
@@ -340,7 +475,12 @@ const ShopOrders = () => {
 
         <Stack spacing={2.5}>
           {filtered.map((o) => (
-            <OrderCard key={o.id} order={o} onAdvance={handleAdvanceStatus} onCancel={handleCancelOrder} />
+            <OrderCard
+              key={o.id}
+              order={o}
+              onAdvance={handleAdvanceStatus}
+              onCancel={handleCancelOrder}
+            />
           ))}
         </Stack>
       </Box>

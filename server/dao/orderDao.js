@@ -313,7 +313,7 @@ class OrderDao extends GenericDao {
     sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length};`;
 
     const res = await pool.query(sql, params);
-    return res.rows.map((r) => new this.Model(r));
+    return res.rows.map((r) => ({ ...r }));
   }
 
 }

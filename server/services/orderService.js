@@ -42,7 +42,7 @@ class OrderService {
     const items = await Promise.all(
       orders.map(async (o) => {
         const details = await orderDetailService.list(o.order_id, { withProduct: true });
-        return { order: o, details };
+        return { order: { ...o }, details };
       })
     );
     return items;
