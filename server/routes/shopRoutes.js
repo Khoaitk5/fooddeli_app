@@ -12,6 +12,9 @@ router.get("/me", shopController.getMyShop);
 // 📋 Lấy danh sách tất cả cửa hàng
 router.get("/list", shopController.getAllShops);
 
+// 🍱 Lấy shops theo loại món ăn (query: ?foodType=Đồ Ăn Nhanh)
+router.get("/by-food-type", shopController.getShopsByFoodType);
+
 // 🔍 Lấy chi tiết cửa hàng (ẩn ID khỏi URL)
 router.post("/detail", shopController.getShopDetail);
 
@@ -29,7 +32,5 @@ router.post("/assign-address", shopController.assignAddressToShop);
 
 // ❌ Xóa cửa hàng (ẩn ID)
 router.delete("/delete", shopController.deleteShop);
-
-
 
 module.exports = router;

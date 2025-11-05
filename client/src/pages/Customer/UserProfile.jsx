@@ -8,11 +8,12 @@ import {
 import axios from 'axios';
 import { EditProfileDialog } from '@/components/role-specific/Customer/EditProfileDialog';
 import { AddressesDialog } from '@/components/role-specific/Customer/AddressesDialog';
-import { PaymentMethodsDialog } from '@/components/role-specific/Customer/PaymentMethodsDialog';
 import { VouchersDialog } from '@/components/role-specific/Customer/VouchersDialog';
 import { SettingsDialog } from '@/components/role-specific/Customer/SettingsDialog';
 import { useAuth } from '../../hooks/useAuth';
 import Navbar from '../../components/shared/Navbar';
+// THÊM IMPORT MỚI
+import AnimatedLogoutButton from '../../components/shared/AnimatedLogoutButton'; // (Hãy điều chỉnh đường dẫn này)
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -32,7 +33,6 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showAddresses, setShowAddresses] = useState(false);
-  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [showVouchers, setShowVouchers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -101,12 +101,6 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
       onClick: () => setShowAddresses(true)
     },
     {
-      icon: CreditCard,
-      title: 'Phương thức thanh toán',
-      color: '#0ea5e9',
-      onClick: () => setShowPaymentMethods(true)
-    },
-    {
       icon: Clock,
       title: 'Lịch sử đơn hàng',
       color: '#8b5cf6',
@@ -155,7 +149,6 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
     <div style={{ width: '100%', height: '100%', background: '#f5f5f5' }}>
       {/* Header gradient */}
       <div style={{
-        background: 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
         padding: `${isMobile ? '2rem' : isTablet ? '2.5rem' : '3rem'} ${padding}`,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         boxShadow: '0 0.25rem 1rem rgba(238, 77, 45, 0.2)'

@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
-import RecentSearchItem from "../../components/shared/RecentSearchItem";
-import SuggestSearchItem from "../../components/shared/SuggestSearchItem";
 import RecommendItem from "../../components/shared/RecommendItem";
 import SearchTitle from "../../components/shared/SearchTitle";
 import ClearIcon from "../../components/shared/ClearIcon";
@@ -12,27 +10,14 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
 
-  const recentSearches = [
-    "phúc long",
-    "bánh trung thu highlands",
-    "Highlands Coffee",
-  ];
-  const suggestSearches = ["Gà Ủ Muối", "Bun Dau Mam Tom", "Mcdonald's", "Kfc"];
-
-  // Đã thêm các món ăn để ví dụ gợi ý được chính xác
+  // Danh sách các cửa hàng được đề xuất
   const allItems = [
-    { title: "Gà Ủ Muối", image: "/gaumuoi.webp", distance: "1.5km" },
-    { title: "Gà Rán", image: "/garan.jpg", distance: "0.9km" },
-    { title: "Gà Chiên", image: "/gachien.jpg", distance: "1.1km" },
-    { title: "Gạo Nếp", image: "/gaonep.jpg", distance: "3.0km" },
     { title: "Bún Đậu Cuối Ngõ", image: "/bundau.jpg", distance: "0.4km" },
     { title: "Highlands Coffee", image: "/highland.png", distance: "1.2km" },
     { title: "Phúc Long", image: "/phuclong.jpg", distance: "0.8km" },
     { title: "Sà Bì Chưởng", image: "/sabichuong.jpg", distance: "2.1km" },
     { title: "Lotteria", image: "/lotteria.png", distance: "0.6km" },
     { title: "KFC", image: "https://upload.wikimedia.org/wikipedia/sco/thumb/b/bf/KFC_logo.svg/2048px-KFC_logo.svg.png", distance: "0.9km" },
-    { title: "Tocotoco", image: "/tocotoco.webp", distance: "2.0km" },
-    { title: "Mcdonald's", image: "/mc.jpg", distance: "1.8km" },
   ];
 
   const handleSearch = (query) => {
@@ -45,6 +30,18 @@ const SearchPage = () => {
     } else {
       setSearchResults([]);
     }
+  };
+
+  // Xử lý khi nhấn Enter để tìm kiếm
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/customer/search-results?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  // Xử lý khi click vào gợi ý tìm kiếm
+  const handleSuggestionClick = (keyword) => {
+    navigate(`/customer/search-results?query=${encodeURIComponent(keyword)}`);
   };
 
   // Hàm để render văn bản với phần trùng khớp được in đậm
@@ -107,6 +104,7 @@ const SearchPage = () => {
             placeholder="Bạn có muốn ăn gì không?"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
             style={{
               flex: 1,
               marginLeft: "3.33vw",
@@ -132,7 +130,7 @@ const SearchPage = () => {
       </div>
 
       {searchQuery ? (
-        /* PHẦN ĐÃ SỬA: Hiển thị danh sách gợi ý tìm kiếm */
+        /* Hiển thị danh sách gợi ý tìm kiếm */
         <div
           style={{
             position: "absolute",
@@ -146,6 +144,7 @@ const SearchPage = () => {
             searchResults.map((item, idx) => (
               <div
                 key={idx}
+                onClick={() => handleSuggestionClick(item.title)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -184,7 +183,7 @@ const SearchPage = () => {
           )}
         </div>
       ) : (
-        /* PHẦN GIỮ NGUYÊN: Hiển thị khi chưa có nội dung tìm kiếm */
+        /* Hiển thị danh sách được đề xuất khi chưa tìm kiếm */
         <>
           <SearchTitle
             style={{
@@ -193,64 +192,12 @@ const SearchPage = () => {
               top: "13.25vh",
             }}
           >
-            Đã tìm kiếm gần đây
-          </SearchTitle>
-
-          <div
-            style={{
-              position: "absolute",
-              top: "18.625vh",
-              left: "5.28vw",
-              width: "90vw",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "1.875vh 2.78vw",
-            }}
-          >
-            {recentSearches.map((text, idx) => (
-              <RecentSearchItem key={idx} text={text} />
-            ))}
-          </div>
-
-          <SearchTitle
-            style={{
-              position: "absolute",
-              left: "5.28vw",
-              top: "31.875vh",
-            }}
-          >
-            Gợi ý tìm kiếm
-          </SearchTitle>
-
-          <div
-            style={{
-              position: "absolute",
-              top: "37.25vh",
-              left: "5.28vw",
-              width: "90vw",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "1.875vh 2.78vw",
-            }}
-          >
-            {suggestSearches.map((text, idx) => (
-              <SuggestSearchItem key={idx} text={text} />
-            ))}
-          </div>
-
-          <SearchTitle
-            style={{
-              position: "absolute",
-              left: "5.28vw",
-              top: "50.5vh",
-            }}
-          >
             Được đề xuất
           </SearchTitle>
           <div
             style={{
               position: "absolute",
-              top: "55.875vh",
+              top: "18.625vh",
               left: 0,
               width: "100%",
               display: "grid",
@@ -260,36 +207,14 @@ const SearchPage = () => {
               rowGap: "2.5vh",
             }}
           >
-            <RecommendItem
-              image="/bundau.jpg"
-              title="Bún Đậu Cuối Ngõ"
-              distance="0.4km"
-            />
-            <RecommendItem
-              image="/highland.png"
-              title="Highlands Coffee"
-              distance="1.2km"
-            />
-            <RecommendItem
-              image="/phuclong.jpg"
-              title="Phúc Long"
-              distance="0.8km"
-            />
-            <RecommendItem
-              image="/sabichuong.jpg"
-              title="Sà Bì Chưởng"
-              distance="2.1km"
-            />
-            <RecommendItem
-              image="/lotteria.png"
-              title="Lotteria"
-              distance="0.6km"
-            />
-            <RecommendItem
-              image="https://upload.wikimedia.org/wikipedia/sco/thumb/b/bf/KFC_logo.svg/2048px-KFC_logo.svg.png"
-              title="KFC"
-              distance="0.9km"
-            />
+            {allItems.map((item, idx) => (
+              <RecommendItem
+                key={idx}
+                image={item.image}
+                title={item.title}
+                distance={item.distance}
+              />
+            ))}
           </div>
         </>
       )}

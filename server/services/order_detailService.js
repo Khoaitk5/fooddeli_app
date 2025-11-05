@@ -1,102 +1,65 @@
 // services/orderDetailService.js
 const orderDetailDao = require("../dao/order_detailDao");
+const orderDao = require("../dao/orderDao");
 
-const orderDetailService = {
+class OrderDetailService {
   /**
-   * ➕ Thêm mới 1 hoặc nhiều dòng chi tiết đơn hàng
-   * @param {object|object[]} orderDetailData - Dữ liệu chi tiết đơn hàng
-   * @returns {Promise<object|object[]>}
+   * Lấy chi tiết theo order_id
    */
-  async createOrderDetail(orderDetailData) {
-    if (Array.isArray(orderDetailData)) {
-      const results = [];
-      for (const detail of orderDetailData) {
-        if (detail.quantity <= 0) {
-          throw new Error("Số lượng phải lớn hơn 0");
-        }
-        const created = await orderDetailDao.create(detail);
-        results.push(created);
-      }
-      return results;
-    } else {
-      if (orderDetailData.quantity <= 0) {
-        throw new Error("Số lượng phải lớn hơn 0");
-      }
-      return await orderDetailDao.create(orderDetailData);
-    }
-  },
+  async list(orderId, { withProduct = true } = {}) {
+    const id = Number(orderId);
+    if (!id) throw new Error("orderId is required");
+    return await orderDetailDao.getByOrderId(id, { withProduct });
+  }
 
   /**
-   * 📦 Lấy chi tiết đơn hàng theo ID dòng chi tiết
-   * @param {number} orderDetailId
-   * @returns {Promise<object|null>}
+   * Bulk add nhiều dòng chi tiết (chỉ gọi DAO), rồi recalc tổng (gọi DAO)
    */
-  async getOrderDetailById(orderDetailId) {
-    return await orderDetailDao.findById(orderDetailId);
-  },
+  async addMany(orderId, items, { useProvidedUnitPrice = false } = {}) {
+    const id = Number(orderId);
+    if (!id) throw new Error("orderId is required");
+    if (!Array.isArray(items) || items.length === 0) throw new Error("items is empty");
+
+    const result = await orderDetailDao.addMany(id, items, {
+      mergeDuplicates: true,
+      useProvidedUnitPrice,
+    });
+
+    const updatedOrder = await orderDao.recalcTotals(id);
+    return { ...result, order: updatedOrder };
+  }
 
   /**
-   * 📜 Lấy tất cả chi tiết đơn hàng
-   * @returns {Promise<object[]>}
+   * Cập nhật số lượng 1 dòng chi tiết:
+   * - lấy detail để biết order_id (DAO.findById)
+   * - gọi DAO.updateQuantity
+   * - gọi orderDao.recalcTotals(order_id)
    */
-  async getAllOrderDetails() {
-    return await orderDetailDao.findAll();
-  },
+  async updateQuantity(detailId, quantity) {
+    const did = Number(detailId);
+    const qty = Number(quantity);
+    if (!did || !qty) throw new Error("detailId and quantity are required");
+
+    const detail = await orderDetailDao.findById("id", did);
+    if (!detail) throw new Error("Order detail not found");
+
+    const updated = await orderDetailDao.updateQuantity(did, qty);
+    await orderDao.recalcTotals(detail.order_id);
+
+    return updated;
+  }
 
   /**
-   * 📦 Lấy tất cả chi tiết theo order_id
-   * @param {number} orderId - ID đơn hàng
-   * @returns {Promise<object[]>}
+   * Xoá toàn bộ chi tiết theo order_id rồi recalc tổng
    */
-  async getDetailsByOrderId(orderId) {
-    return await orderDetailDao.getByOrderId(orderId);
-  },
+  async deleteByOrderId(orderId) {
+    const id = Number(orderId);
+    if (!id) throw new Error("orderId is required");
 
-  /**
-   * ✏️ Cập nhật thông tin chi tiết đơn hàng
-   * @param {number} orderDetailId
-   * @param {object} updateData
-   * @returns {Promise<object>}
-   */
-  async updateOrderDetail(orderDetailId, updateData) {
-    const existing = await orderDetailDao.findById(orderDetailId);
-    if (!existing) {
-      throw new Error("Chi tiết đơn hàng không tồn tại");
-    }
-    return await orderDetailDao.update(orderDetailId, updateData);
-  },
+    const count = await orderDetailDao.deleteByOrderId(id);
+    await orderDao.recalcTotals(id); // subtotal = 0 => total_price = delivery_fee
+    return count;
+  }
+}
 
-  /**
-   * ✏️ Cập nhật số lượng dòng chi tiết đơn hàng
-   * @param {number} orderDetailId
-   * @param {number} quantity
-   * @returns {Promise<object>}
-   */
-  async updateQuantity(orderDetailId, quantity) {
-    return await orderDetailDao.updateQuantity(orderDetailId, quantity);
-  },
-
-  /**
-   * 🗑️ Xóa một dòng chi tiết đơn hàng
-   * @param {number} orderDetailId
-   * @returns {Promise<boolean>}
-   */
-  async deleteOrderDetail(orderDetailId) {
-    const existing = await orderDetailDao.findById(orderDetailId);
-    if (!existing) {
-      throw new Error("Chi tiết đơn hàng không tồn tại");
-    }
-    return await orderDetailDao.delete(orderDetailId);
-  },
-
-  /**
-   * 🗑️ Xóa toàn bộ chi tiết theo order_id (khi hủy đơn)
-   * @param {number} orderId
-   * @returns {Promise<number>} - Số dòng chi tiết đã bị xóa
-   */
-  async deleteDetailsByOrderId(orderId) {
-    return await orderDetailDao.deleteByOrderId(orderId);
-  },
-};
-
-module.exports = orderDetailService;
+module.exports = new OrderDetailService();

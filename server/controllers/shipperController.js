@@ -125,3 +125,26 @@ exports.getMyShipperProfile = async (req, res) => {
     });
   }
 };
+
+
+exports.listNearbyCookingFull = async (req, res) => {
+  try {
+    const { lat, lon, radius_km, shipper_id, limit, offset } = req.body || {};
+    const latN = Number(lat), lonN = Number(lon);
+    if (!Number.isFinite(latN) || !Number.isFinite(lonN)) {
+      return res.status(400).json({ success: false, message: "lat & lon required (number)" });
+    }
+    const r = await ShipperProfileService.listNearbyCookingFull({
+      lat: latN,
+      lon: lonN,
+      radiusKm: Number(radius_km) || 3,
+      shipperId: shipper_id ?? null,
+      limit: Number(limit) || 200,
+      offset: Number(offset) || 0,
+    });
+    return res.json({ success: true, data: r.items, meta: r.meta });
+  } catch (err) {
+    console.error("[ShipperCtrl:listNearbyCookingFull]", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};

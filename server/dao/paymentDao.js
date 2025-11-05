@@ -5,7 +5,7 @@ const pool = require("../config/db");
 class PaymentDao extends GenericDao {
   constructor() {
     super("payments", Payment);
-    this.db = pool;
+    pool = pool;
   }
 
   /**
@@ -18,7 +18,7 @@ class PaymentDao extends GenericDao {
       WHERE order_id = $1
       ORDER BY paid_at DESC NULLS LAST;
     `;
-    const result = await this.db.query(query, [orderId]);
+    const result = await pool.query(query, [orderId]);
     return result.rows.map(row => new Payment(row));
   }
 
@@ -49,7 +49,7 @@ class PaymentDao extends GenericDao {
       RETURNING *;
     `;
 
-    const result = await this.db.query(query, [status, paidAt, paymentId]);
+    const result = await pool.query(query, [status, paidAt, paymentId]);
     return result.rows[0] ? new Payment(result.rows[0]) : null;
   }
 
@@ -63,7 +63,7 @@ class PaymentDao extends GenericDao {
       WHERE status = 'success'
       ORDER BY paid_at DESC;
     `;
-    const result = await this.db.query(query);
+    const result = await pool.query(query);
     return result.rows.map(row => new Payment(row));
   }
 }

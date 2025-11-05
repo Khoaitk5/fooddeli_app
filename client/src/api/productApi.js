@@ -20,4 +20,14 @@ export const getCompleteProducts = async (params = {}) => {
 
   return response.data;
 };
+
+/**
+ * 🔎 Lấy chi tiết sản phẩm theo ID
+ * @param {number|string} id
+ */
+export const getProductById = async (id) => {
+  if (!id && id !== 0) throw new Error("Thiếu id sản phẩm");
+  const response = await axiosInstance.get(`/products/${id}`);
+  return response.data;
+};
  

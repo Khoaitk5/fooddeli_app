@@ -19,7 +19,7 @@ class NotificationDao extends GenericDao {
       WHERE user_id = $1
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rows;
   }
 
@@ -34,7 +34,7 @@ class NotificationDao extends GenericDao {
       WHERE user_id = $1 AND is_read = FALSE
       ORDER BY created_at DESC;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rows;
   }
 
@@ -49,7 +49,7 @@ class NotificationDao extends GenericDao {
       SET is_read = TRUE
       WHERE user_id = $1 AND is_read = FALSE;
     `;
-    const result = await this.db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rowCount; // số bản ghi được cập nhật
   }
 
@@ -65,7 +65,7 @@ class NotificationDao extends GenericDao {
       WHERE id = $1
       RETURNING *;
     `;
-    const result = await this.db.query(query, [notificationId]);
+    const result = await pool.query(query, [notificationId]);
     return result.rows[0];
   }
 }

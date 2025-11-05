@@ -6,16 +6,21 @@ const shopProfileService = require("../services/shop_profileService");
  * 📌 Lấy danh sách tất cả người dùng (chỉ admin)
  */
 const getAllUsers = async (req, res) => {
-  try {
-    const users = await userService.getAllUsers();
-    return res.status(200).json({ success: true, users });
-  } catch (error) {
-    console.error("⚠️ Lỗi getAllUsers:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Lỗi server khi lấy danh sách người dùng.",
-    });
-  }
+  // try {
+  //   const users = await userService.getAllUsers();
+  //   return res.status(200).json({ success: true, users });
+  // } catch (error) {
+  //   console.error("⚠️ Lỗi getAllUsers:", error);
+  //   return res.status(500).json({
+  //     success: false,
+  //     message: "Lỗi server khi lấy danh sách người dùng.",
+  //   });
+  // }
+
+  return res.status(501).json({
+    success: false,
+    message: "Chức năng chưa được triển khai.",
+  });
 };
 
 /**

@@ -1,44 +1,49 @@
-import React from 'react';
-
-const buttonStyle = {
-  width: "89.3vw",
-  height: "6.5vh",
-  background: "linear-gradient(180deg, #5ead1d, #54a312)",
-  boxShadow: "0px -1px 0px #46890d inset, 0px 1px 0px rgba(255, 255, 255, 0.12) inset",
-  color: "white",
-  fontSize: "1.5rem",
-  fontFamily: "Be Vietnam Pro",
-  fontWeight: "700",
-  wordWrap: "break-word",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "1.2rem",
-  border: "none",
-  cursor: "pointer",
-  overflow: "hidden",
-};
-
 const SubmitButton = ({ children, onClick, style, isValid = true, ...props }) => {
-  const finalStyle = {
-    ...buttonStyle,
-    ...(isValid ? {} : {
-      background: "#e8ebe6",
-      color: "#b6b8b6",
-      boxShadow: "none",
-    }),
+  const containerStyle = {
+    width: '100%',
+    height: "10.125vh",
+    position: 'relative',
     ...style,
   };
 
+  const backgroundStyle = {
+    width: "100%",
+    height: "10.125vh",
+    left: 0,
+    top: 0,
+    position: 'absolute',
+    background: 'white',
+    boxShadow: '0px 1px 10px rgba(0, 0, 0, 0.25)',
+    borderTopLeftRadius: "1.6rem",
+    borderTopRightRadius: "1.6rem",
+  };
+
+  const buttonStyle = {
+    width: "87.78vw",
+    height: "6.375vh",
+    left: "50%",
+    top: "1.875vh",
+    transform: 'translateX(-50%)',
+    position: 'absolute',
+    background: isValid ? '#2BCDD2' : '#EAF8F8',
+    borderRadius: 999,
+    cursor: isValid ? 'pointer' : 'not-allowed',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: isValid ? 'white' : '#2BCDD2',
+    fontSize: "1.4rem",
+    fontFamily: 'Be Vietnam Pro',
+    fontWeight: '700',
+  };
+
   return (
-    <button
-      type="submit"
-      onClick={onClick}
-      style={finalStyle}
-      {...props}
-    >
-      {children}
-    </button>
+    <div style={containerStyle} onClick={isValid ? onClick : undefined} {...props}>
+      <div style={backgroundStyle} />
+      <div style={buttonStyle}>
+        {children}
+      </div>
+    </div>
   );
 };
 
