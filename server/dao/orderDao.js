@@ -275,18 +275,59 @@ class OrderDao extends GenericDao {
     return res.rows; // giữ dạng raw để service xử lý tiếp
   }
 
-  // Kiểm tra shipper đang có đơn shipping chưa
+  // Kiểm tra shipper đang có đơn chưa hoàn tất (đã gán hoặc đang giao)
   async hasShippingOfShipper(shipperId) {
     const sql = `
     SELECT 1
     FROM orders
     WHERE shipper_id = $1
-      AND status = 'shipping'
+      AND status IN ('cooking','shipping')  -- coi là bận nếu đã gán hoặc đang shipping
     LIMIT 1;
   `;
     const r = await pool.query(sql, [shipperId]);
     return !!r.rows[0];
   }
+
+  // Gán shipper nếu đơn còn cooking & chưa ai nhận (KHÔNG đổi status)
+  async assignShipperIfCooking({ orderId, shipperId }) {
+    const result = await pool.query(
+      `
+    UPDATE orders
+       SET shipper_id = $1,
+           updated_at = NOW()
+     WHERE order_id   = $2
+       AND status     = 'cooking'
+       AND shipper_id IS NULL
+    `,
+      [shipperId, orderId]
+    );
+    return result.rowCount > 0;
+  }
+  async updateStatusToShipping({ orderId, shipperId }) {
+    const sql = `
+    UPDATE orders
+       SET status='shipping', updated_at=NOW()
+     WHERE order_id=$1
+       AND shipper_id=$2
+       AND status='cooking'
+  `;
+    const r = await pool.query(sql, [orderId, shipperId]);
+    return r.rowCount > 0;
+  }
+
+  async completeIfOwnedByShipper({ orderId, shipperId }) {
+  const sql = `
+    UPDATE orders
+       SET status='completed',
+           updated_at = NOW()
+     WHERE order_id = $1
+       AND shipper_id = $2
+       AND status IN ('shipping')         -- chặt chẽ: chỉ khi đang giao
+    RETURNING *;
+  `;
+  const r = await pool.query(sql, [orderId, shipperId]);
+  return r.rows[0] || null;
+}
 }
 
 module.exports = new OrderDao();

@@ -6,6 +6,7 @@ const addressService = require("./addressService");
 const shopService = require("./shop_profileService");
 const orderDao = require("../dao/orderDao");
 const map4dService = require("../services/map4dService");
+const userDao = require("../dao/userDao");
 
 // 📍 Tính khoảng cách giữa 2 tọa độ theo công thức Haversine (km)
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -218,6 +219,7 @@ const shipperProfileService = {
     // Nếu đang giao thì không trả đơn mới
     if (shipperId) {
       const busy = await orderDao.hasShippingOfShipper(shipperId);
+      console.log("[busy-check]", { shipperId, busy });
       if (busy) {
         return {
           items: [],
@@ -254,7 +256,10 @@ const shipperProfileService = {
           destinations.join("|")
         );
         // Thường: matrix.rows[0].elements[i].duration.value (giây) / distance.value (m)
-        elements = matrix?.rows?.[0]?.elements || []; // fallback an toàn
+        elements =
+          matrix?.rows?.[0]?.elements || // kiểu Google
+          matrix?.elements || // một số API trả phẳng
+          [];
       } catch (e) {
         console.error("[Map4D matrix] error:", e.message);
         elements = [];
@@ -267,16 +272,29 @@ const shipperProfileService = {
       // Google-like
       if (el?.duration?.value != null)
         return Math.round(Number(el.duration.value));
-      // Một số API trả duration theo giây ở root
+      // duration ở root (giây)
       if (el?.duration != null && Number.isFinite(Number(el.duration)))
         return Math.round(Number(el.duration));
+      // một số API dùng tên khác
+      if (el?.time != null && Number.isFinite(Number(el.time)))
+        return Math.round(Number(el.time));
+      if (el?.travelTime != null && Number.isFinite(Number(el.travelTime)))
+        return Math.round(Number(el.travelTime));
+      if (el?.duration_in_traffic?.value != null)
+        return Math.round(Number(el.duration_in_traffic.value));
       return null;
     };
+
     const readDistanceKm = (el, fallbackKm) => {
       if (!el) return fallbackKm;
       if (el?.distance?.value != null) return Number(el.distance.value) / 1000; // m -> km
-      if (el?.distance != null && Number.isFinite(Number(el.distance)))
-        return Number(el.distance) / 1000;
+      if (el?.distance != null && Number.isFinite(Number(el.distance))) {
+        const m = Number(el.distance);
+        return m > 1000 ? m / 1000 : fallbackKm;
+      }
+      if (el?.length != null && Number.isFinite(Number(el.length))) {
+        return Number(el.length) / 1000; // nhiều API dùng length (m)
+      }
       return fallbackKm;
     };
 
@@ -286,8 +304,15 @@ const shipperProfileService = {
       const { row, distKm } = shortlisted[i];
       const el = elements[i] || null;
 
-      const duration_sec = readDurationSeconds(el);
-      const distance_km = Number(readDistanceKm(el, distKm).toFixed(2)); // dùng distance đường đi nếu có, fallback Haversine
+      let distance_km = readDistanceKm(el, distKm);
+      distance_km = Number(distance_km.toFixed(2));
+
+      let duration_sec = readDurationSeconds(el);
+      if (duration_sec == null) {
+        // Fallback: 22 km/h (xe máy nội đô)
+        const AVG_SPEED_KMH = 22;
+        duration_sec = Math.round((distance_km / AVG_SPEED_KMH) * 3600);
+      }
 
       const [details, userAddresses, shopInfoRaw] = await Promise.all([
         orderDetailService.list(row.order_id, { withProduct: true }),
@@ -313,6 +338,22 @@ const shipperProfileService = {
           }
         : null;
 
+      // user của KH (từ order.user_id) & user owner của shop (từ shop_info.user_id)
+      const [customerUser, shopOwnerUser] = await Promise.all([
+        userDao.findById(row.user_id), // KH
+        shopInfoRaw?.user_id ? userDao.findById(shopInfoRaw.user_id) : null, // Owner shop
+      ]);
+
+      const customer_name =
+        customerUser?.full_name || customerUser?.username || "Khách hàng";
+      const customer_phone = customerUser?.phone || null;
+
+      const shop_contact_name =
+        shopOwnerUser?.full_name ||
+        shopOwnerUser?.username ||
+        (shopInfoRaw?.shop_name ?? null);
+      const shop_phone = shopOwnerUser?.phone || null;
+
       items.push({
         order: row,
         details,
@@ -320,10 +361,78 @@ const shipperProfileService = {
         shop_info,
         distance_km,
         duration_sec, // ✅ FE đang cần key này
+        customer_name,
+        customer_phone,
+        shop_contact_name,
+        shop_phone,
       });
     }
 
     return { items, meta: { busy: false, total: items.length, limit, offset } };
+  },
+
+  async acceptOrder({ orderId, shipperId }) {
+    if (!orderId || !shipperId) {
+      const e = new Error("orderId & shipperId required");
+      e.code = 400;
+      throw e;
+    }
+
+    // 1) kiểm tra shipper đang bận không
+    const busy = await orderDao.hasShippingOfShipper(shipperId);
+    console.log("[busy-check]", { shipperId, busy });
+    if (busy) {
+      const e = new Error("Bạn đang giao một đơn khác");
+      e.code = 409;
+      throw e;
+    }
+
+    // 2) gán shipper nếu đơn vẫn còn 'cooking'
+    const ok = await orderDao.assignShipperIfCooking({ orderId, shipperId });
+    if (!ok) {
+      const e = new Error("Đơn đã được nhận bởi shipper khác");
+      e.code = 409;
+      throw e;
+    }
+
+    // 3) trả về order đã gán (optional)
+    const order = await orderDao.findById(orderId);
+    return { order };
+  },
+
+  async pickupOrder({ orderId, shipperId }) {
+    if (!orderId || !shipperId) {
+      const e = new Error("orderId & shipperId required");
+      e.code = 400;
+      throw e;
+    }
+    // chỉ cho phép đổi trạng thái khi chính shipper được gán nhận hàng
+    const ok = await orderDao.updateStatusToShipping({ orderId, shipperId });
+    if (!ok) {
+      const e = new Error(
+        "Không thể chuyển sang shipping (đơn không ở trạng thái cooking hoặc không thuộc shipper này)"
+      );
+      e.code = 409;
+      throw e;
+    }
+    const order = await orderDao.findById(orderId);
+    return { order };
+  },
+
+  async completeOrder({ orderId, shipperId }) {
+    if (!orderId || !shipperId) {
+      const e = new Error("orderId & shipperId required");
+      e.code = 400;
+      throw e;
+    }
+
+    const updated = await orderDao.completeIfOwnedByShipper({ orderId, shipperId });
+    if (!updated) {
+      const e = new Error("Không thể hoàn thành: đơn không ở trạng thái shipping hoặc không thuộc bạn");
+      e.code = 409;
+      throw e;
+    }
+    return { order: updated };
   },
 };
 
