@@ -30,6 +30,7 @@ router.post("/check-phone", authController.checkPhoneExists);
 
 router.post("/check-email", authController.checkEmailExists);
 
+router.post("/change-password", authController.changePassword);
 
 
 

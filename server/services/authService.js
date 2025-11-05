@@ -4,7 +4,7 @@ const addressService = require("../services/addressService");
 
 /**
  * @module AuthService
- * @description Xử lý logic đăng nhập và đăng ký tài khoản người dùng
+ * @description Xử lý logic đăng nhập, đăng ký và xác thực người dùng
  */
 const AuthService = {
   /**
@@ -98,6 +98,29 @@ const AuthService = {
 
     newUser.fullname = fullname;
     return newUser;
+  },
+
+  /**
+   * @async
+   * @function changePassword
+   * @description Đổi mật khẩu người dùng (dùng trong Profile)
+   * @param {number} userId - ID người dùng
+   * @param {string} oldPassword - Mật khẩu hiện tại
+   * @param {string} newPassword - Mật khẩu mới
+   */
+  async changePassword(userId, oldPassword, newPassword) {
+    const user = await userDao.findById(userId);
+    if (!user) throw new Error("Không tìm thấy người dùng.");
+
+    // So sánh mật khẩu cũ bằng bcrypt
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) throw new Error("❌ Mật khẩu cũ không chính xác.");
+
+    // Mã hóa mật khẩu mới
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await userDao.updateById(userId, { password: hashedNewPassword });
+
+    return true;
   },
 };
 

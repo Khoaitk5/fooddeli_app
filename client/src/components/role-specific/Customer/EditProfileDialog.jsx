@@ -1,48 +1,100 @@
 import { X, User, Phone, Mail } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile, isTablet }) {
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+export function EditProfileDialog({ isOpen, onClose, onSave, isMobile, isTablet }) {
   const [formData, setFormData] = useState({
-    name: userData.name,
-    phone: userData.phone,
-    email: userData.email
+    full_name: "",
+    phone: "",
+    email: ""
   });
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  if (!isOpen) return null;
+  const [loading, setLoading] = useState(false);
 
   const padding = isMobile ? '1.5rem' : isTablet ? '1.75rem' : '2rem';
   const inputPadding = isMobile ? '0.875rem' : '1rem';
 
+  // 🧩 Lấy dữ liệu user thật khi mở dialog
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API_BASE_URL}/users/me`, { withCredentials: true });
+        const u = res.data?.user;
+        if (u) {
+          setFormData({
+            full_name: u.full_name || "",
+            phone: u.phone || "",
+            email: u.email || ""
+          });
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi tải thông tin người dùng:", err);
+        alert("Không thể tải thông tin người dùng!");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [isOpen]);
+
+  // 🧩 Xử lý thay đổi input
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // 🧩 Gửi dữ liệu cập nhật user
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  // 🔹 Kiểm tra số điện thoại
+  const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
+  if (!phoneRegex.test(formData.phone)) {
+    alert("⚠️ Số điện thoại không hợp lệ.Vui lòng nhập 10 số hợp lệ.");
+    return;
+  }
+
+  try {
+    const res = await axios.put(
+      `${API_BASE_URL}/users/me`,
+      {
+        full_name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+      },
+      { withCredentials: true }
+    );
+
+    alert(res.data.message || "✅ Cập nhật thông tin thành công!");
+    onSave(res.data.user);
+    onClose();
+  } catch (err) {
+    alert("❌ Lỗi khi lưu dữ liệu: " + (err.response?.data?.message || err.message));
+  }
+};
+
+
+  if (!isOpen) return null;
+
   return (
     <div style={{
       position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      top: 0, left: 0, right: 0, bottom: 0,
       zIndex: 9999,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     }}>
       {/* Backdrop */}
-      <div 
+      <div
         onClick={onClose}
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(4px)'
         }}
@@ -62,7 +114,7 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
         {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
-          padding: padding,
+          padding,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -90,16 +142,14 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
               backdropFilter: 'blur(10px)',
               transition: 'all 0.2s'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
           >
             <X size={isMobile ? 18 : 20} color="#fff" strokeWidth={2.5} />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: padding }}>
-          {/* Name Field */}
+        <form onSubmit={handleSubmit} style={{ padding }}>
+          {/* Họ và tên */}
           <div style={{ marginBottom: isMobile ? '1.25rem' : '1.5rem' }}>
             <label style={{
               display: 'block',
@@ -110,24 +160,17 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
             }}>
               Họ và tên
             </label>
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <div style={{
-                position: 'absolute',
-                left: inputPadding,
-                display: 'flex',
-                alignItems: 'center',
-                pointerEvents: 'none'
+                position: 'absolute', left: inputPadding,
+                display: 'flex', alignItems: 'center', pointerEvents: 'none'
               }}>
                 <User size={isMobile ? 18 : 20} color="#999" strokeWidth={2} />
               </div>
               <input
                 type="text"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
+                value={formData.full_name}
+                onChange={(e) => handleChange('full_name', e.target.value)}
                 required
                 style={{
                   width: '100%',
@@ -139,19 +182,11 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
                   outline: 'none',
                   transition: 'all 0.2s'
                 }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#ee4d2d';
-                  e.currentTarget.style.boxShadow = '0 0 0 0.1875rem rgba(238, 77, 45, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = '#e5e5e5';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
               />
             </div>
           </div>
 
-          {/* Phone Field */}
+          {/* Số điện thoại */}
           <div style={{ marginBottom: isMobile ? '1.25rem' : '1.5rem' }}>
             <label style={{
               display: 'block',
@@ -162,17 +197,10 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
             }}>
               Số điện thoại
             </label>
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <div style={{
-                position: 'absolute',
-                left: inputPadding,
-                display: 'flex',
-                alignItems: 'center',
-                pointerEvents: 'none'
+                position: 'absolute', left: inputPadding,
+                display: 'flex', alignItems: 'center', pointerEvents: 'none'
               }}>
                 <Phone size={isMobile ? 18 : 20} color="#999" strokeWidth={2} />
               </div>
@@ -180,8 +208,7 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
-                required
-                pattern="[0-9]{10}"
+                placeholder="Nhập số điện thoại"
                 style={{
                   width: '100%',
                   padding: inputPadding,
@@ -192,19 +219,11 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
                   outline: 'none',
                   transition: 'all 0.2s'
                 }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#ee4d2d';
-                  e.currentTarget.style.boxShadow = '0 0 0 0.1875rem rgba(238, 77, 45, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = '#e5e5e5';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
               />
             </div>
           </div>
 
-          {/* Email Field */}
+          {/* Email */}
           <div style={{ marginBottom: isMobile ? '1.5rem' : '1.75rem' }}>
             <label style={{
               display: 'block',
@@ -215,17 +234,10 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
             }}>
               Email
             </label>
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <div style={{
-                position: 'absolute',
-                left: inputPadding,
-                display: 'flex',
-                alignItems: 'center',
-                pointerEvents: 'none'
+                position: 'absolute', left: inputPadding,
+                display: 'flex', alignItems: 'center', pointerEvents: 'none'
               }}>
                 <Mail size={isMobile ? 18 : 20} color="#999" strokeWidth={2} />
               </div>
@@ -244,26 +256,16 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
                   outline: 'none',
                   transition: 'all 0.2s'
                 }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#ee4d2d';
-                  e.currentTarget.style.boxShadow = '0 0 0 0.1875rem rgba(238, 77, 45, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = '#e5e5e5';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
               />
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: isMobile ? '0.75rem' : '1rem'
-          }}>
+          {/* Buttons */}
+          <div style={{ display: 'flex', gap: isMobile ? '0.75rem' : '1rem' }}>
             <button
               type="button"
               onClick={onClose}
+              disabled={loading}
               style={{
                 flex: 1,
                 padding: isMobile ? '0.875rem' : '1rem',
@@ -273,16 +275,14 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
                 color: '#666',
                 fontSize: isMobile ? '0.9375rem' : '1rem',
                 fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
+                cursor: 'pointer'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#e5e5e5'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
             >
               Hủy
             </button>
             <button
               type="submit"
+              disabled={loading}
               style={{
                 flex: 1,
                 padding: isMobile ? '0.875rem' : '1rem',
@@ -293,19 +293,10 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
                 fontSize: isMobile ? '0.9375rem' : '1rem',
                 fontWeight: '600',
                 cursor: 'pointer',
-                boxShadow: '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-0.125rem)';
-                e.currentTarget.style.boxShadow = '0 0.375rem 1rem rgba(238, 77, 45, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)';
+                opacity: loading ? 0.7 : 1
               }}
             >
-              Lưu thay đổi
+              {loading ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
           </div>
         </form>
@@ -314,14 +305,8 @@ export function EditProfileDialog({ isOpen, onClose, userData, onSave, isMobile,
       <style>
         {`
           @keyframes slideUp {
-            from {
-              opacity: 0;
-              transform: translateY(1rem);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(1rem); }
+            to { opacity: 1; transform: translateY(0); }
           }
         `}
       </style>
