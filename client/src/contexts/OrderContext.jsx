@@ -11,7 +11,7 @@ const OrderContext = createContext();
 // 2. Tạo Provider (Component bọc ngoài)
 export const OrderProvider = ({ children }) => {
   // === LẤY CART TỪ BACKEND ===
-  const { cartItems: backendCartItems, cartCount, loading: cartLoading } = useCart();
+  const { cartItems: backendCartItems, cartCount, loading: cartLoading, refreshCart } = useCart();
   
   // === STATE CỦA ĐƠN HÀNG ===
   const [note, setNote] = useState("");
@@ -66,25 +66,90 @@ export const OrderProvider = ({ children }) => {
   };
   // ==========================================================
 
-  // === LOGIC CỦA ĐƠN HÀNG ===
-  const handleQuantityChange = (index, delta) => {
+  // === LOGIC CỦA ĐƠN HÀNG (ĐỒNG BỘ VỚI BACKEND) ===
+  const handleQuantityChange = async (index, delta) => {
+    const item = currentItems[index];
+    const currentQty = quantities[index];
+    const newQty = Math.max(1, currentQty + delta);
+
+    if (!item || !item.id) return;
+
+    // Update local state ngay lập tức (optimistic update)
     setQuantities((prev) =>
-      prev.map((q, i) => {
-        if (i === index) {
-          return Math.max(1, q + delta);
-        }
-        return q;
-      })
+      prev.map((q, i) => (i === index ? newQty : q))
     );
+
+    // Sync với backend
+    try {
+      const res = await fetch("http://localhost:5000/api/cart/items", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: item.id, quantity: newQty }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Refresh cart để đồng bộ badge và data
+        refreshCart();
+      } else {
+        // Rollback nếu API fail
+        setQuantities((prev) =>
+          prev.map((q, i) => (i === index ? currentQty : q))
+        );
+        console.error("❌ Lỗi khi cập nhật số lượng:", data.message);
+      }
+    } catch (err) {
+      // Rollback nếu có lỗi
+      setQuantities((prev) =>
+        prev.map((q, i) => (i === index ? currentQty : q))
+      );
+      console.error("❌ Lỗi khi cập nhật số lượng:", err);
+    }
   };
 
-  const handleRemoveItem = (indexToRemove) => {
+  const handleRemoveItem = async (indexToRemove) => {
+    const item = currentItems[indexToRemove];
+    
+    if (!item || !item.id) return;
+
+    // Backup để rollback nếu cần
+    const backupItems = [...currentItems];
+    const backupQuantities = [...quantities];
+
+    // Update local state ngay lập tức (optimistic update)
     setCurrentItems((prevItems) =>
       prevItems.filter((_, index) => index !== indexToRemove)
     );
     setQuantities((prevQuantities) =>
       prevQuantities.filter((_, index) => index !== indexToRemove)
     );
+
+    // Sync với backend
+    try {
+      const res = await fetch("http://localhost:5000/api/cart/items", {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: item.id }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Refresh cart để đồng bộ badge và data
+        refreshCart();
+      } else {
+        // Rollback nếu API fail
+        setCurrentItems(backupItems);
+        setQuantities(backupQuantities);
+        console.error("❌ Lỗi khi xóa item:", data.message);
+      }
+    } catch (err) {
+      // Rollback nếu có lỗi
+      setCurrentItems(backupItems);
+      setQuantities(backupQuantities);
+      console.error("❌ Lỗi khi xóa item:", err);
+    }
   };
 
   // === TÍNH TOÁN ===
