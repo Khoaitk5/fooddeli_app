@@ -3,14 +3,14 @@ import CartIcon from "@/components/shared/CartIcon";
 import Navbar from "@/components/shared/Navbar";
 import RestaurantCard from "../../components/role-specific/Customer/RestaurantCard";
 import { useNavigate } from "react-router-dom";
-import { useOrder } from "../../contexts/OrderContext";
+import { useCart } from "../../hooks/useCart";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
 // Functional component for the Discover page
 const Discover = () => {
   const navigate = useNavigate();
-  const { totalQuantity } = useOrder();
+  const { cartCount } = useCart(); // Lấy số lượng từ backend cart
 
   // State cho danh sách shops
   const [restaurants, setRestaurants] = useState([]);
@@ -156,6 +156,15 @@ const Discover = () => {
           input::placeholder {
             color: rgba(0, 0, 0, 0.25) !important; // Set placeholder color with high priority
           }
+          
+          /* Ẩn scrollbar nhưng vẫn giữ chức năng scroll */
+          .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+          }
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;  /* Chrome, Safari and Opera */
+          }
         `}
       </style>
       {/* Header section with gradient background */}
@@ -204,9 +213,10 @@ const Discover = () => {
               top: "1.5vh",
               right: "5vw",
             }}
-            onClick={() => navigate("/customer/confirm-order")}
+            
+            onClick={() => navigate("/customer/cart")}
           />
-          {totalQuantity > 0 && (
+          {cartCount > 0 && (
             <div
               style={{
                 position: "absolute",
@@ -225,7 +235,7 @@ const Discover = () => {
                 zIndex: 1,
               }}
             >
-              {totalQuantity}
+              {cartCount}
             </div>
           )}
         </div>
@@ -568,6 +578,7 @@ const Discover = () => {
 
           {/* Restaurant Cards - Horizontal Scroll */}
           <div
+            className="hide-scrollbar"
             style={{
               display: "flex",
               flexDirection: "row",
@@ -648,6 +659,7 @@ const Discover = () => {
 
           {/* Best Seller Restaurant Cards */}
           <div
+            className="hide-scrollbar"
             style={{
               display: "flex",
               flexDirection: "row",

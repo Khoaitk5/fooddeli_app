@@ -53,6 +53,7 @@ import ShopRegistration from "./pages/Customer/ShopRegistration";
 import PaymentMethod from "./pages/Customer/PaymentMethod";
 import QRPayment from "./pages/Customer/QRPayment";
 import FoodDetail from "./pages/Customer/FoodDetail";
+import { CartPage } from "./pages/Customer/Cart";
 
 // ====================== AUTH ======================
 import Login from "./pages/Auth/Login";
@@ -129,6 +130,7 @@ function App() {
         >
           <Route path="home" element={<Home />} />
           <Route path="discover" element={<Discover />} />
+          <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="confirm-order" element={<ConfirmOrder />} />
           <Route path="add-coupon" element={<AddCoupon />} />
