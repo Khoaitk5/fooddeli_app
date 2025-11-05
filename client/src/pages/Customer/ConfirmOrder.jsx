@@ -632,34 +632,6 @@ const OrderItem = ({
 
 // --- Component Chính ---
 
-// Di chuyển mảng này ra ngoài VÀ EXPORT nó
-export const DEFAULT_ITEMS = [
-  {
-    id: "tra-dao", 
-    name: "Trà Đào",
-    price: 25000,
-    img: "https://www.highlandscoffee.com.vn/vnt_upload/product/06_2023/HLC_New_logo_5.1_Products__TRA_THANH_DAO-08.jpg",
-  },
-  {
-    id: "banh-mi", 
-    name: "Bánh Mì",
-    price: 30000,
-    img: "https://product.hstatic.net/200000411281/product/banh_mi_thap_cam_5ff35715998b428f81797561d20c8f7b_master.png",
-  },
-  {
-    id: "ca-phe", 
-    name: "Cà Phê Sữa Đá",
-    price: 35000,
-    img: "https://trungnguyenecoffee.com/wp-content/uploads/2021/07/H%C3%ACnh-App_3006021-C%C3%A0-Ph%C3%AA-S%E1%BB%AFa.jpg",
-  },
-  {
-    id: "bo", 
-    name: "Sinh Tố Bơ",
-    price: 40000,
-    img: "https://images.prismic.io/nutriinfo/aBHRavIqRLdaBvLz_hinh-anh-sinh-to-bo.jpg?auto=format,compress",
-  },
-];
-
 // Mảng coupons được import từ AddCoupon.jsx
 export { coupons }; 
 
@@ -670,7 +642,7 @@ export default function ConfirmOrder({
 }) {
   const navigate = useNavigate();
   
-  // Lấy MỌI THỨ từ context
+  // Lấy MỌI THỨ từ context (đã được đồng bộ với backend)
   const {
     items,
     note,
@@ -687,7 +659,57 @@ export default function ConfirmOrder({
     shippingDiscount,
     totalPrice,
     couponCount,
+    cartLoading,
   } = useOrder();
+
+  // Hiển thị loading khi đang fetch cart
+  if (cartLoading) {
+    return (
+      <div style={{
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "1.25rem",
+        color: "#555",
+      }}>
+        Đang tải đơn hàng...
+      </div>
+    );
+  }
+
+  // Hiển thị thông báo nếu giỏ hàng trống
+  if (!items || items.length === 0) {
+    return (
+      <div style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "1rem",
+      }}>
+        <div style={{ fontSize: "1.5rem", color: "#555" }}>
+          Giỏ hàng trống
+        </div>
+        <button
+          onClick={() => navigate("/customer/discover")}
+          style={{
+            padding: "0.75rem 1.5rem",
+            backgroundColor: "#2BCDD2",
+            color: "white",
+            border: "none",
+            borderRadius: "999px",
+            fontSize: "1.2rem",
+            fontWeight: "600",
+            cursor: "pointer",
+          }}
+        >
+          Khám phá món ăn
+        </button>
+      </div>
+    );
+  }
   
   return (
     <div style={s.pageContainer}>

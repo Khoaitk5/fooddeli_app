@@ -1,21 +1,40 @@
 // File: src/contexts/OrderContext.jsx
 
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 // Import constants từ các file trang
 import { coupons } from "../pages/Customer/AddCoupon";
-import { DEFAULT_ITEMS } from "../pages/Customer/ConfirmOrder";
+import { useCart } from "../hooks/useCart";
 
 // 1. Tạo Context
 const OrderContext = createContext();
 
 // 2. Tạo Provider (Component bọc ngoài)
 export const OrderProvider = ({ children }) => {
+  // === LẤY CART TỪ BACKEND ===
+  const { cartItems: backendCartItems, cartCount, loading: cartLoading } = useCart();
+  
   // === STATE CỦA ĐƠN HÀNG ===
   const [note, setNote] = useState("");
-  const [currentItems, setCurrentItems] = useState(DEFAULT_ITEMS);
-  const [quantities, setQuantities] = useState(DEFAULT_ITEMS.map(() => 1));
+  const [currentItems, setCurrentItems] = useState([]);
+  const [quantities, setQuantities] = useState([]);
   const [paymentMethodName, setPaymentMethodName] = useState("Tiền mặt");
   const [selectedCoupons, setSelectedCoupons] = useState({ shipping: null, food: null });
+
+  // === ĐỒNG BỘ CART TỪ BACKEND ===
+  useEffect(() => {
+    if (backendCartItems && backendCartItems.length > 0) {
+      // Transform backend cart items thành format cho ConfirmOrder
+      const transformedItems = backendCartItems.map((item) => ({
+        id: item.id,
+        name: item.product_name,
+        price: item.unit_price,
+        img: item.product_image || "https://via.placeholder.com/150",
+      }));
+      
+      setCurrentItems(transformedItems);
+      setQuantities(backendCartItems.map((item) => item.quantity));
+    }
+  }, [backendCartItems]);
 
   // ==========================================================
   // STATE MỚI CHO MODAL XÁC NHẬN
@@ -130,6 +149,7 @@ export const OrderProvider = ({ children }) => {
     shippingDiscount,
     totalPrice,
     couponCount,
+    cartLoading, // Thêm loading state
     // Cung cấp state và hàm của modal
     confirmation,
     showConfirmation,
