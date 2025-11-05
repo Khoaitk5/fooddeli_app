@@ -4,7 +4,43 @@ const orderService = require("./orderService");
 const orderDetailService = require("./order_detailService");
 const addressService = require("./addressService");
 const shopService = require("./shop_profileService");
+const orderDao = require("../dao/orderDao");
 const map4dService = require("../services/map4dService");
+
+// 📍 Tính khoảng cách giữa 2 tọa độ theo công thức Haversine (km)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Bán kính Trái đất (km)
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function composeAddress(addrLine = {}) {
+  const text = addrLine?.address;
+  if (typeof text === "string" && text.trim()) return text.trim();
+  const { detail, ward, district, city } = addrLine || {};
+  return [detail, ward, district, city].filter(Boolean).join(", ");
+}
+
+function pickOneAndNormalize(addresses = []) {
+  if (!Array.isArray(addresses) || addresses.length === 0) return [];
+  const chosen = addresses.find((a) => a.is_primary) || addresses[0];
+  return [
+    {
+      ...chosen,
+      address_line: {
+        ...(chosen.address_line || {}),
+        address: composeAddress(chosen.address_line || {}),
+      },
+    },
+  ];
+}
 const shipperProfileService = {
   /**
    * ➕ Tạo hồ sơ shipper mới
@@ -97,7 +133,11 @@ const shipperProfileService = {
     if (!existing) {
       throw new Error("Hồ sơ shipper không tồn tại");
     }
-    return await shipperProfileDao.updateLocation(shipperId, latitude, longitude);
+    return await shipperProfileDao.updateLocation(
+      shipperId,
+      latitude,
+      longitude
+    );
   },
 
   /**
@@ -166,51 +206,96 @@ const shipperProfileService = {
     }
   },
 
-  /**
-   * Lấy danh sách đơn (theo shipper_id) kèm đầy đủ thông tin:
-   * - order
-   * - order_details (withProduct)
-   * - user_addresses
-   * - shop_info (có address)
-   */
-  // services/shipper_profileService.js
-async listFullOrders(shipperId, { status, limit = 10, offset = 0 } = {}) {
-  if (!shipperId) throw new Error("shipper_id is required");
+  // Quét đơn cooking gần shipper trong bán kính radiusKm
+  async listNearbyCookingFull({
+    lat,
+    lon,
+    radiusKm = 3,
+    shipperId = null,
+    limit = 200,
+    offset = 0,
+  }) {
+    // Nếu đang giao thì không trả đơn mới
+    if (shipperId) {
+      const busy = await orderDao.hasShippingOfShipper(shipperId);
+      if (busy) {
+        return {
+          items: [],
+          meta: { busy: true, reason: "Shipper is delivering (shipping)" },
+        };
+      }
+    }
 
-  // helper: gộp address_line.{detail, ward, district, city} => address
-  const composeAddress = (addrLine = {}) => {
-    if (addrLine.address && addrLine.address.trim()) return addrLine.address;
-    const { detail, ward, district, city } = addrLine;
-    return [detail, ward, district, city].filter(Boolean).join(", ");
-  };
+    // 1) Lấy danh sách đơn + tọa độ shop
+    const rows = await orderDao.listCookingWithShopAddress({ limit, offset });
 
-  // helper: chọn 1 địa chỉ hợp lệ, ưu tiên is_primary
-  const pickOneAndNormalize = (addresses = []) => {
-    if (!Array.isArray(addresses) || addresses.length === 0) return [];
-    const chosen = addresses.find(a => a.is_primary) || addresses[0];
-    const normalized = {
-      ...chosen,
-      address_line: {
-        ...(chosen.address_line || {}),
-        address: composeAddress(chosen.address_line || {}),
-      },
+    // 2) Lọc trong bán kính & gom điểm đích để gọi Matrix 1 lần
+    const shortlisted = [];
+    const destinations = [];
+    rows.forEach((row) => {
+      const shopLat = Number(row.shop_lat);
+      const shopLon = Number(row.shop_lon);
+      if (!Number.isFinite(shopLat) || !Number.isFinite(shopLon)) return;
+
+      const distKm = calculateDistance(lat, lon, shopLat, shopLon);
+      if (distKm > radiusKm) return;
+
+      shortlisted.push({ row, distKm, shopLat, shopLon });
+      destinations.push(`${shopLat},${shopLon}`);
+    });
+
+    // 3) Gọi Map4D Matrix để lấy ETA (và distance theo đường đi nếu cần)
+    let elements = [];
+    if (destinations.length > 0) {
+      try {
+        const origin = `${lat},${lon}`;
+        const matrix = await map4dService.getMatrix(
+          origin,
+          destinations.join("|")
+        );
+        // Thường: matrix.rows[0].elements[i].duration.value (giây) / distance.value (m)
+        elements = matrix?.rows?.[0]?.elements || []; // fallback an toàn
+      } catch (e) {
+        console.error("[Map4D matrix] error:", e.message);
+        elements = [];
+      }
+    }
+
+    // helper đọc giá trị an toàn (vì schema API có thể hơi khác)
+    const readDurationSeconds = (el) => {
+      if (!el) return null;
+      // Google-like
+      if (el?.duration?.value != null)
+        return Math.round(Number(el.duration.value));
+      // Một số API trả duration theo giây ở root
+      if (el?.duration != null && Number.isFinite(Number(el.duration)))
+        return Math.round(Number(el.duration));
+      return null;
     };
-    return [normalized];
-  };
+    const readDistanceKm = (el, fallbackKm) => {
+      if (!el) return fallbackKm;
+      if (el?.distance?.value != null) return Number(el.distance.value) / 1000; // m -> km
+      if (el?.distance != null && Number.isFinite(Number(el.distance)))
+        return Number(el.distance) / 1000;
+      return fallbackKm;
+    };
 
-  // 1️⃣ lấy danh sách order
-  const orders = await orderService.listByShipper(shipperId, { status, limit, offset });
+    // 4) Enrich + ghép thêm details, addresses
+    const items = [];
+    for (let i = 0; i < shortlisted.length; i++) {
+      const { row, distKm } = shortlisted[i];
+      const el = elements[i] || null;
 
-  // 2️⃣ enrich từng order
-  const items = await Promise.all(
-    orders.map(async (order) => {
-      const [details, userAddressesRaw, shopInfoRaw] = await Promise.all([
-        orderDetailService.list(order.order_id, { withProduct: true }),
-        addressService.getUserAddresses(order.user_id),
-        shopService.getShopProfilesAndAddressesByShopId(order.shop_id),
+      const duration_sec = readDurationSeconds(el);
+      const distance_km = Number(readDistanceKm(el, distKm).toFixed(2)); // dùng distance đường đi nếu có, fallback Haversine
+
+      const [details, userAddresses, shopInfoRaw] = await Promise.all([
+        orderDetailService.list(row.order_id, { withProduct: true }),
+        addressService.getUserAddresses(row.user_id),
+        shopService.getShopProfilesAndAddressesByShopId(row.shop_id),
       ]);
 
-      const user_addresses = pickOneAndNormalize(userAddressesRaw);
+      const user_addresses = pickOneAndNormalize(userAddresses);
       const shop_info = shopInfoRaw
         ? {
             ...shopInfoRaw,
@@ -219,43 +304,27 @@ async listFullOrders(shipperId, { status, limit = 10, offset = 0 } = {}) {
                   ...shopInfoRaw.address,
                   address_line: {
                     ...(shopInfoRaw.address.address_line || {}),
-                    address: composeAddress(shopInfoRaw.address.address_line || {}),
+                    address: composeAddress(
+                      shopInfoRaw.address.address_line || {}
+                    ),
                   },
                 }
               : null,
           }
         : null;
 
-      // 🧭 Tính khoảng cách (distance) & thời gian (duration)
-      let distance = null;
-      let duration = null;
-      try {
-        const shopLatLon = shop_info?.address?.lat_lon;
-        const userLatLon = user_addresses[0]?.lat_lon;
-        if (shopLatLon && userLatLon) {
-          const origin = `${shopLatLon.lat},${shopLatLon.lon}`;
-          const destination = `${userLatLon.lat},${userLatLon.lon}`;
-          const route = await map4dService.getRoute(origin, destination);
-          const routeInfo = route?.result?.routes?.[0];
-          if (routeInfo) {
-            distance = routeInfo.distance?.text || null;
-            duration = routeInfo.duration?.text || null;
-          }
-        }
-      } catch (err) {
-        console.warn("⚠️ Không tính được khoảng cách cho order:", order.order_id, err.message);
-      }
+      items.push({
+        order: row,
+        details,
+        user_addresses,
+        shop_info,
+        distance_km,
+        duration_sec, // ✅ FE đang cần key này
+      });
+    }
 
-      return { order, details, user_addresses, shop_info, distance, duration };
-    })
-  );
-
-  return items;
-}
-
+    return { items, meta: { busy: false, total: items.length, limit, offset } };
+  },
 };
-
-
-
 
 module.exports = shipperProfileService;
