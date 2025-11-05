@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import BackArrow from "../../components/shared/BackArrow";
 import { useNavigate } from "react-router-dom";
+import * as QRCode from "qrcode.react"; // ✅ Sửa import cho v4.2.0
 
 const QRPayment = () => {
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 phút
+  const [paymentUrl, setPaymentUrl] = useState("");
+  const [loading, setLoading] = useState(true);
 
+  // ⏱️ Đếm ngược thời gian
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -16,12 +20,48 @@ const QRPayment = () => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
+  // 🧾 Gọi API backend tạo link thanh toán PayOS
+  useEffect(() => {
+    const createPayment = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("http://localhost:5000/api/payments/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderCode: Date.now(),
+            amount: 20000,
+            description: "Thanh toán đơn hàng test PayOS",
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) setPaymentUrl(data.paymentUrl);
+        else alert("❌ Không tạo được link thanh toán");
+      } catch (err) {
+        console.error("PayOS error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    createPayment();
+  }, []);
+
   return (
-    <div style={{ position: "relative", height: "100vh", backgroundColor: "#F2F2F2" }}>
-      {/* Nút test nhỏ ở góc trên phải */}
+    <div
+      style={{
+        position: "relative",
+        height: "100vh",
+        backgroundColor: "#F2F2F2",
+      }}
+    >
+      {/* 🔹 Nút test nhỏ ở góc trên phải */}
       <div
         style={{
           position: "absolute",
@@ -41,6 +81,8 @@ const QRPayment = () => {
       >
         Test
       </div>
+
+      {/* 🔙 Nút quay lại */}
       <div
         style={{
           position: "relative",
@@ -60,6 +102,8 @@ const QRPayment = () => {
           onClick={() => navigate(-1)}
         />
       </div>
+
+      {/* 🔳 QR Code */}
       <div
         style={{
           display: "flex",
@@ -79,6 +123,7 @@ const QRPayment = () => {
         >
           Quét mã QR để thanh toán
         </div>
+
         <div
           style={{
             width: "70vw",
@@ -93,17 +138,21 @@ const QRPayment = () => {
             boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
           }}
         >
-          {/* Placeholder cho QR code - thay bằng ảnh thật hoặc library generate QR */}
-          <div
-            style={{
-              fontSize: "1.2rem",
-              color: "#666",
-              textAlign: "center",
-            }}
-          >
-            QR Code<br />Placeholder
-          </div>
+          {loading ? (
+            <div style={{ fontSize: "1.2rem", color: "#666" }}>
+              Đang tạo QR...
+            </div>
+          ) : paymentUrl ? (
+            // ✅ Sửa lại cách gọi đúng cho v4.2.0
+            <QRCode.default value={paymentUrl} size={230} />
+          ) : (
+            <div style={{ fontSize: "1.2rem", color: "#666" }}>
+              Không thể tạo QR
+            </div>
+          )}
         </div>
+
+        {/* ⚙️ Thông tin hiển thị */}
         <div
           style={{
             color: "#666",
@@ -124,6 +173,7 @@ const QRPayment = () => {
             style={{ height: "2.5vh", marginLeft: "2.78vw" }}
           />
         </div>
+
         <div
           style={{
             color: timeLeft > 0 ? "#2BCDD2" : "#FF0000",
@@ -133,7 +183,9 @@ const QRPayment = () => {
             marginTop: "2vh",
           }}
         >
-          {timeLeft > 0 ? `Giao dịch hết hạn sau: ${formatTime(timeLeft)}` : "Giao dịch đã hết hạn"}
+          {timeLeft > 0
+            ? `Giao dịch hết hạn sau: ${formatTime(timeLeft)}`
+            : "Giao dịch đã hết hạn"}
         </div>
       </div>
     </div>

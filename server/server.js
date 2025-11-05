@@ -1,8 +1,10 @@
+// server/server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { setupSession } from "./services/sessionService.js";
 
+// Import tất cả các route
 import userRoutes from "./routes/userRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -15,35 +17,30 @@ import videoLikeRoutes from "./routes/videoLikeRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import imageUploadRouter from "./routes/imageUploadRouter.js";
 import map4dRoutes from "./routes/map4dRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";  
+import adminRoutes from "./routes/adminRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import voucherRoutes from "./routes/voucherRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js"; // 🔹 PayOS route
+
 dotenv.config();
 
 const app = express();
 app.set("trust proxy", 1);
 
-// ✅ Cho phép nhiều origin (local + production)
+// ✅ Cấu hình CORS
 const allowedOrigins = [
-  "http://localhost:5173", // local React dev
+  "http://localhost:5173",
   "http://localhost:5174",
-  "https://yourdomain.com", // tên miền production của bạn
+  "https://yourdomain.com",
   "https://www.yourdomain.com",
 ];
 
-// ✅ Cấu hình CORS linh hoạt
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Nếu không có origin (ví dụ request nội bộ hoặc Postman), vẫn cho phép
       if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`❌ Blocked by CORS: ${origin}`);
-        callback(new Error("CORS not allowed for this origin"));
-      }
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error("CORS not allowed for this origin"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -51,7 +48,7 @@ app.use(
   })
 );
 
-// ✅ Đảm bảo server phản hồi preflight (OPTIONS)
+// ✅ Đáp ứng preflight request
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {
     res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
@@ -62,15 +59,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ Middleware cơ bản
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 setupSession(app);
 
-// 🧭 Log request đơn giản để debug
-app.use((req, res, next) => {
-  console.log(`📡 ${req.method} ${req.originalUrl}`);
-  next();
-});
-
+// ✅ Mount tất cả các routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
@@ -86,16 +80,17 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/shipper", shipperRoutes);
+app.use("/api/payments", paymentRoutes); // ✅ Mount route PayOS
 
-
-// ✅ Debug route
+// ✅ Route kiểm tra nhanh
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));
 app.get("/", (req, res) => res.send("✅ API hoạt động ổn định!"));
+app.get("/api/payments/ping", (req, res) => res.send("✅ /api/payments route hoạt động OK!"));
 
+// ✅ Khởi động server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
-  // console.log(`🌐 CORS allowed origins:`, allowedOrigins);
 });
 
 export default app;
