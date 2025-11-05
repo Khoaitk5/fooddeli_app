@@ -442,7 +442,9 @@ const Discover = () => {
                 {filteredRestaurants.map((restaurant) => (
                   <div
                     key={restaurant.id}
-                    onClick={() => navigate(`/customer/shop/${restaurant.id}`)}
+                    onClick={() => navigate("/customer/restaurant-details", {
+                      state: { shopId: restaurant.id }
+                    })}
                     style={{
                       cursor: "pointer",
                       display: "flex",
@@ -623,7 +625,9 @@ const Discover = () => {
               restaurants.map((restaurant) => (
                 <div
                   key={restaurant.id}
-                  onClick={() => navigate(`/customer/shop/${restaurant.id}`)}
+                  onClick={() => navigate("/customer/restaurant-details", {
+                    state: { shopId: restaurant.id }
+                  })}
                   style={{ cursor: "pointer" }}
                 >
                   <RestaurantCard
@@ -702,7 +706,13 @@ const Discover = () => {
               </div>
             ) : (
               restaurants.map((restaurant) => (
-                <div key={`bestseller-${restaurant.id}`} onClick={() => navigate(`/customer/shop/${restaurant.id}`)} style={{ cursor: "pointer" }}>
+                <div 
+                  key={`bestseller-${restaurant.id}`} 
+                  onClick={() => navigate("/customer/restaurant-details", {
+                    state: { shopId: restaurant.id }
+                  })} 
+                  style={{ cursor: "pointer" }}
+                >
                   <RestaurantCard
                     style={{
                       flexShrink: 0,
