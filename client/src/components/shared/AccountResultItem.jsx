@@ -1,134 +1,158 @@
 import React, { useState } from "react";
+import { Box, Card, Avatar, Typography, Button, Stack, Chip } from "@mui/material";
+import { PersonAdd, CheckCircle, VideoLibrary, Restaurant } from "@mui/icons-material";
 
-const AccountResultItem = () => {
-  const accounts = [
-    { accountName: "Lotteria Vietnam", username: "lotteriavietnam", followers: "46.0K follower" },
-    { accountName: "McDonald's VN", username: "mcdonalds_vn", followers: "120.5K follower" },
-    { accountName: "KFC Vietnam", username: "kfc_vietnam", followers: "89.2K follower" },
-    { accountName: "Pizza Hut VN", username: "pizzahut_vn", followers: "34.7K follower" },
-    { accountName: "Burger King VN", username: "burgerking_vn", followers: "67.8K follower" },
-    { accountName: "Starbucks VN", username: "starbucks_vn", followers: "150.3K follower" },
-    { accountName: "Jollibee VN", username: "jollibee_vn", followers: "98.1K follower" },
-    { accountName: "Domino's Pizza VN", username: "dominos_vn", followers: "45.6K follower" },
-  ];
+/**
+ * 👤 AccountResultItem - Component hiển thị kết quả tìm kiếm tài khoản
+ * Design theo phong cách Instagram/TikTok
+ */
+const AccountResultItem = ({ account }) => {
+  const [isFollowed, setIsFollowed] = useState(false);
 
-  const [followedStates, setFollowedStates] = useState(accounts.map(() => false));
+  if (!account) return null;
 
-  const handleFollow = (index) => {
-    setFollowedStates(prev => prev.map((followed, i) => i === index ? !followed : followed));
+  // Format số followers
+  const formatFollowers = (count) => {
+    if (!count) return "0";
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    return count.toString();
+  };
+
+  // Giả lập dữ liệu nếu không có
+  const followers = account.followers || Math.floor(Math.random() * 100000) + 1000;
+  const videoCount = account.video_count || Math.floor(Math.random() * 50) + 5;
+  const productCount = account.product_count || Math.floor(Math.random() * 30) + 3;
+
+  const handleFollow = () => {
+    setIsFollowed(!isFollowed);
   };
 
   return (
-    <div
-      style={{
-        scrollbarWidth: 'none', // Firefox
-        msOverflowStyle: 'none', // IE and Edge
+    <Card
+      sx={{
+        mb: 2,
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+        },
       }}
-      className="scrollbar-hide" // Custom class for webkit scrollbar
     >
-      {accounts.map((account, index) => (
-        <div key={index}>
-          <div
-            style={{
-              position: "absolute",
-              top: `${1.25 + index * 10}vh`,
-              left: "3.61vw",
-              width: "16.67vw",
-              height: "16.67vw",
-              background: "#D9D9D9",
-              borderRadius: 9999,
+      <Box sx={{ p: 2 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          {/* Avatar */}
+          <Avatar
+            src={account.avatar_url || "https://placehold.co/80x80"}
+            sx={{
+              width: 70,
+              height: 70,
+              border: '3px solid #F9704B',
             }}
           />
 
-          <div
-            style={{
-              position: "absolute",
-              top: `${1.75 + index * 10}vh`,
-              left: "22.5vw",
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              color: "black",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              wordWrap: "break-word",
+          {/* Thông tin tài khoản */}
+          <Box sx={{ flex: 1 }}>
+            {/* Tên và role */}
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '1.5rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {account.full_name || account.username}
+              </Typography>
+              {account.role === 'shop' && (
+                <CheckCircle sx={{ fontSize: '1.6rem', color: '#1976D2' }} />
+              )}
+            </Stack>
+
+            {/* Username */}
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#666',
+                fontSize: '1.2rem',
+                mb: 1,
+              }}
+            >
+              @{account.username}
+            </Typography>
+
+            {/* Stats */}
+            <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography sx={{ fontWeight: 600, fontSize: '1.2rem' }}>
+                  {formatFollowers(followers)}
+                </Typography>
+                <Typography sx={{ color: '#666', fontSize: '1.1rem' }}>
+                  followers
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <VideoLibrary sx={{ fontSize: '1.4rem', color: '#666' }} />
+                <Typography sx={{ color: '#666', fontSize: '1.1rem' }}>
+                  {videoCount} videos
+                </Typography>
+              </Stack>
+              {account.role === 'shop' && (
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Restaurant sx={{ fontSize: '1.4rem', color: '#666' }} />
+                  <Typography sx={{ color: '#666', fontSize: '1.1rem' }}>
+                    {productCount} món
+                  </Typography>
+                </Stack>
+              )}
+            </Stack>
+
+            {/* Role Badge */}
+            {account.role && (
+              <Chip
+                label={account.role === 'shop' ? 'Cửa hàng' : account.role === 'shipper' ? 'Shipper' : 'Khách hàng'}
+                size="small"
+                sx={{
+                  backgroundColor: account.role === 'shop' ? '#E3F2FD' : account.role === 'shipper' ? '#FFF3E0' : '#F5F5F5',
+                  color: account.role === 'shop' ? '#1976D2' : account.role === 'shipper' ? '#F57C00' : '#666',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  height: 22,
+                }}
+              />
+            )}
+          </Box>
+
+          {/* Follow Button */}
+          <Button
+            variant={isFollowed ? "outlined" : "contained"}
+            startIcon={isFollowed ? <CheckCircle /> : <PersonAdd />}
+            onClick={handleFollow}
+            sx={{
+              borderRadius: 20,
+              px: 2.5,
+              py: 0.8,
+              fontSize: '1.2rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              backgroundColor: isFollowed ? 'transparent' : '#F9704B',
+              borderColor: isFollowed ? '#F9704B' : 'transparent',
+              color: isFollowed ? '#F9704B' : 'white',
+              '&:hover': {
+                backgroundColor: isFollowed ? 'rgba(249, 112, 75, 0.08)' : '#E85A3A',
+                borderColor: '#F9704B',
+              },
             }}
           >
-            {account.accountName}
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: `${4.25 + index * 10}vh`,
-              left: "22.5vw",
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              color: "#8A8B8F",
-              fontSize: "1.2rem",
-              fontWeight: "400",
-              wordWrap: "break-word",
-            }}
-          >
-            {account.username}
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: `${6.625 + index * 10}vh`,
-              left: "22.5vw",
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              color: "#8A8B8F",
-              fontSize: "1.1rem",
-              fontWeight: "400",
-              wordWrap: "break-word",
-            }}
-          >
-            {account.followers}
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: `${3.125 + index * 10}vh`,
-              right: "3.61vw",
-              width: "22.2vw",
-              height: "3.625vh",
-              background: followedStates[index] ? "#F5F5F5" : "#F9704B",
-              borderRadius: 9999,
-              cursor: "pointer",
-            }}
-            onClick={() => handleFollow(index)}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              top: `${3.125 + index * 10}vh`,
-              right: "3.61vw",
-              width: "22.2vw",
-              height: "3.625vh",
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              textAlign: "center",
-              color: followedStates[index] ? "black" : "white",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              wordWrap: "break-word",
-              cursor: "pointer",
-            }}
-            onClick={() => handleFollow(index)}
-          >
-            {followedStates[index] ? "Đã follow" : "Follow"}
-          </div>
-        </div>
-      ))}
-    </div>
+            {isFollowed ? 'Đã follow' : 'Follow'}
+          </Button>
+        </Stack>
+      </Box>
+    </Card>
   );
 };
 
