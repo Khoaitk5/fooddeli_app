@@ -25,7 +25,7 @@ class VideoDao extends GenericDao {
    */
   async getVideosByShop(shopId) {
     const query = `
-      SELECT v.video_id, v.title, v.video_url, v.likes_count, v.views_count, v.comments_count
+      SELECT v.video_id, v.title, v.description, v.video_url, v.likes_count, v.views_count, v.comments_count
       FROM videos v
       WHERE v.shop_id = $1 AND v.status = 'approved'
       ORDER BY v.created_at DESC;
@@ -162,16 +162,11 @@ class VideoDao extends GenericDao {
   /**
    * ❌ Xoá video theo id
    */
-  async deleteById(id) {
-    try {
-      const query = `DELETE FROM ${this.table} WHERE id = $1 RETURNING *`;
-      const result = await pool.query(query, [id]);
-      console.log(`[VideoDao] deleteById(${id}) OK`);
-      return result.rows[0] ? new this.Model(result.rows[0]) : null;
-    } catch (err) {
-      console.error("[VideoDao] deleteById error:", err);
-      throw err;
-    }
+  async deleteById(videoId) {
+    const query = `DELETE FROM ${this.table} WHERE video_id = $1 RETURNING *`;
+    const result = await pool.query(query, [videoId]);
+    console.log(`[VideoDao] deleteById(${videoId}) OK`);
+    return result.rows[0] ? new this.Model(result.rows[0]) : null;
   }
 
   /**

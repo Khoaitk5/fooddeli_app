@@ -80,42 +80,42 @@ class ShopProfileDao extends GenericDao {
   /**
    * 📋 Override findAll() để lấy tất cả shops kèm đầy đủ thông tin
    * Bao gồm: ảnh shop, rating, số đánh giá, số đơn hàng, địa chỉ
+   * ⚡ Tối ưu hóa: Sử dụng LEFT JOIN thay vì subquery để tăng tốc độ
    * @returns {Promise<object[]>} - Danh sách tất cả shops với metrics
    */
   async findAll() {
     const query = `
+      WITH shop_metrics AS (
+        -- ⚡ Pre-calculate all metrics in one pass
+        SELECT
+          sp.id,
+          MAX(p.image_url) AS shop_image,
+          COUNT(DISTINCT r.review_id)::int AS review_count,
+          COALESCE(AVG(r.rating), 0)::numeric(3,1) AS avg_review_rating,
+          COUNT(DISTINCT CASE WHEN o.status = 'completed' THEN o.order_id END)::int AS completed_orders
+        FROM shop_profiles sp
+        LEFT JOIN products p ON p.shop_id = sp.id 
+          AND p.image_url IS NOT NULL 
+          AND TRIM(p.image_url) <> ''
+        LEFT JOIN reviews r ON r.target_id = sp.id 
+          AND r.target_type = 'shop'
+        LEFT JOIN orders o ON o.shop_id = sp.id
+        WHERE sp.status = 'open'
+        GROUP BY sp.id
+      )
       SELECT
         sp.*,
         u.avatar_url,
         u.rating,
-        -- Lấy ảnh từ sản phẩm mới nhất
-        (SELECT p.image_url
-         FROM products p
-         WHERE p.shop_id = sp.id
-           AND p.image_url IS NOT NULL
-           AND TRIM(p.image_url) <> ''
-         ORDER BY p.updated_at DESC
-         LIMIT 1) AS shop_image,
-        -- Đếm số đánh giá từ bảng reviews (target_type = 'shop')
-        (SELECT COUNT(*)::int
-         FROM reviews r
-         WHERE r.target_id = sp.id
-           AND r.target_type = 'shop') AS review_count,
-        -- Tính rating trung bình từ reviews
-        (SELECT COALESCE(AVG(r.rating), 0)::numeric(3,1)
-         FROM reviews r
-         WHERE r.target_id = sp.id
-           AND r.target_type = 'shop') AS avg_review_rating,
-        -- Đếm số đơn hàng đã hoàn thành
-        (SELECT COUNT(*)::int
-         FROM orders o
-         WHERE o.shop_id = sp.id
-           AND o.status = 'completed') AS completed_orders,
-        -- Lấy thông tin địa chỉ
+        sm.shop_image,
+        sm.review_count,
+        sm.avg_review_rating,
+        sm.completed_orders,
         a.address_line,
         a.lat_lon
       FROM shop_profiles sp
       JOIN users u ON sp.user_id = u.id
+      LEFT JOIN shop_metrics sm ON sm.id = sp.id
       LEFT JOIN addresses a ON sp.shop_address_id = a.address_id
       WHERE sp.status = 'open'
       ORDER BY sp.created_at DESC
@@ -135,6 +135,7 @@ class ShopProfileDao extends GenericDao {
 
   /**
    * 🍱 Lấy shops theo loại món ăn (category của products)
+   * ⚡ Tối ưu hóa: Sử dụng CTE và LEFT JOIN thay vì subquery
    * @param {string} foodType - Loại món ăn (mapping từ UI categories)
    * @returns {Promise<object[]>} - Danh sách shops bán loại món đó
    */
@@ -151,44 +152,47 @@ class ShopProfileDao extends GenericDao {
     const categories = categoryMapping[foodType] || ["Thức ăn"];
 
     const query = `
-      SELECT DISTINCT ON (sp.id)
+      WITH filtered_shops AS (
+        -- ⚡ Lọc shops có product phù hợp
+        SELECT DISTINCT sp.id
+        FROM shop_profiles sp
+        INNER JOIN products p ON p.shop_id = sp.id
+        WHERE sp.status = 'open'
+          AND p.category = ANY($1::varchar[])
+          AND p.is_available = true
+      ),
+      shop_metrics AS (
+        -- ⚡ Tính metrics cho các shops đã lọc
+        SELECT
+          fs.id,
+          MAX(p.image_url) AS shop_image,
+          COUNT(DISTINCT r.review_id)::int AS review_count,
+          COALESCE(AVG(r.rating), 0)::numeric(3,1) AS avg_review_rating,
+          COUNT(DISTINCT CASE WHEN o.status = 'completed' THEN o.order_id END)::int AS completed_orders
+        FROM filtered_shops fs
+        LEFT JOIN products p ON p.shop_id = fs.id 
+          AND p.image_url IS NOT NULL 
+          AND TRIM(p.image_url) <> ''
+        LEFT JOIN reviews r ON r.target_id = fs.id 
+          AND r.target_type = 'shop'
+        LEFT JOIN orders o ON o.shop_id = fs.id
+        GROUP BY fs.id
+      )
+      SELECT
         sp.*,
         u.avatar_url,
         u.rating,
-        -- Lấy ảnh từ sản phẩm mới nhất
-        (SELECT p.image_url
-         FROM products p
-         WHERE p.shop_id = sp.id
-           AND p.image_url IS NOT NULL
-           AND TRIM(p.image_url) <> ''
-         ORDER BY p.updated_at DESC
-         LIMIT 1) AS shop_image,
-        -- Đếm số đánh giá
-        (SELECT COUNT(*)::int
-         FROM reviews r
-         WHERE r.target_id = sp.id
-           AND r.target_type = 'shop') AS review_count,
-        -- Tính rating trung bình
-        (SELECT COALESCE(AVG(r.rating), 0)::numeric(3,1)
-         FROM reviews r
-         WHERE r.target_id = sp.id
-           AND r.target_type = 'shop') AS avg_review_rating,
-        -- Đếm số đơn hàng đã hoàn thành
-        (SELECT COUNT(*)::int
-         FROM orders o
-         WHERE o.shop_id = sp.id
-           AND o.status = 'completed') AS completed_orders,
-        -- Lấy thông tin địa chỉ
+        sm.shop_image,
+        sm.review_count,
+        sm.avg_review_rating,
+        sm.completed_orders,
         a.address_line
       FROM shop_profiles sp
       JOIN users u ON sp.user_id = u.id
+      INNER JOIN filtered_shops fs ON fs.id = sp.id
+      LEFT JOIN shop_metrics sm ON sm.id = sp.id
       LEFT JOIN addresses a ON sp.shop_address_id = a.address_id
-      -- JOIN với products để filter theo category
-      INNER JOIN products p ON p.shop_id = sp.id
-      WHERE sp.status = 'open'
-        AND p.category = ANY($1::varchar[])
-        AND p.is_available = true
-      ORDER BY sp.id, sp.created_at DESC
+      ORDER BY sp.created_at DESC
     `;
 
     const result = await pool.query(query, [categories]);

@@ -68,24 +68,30 @@ class VideoService {
   /**
    * ✏️ Cập nhật video theo ID
    */
-  async updateVideo(id, data) {
-    const existing = await videoDao.getById(id);
-    if (!existing) throw new Error("Video không tồn tại");
+  async updateVideo(videoId, updateData) {
+    try {
+      // 🔹 Lấy video hiện có trong DB
+      const existing = await videoDao.findById("video_id", videoId);
+      if (!existing) throw new Error("Video không tồn tại");
 
-    if (data.duration) {
-      data.duration = convertDurationToSeconds(data.duration);
+      // 🔹 Cập nhật title và description
+      const updated = await videoDao.update("video_id", videoId, {
+        title: updateData.title,
+        description: updateData.description,
+      });
+
+      return updated;
+    } catch (err) {
+      console.error("[updateVideo] Lỗi:", err);
+      throw err;
     }
-
-    const updated = await videoDao.updateById(id, data);
-    console.log("[SERVICE:updateVideo] ✅ updated =", updated);
-    return updated;
   }
 
   /**
    * 🗑️ Xoá video theo ID
    */
   async deleteVideo(id) {
-    const existing = await videoDao.getById(id);
+    const existing = await videoDao.findById("video_id", id);
     if (!existing) throw new Error("Video không tồn tại");
 
     const deleted = await videoDao.deleteById(id);

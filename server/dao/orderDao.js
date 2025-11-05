@@ -28,9 +28,8 @@ class OrderDao extends GenericDao {
       sql += ` AND status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    };`;
+    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
+      };`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));
@@ -94,9 +93,8 @@ class OrderDao extends GenericDao {
       idSql += ` AND o.status = $${baseParams.length}`;
     }
     baseParams.push(limit, offset);
-    idSql += ` ORDER BY o.created_at DESC LIMIT $${
-      baseParams.length - 1
-    } OFFSET $${baseParams.length};`;
+    idSql += ` ORDER BY o.created_at DESC LIMIT $${baseParams.length - 1
+      } OFFSET $${baseParams.length};`;
 
     const idsRes = await pool.query(idSql, baseParams);
     const ids = idsRes.rows.map((r) => r.order_id);
@@ -247,9 +245,8 @@ class OrderDao extends GenericDao {
       sql += ` AND status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    };`;
+    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
+      };`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));

@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, useMediaQuery } from '@mui/material';
-import { 
-  MapPin, CreditCard, Clock, Gift, Settings, ChevronRight, LogOut, 
-  Edit3, Truck, Store 
+import {
+  MapPin, CreditCard, Clock, Gift, Settings, ChevronRight, LogOut,
+  Edit3, Truck, Store
 } from 'lucide-react';
 import axios from 'axios';
 import { EditProfileDialog } from '@/components/role-specific/Customer/EditProfileDialog';
 import { AddressesDialog } from '@/components/role-specific/Customer/AddressesDialog';
 import { VouchersDialog } from '@/components/role-specific/Customer/VouchersDialog';
 import { SettingsDialog } from '@/components/role-specific/Customer/SettingsDialog';
+import { PaymentMethodsDialog } from '@/components/role-specific/Customer/PaymentMethodsDialog';
 import { useAuth } from '../../hooks/useAuth';
 import Navbar from '../../components/shared/Navbar';
-// THÊM IMPORT MỚI
-import AnimatedLogoutButton from '../../components/shared/AnimatedLogoutButton'; // (Hãy điều chỉnh đường dẫn này)
+import AnimatedLogoutButton from '../../components/shared/AnimatedLogoutButton';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -21,7 +21,7 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
   const navigate = useNavigate();
   const { logout } = useAuth();
   const theme = useTheme();
-  
+
   const detectedIsMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const detectedIsTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = propIsMobile !== undefined ? propIsMobile : detectedIsMobile;
@@ -31,10 +31,12 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Dialog states
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showAddresses, setShowAddresses] = useState(false);
   const [showVouchers, setShowVouchers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false); // ✅ Thêm dòng này
 
   // 🔹 Fetch user info from backend
   useEffect(() => {
@@ -93,12 +95,19 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
   const isShopRole = userData.role === 'shop';
   const isShipperRole = userData.role === 'shipper';
 
+  // 🔹 Menu Items
   const menuItems = [
     {
       icon: MapPin,
       title: 'Địa chỉ của tôi',
       color: '#ee4d2d',
       onClick: () => setShowAddresses(true)
+    },
+    {
+      icon: CreditCard,
+      title: 'Phương thức thanh toán',
+      color: '#0ea5e9',
+      onClick: () => setShowPaymentMethods(true)
     },
     {
       icon: Clock,
@@ -147,13 +156,13 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
 
   return (
     <div style={{ width: '100%', height: '100%', background: '#f5f5f5' }}>
-      {/* Header gradient */}
+      {/* Header */}
       <div style={{
         padding: `${isMobile ? '2rem' : isTablet ? '2.5rem' : '3rem'} ${padding}`,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        boxShadow: '0 0.25rem 1rem rgba(238, 77, 45, 0.2)'
+        boxShadow: '0 0.25rem 1rem rgba(238, 77, 45, 0.2)',
+        background: 'linear-gradient(135deg, #ee4d2d, #ff6b35)'
       }}>
-        {/* Avatar + edit */}
         <div style={{ position: 'relative', marginBottom: isMobile ? '1rem' : '1.25rem' }}>
           <div style={{
             width: avatarSize, height: avatarSize, borderRadius: '50%',
@@ -195,11 +204,9 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{
-        padding: padding,
-        paddingBottom: isMobile ? '5rem' : '6rem'
-      }}>
+      {/* Stats + Menu */}
+      <div style={{ padding: padding, paddingBottom: isMobile ? '5rem' : '6rem' }}>
+        {/* Stats */}
         <div style={{
           background: '#fff',
           borderRadius: isMobile ? '1rem' : '1.25rem',
@@ -215,9 +222,7 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
             }}>{userData.stats.orders}</div>
             <div style={{ fontSize: '0.9375rem', color: '#666' }}>Đơn hàng</div>
           </div>
-
           <div style={{ width: '0.0625rem', background: '#f0f0f0' }} />
-
           <div style={{ textAlign: 'center', flex: 1 }}>
             <div style={{
               fontSize: isMobile ? '2rem' : '2.25rem',
@@ -227,7 +232,7 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
           </div>
         </div>
 
-        {/* Menu items */}
+        {/* Menu */}
         <div style={{
           background: '#fff',
           borderRadius: isMobile ? '1rem' : '1.25rem',
@@ -303,10 +308,16 @@ export function UserProfile({ isMobile: propIsMobile, isTablet: propIsTablet }) 
         isTablet={isTablet}
       />
       <AddressesDialog isOpen={showAddresses} onClose={() => setShowAddresses(false)} />
-      <PaymentMethodsDialog isOpen={showPaymentMethods} onClose={() => setShowPaymentMethods(false)} />
+      <PaymentMethodsDialog
+        isOpen={showPaymentMethods}
+        onClose={() => setShowPaymentMethods(false)}
+        isMobile={isMobile}
+        isTablet={isTablet}
+      />
       <VouchersDialog isOpen={showVouchers} onClose={() => setShowVouchers(false)} />
       <SettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
       <Navbar isProfilePage={true} />
     </div>
   );
 }
+  

@@ -39,7 +39,7 @@ const productService = {
    * @returns {Promise<object|null>}
    */
   async getProductById(productId) {
-    return await productDao.findById(productId);
+    return await productDao.findByProductId(productId);
   },
 
   /**
@@ -57,7 +57,7 @@ const productService = {
    * @returns {Promise<object>}
    */
   async updateProduct(productId, updateData) {
-    const existing = await productDao.findById(productId);
+    const existing = await productDao.findByProductId(productId);
     if (!existing) throw new Error("Sản phẩm không tồn tại");
 
     if (updateData.category && !VALID_CATEGORIES.includes(updateData.category)) {
@@ -75,7 +75,7 @@ const productService = {
       }
     }
 
-    return await productDao.update(productId, updateData);
+    return await productDao.update("product_id", productId, updateData);
   },
 
   /**
