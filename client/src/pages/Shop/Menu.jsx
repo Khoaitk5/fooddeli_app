@@ -187,34 +187,52 @@ const MenuManagement = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/products", {
-        method: "POST",
+      // 🔹 Thêm đoạn này để xử lý khi edit
+      const isEditing = !!editingItem;
+      const url = isEditing
+        ? `http://localhost:5000/api/products/${editingItem.id}`
+        : "http://localhost:5000/api/products";
+      const method = isEditing ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(newProductData),
       });
+
       const result = await response.json();
       if (!response.ok) {
-        alert(result?.error || "Không thể thêm món!");
+        alert(result?.error || (isEditing ? "Không thể cập nhật món!" : "Không thể thêm món!"));
         return;
       }
 
-      const addedItem = {
-        id: result.product_id || result.id || Date.now(),
+      const updatedItem = {
+        id: result.product_id || result.id || (isEditing ? editingItem.id : Date.now()),
         name: result.name || newProductData.name,
         description: result.description || newProductData.description,
         price: Number(result.price) || newProductData.price,
         image: result.image_url || imageUrl,
         category: result.category || newProductData.category,
-        preparationTime:
-          Number(result.prep_minutes) || newProductData.prep_minutes,
+        preparationTime: Number(result.prep_minutes) || newProductData.prep_minutes,
         status: result.is_available ? "active" : "inactive",
         hasVideo: false,
       };
-      setMenuItems((items) => [addedItem, ...items]);
-      setSuccessMessage("✅ Món ăn đã được thêm thành công!");
+
+      // 🔹 Nếu là edit → cập nhật lại item, nếu là thêm → thêm mới
+      setMenuItems((items) =>
+        isEditing
+          ? items.map((i) => (i.id === editingItem.id ? updatedItem : i))
+          : [updatedItem, ...items]
+      );
+
+      setSuccessMessage(
+        isEditing
+          ? "✅ Món ăn đã được cập nhật thành công!"
+          : "✅ Món ăn đã được thêm thành công!"
+      );
     } catch (err) {
-      console.error("❌ Lỗi khi tạo sản phẩm:", err);
+      console.error("❌ Lỗi khi lưu sản phẩm:", err);
       alert("Đã xảy ra lỗi khi kết nối đến server!");
       return;
     }
@@ -230,6 +248,7 @@ const MenuManagement = () => {
       preparationTime: "",
     });
     setImagePreview("");
+    setEditingItem(null);
   };
 
   const handleDelete = async (id) => {
