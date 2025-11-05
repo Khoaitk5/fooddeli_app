@@ -41,33 +41,72 @@ module.exports = {
 
   /**
    * Lấy danh sách đơn theo "ngữ cảnh" đã xác thực (KHÔNG lộ id)
-   * body: { status?, limit?, offset?, full? }
+   * body: { status?, limit?, offset?, full?, shop_id? }
    * - shipper: trả danh sách đơn theo shipper_id trong ctx
-   * - shop: (nếu cần) bạn có thể làm list theo shop ở đây
-   * - user: (nếu cần) list đơn theo user
+   * - shop: trả danh sách đơn theo shop_id (từ ctx hoặc body)
+   * - user: trả danh sách đơn theo user_id (nếu cần)
    */
   async listMine(req, res) {
     try {
-      const { role, shipper_id, shop_id, user_id } = req.ctx || {};
-      const { status, limit, offset, full } = req.body || {};
+      const { role, shipper_id, shop_id: ctxShopId, user_id } = req.ctx || {};
+      const { status, limit, offset, full, shop_id: bodyShopId } = req.body || {};
 
-      if (role === "shipper") {
+      // Ưu tiên lấy shop_id từ ctx, nếu không có thì dùng từ body
+      const shop_id = ctxShopId || bodyShopId;
+      const fullFlag = String(full).toLowerCase() === "true" || full === true;
+
+      // ✅ Nếu là shipper
+      if (role === "shipper" && shipper_id) {
         const items = await orderService.listByShipper(shipper_id, {
           status,
           limit,
           offset,
-          full: toBool(full, false),
+          full: fullFlag,
         });
-        return res.json({ items, limit: Number(limit ?? 20), offset: Number(offset ?? 0) });
+        return res.json({
+          items,
+          limit: Number(limit ?? 20),
+          offset: Number(offset ?? 0),
+        });
       }
 
-      // (tuỳ bạn cần) có thể thêm:
-      // if (role === "shop") { ...orderService.listByShop(shop_id)... }
-      // if (role === "user") { ...orderService.listByUser(user_id)... }
+      // ✅ Nếu là shop (trường hợp bạn đang cần)
+      if ((role === "shop" && shop_id) || bodyShopId) {
+        const items = await orderService.listByShop(Number(shop_id), {
+          status,
+          limit,
+          offset,
+          full: fullFlag,
+        });
+        return res.json({
+          items,
+          limit: Number(limit ?? 20),
+          offset: Number(offset ?? 0),
+        });
+      }
 
-      return res.status(400).json({ message: "Unsupported role for listMine" });
+      // ✅ Nếu là user (nếu bạn cần thêm sau này)
+      if (role === "user" && user_id) {
+        const items = await orderService.listByUser(user_id, {
+          status,
+          limit,
+          offset,
+          full: fullFlag,
+        });
+        return res.json({
+          items,
+          limit: Number(limit ?? 20),
+          offset: Number(offset ?? 0),
+        });
+      }
+
+      // ❌ Nếu không hợp lệ
+      return res
+        .status(400)
+        .json({ message: "Unsupported role or missing identifiers" });
     } catch (e) {
-      res.status(400).json({ message: e.message });
+      console.error("❌ Lỗi listMine:", e);
+      res.status(400).json({ message: e.message || "Bad request" });
     }
   },
 
@@ -215,28 +254,28 @@ module.exports = {
   },
 
   async listByShipperIdWithDetails(req, res) {
-  try {
-    const { shipper_id, status, limit = 20, offset = 0, withProduct = true } = req.body || {};
-    if (!Number(shipper_id)) return res.status(400).json({ message: "shipper_id is required" });
+    try {
+      const { shipper_id, status, limit = 20, offset = 0, withProduct = true } = req.body || {};
+      if (!Number(shipper_id)) return res.status(400).json({ message: "shipper_id is required" });
 
-    // 1) Lấy danh sách đơn theo shipper
-    const orders = await orderService.listByShipper(Number(shipper_id), {
-      status,
-      limit: Number(limit),
-      offset: Number(offset),
-    });
+      // 1) Lấy danh sách đơn theo shipper
+      const orders = await orderService.listByShipper(Number(shipper_id), {
+        status,
+        limit: Number(limit),
+        offset: Number(offset),
+      });
 
-    // 2) Lấy details cho từng order
-    const items = await Promise.all(
-      orders.map(async (o) => {
-        const details = await orderDetailService.list(o.order_id, { withProduct: toBool(withProduct, true) });
-        return { order: o, details };
-      })
-    );
+      // 2) Lấy details cho từng order
+      const items = await Promise.all(
+        orders.map(async (o) => {
+          const details = await orderDetailService.list(o.order_id, { withProduct: toBool(withProduct, true) });
+          return { order: o, details };
+        })
+      );
 
-    res.json({ items, limit: Number(limit), offset: Number(offset) });
-  } catch (e) {
-    res.status(400).json({ message: e.message || "Bad request" });
+      res.json({ items, limit: Number(limit), offset: Number(offset) });
+    } catch (e) {
+      res.status(400).json({ message: e.message || "Bad request" });
+    }
   }
-}
 };

@@ -1,6 +1,7 @@
 // services/orderService.js
 const orderDao = require("../dao/orderDao");
 const orderDetailDao = require("../dao/order_detailDao");
+const orderDetailService = require("./order_detailService");
 
 class OrderService {
   /**
@@ -23,6 +24,28 @@ class OrderService {
       limit: Number(limit),
       offset: Number(offset),
     });
+  }
+
+  /**
+   * 🏪 Lấy danh sách đơn theo shop_id (+ lọc + phân trang)
+   * Có thể trả dạng đơn giản hoặc kèm chi tiết (full)
+   */
+  async listByShop(shopId, { status, limit = 20, offset = 0, full = false } = {}) {
+    const sid = Number(shopId);
+    if (!sid) throw new Error("shopId is required");
+
+    if (!full) {
+      return await orderDao.listByShop(sid, { status, limit, offset });
+    }
+
+    const orders = await orderDao.listByShop(sid, { status, limit, offset });
+    const items = await Promise.all(
+      orders.map(async (o) => {
+        const details = await orderDetailService.list(o.order_id, { withProduct: true });
+        return { order: o, details };
+      })
+    );
+    return items;
   }
 
   /**

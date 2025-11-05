@@ -28,9 +28,8 @@ class OrderDao extends GenericDao {
       sql += ` AND status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    };`;
+    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
+      };`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));
@@ -94,9 +93,8 @@ class OrderDao extends GenericDao {
       idSql += ` AND o.status = $${baseParams.length}`;
     }
     baseParams.push(limit, offset);
-    idSql += ` ORDER BY o.created_at DESC LIMIT $${
-      baseParams.length - 1
-    } OFFSET $${baseParams.length};`;
+    idSql += ` ORDER BY o.created_at DESC LIMIT $${baseParams.length - 1
+      } OFFSET $${baseParams.length};`;
 
     const idsRes = await pool.query(idSql, baseParams);
     const ids = idsRes.rows.map((r) => r.order_id);
@@ -247,9 +245,8 @@ class OrderDao extends GenericDao {
       sql += ` AND status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    };`;
+    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
+      };`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));
@@ -287,6 +284,38 @@ class OrderDao extends GenericDao {
     const r = await pool.query(sql, [shipperId]);
     return !!r.rows[0];
   }
+
+  /**
+ * Lấy danh sách orders theo shop_id (có lọc trạng thái & phân trang)
+ * @param {number} shopId
+ * @param {object} options { status?: string, limit?: number, offset?: number }
+ */
+  async listByShop(shopId, { status, limit = 20, offset = 0 } = {}) {
+    const params = [shopId];
+    let sql = `
+      SELECT
+        o.*,
+        u.full_name  AS user_full_name,
+        u.phone      AS user_phone,
+        sp.shop_name AS shop_name
+      FROM orders o
+      JOIN users u          ON u.id = o.user_id
+      JOIN shop_profiles sp ON sp.id = o.shop_id
+      WHERE o.shop_id = $1
+    `;
+
+    if (status) {
+      params.push(status);
+      sql += ` AND o.status = $${params.length}`;
+    }
+
+    params.push(limit, offset);
+    sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length};`;
+
+    const res = await pool.query(sql, params);
+    return res.rows.map((r) => new this.Model(r));
+  }
+
 }
 
 module.exports = new OrderDao();
