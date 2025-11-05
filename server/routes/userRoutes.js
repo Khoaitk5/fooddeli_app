@@ -41,4 +41,12 @@ router.get("/email/:email", userController.getUserByEmail);
 // 📌 Tìm user theo số điện thoại
 router.get("/phone/:phone", userController.getUserByPhone);
 
+// 📌 Cập nhật user theo ID (Admin hoặc Profile)
+router.patch("/:id", userController.updateUserById);
+
+// 🏪 Lấy thông tin shop của user hiện tại
+router.get("/shops/me", userController.getMyShop);
+
+
+
 module.exports = router;
