@@ -1,21 +1,85 @@
 import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import NoteIcon from "../../components/shared/NoteIcon";
 import SubmitButton from "../../components/shared/SubmitButton";
+import { ChevronLeft } from "lucide-react";
 // Giả sử bạn có import CloseIcon ở đâu đó, nhưng code này không dùng
 // import CloseIcon from "../../components/shared/CloseIcon";
 
 const FoodDetail = () => {
-  const [foodName, setFoodName] = useState("Trà sữa");
-  const [foodPrice, setFoodPrice] = useState("30.000₫");
-  const [foodDescription, setFoodDescription] = useState("Mô tả");
-  const [foodImage, setFoodImage] = useState("https://www.cukcuk.vn/wp-content/uploads/2023/03/gvrtrbvm08upwlo3i81y.jpeg");
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Nhận dữ liệu từ navigation state
+  const {
+    foodId,
+    foodName = "Trà sữa",
+    foodPrice = "30.000",
+    foodDescription = "Mô tả",
+    foodImage = "https://www.cukcuk.vn/wp-content/uploads/2023/03/gvrtrbvm08upwlo3i81y.jpeg",
+    shopId,
+  } = location.state || {};
+
   const [note, setNote] = useState("");
+  const [quantity, setQuantity] = useState(1);
+
+  // Hàm thêm vào giỏ hàng
+  const handleAddToCart = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/cart/items", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shop_id: shopId,
+          product_id: foodId,
+          quantity: quantity,
+          unit_price: foodPrice,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ Đã thêm "${foodName}" vào giỏ hàng!`);
+        navigate(-1); // Quay lại trang trước
+      } else {
+        alert("❌ Không thể thêm vào giỏ hàng: " + data.message);
+      }
+    } catch (err) {
+      console.error("❌ Lỗi khi thêm vào giỏ hàng:", err);
+      alert("Đã xảy ra lỗi khi thêm vào giỏ hàng!");
+    }
+  };
 
   return (
-    <div style={{ position: "relative", height: "100vh" }}>
+    <div style={{ position: "relative", height: "100vh", backgroundColor: "#fff" }}>
+      {/* Nút quay lại */}
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          position: "absolute",
+          top: 20,
+          left: 20,
+          zIndex: 10,
+          backgroundColor: "rgba(255,255,255,0.9)",
+          borderRadius: "50%",
+          border: "none",
+          width: 40,
+          height: 40,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+          cursor: "pointer",
+        }}
+      >
+        <ChevronLeft size={24} />
+      </button>
+
       {/* Hình ảnh */}
       <img
-        src={foodImage}
+        src={foodImage || "/default-food.jpg"}
+        alt={foodName}
         style={{
           width: "100%",
           height: "26.625vh",
@@ -45,12 +109,12 @@ const FoodDetail = () => {
         <div
           style={{
             marginRight: "5.55vw",
-            color: "#2BCDD2",
+            color: "#ff6b35",
             fontSize: "1.6rem",
             fontWeight: "700",
           }}
         >
-          {foodPrice}
+          {Number(foodPrice).toLocaleString("vi-VN")}đ
         </div>
       </div>
 
@@ -169,19 +233,78 @@ const FoodDetail = () => {
           />
         </div>
       </div>
+      {/* Số lượng và nút thêm vào giỏ */}
       <div
         style={{
           position: "absolute",
           bottom: 0,
           left: 0,
           right: 0,
-          display: "flex",
-          justifyContent: "center",
+          padding: "16px",
+          backgroundColor: "#fff",
+          borderTop: "1px solid #eee",
+          boxShadow: "0 -2px 8px rgba(0,0,0,0.05)",
         }}
       >
-        <SubmitButton onClick={() => console.log("Add to cart")}>
-          Thêm vào giỏ hàng
-        </SubmitButton>
+        {/* Chọn số lượng */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "20px",
+            marginBottom: "12px",
+          }}
+        >
+          <button
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              border: "1.5px solid #ff6b35",
+              backgroundColor: "#fff",
+              color: "#ff6b35",
+              fontSize: "20px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            -
+          </button>
+          <span style={{ fontSize: "1.4rem", fontWeight: "600", minWidth: "30px", textAlign: "center" }}>
+            {quantity}
+          </span>
+          <button
+            onClick={() => setQuantity(quantity + 1)}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              border: "1.5px solid #ff6b35",
+              backgroundColor: "#fff",
+              color: "#ff6b35",
+              fontSize: "20px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            +
+          </button>
+        </div>
+
+        {/* Nút thêm vào giỏ */}
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <SubmitButton onClick={handleAddToCart}>
+            Thêm vào giỏ hàng - {(Number(foodPrice) * quantity).toLocaleString("vi-VN")}đ
+          </SubmitButton>
+        </div>
       </div>
     </div>
   );
