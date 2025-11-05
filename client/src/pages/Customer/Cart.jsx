@@ -1,79 +1,27 @@
-import { useState, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
 import SubmitButton from "../../components/shared/SubmitButton";
-import { useCart } from "../../hooks/useCart";
+import { useOrder } from "../../contexts/OrderContext";
 
 export function CartPage({ isMobile, isTablet, onCheckout }) {
   const navigate = useNavigate();
-  const { cartItems: initialCartItems, loading, refreshCart } = useCart();
-  const [cartItems, setCartItems] = useState(initialCartItems);
-
-  // Sync cartItems khi hook update
-  useEffect(() => {
-    setCartItems(initialCartItems);
-  }, [initialCartItems]);
+  
+  // Lấy data từ OrderContext (chung với ConfirmOrder)
+  const {
+    items: cartItems,
+    quantities,
+    handleQuantityChange,
+    handleRemoveItem,
+    totalItemPrice,
+    cartLoading: loading,
+  } = useOrder();
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(price);
-
-  const updateQuantity = async (itemId, delta) => {
-    const item = cartItems.find((i) => i.id === itemId);
-    if (!item) return;
-    const newQty = Math.max(1, item.quantity + delta);
-
-    try {
-      const res = await fetch("http://localhost:5000/api/cart/items", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, quantity: newQty }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCartItems((prev) =>
-          prev.map((i) =>
-            i.id === itemId
-              ? { ...i, quantity: newQty, line_total: newQty * i.unit_price }
-              : i
-          )
-        );
-        // Refresh cart để update badge
-        refreshCart();
-      }
-    } catch (err) {
-      console.error("❌ Lỗi khi cập nhật số lượng:", err);
-    }
-  };
-
-  const removeItem = async (itemId) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/cart/items", {
-        method: "DELETE",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCartItems((prev) => prev.filter((i) => i.id !== itemId));
-        // Refresh cart để update badge
-        refreshCart();
-      }
-    } catch (err) {
-      console.error("❌ Lỗi khi xóa item:", err);
-    }
-  };
-
-  const subtotal = cartItems.reduce(
-    (sum, i) => sum + Number(i.line_total || i.unit_price * i.quantity),
-    0
-  );
-  const total = subtotal;
 
   if (loading)
     return (
@@ -132,7 +80,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
       >
         {cartItems.length > 0 ? (
           <>
-            {cartItems.map((item) => (
+            {cartItems.map((item, index) => (
               <div
                 key={item.id}
                 style={{
@@ -158,8 +106,8 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                 }}
               >
                 <img
-                  src={item.product_image || "/default-food.jpg"}
-                  alt={item.product_name}
+                  src={item.img || "/default-food.jpg"}
+                  alt={item.name}
                   style={{
                     width: "90px",
                     height: "90px",
@@ -187,20 +135,8 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                           lineHeight: "1.4",
                         }}
                       >
-                        {item.product_name}
+                        {item.name}
                       </h3>
-                      {item.product_description && (
-                        <p
-                          style={{
-                            margin: "0.25rem 0 0.5rem",
-                            fontSize: "0.9rem",
-                            color: "#777",
-                            lineHeight: "1.4",
-                          }}
-                        >
-                          {item.product_description}
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -219,7 +155,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                         fontSize: "1rem",
                       }}
                     >
-                      {formatPrice(item.unit_price)}
+                      {formatPrice(item.price)}
                     </span>
                     <div
                       style={{
@@ -233,9 +169,9 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                     >
                       <button
                         onClick={() =>
-                          item.quantity <= 1
-                            ? removeItem(item.id)
-                            : updateQuantity(item.id, -1)
+                          quantities[index] <= 1
+                            ? handleRemoveItem(index)
+                            : handleQuantityChange(index, -1)
                         }
                         style={{
                           width: "28px",
@@ -243,16 +179,16 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                           borderRadius: "6px",
                           border: "none",
                           background: "#fff",
-                          color: item.quantity <= 1 ? "#ef4444" : "#333",
+                          color: quantities[index] <= 1 ? "#ef4444" : "#333",
                           cursor: "pointer",
-                          fontSize: item.quantity <= 1 ? "1.2rem" : "1rem",
+                          fontSize: quantities[index] <= 1 ? "1.2rem" : "1rem",
                           fontWeight: 600,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
                       >
-                        {item.quantity <= 1 ? "🗑️" : "−"}
+                        {quantities[index] <= 1 ? "🗑️" : "−"}
                       </button>
                       <span
                         style={{
@@ -262,10 +198,10 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                           textAlign: "center",
                         }}
                       >
-                        {item.quantity}
+                        {quantities[index]}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => handleQuantityChange(index, 1)}
                         style={{
                           width: "28px",
                           height: "28px",
@@ -297,7 +233,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
             >
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Tạm tính:</span>
-                <span>{formatPrice(subtotal)}</span>
+                <span>{formatPrice(totalItemPrice)}</span>
               </div>
               <hr style={{ margin: "0.5rem 0", borderColor: "#eee" }} />
               <div
@@ -309,7 +245,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                 }}
               >
                 <span>Tổng cộng:</span>
-                <span style={{ color: "#ee4d2d" }}>{formatPrice(total)}</span>
+                <span style={{ color: "#ee4d2d" }}>{formatPrice(totalItemPrice)}</span>
               </div>
             </div>
           </>
@@ -348,9 +284,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
           <SubmitButton
             isValid={cartItems.length > 0}
             onClick={() => {
-              navigate("/customer/confirm-order", {
-                state: { cartItems, total },
-              });
+              navigate("/customer/confirm-order");
             }}
             style={{
               marginTop: "0",
@@ -369,7 +303,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                 wordWrap: "break-word",
               }}
             >
-              Thanh toán • {formatPrice(total)}
+              Thanh toán • {formatPrice(totalItemPrice)}
             </div>
           </SubmitButton>
         </div>

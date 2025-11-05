@@ -377,6 +377,7 @@ const OrderSummary = ({
   onRemoveItem,
   note,
   onNoteChange,
+  onAddMoreClick, // Thêm handler cho "Thêm món"
 }) => {
   const { showConfirmation } = useOrder();
 
@@ -385,7 +386,12 @@ const OrderSummary = ({
       {/* Summary Header */}
       <div style={s.summaryHeader}>
         <div style={s.summaryTitle}>Tóm tắt đơn</div>
-        <div style={s.summaryAddButton}>Thêm món</div>
+        <div 
+          style={{ ...s.summaryAddButton, cursor: "pointer" }}
+          onClick={onAddMoreClick}
+        >
+          Thêm món
+        </div>
       </div>
       {/* Item Rows */}
       {items.map((item, index) => (
@@ -659,8 +665,24 @@ export default function ConfirmOrder({
     shippingDiscount,
     totalPrice,
     couponCount,
+    shopId, // Lấy shopId để navigate
     cartLoading,
   } = useOrder();
+
+  // Handler cho nút "Thêm món"
+  const handleAddMoreItems = () => {
+    if (shopId) {
+      navigate("/customer/restaurant-details", {
+        state: { 
+          shopId,
+          defaultTab: "menu" // Mặc định hiển thị tab Thực đơn
+        }
+      });
+    } else {
+      console.warn("⚠️ Không tìm thấy shopId");
+      navigate("/customer/discover"); // Fallback về trang discover
+    }
+  };
 
   // Hiển thị loading khi đang fetch cart
   if (cartLoading) {
@@ -728,6 +750,7 @@ export default function ConfirmOrder({
         onRemoveItem={handleRemoveItem} 
         note={note}
         onNoteChange={setNote}
+        onAddMoreClick={handleAddMoreItems}
       />
 
       <PaymentDetails

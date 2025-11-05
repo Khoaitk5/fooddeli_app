@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 export const useCart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
+  const [shopId, setShopId] = useState(null); // Lưu shopId từ cart
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -34,9 +35,15 @@ export const useCart = () => {
           quantity: item.quantity,
           unit_price: Number(item.unit_price),
           line_total: Number(item.line_total),
+          shop_id: item.shop_id, // Lưu shop_id
         }));
 
         setCartItems(normalizedItems);
+        
+        // Lấy shopId từ item đầu tiên (tất cả items trong cart cùng 1 shop)
+        if (normalizedItems.length > 0 && normalizedItems[0].shop_id) {
+          setShopId(normalizedItems[0].shop_id);
+        }
         
         // Tính tổng số lượng items
         const totalCount = normalizedItems.reduce(
@@ -47,6 +54,7 @@ export const useCart = () => {
       } else {
         setCartItems([]);
         setCartCount(0);
+        setShopId(null);
       }
     } catch (err) {
       console.error("❌ Lỗi khi fetch giỏ hàng:", err);
@@ -71,6 +79,7 @@ export const useCart = () => {
   return {
     cartItems,
     cartCount,
+    shopId, // Export shopId
     loading,
     error,
     refreshCart,

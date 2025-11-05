@@ -17,12 +17,13 @@ export default function RestaurantDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const shopId = location.state?.shopId || sessionStorage.getItem("lastShopId");
+  const defaultTab = location.state?.defaultTab || "videos"; // Nhận defaultTab từ navigation
 
   const [shop, setShop] = useState(null);
   const [videos, setVideos] = useState([]);
   const [menu, setMenu] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [activeTab, setActiveTab] = useState("videos");
+  const [activeTab, setActiveTab] = useState(defaultTab); // Dùng defaultTab
   const [loading, setLoading] = useState(true);
 
   // 📦 Fetch dữ liệu shop + video + menu
@@ -444,9 +445,36 @@ const handleAddToCart = async (item) => {
                         height: 80,
                         objectFit: "cover",
                         borderRadius: 12,
+                        cursor: "pointer",
                       }}
+                      onClick={() =>
+                        navigate("/customer/food-detail", {
+                          state: {
+                            foodId: item.product_id,
+                            foodName: item.name,
+                            foodPrice: item.price,
+                            foodDescription: item.description,
+                            foodImage: item.image_url,
+                            shopId: shop.id,
+                          },
+                        })
+                      }
                     />
-                    <div style={{ flex: 1 }}>
+                    <div
+                      style={{ flex: 1, cursor: "pointer" }}
+                      onClick={() =>
+                        navigate("/customer/food-detail", {
+                          state: {
+                            foodId: item.product_id,
+                            foodName: item.name,
+                            foodPrice: item.price,
+                            foodDescription: item.description,
+                            foodImage: item.image_url,
+                            shopId: shop.id,
+                          },
+                        })
+                      }
+                    >
                       <h4 style={{ fontWeight: 600 }}>{item.name}</h4>
                       <p style={{ fontSize: 14, color: "#777" }}>
                         {item.description}

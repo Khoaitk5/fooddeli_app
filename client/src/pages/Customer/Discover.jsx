@@ -4,7 +4,7 @@ import Navbar from "@/components/shared/Navbar";
 import RestaurantCard from "../../components/role-specific/Customer/RestaurantCard";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 
 // Functional component for the Discover page
@@ -47,87 +47,56 @@ const Discover = () => {
     },
   ];
 
-  // Fetch danh sách shops từ API
+  // ✅ Hàm transform shop - tối ưu bằng cách tách riêng
+  const transformShopData = (shop) => ({
+    id: shop.id || shop.shop_profile_id,
+    name: shop.shop_name || "Chưa có tên",
+    imageUrl: shop.shop_image || shop.avatar_url || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg",
+    rating: shop.avg_review_rating && shop.avg_review_rating > 0
+      ? Number(shop.avg_review_rating).toFixed(1)
+      : (shop.rating ? Number(shop.rating).toFixed(1) : "5.0"),
+    reviewCount: shop.review_count || 0,
+    salesCount: shop.completed_orders ? `${shop.completed_orders}+` : "0+",
+    distance: "N/A",
+  });
+
+  // Fetch danh sách shops từ API - Tối ưu hóa
   useEffect(() => {
     const fetchShops = async () => {
+      const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
+      
       try {
         setLoading(true);
         setError(null);
 
-        const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
+        // ✅ Xác định endpoint dựa trên category
+        const endpoint = selectedCategory
+          ? `${API_BASE_URL}/shops/by-food-type?foodType=${encodeURIComponent(selectedCategory)}`
+          : `${API_BASE_URL}/shops/list`;
 
-        // Luôn fetch tất cả shops cho section "Gần tôi!" và "Bán chạy"
-        if (!selectedCategory) {
-          const response = await axios.get(`${API_BASE_URL}/shops/list`, {
-            withCredentials: true,
-          });
+        // ✅ Gọi API một lần duy nhất
+        const response = await axios.get(endpoint, {
+          withCredentials: true,
+          timeout: 5000, // ✅ Thêm timeout 5s
+        });
 
-          if (response.data.success && Array.isArray(response.data.data)) {
-            const transformedShops = response.data.data.map((shop) => {
-              const imageUrl = shop.shop_image || shop.avatar_url || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg";
-              const rating = shop.avg_review_rating && shop.avg_review_rating > 0
-                ? Number(shop.avg_review_rating).toFixed(1)
-                : (shop.rating ? Number(shop.rating).toFixed(1) : "5.0");
-              const reviewCount = shop.review_count || 0;
-              const salesCount = shop.completed_orders ? `${shop.completed_orders}+` : "0+";
-              let distance = "N/A";
-
-              return {
-                id: shop.id || shop.shop_profile_id,
-                name: shop.shop_name || "Chưa có tên",
-                imageUrl,
-                rating,
-                reviewCount,
-                salesCount,
-                distance,
-              };
-            });
-
-            setRestaurants(transformedShops);
-          } else {
-            setRestaurants([]);
-          }
-        } else {
-          // Fetch shops theo category được chọn
-          const response = await axios.get(
-            `${API_BASE_URL}/shops/by-food-type?foodType=${encodeURIComponent(selectedCategory)}`,
-            { withCredentials: true }
-          );
-
-          if (response.data.success && Array.isArray(response.data.data)) {
-            const transformedShops = response.data.data.map((shop) => {
-              const imageUrl = shop.shop_image || shop.avatar_url || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg";
-              const rating = shop.avg_review_rating && shop.avg_review_rating > 0
-                ? Number(shop.avg_review_rating).toFixed(1)
-                : (shop.rating ? Number(shop.rating).toFixed(1) : "5.0");
-              const reviewCount = shop.review_count || 0;
-              const salesCount = shop.completed_orders ? `${shop.completed_orders}+` : "0+";
-              let distance = "N/A";
-
-              return {
-                id: shop.id || shop.shop_profile_id,
-                name: shop.shop_name || "Chưa có tên",
-                imageUrl,
-                rating,
-                reviewCount,
-                salesCount,
-                distance,
-              };
-            });
-
+        // ✅ Kiểm tra và transform data
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const transformedShops = response.data.data.map(transformShopData);
+          
+          // ✅ Set state dựa trên category
+          if (selectedCategory) {
             setFilteredRestaurants(transformedShops);
           } else {
-            setFilteredRestaurants([]);
+            setRestaurants(transformedShops);
           }
+        } else {
+          selectedCategory ? setFilteredRestaurants([]) : setRestaurants([]);
         }
       } catch (err) {
         console.error("❌ Lỗi khi fetch shops:", err);
-        setError("Không thể tải danh sách cửa hàng");
-        if (selectedCategory) {
-          setFilteredRestaurants([]);
-        } else {
-          setRestaurants([]);
-        }
+        setError(err.code === 'ECONNABORTED' ? "Kết nối quá chậm" : "Không thể tải danh sách cửa hàng");
+        selectedCategory ? setFilteredRestaurants([]) : setRestaurants([]);
       } finally {
         setLoading(false);
       }

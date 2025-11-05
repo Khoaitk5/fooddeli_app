@@ -11,7 +11,7 @@ const OrderContext = createContext();
 // 2. Tạo Provider (Component bọc ngoài)
 export const OrderProvider = ({ children }) => {
   // === LẤY CART TỪ BACKEND ===
-  const { cartItems: backendCartItems, cartCount, loading: cartLoading, refreshCart } = useCart();
+  const { cartItems: backendCartItems, cartCount, shopId, loading: cartLoading, refreshCart } = useCart();
   
   // === STATE CỦA ĐƠN HÀNG ===
   const [note, setNote] = useState("");
@@ -214,6 +214,7 @@ export const OrderProvider = ({ children }) => {
     shippingDiscount,
     totalPrice,
     couponCount,
+    shopId, // Thêm shopId để navigate đến shop
     cartLoading, // Thêm loading state
     // Cung cấp state và hàm của modal
     confirmation,
