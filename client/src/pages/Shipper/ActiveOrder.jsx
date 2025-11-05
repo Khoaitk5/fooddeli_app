@@ -14,6 +14,21 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 // ---------------------- helpers ----------------------
 const money = (v) => (Number(v || 0)).toLocaleString();
 
+// format hiển thị
+const formatDistance = (km) => {
+  if (km == null) return '-';
+  const v = Number(km);
+  return v < 1 ? `${Math.round(v * 1000)}m` : `${v.toFixed(3)}km`;
+};
+const formatDuration = (sec) => {
+  if (sec == null) return '-';
+  const s = Math.max(0, Math.round(Number(sec)));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  if (m === 0) return `${r} giây`;
+  return `${m} phút${r ? ` ${r} giây` : ''}`;
+};
+
 const mapEnrichedToCard = (item) => {
   const o = item.order || {};
   const userAddr = (item.user_addresses && item.user_addresses[0]) || null;
@@ -26,15 +41,15 @@ const mapEnrichedToCard = (item) => {
   const cod = o.payment_method === 'COD' ? Number(o.total_price || 0) : 0;
   const bonus = Math.round(Number(o.delivery_fee || 0) * Number(o.shipper_commission_rate || 0.15));
 
-    return {
+  // BE trả: distance_km (number), duration_sec (number)
+  return {
     id: o.order_id,
     pickupName: shopInfo.shop_name || `Shop #${o.shop_id}`,
     pickupAddr: shopAddr,
     dropName: 'Khách hàng',
     dropAddr: dropAddr,
-    distance: item.distance || '-', // ✅ lấy từ BE
-    eta: item.duration || '-',       // ✅ lấy từ BE
-    weight: '-',
+    distance: formatDistance(item.distance_km),
+    eta: formatDuration(item.duration_sec),
     cod,
     bonus,
   };
@@ -363,32 +378,61 @@ const ActiveOrder = () => {
     const load = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         // 1) lấy shipper_id từ /api/users/me
-        const meRes = await fetch('http://localhost:5000/api/users/me', { credentials: 'include' });
+        const meRes = await fetch("http://localhost:5000/api/users/me", {
+          credentials: "include",
+        });
         const meJson = await meRes.json();
         const shipperId = meJson?.user?.shipper_profile?.id;
-        if (!shipperId) throw new Error('Không tìm thấy shipper_id');
+        if (!shipperId) throw new Error("Không tìm thấy shipper_id");
 
-        // 2) lấy đơn đầy đủ cho shipper
-        const ordersRes = await fetch('http://localhost:5000/api/shipper/orders/full', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ shipper_id: shipperId, status: 'shipping' }), // hoặc 'pending'
-        });
-        // chỉ dùng clone để in debug
-        const debugText = await ordersRes.clone().text();
-        console.log('DEBUG /api/shipper/orders/full:', debugText);
+        // 2) lấy vị trí hiện tại của shipper
+        const getPosition = () =>
+          new Promise((resolve, reject) => {
+            if (!navigator.geolocation)
+              return reject(new Error("Trình duyệt không hỗ trợ định vị"));
+            navigator.geolocation.getCurrentPosition(
+              (pos) => resolve(pos.coords),
+              (err) => reject(err),
+              { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+            );
+          });
+
+        let coords;
+        try {
+          coords = await getPosition();
+        } catch (e) {
+          throw new Error("Không lấy được vị trí hiện tại");
+        }
+
+        // 3) gọi API BE mới: /api/shipper/orders/nearby (lọc 3km + cooking)
+        const ordersRes = await fetch(
+          "http://localhost:5000/api/shipper/orders/nearby",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              shipper_id: shipperId,
+              lat: coords.latitude,
+              lon: coords.longitude,
+              radius_km: 3,
+              status: "cooking",
+              limit: 50,
+              offset: 0,
+            }),
+          }
+        );
+
         const ordersJson = await ordersRes.json();
         if (!ordersRes.ok || ordersJson.success === false) {
-          throw new Error(ordersJson.message || 'Không lấy được danh sách đơn');
+          throw new Error(ordersJson.message || "Không lấy được danh sách đơn");
         }
 
         const enrichedItems = ordersJson.data || ordersJson.items || [];
         const cards = enrichedItems.map(mapEnrichedToCard);
-
         if (!abort) setAvailableOrders(cards);
       } catch (e) {
         if (!abort) setError(e.message || 'Lỗi tải dữ liệu');
@@ -407,12 +451,30 @@ const ActiveOrder = () => {
     setAvailableOrders((q) => q.slice(1));
   };
 
-  const handleAccepted = (order) => {
+  const handleAccepted = async (order) => {
+  try {
+    const res = await fetch('http://localhost:5000/api/shipper/orders/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ order_id: order.id }) // shipper lấy từ session
+    });
+    const json = await res.json();
+    if (!res.ok || json.success === false) {
+      throw new Error(json.message || 'Nhận đơn thất bại');
+    }
+
+    // cập nhật state local
     setCurrentOrder(order);
     setAvailableOrders((q) => q.filter((o) => o.id !== order.id));
-    // TODO: nếu cần, gọi API gán shipper/ cập nhật trạng thái tại đây
-    // await fetch('/api/orders/assign-me', { method:'POST', body: JSON.stringify({ order_id: order.id }) })
-  };
+
+    // điều hướng
+    navigate('/shipper/delivering');
+  } catch (err) {
+    alert(err.message || 'Không thể nhận đơn');
+  }
+};
+
 
 
   // UI loading / error

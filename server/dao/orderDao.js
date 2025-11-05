@@ -254,6 +254,39 @@ class OrderDao extends GenericDao {
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));
   }
+  // Lấy tất cả order status='cooking' + join shop address (để lọc bằng JS)
+  async listCookingWithShopAddress({ limit = 200, offset = 0 } = {}) {
+    const sql = `
+    SELECT
+      o.*,
+      sp.shop_name,
+      a.address_id,
+      (a.lat_lon->>'lat')::float AS shop_lat,
+      (a.lat_lon->>'lon')::float AS shop_lon,
+      a.address_line
+    FROM orders o
+    JOIN shop_profiles sp ON sp.id = o.shop_id
+    JOIN addresses a       ON a.address_id = sp.shop_address_id
+    WHERE o.status = 'cooking'
+    ORDER BY o.created_at DESC
+    LIMIT $1 OFFSET $2;
+  `;
+    const res = await pool.query(sql, [limit, offset]);
+    return res.rows; // giữ dạng raw để service xử lý tiếp
+  }
+
+  // Kiểm tra shipper đang có đơn shipping chưa
+  async hasShippingOfShipper(shipperId) {
+    const sql = `
+    SELECT 1
+    FROM orders
+    WHERE shipper_id = $1
+      AND status = 'shipping'
+    LIMIT 1;
+  `;
+    const r = await pool.query(sql, [shipperId]);
+    return !!r.rows[0];
+  }
 }
 
 module.exports = new OrderDao();

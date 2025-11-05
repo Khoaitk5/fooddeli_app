@@ -28,6 +28,6 @@ router.put("/:id", shipperController.updateShipper);
 router.delete("/:id", shipperController.deleteShipper);
 
 // lấy toàn bộ đơn của shipper kèm chi tiết, user, shop
-router.post("/orders/full", shipperController.getFullOrders);
+router.post("/orders/nearby", shipperController.listNearbyCookingFull);
 
 module.exports = router;
