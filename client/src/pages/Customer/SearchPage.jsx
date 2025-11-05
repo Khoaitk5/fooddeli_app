@@ -1,24 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
 import RecommendItem from "../../components/shared/RecommendItem";
 import SearchTitle from "../../components/shared/SearchTitle";
 import ClearIcon from "../../components/shared/ClearIcon";
+import { getAllShops } from "../../api/shopApi";
 
 const SearchPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [allItems, setAllItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Danh sách các cửa hàng được đề xuất
-  const allItems = [
-    { title: "Bún Đậu Cuối Ngõ", image: "/bundau.jpg", distance: "0.4km" },
-    { title: "Highlands Coffee", image: "/highland.png", distance: "1.2km" },
-    { title: "Phúc Long", image: "/phuclong.jpg", distance: "0.8km" },
-    { title: "Sà Bì Chưởng", image: "/sabichuong.jpg", distance: "2.1km" },
-    { title: "Lotteria", image: "/lotteria.png", distance: "0.6km" },
-    { title: "KFC", image: "https://upload.wikimedia.org/wikipedia/sco/thumb/b/bf/KFC_logo.svg/2048px-KFC_logo.svg.png", distance: "0.9km" },
-  ];
+  // Lấy danh sách cửa hàng từ API khi component mount
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllShops();
+        
+        // Map dữ liệu shop sang format mà RecommendItem cần
+        const shops = Array.isArray(response) ? response : (response?.data || []);
+        const mappedShops = shops.map(shop => ({
+          title: shop.shop_name || shop.full_name || "Cửa hàng",
+          image: shop.shop_image || shop.avatar_url || "https://placehold.co/97x97",
+          distance: shop.address_line ? "Xem địa chỉ" : "N/A",
+          shopId: shop.shop_profile_id || shop.id,
+        }));
+        
+        setAllItems(mappedShops);
+      } catch (error) {
+        console.error("❌ Lỗi khi lấy danh sách cửa hàng:", error);
+        setAllItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShops();
+  }, []);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -194,28 +215,66 @@ const SearchPage = () => {
           >
             Được đề xuất
           </SearchTitle>
-          <div
-            style={{
-              position: "absolute",
-              top: "18.625vh",
-              left: 0,
-              width: "100%",
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 26.94vw)",
-              justifyContent: "center",
-              columnGap: "2.78vw",
-              rowGap: "2.5vh",
-            }}
-          >
-            {allItems.map((item, idx) => (
-              <RecommendItem
-                key={idx}
-                image={item.image}
-                title={item.title}
-                distance={item.distance}
-              />
-            ))}
-          </div>
+          
+          {loading ? (
+            /* Hiển thị loading */
+            <div
+              style={{
+                position: "absolute",
+                top: "18.625vh",
+                left: 0,
+                width: "100%",
+                textAlign: "center",
+                padding: "3rem 1rem",
+                color: "#666",
+                fontSize: "1.4rem",
+                fontFamily: "'Be Vietnam Pro', sans-serif",
+              }}
+            >
+              Đang tải danh sách cửa hàng...
+            </div>
+          ) : allItems.length === 0 ? (
+            /* Hiển thị thông báo khi không có dữ liệu */
+            <div
+              style={{
+                position: "absolute",
+                top: "18.625vh",
+                left: 0,
+                width: "100%",
+                textAlign: "center",
+                padding: "3rem 1rem",
+                color: "#666",
+                fontSize: "1.4rem",
+                fontFamily: "'Be Vietnam Pro', sans-serif",
+              }}
+            >
+              Không có cửa hàng nào đang mở cửa
+            </div>
+          ) : (
+            /* Hiển thị danh sách cửa hàng */
+            <div
+              style={{
+                position: "absolute",
+                top: "18.625vh",
+                left: 0,
+                width: "100%",
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 26.94vw)",
+                justifyContent: "center",
+                columnGap: "2.78vw",
+                rowGap: "2.5vh",
+              }}
+            >
+              {allItems.map((item, idx) => (
+                <RecommendItem
+                  key={idx}
+                  image={item.image}
+                  title={item.title}
+                  distance={item.distance}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>
