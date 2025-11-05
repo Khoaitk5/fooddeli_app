@@ -26,16 +26,20 @@ exports.getMyShop = async (req, res) => {
   try {
     const userId = req.session?.user?.id;
     console.log("[shopController:getMyShop] userId từ session:", userId);
-    
+
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Bạn chưa đăng nhập" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Bạn chưa đăng nhập" });
     }
 
     const shop = await shopService.getShopByUserId(userId);
     console.log("[shopController:getMyShop] shop data:", shop);
-    
+
     if (!shop) {
-      return res.status(404).json({ success: false, message: "Bạn chưa tạo hồ sơ cửa hàng" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Bạn chưa tạo hồ sơ cửa hàng" });
     }
 
     res.status(200).json({ success: true, data: shop });
@@ -59,6 +63,29 @@ exports.getAllShops = async (req, res) => {
 };
 
 /**
+ * 🍱 Lấy shops theo loại món ăn
+ * Query param: ?foodType=Đồ Ăn Nhanh
+ */
+exports.getShopsByFoodType = async (req, res) => {
+  try {
+    const { foodType } = req.query;
+
+    if (!foodType) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu tham số foodType"
+      });
+    }
+
+    const shops = await shopService.getShopsByFoodType(foodType);
+    res.status(200).json({ success: true, data: shops });
+  } catch (err) {
+    console.error("[ShopController:getShopsByFoodType]", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
  * 🔍 Lấy thông tin chi tiết cửa hàng (ẩn ID khỏi URL)
  *  → frontend gửi shopId trong body
  */
@@ -66,7 +93,9 @@ exports.getShopDetail = async (req, res) => {
   try {
     const { shopId } = req.body;
     if (!shopId) {
-      return res.status(400).json({ success: false, message: "Thiếu shopId trong body" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu shopId trong body" });
     }
 
     const data = await shopService.getShopDetail(shopId);
@@ -85,7 +114,9 @@ exports.getShopById = async (req, res) => {
     const { id } = req.params;
     const shop = await shopService.getShopById(id);
     if (!shop) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy cửa hàng" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy cửa hàng" });
     }
     res.status(200).json({ success: true, data: shop });
   } catch (err) {
@@ -102,7 +133,9 @@ exports.updateShopInfo = async (req, res) => {
     const { id } = req.params;
     const updatedShop = await shopService.updateShopInfo(id, req.body);
     if (!updatedShop) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy cửa hàng" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy cửa hàng" });
     }
     res.status(200).json({ success: true, data: updatedShop });
   } catch (err) {
@@ -133,7 +166,9 @@ exports.getNearbyShops = async (req, res) => {
   try {
     const { latitude, longitude, radiusKm } = req.query;
     if (!latitude || !longitude) {
-      return res.status(400).json({ success: false, message: "Thiếu tọa độ người dùng" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu tọa độ người dùng" });
     }
 
     const shops = await shopService.getNearbyShops(
@@ -155,7 +190,9 @@ exports.assignAddressToShop = async (req, res) => {
   try {
     const { shopId, addressId } = req.body;
     if (!shopId || !addressId) {
-      return res.status(400).json({ success: false, message: "Thiếu shopId hoặc addressId" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu shopId hoặc addressId" });
     }
 
     const updated = await shopService.assignAddressToShop(shopId, addressId);
@@ -171,17 +208,36 @@ exports.assignAddressToShop = async (req, res) => {
  */
 exports.deleteShop = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id} = req.params;
     const deleted = await shopService.deleteShop(id);
     if (!deleted) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy cửa hàng" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy cửa hàng" });
     }
 
-    res.status(200).json({ success: true, message: "Đã xóa cửa hàng thành công" });
+    res
+      .status(200)
+      .json({ success: true, message: "Đã xóa cửa hàng thành công" });
   } catch (err) {
     console.error("[ShopController:deleteShop]", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-
+exports.getShopProfilesAndAddressesByShopId = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    if (!shopId) {
+      return res.status(400).json({ success: false, message: "Thiếu shopId" });
+    }
+    const data = await shopService.getShopProfilesAndAddressesByShopId(shopId);
+    res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error(
+      "[ShopController:getShopProfilesAndAddressesByShopId]",
+      err.message
+    );
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

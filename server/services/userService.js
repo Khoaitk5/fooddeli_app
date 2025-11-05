@@ -1,6 +1,7 @@
 const userDao = require("../dao/userDao");
 const shopProfileService = require("./shop_profileService");
 const shipperProfileService = require("./shipper_profileService");
+const addressService = require("./addressService");
 
 /**
  * @class UserService
@@ -11,8 +12,6 @@ class UserService {
    * @async
    * @function createUser
    * @description Tạo người dùng mới
-   * @param {object} userData - Thông tin người dùng (username, password, email, phone, role, ...)
-   * @returns {Promise<object>} - User mới tạo
    */
   async createUser(userData) {
     try {
@@ -25,24 +24,26 @@ class UserService {
   }
 
   /**
-  * @async
-  * @function getUserById
-  * @description Lấy thông tin người dùng theo ID (bao gồm shop_profile và shipper_profile nếu có)
-  * @param {number} id - ID người dùng
-  * @returns {Promise<object|null>} - Thông tin user hoặc null nếu không có
-  */
+   * @async
+   * @function getUserById
+   * @description Lấy thông tin người dùng theo ID (bao gồm shop_profile và shipper_profile)
+   */
   async getUserById(id) {
     try {
       const user = await userDao.findById(id);
       if (!user) return null;
 
-      // Lấy shop_profile nếu user có role shop hoặc có hồ sơ shop
+      // 🏪 Lấy thông tin shop_profile
       const shopProfile = await shopProfileService.getShopByUserId(id);
       if (shopProfile) user.shop_profile = shopProfile;
 
-      // Lấy shipper_profile nếu user có role shipper hoặc có hồ sơ shipper
+      // 🚚 Lấy thông tin shipper_profile
       const shipperProfile = await shipperProfileService.getShipperByUserId(id);
       if (shipperProfile) user.shipper_profile = shipperProfile;
+
+      // 🏡 Lấy danh sách địa chỉ
+      const addresses = await addressService.getNormalizedUserAddresses(id);
+      user.addresses = addresses || [];
 
       return user;
     } catch (err) {
@@ -54,9 +55,6 @@ class UserService {
   /**
    * @async
    * @function getUserByUsername
-   * @description Lấy người dùng theo username
-   * @param {string} username - Tên đăng nhập
-   * @returns {Promise<object|null>}
    */
   async getUserByUsername(username) {
     try {
@@ -70,9 +68,6 @@ class UserService {
   /**
    * @async
    * @function getUserByPhone
-   * @description Lấy người dùng theo số điện thoại
-   * @param {string} phone - Số điện thoại
-   * @returns {Promise<object|null>}
    */
   async getUserByPhone(phone) {
     try {
@@ -86,10 +81,7 @@ class UserService {
   /**
    * @async
    * @function updateUser
-   * @description Cập nhật thông tin người dùng
-   * @param {number} id - ID người dùng
-   * @param {object} updateData - Dữ liệu cần cập nhật
-   * @returns {Promise<object>} - User sau khi cập nhật
+   * @description Cập nhật người dùng theo cột key tuỳ chọn
    */
   async updateUser(id, updateData) {
     try {
@@ -102,10 +94,58 @@ class UserService {
 
   /**
    * @async
+   * @function updateUserById
+   * @description Cập nhật người dùng theo ID (dùng trong Profile)
+   */
+  async updateUserById(id, updateData) {
+    try {
+      // 🧱 Cập nhật thông tin cơ bản
+      const updatedUser = await userDao.updateById(id, updateData);
+
+      // 🏡 Nếu có address gửi kèm → cập nhật địa chỉ
+      if (updateData.addresses && Array.isArray(updateData.addresses)) {
+        await addressService.updateUserAddresses(id, updateData.addresses);
+      }
+
+      // 🏪 Nếu có cập nhật shop_profile → cập nhật shop
+      if (updateData.shop_profile) {
+        const shop = await shopProfileService.getShopByUserId(id);
+        if (shop) {
+          await shopProfileService.updateShopInfo(
+            shop.shop_id || shop.id,
+            updateData.shop_profile
+          );
+        }
+      }
+
+      return updatedUser;
+    } catch (err) {
+      console.error("❌ Error updateUserById:", err.message);
+      throw new Error("Không thể cập nhật hồ sơ người dùng.");
+    }
+  }
+
+  /**
+   * @async
+   * @function getAllUsers
+   * @description Lấy tất cả người dùng (hoặc lọc theo role)
+   */
+  async getAllUsers(role = null) {
+    try {
+      const users = await userDao.findAll();
+      if (role) {
+        return users.filter((u) => u.role === role);
+      }
+      return users;
+    } catch (err) {
+      console.error("❌ Error fetching all users:", err.message);
+      throw new Error("Không thể lấy danh sách người dùng.");
+    }
+  }
+
+  /**
+   * @async
    * @function lockUserAccount
-   * @description Khóa tài khoản người dùng (đổi status -> inactive)
-   * @param {number} id - ID người dùng
-   * @returns {Promise<object>} - User sau khi bị khóa
    */
   async lockUserAccount(id) {
     try {
@@ -119,17 +159,13 @@ class UserService {
   /**
    * @async
    * @function updateRating
-   * @description Cập nhật điểm đánh giá người dùng
-   * @param {number} id - ID người dùng
-   * @param {number} rating - Điểm đánh giá mới
-   * @returns {Promise<object>} - User sau khi cập nhật
    */
   async updateRating(id, rating) {
     try {
       if (rating < 0 || rating > 5) throw new Error("Rating không hợp lệ.");
       return await userDao.updateRating(id, rating);
     } catch (err) {
-      console.error("❌ Error updating user rating:", err.message);
+      console.error("❌ Error updating rating:", err.message);
       throw new Error("Không thể cập nhật điểm đánh giá người dùng.");
     }
   }
@@ -137,9 +173,6 @@ class UserService {
   /**
    * @async
    * @function getRoleById
-   * @description Lấy vai trò (role) của người dùng
-   * @param {number} id - ID người dùng
-   * @returns {Promise<string|null>} - Role ('user', 'shop', 'shipper', 'admin')
    */
   async getRoleById(id) {
     try {
@@ -153,9 +186,6 @@ class UserService {
   /**
    * @async
    * @function deleteUser
-   * @description Xóa người dùng
-   * @param {number} id - ID người dùng
-   * @returns {Promise<object>} - Người dùng đã bị xóa
    */
   async deleteUser(id) {
     try {
@@ -167,12 +197,9 @@ class UserService {
   }
 
   /**
- * @async
- * @function getUserByEmail
- * @description Lấy người dùng theo email
- * @param {string} email - Địa chỉ email của người dùng
- * @returns {Promise<object|null>} - User hoặc null nếu không tồn tại
- */
+   * @async
+   * @function getUserByEmail
+   */
   async getUserByEmail(email) {
     try {
       return await userDao.getUserByEmail(email);
@@ -181,12 +208,10 @@ class UserService {
       throw new Error("Không thể tìm người dùng theo email.");
     }
   }
-    /**
+
+  /**
    * @async
    * @function searchUsers
-   * @description Tìm kiếm người dùng theo tên, username hoặc email
-   * @param {string} keyword - Từ khóa tìm kiếm
-   * @returns {Promise<object[]>} - Danh sách người dùng phù hợp
    */
   async searchUsers(keyword) {
     try {
@@ -200,6 +225,5 @@ class UserService {
     }
   }
 }
-
 
 module.exports = new UserService();

@@ -17,8 +17,8 @@ router.get("/ping", (req, res) => {
   res.send("✅ userRoutes hoạt động!");
 });
 
-// 📌 Lấy tất cả user (chỉ admin mới được dùng nếu cần)
-router.get("/", userController.getAllUsers);
+// // 📌 Lấy tất cả user (chỉ admin mới được dùng nếu cần)
+// router.get("/", userController.getAllUsers);
 
 // 📌 Lấy thông tin user hiện tại từ session
 router.get("/me", userController.getCurrentUser);
@@ -40,5 +40,13 @@ router.get("/email/:email", userController.getUserByEmail);
 
 // 📌 Tìm user theo số điện thoại
 router.get("/phone/:phone", userController.getUserByPhone);
+
+// 📌 Cập nhật user theo ID (Admin hoặc Profile)
+router.patch("/:id", userController.updateUserById);
+
+// 🏪 Lấy thông tin shop của user hiện tại
+router.get("/shops/me", userController.getMyShop);
+
+
 
 module.exports = router;

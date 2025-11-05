@@ -1,142 +1,156 @@
 import React from "react";
-import BadgeIcon from "./BadgeIcon";
-import StarIcon from "./StarIcon";
+import { Box, Card, CardContent, CardMedia, Typography, Chip, Stack } from "@mui/material";
+import { Star, AccessTime, LocalOffer } from "@mui/icons-material";
 
-const FoodResults = ({
-  storeName,
-  storeImage,
-  rating,
-  reviewCount,
-  dishCategory,
-  deliveryTime,
-  promotions = [],
-  dishes = [],
-}) => {
-  const dish = dishes[0];
+/**
+ * 🍔 FoodResultItem - Component hiển thị kết quả tìm kiếm món ăn
+ * Design theo phong cách GrabFood/ShopeeFood
+ */
+const FoodResultItem = ({ product }) => {
+  if (!product) return null;
+
+  // Format giá tiền
+  const formatPrice = (price) => {
+    if (!price) return "N/A";
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(numPrice);
+  };
+
+  // Tính rating giả (nếu không có từ API)
+  const rating = product.rating || (4 + Math.random()).toFixed(1);
+  const reviewCount = product.review_count || Math.floor(Math.random() * 500) + 50;
+
   return (
-    <div style={{ position: "relative", paddingBottom: "34vh" }}>
-      {/* Ảnh cửa hàng */}
-      <img
-        src={dish?.image || storeImage || "https://placehold.co/101x101"}
-        alt={dish?.name}
-        style={{
-          position: "absolute",
-          left: "4.17vw",
-          top: "0",
-          width: "28.06vw",
-          height: "28.06vw",
-          borderRadius: 14,
-          objectFit: "cover",
+    <Card
+      sx={{
+        display: 'flex',
+        mb: 2,
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        transition: 'all 0.3s ease',
+        cursor: 'pointer',
+        '&:hover': {
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          transform: 'translateY(-2px)',
+        },
+      }}
+    >
+      {/* Hình ảnh sản phẩm */}
+      <CardMedia
+        component="img"
+        sx={{
+          width: 120,
+          height: 120,
+          objectFit: 'cover',
+          borderRadius: 2,
+          m: 1.5,
         }}
+        image={product.image_url || "https://placehold.co/120x120?text=No+Image"}
+        alt={product.name}
       />
 
-      {/* Biểu tượng shop */}
-      <div style={{ position: "absolute", top: "0.26vh", left: "36.4vw" }}>
-        <BadgeIcon />
-      </div>
+      {/* Thông tin sản phẩm */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, py: 1.5, pr: 1.5 }}>
+        <CardContent sx={{ flex: '1 0 auto', p: 0, '&:last-child': { pb: 0 } }}>
+          {/* Tên món */}
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{
+              fontWeight: 600,
+              fontSize: '1.5rem',
+              mb: 0.5,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {product.name}
+          </Typography>
 
-      {/* Tên cửa hàng */}
-      <div
-        style={{
-          position: "absolute",
-          left: "40.84vw",
-          top: "0",
-          fontSize: "1.4rem",
-          fontWeight: "600",
-        }}
-      >
-        {storeName}
-      </div>
+          {/* Mô tả */}
+          {product.description && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mb: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                fontSize: '1.2rem',
+              }}
+            >
+              {product.description}
+            </Typography>
+          )}
 
-      {/* Đánh giá */}
-      <div style={{ position: "absolute", top: "3.875vh", left: "36.39vw" }}>
-        <StarIcon />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: "3.75vh",
-          left: "41.39vw",
-          fontSize: "1.2rem",
-          color: "#444",
-        }}
-      >
-        {rating} ({reviewCount}) • {dishCategory}
-      </div>
-
-      {/* Thời gian giao */}
-      <div
-        style={{
-          position: "absolute",
-          top: "7.125vh",
-          left: "36.39vw",
-          color: "#999",
-          fontSize: "1.1rem",
-        }}
-      >
-        {deliveryTime}
-      </div>
-
-      {/* Giá và món */}
-      <div
-        style={{
-          position: "absolute",
-          top: "14.5vh",
-          left: "4.17vw",
-          width: "91.67vw",
-          display: "flex",
-          gap: "3vw",
-          overflowX: "auto",
-        }}
-      >
-        {dishes.map((d, i) => (
-          <div key={i} style={{ width: "25vw", flexShrink: 0 }}>
-            <img
-              src={d.image}
-              alt={d.name}
-              style={{
-                width: "25.83vw",
-                height: "25.83vw",
-                borderRadius: 14,
-                objectFit: "cover",
+          {/* Rating và thông tin */}
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <Chip
+              icon={<Star sx={{ fontSize: '1.4rem', color: '#FFB800' }} />}
+              label={`${rating} (${reviewCount})`}
+              size="small"
+              sx={{
+                backgroundColor: '#FFF8E1',
+                color: '#F57C00',
+                fontWeight: 500,
+                fontSize: '1.1rem',
+                height: 24,
               }}
             />
-            <div
-              style={{
-                fontSize: "1.4rem",
-                fontWeight: "500",
-                textAlign: "center",
-                marginTop: "1vh",
+            <Chip
+              icon={<AccessTime sx={{ fontSize: '1.4rem' }} />}
+              label="20-30 phút"
+              size="small"
+              sx={{
+                backgroundColor: '#E3F2FD',
+                color: '#1976D2',
+                fontSize: '1.1rem',
+                height: 24,
               }}
-            >
-              {d.price}
-            </div>
-            <div
-              style={{
-                fontSize: "1.3rem",
-                color: "#333",
-                textAlign: "center",
-              }}
-            >
-              {d.name}
-            </div>
-          </div>
-        ))}
-      </div>
+            />
+          </Stack>
 
-      {/* Gạch ngăn */}
-      <div
-        style={{
-          position: "absolute",
-          top: "36.75vh",
-          left: "4.17vw",
-          width: "91.67vw",
-          height: "1px",
-          background: "#E7E7E7",
-        }}
-      />
-    </div>
+          {/* Giá */}
+          <Typography
+            variant="h6"
+            sx={{
+              color: '#F9704B',
+              fontWeight: 700,
+              fontSize: '1.6rem',
+            }}
+          >
+            {formatPrice(product.price)}
+          </Typography>
+
+          {/* Khuyến mãi (nếu có) */}
+          {product.discount && (
+            <Chip
+              icon={<LocalOffer sx={{ fontSize: '1.2rem' }} />}
+              label={`Giảm ${product.discount}%`}
+              size="small"
+              sx={{
+                mt: 0.5,
+                backgroundColor: '#FFE0E0',
+                color: '#D32F2F',
+                fontWeight: 600,
+                fontSize: '1rem',
+                height: 22,
+              }}
+            />
+          )}
+        </CardContent>
+      </Box>
+    </Card>
   );
 };
 
-export default FoodResults;
+export default FoodResultItem;

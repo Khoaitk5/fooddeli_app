@@ -18,7 +18,7 @@ class VoucherDao extends GenericDao {
       WHERE code = $1
       LIMIT 1;
     `;
-    const result = await this.db.query(query, [code]);
+    const result = await pool.query(query, [code]);
     return result.rows[0] || null;
   }
 
@@ -33,7 +33,7 @@ class VoucherDao extends GenericDao {
       AND NOW() BETWEEN start_date AND end_date
       ORDER BY start_date DESC;
     `;
-    const result = await this.db.query(query);
+    const result = await pool.query(query);
     return result.rows;
   }
 
@@ -76,7 +76,7 @@ class VoucherDao extends GenericDao {
       WHERE voucher_id = $1
       RETURNING *;
     `;
-    const result = await this.db.query(query, [voucherId]);
+    const result = await pool.query(query, [voucherId]);
     return result.rows[0];
   }
 
@@ -90,7 +90,7 @@ class VoucherDao extends GenericDao {
       SET status = 'expired'
       WHERE end_date < NOW() AND status = 'active';
     `;
-    const result = await this.db.query(query);
+    const result = await pool.query(query);
     return result.rowCount;
   }
 }

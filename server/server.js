@@ -17,7 +17,7 @@ import imageUploadRouter from "./routes/imageUploadRouter.js";
 import map4dRoutes from "./routes/map4dRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";  
 import searchRoutes from "./routes/searchRoutes.js";
-
+import voucherRoutes from "./routes/voucherRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -77,7 +77,6 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/shops", shopRoutes);
-app.use("/api/shippers", shipperRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/video-likes", videoLikeRoutes);
 app.use("/api/cart", cartRoutes);
@@ -85,6 +84,8 @@ app.use("/api/images", imageUploadRouter);
 app.use("/api/map4d", map4dRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/vouchers", voucherRoutes);
+app.use("/api/shipper", shipperRoutes);
 
 
 // ✅ Debug route

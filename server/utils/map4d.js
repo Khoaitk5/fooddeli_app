@@ -1,5 +1,5 @@
 // Tính khoảng cách giữa 2 tọa độ theo công thức Haversine
-export const calculateDistance = (lat1, lon1, lat2, lon2) => {
+export function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Bán kính Trái đất (km)
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;

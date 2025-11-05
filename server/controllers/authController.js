@@ -484,3 +484,30 @@ exports.checkEmailExists = async (req, res) => {
     return res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
+
+/**
+ * 🔐 Đổi mật khẩu người dùng
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const { userId, oldPassword, newPassword } = req.body;
+    if (!userId || !oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng nhập đầy đủ thông tin đổi mật khẩu.",
+      });
+    }
+
+    await authService.changePassword(userId, oldPassword, newPassword);
+    return res.status(200).json({
+      success: true,
+      message: "✅ Đổi mật khẩu thành công!",
+    });
+  } catch (error) {
+    console.error("❌ Lỗi changePassword:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Không thể đổi mật khẩu.",
+    });
+  }
+};

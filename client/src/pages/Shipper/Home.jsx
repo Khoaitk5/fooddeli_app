@@ -9,105 +9,126 @@ import {
   Button,
   Fade,
   Slide,
-  Zoom,
 } from "@mui/material";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import LocalMallIcon from "@mui/icons-material/LocalMall";
-import CloseIcon from "@mui/icons-material/Close";
-import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
 import { useShipper } from "@/hooks/useShipper";
 import Map4DView from "@/components/Shipper/Map4DView.jsx";
 
-// Trang Home Shipper - Thiết kế responsive đẹp cho mobile
+// helper nhỏ
+const money = (v) => Number(v || 0).toLocaleString() + "đ";
+
+const formatDistance = (km) => {
+  if (km == null || isNaN(km)) return "-";
+  const v = Number(km);
+  return v < 1 ? `${Math.round(v * 1000)}m` : `${v.toFixed(2)}km`;
+};
+
+const formatDuration = (sec) => {
+  if (sec == null || isNaN(sec)) return "-";
+  const s = Math.max(0, Math.round(Number(sec)));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m === 0 ? `${r}s` : `${m}p${r ? ` ${r}s` : ""}`;
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const { isOnline, setIsOnline, resetAvailableOrders } = useShipper();
   const online = isOnline;
+
+  // Popup đơn giản
   const [showIncomingOrder, setShowIncomingOrder] = React.useState(false);
-  const [rippleActive, setRippleActive] = React.useState(false);
-  const [visibleIcons, setVisibleIcons] = React.useState(0);
-  const [orderPoints, setOrderPoints] = React.useState([]);
   const [countdown, setCountdown] = React.useState(28);
-  const [iconsDone, setIconsDone] = React.useState(false);
+  const [incomingOrder, setIncomingOrder] = React.useState(null); // {id, distance, duration, cod}
 
   const timersRef = React.useRef({
-    ripple: null,
-    iconInterval: null,
-    afterIcons: null,
     countdown: null,
-    respawn: null,
   });
 
-  // Khi bật online: ripple -> icon xuất hiện tuần tự -> popup đơn hàng mới
+  // Bật online -> mở popup & reset countdown
   React.useEffect(() => {
-    const clearTimers = () => {
-      const { ripple, iconInterval, afterIcons, countdown, respawn } =
-        timersRef.current;
-      if (ripple) clearTimeout(ripple);
-      if (iconInterval) clearInterval(iconInterval);
-      if (afterIcons) clearTimeout(afterIcons);
-      if (countdown) clearInterval(countdown);
-      if (respawn) clearTimeout(respawn);
-      timersRef.current = {
-        ripple: null,
-        iconInterval: null,
-        afterIcons: null,
-        countdown: null,
-        respawn: null,
-      };
-    };
-
-    if (!online) {
-      clearTimers();
-      setRippleActive(false);
-      setVisibleIcons(0);
+    if (online) {
+      setShowIncomingOrder(true);
+    } else {
       setShowIncomingOrder(false);
-      return;
     }
-
-    // Bắt đầu ripple
-    setShowIncomingOrder(false);
-    setVisibleIcons(0);
-    setRippleActive(true);
-    setIconsDone(false);
-
-    // Kết thúc ripple sau 1.6s rồi bắt đầu hiện icon
-    timersRef.current.ripple = setTimeout(() => {
-      setRippleActive(false);
-      // Tạo vị trí ngẫu nhiên cho các icon (tránh vùng nút bật kết nối)
-      const generated = generateRandomPoints(3);
-      setOrderPoints(generated);
-      // Stagger icon mỗi 400ms
-      let index = 0;
-      setVisibleIcons(0);
-      timersRef.current.iconInterval = setInterval(() => {
-        index += 1;
-        setVisibleIcons((v) => {
-          const next = Math.min(generated.length, Math.max(v, index));
-          if (next >= generated.length) {
-            if (timersRef.current.iconInterval)
-              clearInterval(timersRef.current.iconInterval);
-            // Sau khi hiện xong icon, chờ 600ms rồi hiện popup
-            setIconsDone(true);
-            timersRef.current.afterIcons = setTimeout(
-              () => setShowIncomingOrder(true),
-              600
-            );
-          }
-          return next;
-        });
-      }, 400);
-    }, 1600);
-
-    return () => {
-      clearTimers();
-    };
   }, [online]);
 
-  // Đếm ngược tự động đóng popup đơn hàng mới
+  // Lấy 1 đơn mới nhất từ DB để hiển thị trong popup
+  const fetchIncomingOrder = React.useCallback(async () => {
+    try {
+      // 1) shipper_id
+      const meRes = await fetch("http://localhost:5000/api/users/me", {
+        credentials: "include",
+      });
+      const meJson = await meRes.json();
+      const shipperId = meJson?.user?.shipper_profile?.id;
+      if (!shipperId) throw new Error("Không tìm thấy shipper_id");
+
+      // 2) vị trí hiện tại
+      const coords = await new Promise((resolve, reject) => {
+        if (!navigator.geolocation)
+          return reject(new Error("Trình duyệt không hỗ trợ định vị"));
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(pos.coords),
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+        );
+      });
+
+      // 3) gọi API nearby (lọc cooking trong bán kính 3km)
+      const res = await fetch(
+        "http://localhost:5000/api/shipper/orders/nearby",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            shipper_id: shipperId,
+            lat: coords.latitude,
+            lon: coords.longitude,
+            radius_km: 3,
+            status: "cooking",
+            limit: 1,
+            offset: 0,
+          }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok || json.success === false)
+        throw new Error(json.message || "Không lấy được đơn");
+
+      const first = (json.data || json.items || [])[0];
+      if (!first) {
+        setIncomingOrder(null);
+        return;
+      }
+
+      const o = first.order || {};
+      const cod = o.payment_method === "COD" ? Number(o.total_price || 0) : 0;
+
+      setIncomingOrder({
+        id: o.order_id,
+        distanceText: formatDistance(first.distance_km),
+        durationText: formatDuration(first.duration_sec),
+        cod,
+      });
+    } catch (e) {
+      console.log("[fetchIncomingOrder] error:", e.message);
+      setIncomingOrder(null);
+    }
+  }, []);
+
+  // Khi popup mở -> fetch data thật
   React.useEffect(() => {
-    // dọn timer cũ
+    if (online && showIncomingOrder) {
+      fetchIncomingOrder();
+    }
+  }, [online, showIncomingOrder, fetchIncomingOrder]);
+
+  // Đếm ngược tự đóng popup
+  React.useEffect(() => {
     if (!showIncomingOrder) {
       if (timersRef.current.countdown) {
         clearInterval(timersRef.current.countdown);
@@ -115,12 +136,10 @@ const Home = () => {
       }
       return;
     }
-
     setCountdown(28);
     timersRef.current.countdown = setInterval(() => {
       setCountdown((s) => {
         if (s <= 1) {
-          // về 0: đóng popup và clear interval
           if (timersRef.current.countdown) {
             clearInterval(timersRef.current.countdown);
             timersRef.current.countdown = null;
@@ -131,7 +150,6 @@ const Home = () => {
         return s - 1;
       });
     }, 1000);
-
     return () => {
       if (timersRef.current.countdown) {
         clearInterval(timersRef.current.countdown);
@@ -140,85 +158,14 @@ const Home = () => {
     };
   }, [showIncomingOrder]);
 
-  // Sau khi đóng/không nhận đơn: bật lại popup mới sau 5-10s nếu vẫn online và đã hoàn tất sequence icon
-  React.useEffect(() => {
-    if (!online) {
-      if (timersRef.current.respawn) {
-        clearTimeout(timersRef.current.respawn);
-        timersRef.current.respawn = null;
-      }
-      return;
-    }
-    if (!showIncomingOrder && iconsDone) {
-      if (timersRef.current.respawn) clearTimeout(timersRef.current.respawn);
-      const delay = 5000 + Math.floor(Math.random() * 5000); // 5s .. 10s
-      timersRef.current.respawn = setTimeout(() => {
-        setShowIncomingOrder(true);
-        // tự reset danh sách đơn sau 10s nếu vẫn online (giả lập quét)
-        timersRef.current.respawn = setTimeout(() => {
-          if (online) resetAvailableOrders();
-        }, 10000);
-      }, delay);
-    } else {
-      if (timersRef.current.respawn) {
-        clearTimeout(timersRef.current.respawn);
-        timersRef.current.respawn = null;
-      }
-    }
-    return () => {
-      if (timersRef.current.respawn) {
-        clearTimeout(timersRef.current.respawn);
-        timersRef.current.respawn = null;
-      }
-    };
-  }, [online, showIncomingOrder, iconsDone, resetAvailableOrders]);
-
-  // Sinh ngẫu nhiên các điểm icon trên "bản đồ" theo phần trăm, tránh trùng nút kết nối ở đáy giữa
-  const generateRandomPoints = (count) => {
-    const points = [];
-    const minGapPct = 10; // khoảng cách tối thiểu giữa các icon theo %
-
-    // Vùng cấm: khu vực nút bật kết nối (bottom ~180px). Chuyển đổi tương đối bằng % theo giả định chiều cao hiển thị
-    // Ta sẽ tránh vùng từ 70%-100% theo trục Y và 35%-65% theo trục X để không đè lên nút ở giữa dưới
-    const isInForbidden = (xPct, yPct) =>
-      xPct >= 35 && xPct <= 65 && yPct >= 70;
-
-    const isFarEnough = (xPct, yPct) =>
-      points.every((p) => {
-        const dx = xPct - p.x;
-        const dy = yPct - p.y;
-        return Math.hypot(dx, dy) >= minGapPct;
-      });
-
-    let safety = 0;
-    while (points.length < count && safety < 500) {
-      safety += 1;
-      const x = Math.round(10 + Math.random() * 80); // 10% .. 90%
-      const y = Math.round(10 + Math.random() * 60); // 10% .. 70% (tránh phần dưới nhiều)
-      if (isInForbidden(x, y)) continue;
-      if (!isFarEnough(x, y)) continue;
-      points.push({ x, y });
-    }
-    // fallback nếu chưa đủ, nới lỏng
-    while (points.length < count) {
-      const x = Math.round(5 + Math.random() * 90);
-      const y = Math.round(5 + Math.random() * 80);
-      if (isInForbidden(x, y)) continue;
-      points.push({ x, y });
-    }
-
-    // chuyển sang dạng chuỗi % để dùng trực tiếp
-    return points.map((p) => ({ x: `${p.x}%`, y: `${p.y}%` }));
-  };
-
   return (
     <Box sx={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
-      {/* ✅ Map full-screen ổn định khi F5 */}
+      {/* Bản đồ full-screen */}
       <Box sx={{ position: "fixed", inset: 0, zIndex: 0 }}>
         <Map4DView height="100vh" hideControls followUser />
       </Box>
 
-      {/* ✅ UI nổi trên map */}
+      {/* UI nổi trên map */}
       <Box sx={{ position: "relative", zIndex: 1, px: 2.5, pt: 3, pb: 12 }}>
         <Fade in timeout={600}>
           <Paper
@@ -228,7 +175,6 @@ const Home = () => {
               p: 2.5,
               mx: "auto",
               maxWidth: 400,
-              // (tuỳ chọn) làm trong suốt nhẹ để thấy map phía sau
               background: "rgba(255,255,255,0.9)",
               border: online
                 ? "2px solid rgba(34,197,94,0.2)"
@@ -259,26 +205,10 @@ const Home = () => {
                     boxShadow: online
                       ? "0 4px 12px rgba(34,197,94,0.2)"
                       : "none",
-                    transition: "all 0.3s ease",
-                    // Pulse animation khi online
-                    ...(online && {
-                      "&::before": {
-                        content: '""',
-                        position: "absolute",
-                        inset: -4,
-                        borderRadius: 3,
-                        background: "rgba(34,197,94,0.2)",
-                        animation:
-                          "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                      },
-                    }),
                   }}
                 >
                   <PowerSettingsNewIcon
-                    sx={{
-                      color: online ? "#16a34a" : "#6B7280",
-                      fontSize: 28,
-                    }}
+                    sx={{ color: online ? "#16a34a" : "#6B7280", fontSize: 28 }}
                   />
                 </Box>
                 <Box>
@@ -300,7 +230,6 @@ const Home = () => {
                       lineHeight: "28px",
                       fontWeight: 700,
                       color: online ? "#00a63e" : "#4a5565",
-                      transition: "color 0.3s ease",
                     }}
                   >
                     {online ? "Đang hoạt động" : "Offline"}
@@ -326,7 +255,7 @@ const Home = () => {
           </Paper>
         </Fade>
 
-        {/* Nút bật kết nối - Fixed bottom, responsive */}
+        {/* Nút bật kết nối */}
         <Box
           sx={{
             position: "fixed",
@@ -341,9 +270,7 @@ const Home = () => {
         >
           <Slide direction="up" in timeout={800}>
             <Button
-              onClick={() => {
-                setIsOnline(!online);
-              }}
+              onClick={() => setIsOnline(!online)}
               startIcon={<PowerSettingsNewIcon sx={{ fontSize: 24 }} />}
               sx={{
                 minWidth: 280,
@@ -360,20 +287,6 @@ const Home = () => {
                 boxShadow: online
                   ? "0 12px 40px rgba(239,68,68,0.4), 0 4px 12px rgba(0,0,0,0.1)"
                   : "0 12px 40px rgba(34,197,94,0.4), 0 4px 12px rgba(0,0,0,0.1)",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                transform: "scale(1)",
-                "&:hover": {
-                  transform: "scale(1.05)",
-                  background: online
-                    ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
-                    : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                  boxShadow: online
-                    ? "0 16px 48px rgba(239,68,68,0.5)"
-                    : "0 16px 48px rgba(34,197,94,0.5)",
-                },
-                "&:active": {
-                  transform: "scale(0.98)",
-                },
               }}
             >
               {online ? "Ngắt kết nối" : "Bật kết nối"}
@@ -382,27 +295,14 @@ const Home = () => {
         </Box>
       </Box>
 
-      {/* Global keyframes */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-      `}</style>
-
-      {/* Modal đơn hàng mới - Responsive design */}
-      {online && showIncomingOrder && (
+      {/* Popup đơn hàng mới (tối giản) */}
+      {online && showIncomingOrder && incomingOrder && (
         <Fade in={showIncomingOrder}>
           <Box
             sx={{
               position: "fixed",
               inset: 0,
-              background: "rgba(0,0,0,0.6)",
-              backdropFilter: "blur(4px)",
+              background: "rgba(0,0,0,0.5)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -411,406 +311,87 @@ const Home = () => {
             }}
             onClick={() => setShowIncomingOrder(false)}
           >
-            <Slide direction="up" in={showIncomingOrder} timeout={400}>
-              <Box
+            <Slide direction="up" in={showIncomingOrder} timeout={250}>
+              <Paper
                 onClick={(e) => e.stopPropagation()}
-                sx={{
-                  width: "100%",
-                  maxWidth: 420,
-                  borderRadius: 5,
-                  overflow: "hidden",
-                  boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
-                  background: "#fff",
-                }}
+                elevation={12}
+                sx={{ width: "100%", maxWidth: 360, borderRadius: 3, p: 2 }}
               >
-                {/* Header gradient đẹp */}
-                <Box
-                  sx={{
-                    background:
-                      "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
-                    px: 3,
-                    pt: 3,
-                    pb: 2.5,
-                    color: "#fff",
-                    position: "relative",
-                    overflow: "hidden",
-                    "&::before": {
-                      content: '""',
-                      position: "absolute",
-                      top: 0,
-                      right: 0,
-                      width: 200,
-                      height: 200,
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.1)",
-                      transform: "translate(50%, -50%)",
-                    },
-                  }}
+                {/* Header ngắn gọn */}
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ mb: 1 }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      mb: 2.5,
-                      position: "relative",
-                      zIndex: 1,
-                    }}
+                  <Typography sx={{ fontWeight: 800, fontSize: 16 }}>
+                    Có đơn hàng mới
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: 13, color: "#6b7280", fontWeight: 600 }}
                   >
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: 13,
-                          opacity: 0.9,
-                          letterSpacing: "0.5px",
-                          mb: 0.5,
-                        }}
-                      >
-                        ĐƠN HÀNG MỚI
-                      </Typography>
-                      <Typography sx={{ fontSize: 24, fontWeight: 800 }}>
-                        #DH001
-                      </Typography>
-                    </Box>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Box
-                        sx={{
-                          background:
-                            "linear-gradient(135deg, #fde047 0%, #facc15 100%)",
-                          color: "#78350f",
-                          borderRadius: 2,
-                          px: 1.5,
-                          py: 0.5,
-                          fontSize: 13,
-                          fontWeight: 700,
-                          boxShadow: "0 2px 8px rgba(253,224,71,0.3)",
-                        }}
-                      >
-                        Gấp 🔥
-                      </Box>
-                      <IconButton
-                        size="small"
-                        onClick={() => setShowIncomingOrder(false)}
-                        sx={{
-                          color: "#fff",
-                          background: "rgba(255,255,255,0.15)",
-                          "&:hover": { background: "rgba(255,255,255,0.25)" },
-                        }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </Box>
+                    Đóng sau <b>{countdown}</b> giây
+                  </Typography>
+                </Stack>
 
-                  {/* Countdown timer đẹp hơn */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                      background: "rgba(255,255,255,0.15)",
-                      backdropFilter: "blur(10px)",
-                      borderRadius: 3,
-                      height: 48,
-                      px: 2,
-                      position: "relative",
-                      zIndex: 1,
-                      border: "1px solid rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        background: "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: "#ff6b35",
-                      }}
-                    >
-                      {countdown}
-                    </Box>
-                    <Typography
-                      sx={{ fontSize: 15, color: "#fff", fontWeight: 600 }}
-                    >
-                      Tự động đóng sau {countdown} giây
+                {/* 3 dòng thông tin chính */}
+                <Stack spacing={1.25} sx={{ mb: 1.5 }}>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
+                      Khoảng cách
                     </Typography>
-                  </Box>
-                </Box>
-
-                {/* Nội dung chi tiết */}
-                <Box sx={{ p: 3 }}>
-                  {/* Lấy hàng - với icon đẹp */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      alignItems: "flex-start",
-                      mb: 2.5,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: "50%",
-                        background:
-                          "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 4px 12px rgba(34,197,94,0.2)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <LocalMallIcon sx={{ color: "#16a34a", fontSize: 20 }} />
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        sx={{
-                          fontSize: 13,
-                          color: "#6b7280",
-                          fontWeight: 500,
-                          mb: 0.5,
-                        }}
-                      >
-                        Lấy hàng tại
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 16,
-                          color: "#111827",
-                          fontWeight: 700,
-                          mb: 0.5,
-                        }}
-                      >
-                        Nhà hàng Phở 24
-                      </Typography>
-                      <Typography
-                        sx={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}
-                      >
-                        123 Nguyễn Huệ, Quận 1, TP.HCM
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Connecting line */}
-                  <Box
-                    sx={{
-                      width: 2,
-                      height: 20,
-                      background:
-                        "linear-gradient(180deg, #16a34a 0%, #ff6b35 100%)",
-                      ml: 2.8,
-                      mb: 1,
-                    }}
-                  />
-
-                  {/* Giao hàng - với icon đẹp */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      alignItems: "flex-start",
-                      mb: 2.5,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: "50%",
-                        background:
-                          "linear-gradient(135deg, #ffedd4 0%, #fed7aa 100%)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 4px 12px rgba(255,107,53,0.2)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <LocalMallIcon sx={{ color: "#c2410c", fontSize: 20 }} />
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        sx={{
-                          fontSize: 13,
-                          color: "#6b7280",
-                          fontWeight: 500,
-                          mb: 0.5,
-                        }}
-                      >
-                        Giao đến
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 16,
-                          color: "#111827",
-                          fontWeight: 700,
-                          mb: 0.5,
-                        }}
-                      >
-                        Nguyễn Văn A
-                      </Typography>
-                      <Typography
-                        sx={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}
-                      >
-                        456 Lê Lợi, Quận 3, TP.HCM
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Stats cards - Đẹp hơn */}
-                  <Stack direction="row" spacing={1.5} sx={{ mb: 2.5 }}>
-                    {[
-                      { label: "Khoảng cách", value: "3.5 km", icon: "📍" },
-                      { label: "Thời gian", value: "15-20p", icon: "⏱️" },
-                      { label: "Khối lượng", value: "2kg", icon: "📦" },
-                    ].map((m) => (
-                      <Box
-                        key={m.label}
-                        sx={{
-                          background:
-                            "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
-                          borderRadius: 3,
-                          border: "1px solid rgba(0,0,0,0.06)",
-                          px: 1.5,
-                          py: 2,
-                          flex: 1,
-                          textAlign: "center",
-                          transition: "transform 0.2s ease",
-                          "&:hover": { transform: "translateY(-2px)" },
-                        }}
-                      >
-                        <Typography sx={{ fontSize: 18, mb: 0.5 }}>
-                          {m.icon}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: 11,
-                            color: "#6b7280",
-                            fontWeight: 500,
-                            mb: 0.25,
-                          }}
-                        >
-                          {m.label}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: 15,
-                            color: "#111827",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {m.value}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-
-                  {/* Thu hộ - Highlight */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      background:
-                        "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
-                      borderRadius: 3,
-                      px: 2.5,
-                      py: 2,
-                      mb: 3,
-                      border: "1.5px solid rgba(34,197,94,0.2)",
-                      boxShadow: "0 4px 12px rgba(34,197,94,0.1)",
-                    }}
-                  >
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Box
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          background:
-                            "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 18,
-                        }}
-                      >
-                        💰
-                      </Box>
-                      <Typography
-                        sx={{ fontSize: 15, color: "#15803d", fontWeight: 600 }}
-                      >
-                        Thu hộ
-                      </Typography>
-                    </Stack>
-                    <Typography
-                      sx={{ fontSize: 22, color: "#16a34a", fontWeight: 800 }}
-                    >
-                      45.000đ
+                    <Typography sx={{ fontWeight: 800 }}>
+                      {incomingOrder?.distanceText ?? "-"}
                     </Typography>
-                  </Box>
-
-                  {/* Action buttons - Đẹp hơn */}
-                  <Stack direction="row" spacing={1.5}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setShowIncomingOrder(false)}
-                      sx={{
-                        flex: 1,
-                        height: 54,
-                        borderRadius: 3,
-                        borderColor: "#e5e7eb",
-                        color: "#6b7280",
-                        fontWeight: 600,
-                        fontSize: 15,
-                        textTransform: "none",
-                        "&:hover": {
-                          borderColor: "#d1d5db",
-                          background: "#f9fafb",
-                        },
-                      }}
-                    >
-                      Không nhận
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setShowIncomingOrder(false);
-                        setTimeout(() => {
-                          if (!online) setIsOnline(true);
-                          resetAvailableOrders();
-                          navigate("/shipper/available");
-                        }, 50);
-                      }}
-                      sx={{
-                        flex: 2,
-                        height: 54,
-                        background:
-                          "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
-                        color: "#fff",
-                        borderRadius: 3,
-                        fontWeight: 700,
-                        fontSize: 15,
-                        textTransform: "none",
-                        boxShadow: "0 8px 20px rgba(255,107,53,0.3)",
-                        "&:hover": {
-                          background:
-                            "linear-gradient(135deg, #ff5722 0%, #f4511e 100%)",
-                          boxShadow: "0 12px 28px rgba(255,107,53,0.4)",
-                        },
-                      }}
-                    >
-                      Xem chi tiết đơn hàng
-                    </Button>
                   </Stack>
-                </Box>
-              </Box>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
+                      Thời gian
+                    </Typography>
+                    <Typography sx={{ fontWeight: 800 }}>
+                      {incomingOrder?.durationText ?? "-"}
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
+                      Thu hộ
+                    </Typography>
+                    <Typography sx={{ fontWeight: 900, color: "#16a34a" }}>
+                      {money(incomingOrder?.cod)}đ
+                    </Typography>
+                  </Stack>
+                </Stack>
+
+                {/* Action */}
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setShowIncomingOrder(false)}
+                    sx={{ flex: 1, textTransform: "none" }}
+                  >
+                    Để sau
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowIncomingOrder(false);
+                      // Làm mới danh sách & đi tới trang Available để xem chi tiết
+                      resetAvailableOrders();
+                      navigate("/shipper/available");
+                    }}
+                    sx={{
+                      flex: 1,
+                      textTransform: "none",
+                      background: "linear-gradient(135deg,#ff6b35,#ff5722)",
+                      color: "#fff",
+                      "&:hover": {
+                        background: "linear-gradient(135deg,#ff5722,#f4511e)",
+                      },
+                    }}
+                  >
+                    Xem chi tiết
+                  </Button>
+                </Stack>
+              </Paper>
             </Slide>
           </Box>
         </Fade>

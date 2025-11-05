@@ -6,16 +6,21 @@ const shopProfileService = require("../services/shop_profileService");
  * 📌 Lấy danh sách tất cả người dùng (chỉ admin)
  */
 const getAllUsers = async (req, res) => {
-  try {
-    const users = await userService.getAllUsers();
-    return res.status(200).json({ success: true, users });
-  } catch (error) {
-    console.error("⚠️ Lỗi getAllUsers:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Lỗi server khi lấy danh sách người dùng.",
-    });
-  }
+  // try {
+  //   const users = await userService.getAllUsers();
+  //   return res.status(200).json({ success: true, users });
+  // } catch (error) {
+  //   console.error("⚠️ Lỗi getAllUsers:", error);
+  //   return res.status(500).json({
+  //     success: false,
+  //     message: "Lỗi server khi lấy danh sách người dùng.",
+  //   });
+  // }
+
+  return res.status(501).json({
+    success: false,
+    message: "Chức năng chưa được triển khai.",
+  });
 };
 
 /**
@@ -376,6 +381,84 @@ const getUserByPhone = async (req, res) => {
   }
 };
 
+/**
+ * 📌 Cập nhật thông tin user theo ID (dành cho admin hoặc trang Profile)
+ */
+const updateUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // 🧩 Kiểm tra người dùng có tồn tại không
+    const existingUser = await userService.getUserById(id);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ Không tìm thấy người dùng để cập nhật.",
+      });
+    }
+
+    // 🔄 Cập nhật thông tin user (qua Service → DAO)
+    const updatedUser = await userService.updateUserById(id, updateData);
+
+    return res.status(200).json({
+      success: true,
+      message: "✅ Hồ sơ người dùng đã được cập nhật thành công!",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("❌ [ERROR] updateUserById:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi cập nhật thông tin người dùng.",
+      error: error.message,
+    });
+  }
+};
+/**
+ * 🏪 Lấy thông tin shop của user hiện tại
+ */
+const getMyShop = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
+    }
+
+    const user = await userService.getUserById(sessionUser.id);
+    if (!user?.shop_profile) {
+      return res.status(404).json({ success: false, message: "Không có hồ sơ shop." });
+    }
+
+    return res.status(200).json({ success: true, data: user.shop_profile });
+  } catch (error) {
+    console.error("❌ Lỗi getMyShop:", error);
+    return res.status(500).json({ success: false, message: "Lỗi server khi lấy thông tin shop." });
+  }
+};
+
+/**
+ * 🚚 Lấy thông tin shipper của user hiện tại
+ */
+const getMyShipper = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
+    }
+
+    const user = await userService.getUserById(sessionUser.id);
+    if (!user?.shipper_profile) {
+      return res.status(404).json({ success: false, message: "Không có hồ sơ shipper." });
+    }
+
+    return res.status(200).json({ success: true, data: user.shipper_profile });
+  } catch (error) {
+    console.error("❌ Lỗi getMyShipper:", error);
+    return res.status(500).json({ success: false, message: "Lỗi server khi lấy thông tin shipper." });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getCurrentUser,
@@ -385,4 +468,7 @@ module.exports = {
   getUserByUsername,
   getUserByEmail,
   getUserByPhone,
+  updateUserById,
+  getMyShop,
+  getMyShipper,
 };

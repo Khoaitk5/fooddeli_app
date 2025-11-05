@@ -1,156 +1,157 @@
-import React, { useRef, useState, useLayoutEffect } from "react";
+import React from "react";
+import { Box, Card, CardMedia, Typography, Avatar, Stack, Chip } from "@mui/material";
+import { PlayCircleOutline, Visibility } from "@mui/icons-material";
 
-const VideoResultItem = ({ videos = [] }) => {
-  // 👉 Nếu không có dữ liệu thật, không render gì
-  if (!videos || videos.length === 0) {
-    return (
-      <p style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
-        Không có video phù hợp
-      </p>
-    );
-  }
+/**
+ * 🎥 VideoResultItem - Component hiển thị kết quả tìm kiếm video
+ * Design theo phong cách TikTok/YouTube Shorts
+ */
+const VideoResultItem = ({ video }) => {
+  if (!video) return null;
 
-  // Hàm cắt bớt chữ (giống logic cũ)
-  const renderVideoItem = (video) => {
-    const [truncatedText, setTruncatedText] = useState(video.title);
-    const textRef = useRef(null);
+  // Format số lượt xem
+  const formatViews = (views) => {
+    if (!views) return "0 lượt xem";
+    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M lượt xem`;
+    if (views >= 1000) return `${(views / 1000).toFixed(1)}K lượt xem`;
+    return `${views} lượt xem`;
+  };
 
-    useLayoutEffect(() => {
-      if (textRef.current) {
-        const element = textRef.current;
-        const lineHeight =
-          parseFloat(getComputedStyle(element).lineHeight) || 20;
-        const maxHeight = lineHeight * 2;
-        const text = video.title || "";
+  // Giả lập dữ liệu nếu không có
+  const views = video.views || Math.floor(Math.random() * 100000) + 1000;
+  const duration = video.duration || "0:45";
 
-        element.textContent = text;
-
-        if (element.scrollHeight > maxHeight) {
-          let low = 0;
-          let high = text.length;
-          let best = text;
-
-          while (low <= high) {
-            const mid = Math.floor((low + high) / 2);
-            const truncated = text.substring(0, mid) + "...";
-            element.textContent = truncated;
-
-            if (element.scrollHeight <= maxHeight) {
-              best = truncated;
-              low = mid + 1;
-            } else {
-              high = mid - 1;
-            }
-          }
-
-          setTruncatedText(best);
-        }
-      }
-    }, [video.title]);
-
-    return (
-      <>
-        {/* Ảnh hoặc video thumbnail */}
-        <img
-          style={{
-            position: "absolute",
-            left: 0,
+  return (
+    <Card
+      sx={{
+        position: 'relative',
+        borderRadius: 3,
+        overflow: 'hidden',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        transition: 'all 0.3s ease',
+        cursor: 'pointer',
+        '&:hover': {
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          transform: 'scale(1.02)',
+        },
+        '&:hover .play-overlay': {
+          opacity: 1,
+        },
+      }}
+    >
+      {/* Thumbnail Video */}
+      <Box sx={{ position: 'relative', paddingTop: '177.78%' }}> {/* 9:16 aspect ratio */}
+        <CardMedia
+          component="img"
+          sx={{
+            position: 'absolute',
             top: 0,
-            width: "46.94vw",
-            height: "33.75vh",
-            borderRadius: 6,
-            objectFit: "cover",
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
           }}
-          src={
+          image={
             video.thumbnail_url ||
             video.video_url ||
-            "https://placehold.co/169x270?text=No+Thumbnail"
+            "https://placehold.co/270x480?text=Video"
           }
           alt={video.title}
         />
 
-        {/* Tiêu đề video */}
-        <div
-          ref={textRef}
-          style={{
-            position: "absolute",
-            top: "34.625vh",
+        {/* Play Overlay */}
+        <Box
+          className="play-overlay"
+          sx={{
+            position: 'absolute',
+            top: 0,
             left: 0,
-            width: "46.94vw",
-            color: "black",
-            fontSize: "1.4rem",
-            fontWeight: "400",
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            opacity: 0,
+            transition: 'opacity 0.3s ease',
           }}
         >
-          {truncatedText}
-        </div>
+          <PlayCircleOutline sx={{ fontSize: 60, color: 'white' }} />
+        </Box>
 
-        {/* Avatar + Tên cửa hàng */}
-        <img
-          style={{
-            position: "absolute",
-            top: "40.5vh",
-            left: 0,
-            width: "5.28vw",
-            height: "5.28vw",
-            borderRadius: 9999,
+        {/* Duration Badge */}
+        <Chip
+          label={duration}
+          size="small"
+          sx={{
+            position: 'absolute',
+            bottom: 8,
+            right: 8,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1rem',
+            height: 20,
           }}
-          src={"https://placehold.co/19x19"} // 🧠 Bạn có thể thay bằng video.avatar nếu có
-          alt="avatar"
         />
+      </Box>
 
-        <div
-          style={{
-            position: "absolute",
-            top: "40.875vh",
-            left: "7.23vw",
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            color: "#7B7B7B",
-            fontSize: "1.2rem",
-            fontWeight: "400",
-            wordWrap: "break-word",
+      {/* Video Info */}
+      <Box sx={{ p: 1.5 }}>
+        {/* Title */}
+        <Typography
+          variant="body1"
+          sx={{
+            fontWeight: 500,
+            fontSize: '1.3rem',
+            mb: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            lineHeight: 1.4,
           }}
         >
-          {video.shopName || `Cửa hàng #${video.shop_id}`}
-        </div>
-      </>
-    );
-  };
+          {video.title || "Video không có tiêu đề"}
+        </Typography>
 
-  // ✅ Giữ nguyên cách hiển thị 2 cột (như bạn đang có)
-  const rows = Math.ceil(videos.length / 2);
-  const containerHeight =
-    rows === 1 ? "45vh" : (rows - 1) * 47.75 + 45 + "vh";
+        {/* Shop Info */}
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+          <Avatar
+            src={video.shop_avatar || "https://placehold.co/32x32"}
+            sx={{ width: 24, height: 24 }}
+          />
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#666',
+              fontSize: '1.1rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+            }}
+          >
+            {video.shopName || `Cửa hàng #${video.shop_id}`}
+          </Typography>
+        </Stack>
 
-  return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: `::-webkit-scrollbar { display: none; }` }} />
-      <div style={{ position: "relative", height: containerHeight, overflow: "auto" }}>
-        {videos.map((video, index) => {
-          const isLeft = index % 2 === 0;
-          const left = isLeft ? "1.94vw" : undefined;
-          const right = !isLeft ? "1.94vw" : undefined;
-          const top = Math.floor(index / 2) * 47.75 + "vh";
-          return (
-            <div
-              key={video.video_id || index}
-              style={{
-                position: "absolute",
-                left: left,
-                right: right,
-                top: top,
-                width: "46.94vw",
-                height: "auto",
-              }}
-            >
-              {renderVideoItem(video)}
-            </div>
-          );
-        })}
-      </div>
-    </>
+        {/* Views */}
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Visibility sx={{ fontSize: '1.4rem', color: '#999' }} />
+          <Typography
+            variant="caption"
+            sx={{
+              color: '#999',
+              fontSize: '1.1rem',
+            }}
+          >
+            {formatViews(views)}
+          </Typography>
+        </Stack>
+      </Box>
+    </Card>
   );
 };
 
