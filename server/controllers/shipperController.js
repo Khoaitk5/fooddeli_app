@@ -148,3 +148,109 @@ exports.listNearbyCookingFull = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+
+exports.acceptOrder = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
+    }
+
+    const { order_id } = req.body || {};
+    if (!order_id) {
+      return res.status(400).json({ success: false, message: "order_id required" });
+    }
+
+    // Lấy shipper_id từ user hiện tại (giống /api/users/me)
+    // Nếu session đã có shipper_profile.id thì dùng luôn, nếu không thì đọc DB một lần
+    let shipperId = sessionUser?.shipper_profile?.id;
+    if (!shipperId) {
+      // fallback DB rất nhẹ — không bắt buộc nếu session đã chứa shipper_profile
+      const sp = await ShipperProfileService.getShipperByUserId(sessionUser.id);
+      if (!sp) return res.status(400).json({ success:false, message:"Không tìm thấy hồ sơ shipper" });
+      shipperId = sp.id;
+    }
+
+    const result = await ShipperProfileService.acceptOrder({
+      orderId: Number(order_id),
+      shipperId: Number(shipperId),
+    });
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    if (err.code === 409) {
+      return res.status(409).json({ success: false, message: err.message });
+    }
+    console.error("[acceptOrder]", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.pickupOrder = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({ success:false, message:'Chưa đăng nhập' });
+    }
+    const { order_id } = req.body || {};
+    if (!order_id) {
+      return res.status(400).json({ success:false, message:'order_id required' });
+    }
+    // lấy shipperId từ session (giống accept)
+    let shipperId = sessionUser?.shipper_profile?.id;
+    if (!shipperId) {
+      const sp = await ShipperProfileService.getShipperByUserId(sessionUser.id);
+      if (!sp) return res.status(400).json({ success:false, message:'Không tìm thấy hồ sơ shipper' });
+      shipperId = sp.id;
+    }
+
+    const data = await ShipperProfileService.pickupOrder({
+      orderId: Number(order_id),
+      shipperId: Number(shipperId),
+    });
+
+    return res.status(200).json({ success:true, data });
+  } catch (err) {
+    if (err.code === 409) {
+      return res.status(409).json({ success:false, message: err.message });
+    }
+    console.error('[pickupOrder]', err);
+    return res.status(500).json({ success:false, message:'Lỗi hệ thống' });
+  }
+};
+
+exports.completeOrder = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
+    }
+
+    const { order_id } = req.body || {};
+    if (!order_id) {
+      return res.status(400).json({ success: false, message: "order_id required" });
+    }
+
+    // lấy shipper_id từ session (giống accept)
+    let shipperId = sessionUser?.shipper_profile?.id;
+    if (!shipperId) {
+      const sp = await ShipperProfileService.getShipperByUserId(sessionUser.id);
+      if (!sp) return res.status(400).json({ success:false, message:"Không tìm thấy hồ sơ shipper" });
+      shipperId = sp.id;
+    }
+
+    const result = await ShipperProfileService.completeOrder({
+      orderId: Number(order_id),
+      shipperId: Number(shipperId),
+    });
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    if (err.code === 409) {
+      return res.status(409).json({ success: false, message: err.message });
+    }
+    console.error("[completeOrder]", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
