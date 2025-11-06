@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import theme from "../../../styles/theme";
+import { useCart } from "../../../hooks/useCart";
+import FloatingCart from "../../shared/FloatingCart";
+import Toast from "../../shared/Toast";
 
 export default function RestaurantDetail() {
   const navigate = useNavigate();
@@ -25,6 +28,12 @@ export default function RestaurantDetail() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState(defaultTab); // Dùng defaultTab
   const [loading, setLoading] = useState(true);
+
+  // 🛒 Hook giỏ hàng từ backend
+  const { cartItems, cartCount, refreshCart } = useCart();
+
+  // 🍞 Toast notification state
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
   // 📦 Fetch dữ liệu shop + video + menu
   useEffect(() => {
@@ -84,32 +93,53 @@ export default function RestaurantDetail() {
   }, [shopId]);
 
   // 🛒 Hàm thêm món vào giỏ hàng
-const handleAddToCart = async (item) => {
-  try {
-    const res = await fetch("http://localhost:5000/api/cart/items", {
-      method: "POST",
-      credentials: "include", // để gửi session cookie
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        shop_id: shop.id,          // id cửa hàng hiện tại
-        product_id: item.product_id, // id sản phẩm
-        quantity: 1,
-        unit_price: item.price
-      }),
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      console.log("✅ Đã thêm vào giỏ hàng:", item.name);
-      alert(`✅ Đã thêm "${item.name}" vào giỏ hàng!`);
-    } else {
-      alert("❌ Không thể thêm vào giỏ hàng: " + data.message);
+  const handleAddToCart = async (item) => {
+    // ✅ Kiểm tra dữ liệu đầu vào
+    if (!item?.product_id || !item?.shop_id) {
+      alert("❌ Thiếu thông tin sản phẩm");
+      return;
     }
-  } catch (err) {
-    console.error("❌ Lỗi khi thêm vào giỏ hàng:", err);
-    alert("Đã xảy ra lỗi khi thêm vào giỏ hàng!");
-  }
-};
+
+    const itemName = item.name || item.product_name || "món ăn";
+
+    try {
+      const res = await fetch("http://localhost:5000/api/cart/items", {
+        method: "POST",
+        credentials: "include", // để gửi session cookie
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shop_id: item.shop_id, // ✅ Lấy shop_id từ sản phẩm (chính xác hơn)
+          product_id: item.product_id,
+          quantity: 1,
+          unit_price: item.price,
+        }),
+      });
+
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error("❌ Không parse được phản hồi thêm giỏ hàng:", parseErr);
+      }
+
+      if (res.ok && data?.success) {
+        const successMessage = data.message || `Đã thêm "${itemName}" vào giỏ hàng!`;
+        console.log("✅ Giỏ hàng:", { item: itemName, response: data });
+        
+        // ✅ Refresh giỏ hàng để cập nhật UI
+        refreshCart();
+        
+        // ✅ Hiển thị toast notification
+        setToast({ show: true, message: successMessage, type: "success" });
+      } else {
+        const errorMessage = data?.message || "Không rõ nguyên nhân";
+        setToast({ show: true, message: `Không thể thêm vào giỏ hàng: ${errorMessage}`, type: "error" });
+      }
+    } catch (err) {
+      console.error("❌ Lỗi khi thêm vào giỏ hàng:", err);
+      setToast({ show: true, message: "Đã xảy ra lỗi khi thêm vào giỏ hàng!", type: "error" });
+    }
+  };
 
 
   if (loading) return <p className="text-center mt-40">Đang tải dữ liệu...</p>;
@@ -124,12 +154,16 @@ const handleAddToCart = async (item) => {
     return acc;
   }, {});
 
+  // 💰 Tính tổng giá giỏ hàng
+  const totalPrice = cartItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+
   return (
     <div
       style={{
         backgroundColor: "#fff",
         minHeight: "100vh",
         position: "relative",
+        paddingBottom: cartCount > 0 ? "95px" : "0", // Thêm padding khi có giỏ hàng
       }}
     >
       {/* Header */}
@@ -510,6 +544,22 @@ const handleAddToCart = async (item) => {
           </div>
         )}
       </div>
+
+      {/* 🛒 Floating Cart */}
+      <FloatingCart
+        items={cartItems}
+        totalQuantity={cartCount}
+        totalPrice={totalPrice}
+      />
+
+      {/* 🍞 Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        show={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        duration={2000}
+      />
     </div>
   );
 }

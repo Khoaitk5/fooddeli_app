@@ -21,6 +21,10 @@ const cartItemService = {
     return await cart_itemDao.findById("id", itemId);
   },
 
+  async findByCartShopProduct(cartId, shopId, productId) {
+    return await cart_itemDao.findByCartShopProduct(cartId, shopId, productId);
+  },
+
   async getAllCartItems() {
     return await cart_itemDao.findAll();
   },
