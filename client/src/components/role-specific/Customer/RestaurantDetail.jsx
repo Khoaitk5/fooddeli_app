@@ -256,7 +256,7 @@ const handleAddToCart = async (item) => {
             color: isFollowing ? "#222" : "#fff",
             background: isFollowing
               ? "#f3f4f6"
-              : "linear-gradient(135deg, #ff6b35 0%, #ff9559 100%)",
+              : "linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)",
             boxShadow: "0 3px 8px rgba(255,107,53,0.3)",
           }}
         >
@@ -272,23 +272,6 @@ const handleAddToCart = async (item) => {
             )}
           </AnimatePresence>
         </motion.button>
-
-        {/* Ưu đãi */}
-        <div
-          style={{
-            marginTop: 20,
-            background: "linear-gradient(90deg, #fff5f0 0%, #ffe9e0 100%)",
-            borderRadius: 12,
-            padding: 16,
-          }}
-        >
-          <div style={{ fontWeight: 700, color: "#ff6b35", marginBottom: 4 }}>
-            🎁 Ưu đãi đặc biệt
-          </div>
-          <p style={{ color: "#555", fontSize: 14 }}>
-            Giảm đến 50% cho đơn từ 99.000đ
-          </p>
-        </div>
 
         {/* Tabs */}
         <div
@@ -308,8 +291,8 @@ const handleAddToCart = async (item) => {
                 border: "none",
                 background: "transparent",
                 fontWeight: 600,
-                borderBottom: activeTab === tab ? "2px solid #ff6b35" : "none",
-                color: activeTab === tab ? "#ff6b35" : "#333",
+                borderBottom: activeTab === tab ? "2px solid #5EAD1D" : "none",
+                color: activeTab === tab ? "#5EAD1D" : "#333",
               }}
             >
               {tab === "videos" ? "Video" : "Thực đơn"}
@@ -418,7 +401,7 @@ const handleAddToCart = async (item) => {
               <div key={category} style={{ marginBottom: 24 }}>
                 <h3
                   style={{
-                    color: "#ff6b35",
+                    color: "#5EAD1D",
                     fontWeight: 700,
                     fontSize: 18,
                     marginBottom: 10,
@@ -482,7 +465,7 @@ const handleAddToCart = async (item) => {
                       <div style={{ marginTop: 4 }}>
                         <span
                           style={{
-                            color: "#ff6b35",
+                            color: "#5EAD1D",
                             fontWeight: 700,
                             fontSize: 16,
                           }}
@@ -495,7 +478,7 @@ const handleAddToCart = async (item) => {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleAddToCart(item)}
                       style={{
-                        border: "1.5px solid #ff6b35",
+                        border: "1.5px solid #5EAD1D",
                         borderRadius: "10px",
                         width: 42,
                         height: 28,
@@ -503,7 +486,7 @@ const handleAddToCart = async (item) => {
                         alignItems: "center",
                         justifyContent: "center",
                         backgroundColor: "#fff",
-                        color: "#ff6b35",
+                        color: "#5EAD1D",
                         fontSize: 18,
                         fontWeight: 600,
                         lineHeight: "0",
@@ -527,49 +510,6 @@ const handleAddToCart = async (item) => {
           </div>
         )}
       </div>
-
-      {/* Bottom Action Bar */}
-      {activeTab === "menu" && (
-        <div
-          style={{
-            position: "sticky",
-            bottom: 0,
-            background: "#fff",
-            padding: "10px 16px",
-            display: "flex",
-            gap: 12,
-            borderTop: "1px solid #eee",
-            boxShadow: "0 -2px 8px rgba(0,0,0,0.05)",
-          }}
-        >
-          <button
-            style={{
-              flex: 1,
-              border: "1px solid #ff6b35",
-              borderRadius: 12,
-              color: "#ff6b35",
-              fontWeight: 600,
-              padding: "12px 0",
-              background: "#fff",
-            }}
-          >
-            Thêm món
-          </button>
-          <button
-            style={{
-              flex: 1,
-              border: "none",
-              borderRadius: 12,
-              color: "#fff",
-              fontWeight: 600,
-              padding: "12px 0",
-              background: "linear-gradient(135deg, #ff6b35 0%, #ff9559 100%)",
-            }}
-          >
-            Đặt ngay
-          </button>
-        </div>
-      )}
     </div>
   );
 }

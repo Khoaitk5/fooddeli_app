@@ -21,7 +21,6 @@ import {
 } from "@mui/icons-material";
 import ShopResultItem from "../../shared/ShopResultItem";
 import VideoResultItem from "../../shared/VideoResultItem";
-import SearchDebugPanel from "../../shared/SearchDebugPanel";
 
 const SearchResults = () => {
   const navigate = useNavigate();
@@ -305,15 +304,6 @@ const SearchResults = () => {
           </Grid>
         )}
       </Container>
-
-      {/* 🐛 Debug Panel - Chỉ hiển thị trong development */}
-      <SearchDebugPanel
-        queryParam={queryParam}
-        loading={loading}
-        products={products}
-        videos={videos}
-        error={error}
-      />
     </Box>
   );
 };

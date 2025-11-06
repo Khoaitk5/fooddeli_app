@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
-// ❌ Sửa lỗi import alias sang đường dẫn tương đối (Relative Paths)
 import { auth, googleProvider } from "@/firebase/firebaseConfig"; 
 import FooterBar from "@/components/shared/FooterBar";
 import GoogleButton from "@/components/shared/GoogleButton";
@@ -9,7 +8,7 @@ import PhoneButton from "@/components/shared/PhoneButton";
 import SubmitButton from "@/components/shared/SubmitButton";
 import MiniLogo from "@/components/shared/MiniLogo";
 import BurgerBG from "@/components/shared/BurgerBG";
-import "@/App.css"; // ❌ Sửa lỗi import CSS
+import "@/App.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -68,28 +67,13 @@ const Login = () => {
     }
   };
 
-  // ⚡️ GIỮ NGUYÊN GIAO DIỆN VÀ VỊ TRÍ CỦA BẠN (với các giá trị pxW, pxH và vh/vw)
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%", // Đã sửa để responsive hơn
-        height: "100%", // Đã sửa để responsive hơn
-        background: "#fff",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "space-between",
-        overflow: "hidden",
-      }}
-    >
+    <div>
       {/* Logo */}
       <div
         style={{
           position: "absolute",
-          top: "2.82vh", // Giữ nguyên vị trí theo vh/vw
+          top: "6.75vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -102,7 +86,7 @@ const Login = () => {
       <div
         style={{
           position: "absolute",
-          top: "17.12vh", // Giữ nguyên vị trí theo vh/vw
+          top: "21.3675vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 5,
@@ -115,13 +99,12 @@ const Login = () => {
       <div
         style={{
           position: "absolute",
-          top: "65.75vh", // Giữ nguyên vị trí theo vh/vw
+          top: "70.375vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
         }}
       >
-        {/* GIỮ NGUYÊN LOGIC navigate */}
         <SubmitButton onClick={() => navigate("/customer/home")}>
           Tiếp tục với tư cách là khách
         </SubmitButton>
@@ -131,7 +114,7 @@ const Login = () => {
       <div
         style={{
           position: "absolute",
-          top: "75vh", // Giữ nguyên vị trí theo vh/vw
+          top: "79.375vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -151,7 +134,7 @@ const Login = () => {
       <div
         style={{
           position: "absolute",
-          top: "80.125vh", // Giữ nguyên vị trí theo vh/vw
+          top: "84.25vh",
           left: 0,
           right: 0,
           zIndex: 10,
@@ -162,23 +145,16 @@ const Login = () => {
           paddingRight: "5.27vw",
         }}
       >
-        {/* Google Login Button (GIỮ NGUYÊN LOGIC) */}
         <div>
           <GoogleButton onClick={handleGoogleLogin} />
         </div>
-
-        {/* Phone Button (GIỮ NGUYÊN LOGIC navigate) */}
         <div>
           <PhoneButton onClick={() => navigate("/login/phone")} />
         </div>
-
-        {/* Message Button (GIỮ NGUYÊN LOGIC navigate) */}
         <div>
           <MessageButton onClick={() => navigate("/login/email")} />
         </div>
       </div>
-
-      {/* Footer (GIỮ NGUYÊN LOGIC navigate) */}
       <FooterBar onClick={() => navigate("/register")} />
     </div>
   );

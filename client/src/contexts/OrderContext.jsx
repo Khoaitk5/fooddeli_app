@@ -161,7 +161,7 @@ export const OrderProvider = ({ children }) => {
   
   const distance = "1.36km"; 
   const distanceNum = parseFloat(distance.replace("km", ""));
-  const shippingFee = 5000 + Math.round(distanceNum * 2000);
+  const shippingFee = 5000 + Math.round(distanceNum * 4000);
 
   let foodDiscount = 0;
   const foodCouponIndex = selectedCoupons.food;

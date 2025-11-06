@@ -62,3 +62,11 @@ html {
     font-size: 16px;
   }
 }
+
+input::placeholder {
+  color: #91958E;
+  font-size: 15px;
+  font-family: 'Be Vietnam Pro';
+  font-weight: 400;
+  word-wrap: break-word;
+}

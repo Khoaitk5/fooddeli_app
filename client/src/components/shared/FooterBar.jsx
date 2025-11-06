@@ -1,12 +1,12 @@
 import React from 'react';
 
-const FooterBar = ({ text1 = "Bạn không có tài khoản?", text2 = "Đăng ký", onClick }) => {
+const FooterBar = ({ text1 = "Bạn chưa có tài khoản?", text2 = "Đăng ký", onClick }) => {
   const barStyle = {
     position: 'fixed',
     bottom: 0,
     left: 0,
     width: '100%',
-    minHeight: '60px',
+    height: '6.875vh',
     background: '#F7F7F7',
     display: 'flex',
     justifyContent: 'center',
