@@ -17,4 +17,8 @@ router.post("/details/add-bulk", orderController.addItems);
 router.post("/details/update-quantity", orderController.updateDetailQuantity);
 router.post("/details/delete-all", orderController.deleteDetailsByOrder);
 
+// 🆕 Tạo đơn hàng tiền mặt
+router.post("/create-cash", orderController.createCashOrder);
+
+
 module.exports = router;

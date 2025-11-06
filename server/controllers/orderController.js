@@ -7,55 +7,41 @@ const toBool = (v, def = false) =>
   v === undefined ? def : String(v).toLowerCase() === "true";
 
 module.exports = {
-  /**
-   * Lấy 1 đơn đầy đủ (order + details)
-   * body: { order_id }
-   */
+  /** ===========================
+   * 🔹 Lấy 1 đơn đầy đủ (order + details)
+   * =========================== */
   async getFull(req, res) {
     try {
       const { order_id } = req.body;
-
-      // (tuỳ yêu cầu) kiểm tra quyền xem dựa trên role
-      // - shipper: chỉ xem đơn gán cho mình
-      // - shop: chỉ xem đơn của shop mình
-      // - user: chỉ xem đơn của mình đặt
-      // -> có thể dùng orderService.getFull rồi tự verify, hoặc tạo DAO check trước.
       const data = await orderService.getFull(order_id);
 
       const { role, shipper_id, shop_id, user_id } = req.ctx || {};
-      if (role === "shipper" && data.order.shipper_id !== shipper_id) {
+      if (role === "shipper" && data.order.shipper_id !== shipper_id)
         return res.status(403).json({ message: "Forbidden" });
-      }
-      if (role === "shop" && data.order.shop_id !== shop_id) {
+      if (role === "shop" && data.order.shop_id !== shop_id)
         return res.status(403).json({ message: "Forbidden" });
-      }
-      if (role === "user" && data.order.user_id !== user_id) {
+      if (role === "user" && data.order.user_id !== user_id)
         return res.status(403).json({ message: "Forbidden" });
-      }
 
       res.json(data);
     } catch (e) {
-      res.status(e.message === "Order not found" ? 404 : 400).json({ message: e.message });
+      res
+        .status(e.message === "Order not found" ? 404 : 400)
+        .json({ message: e.message });
     }
   },
 
-  /**
-   * Lấy danh sách đơn theo "ngữ cảnh" đã xác thực (KHÔNG lộ id)
-   * body: { status?, limit?, offset?, full?, shop_id? }
-   * - shipper: trả danh sách đơn theo shipper_id trong ctx
-   * - shop: trả danh sách đơn theo shop_id (từ ctx hoặc body)
-   * - user: trả danh sách đơn theo user_id (nếu cần)
-   */
+  /** ===========================
+   * 🔹 Lấy danh sách đơn theo ngữ cảnh (shop / user / shipper)
+   * =========================== */
   async listMine(req, res) {
     try {
       const { role, shipper_id, shop_id: ctxShopId, user_id } = req.ctx || {};
       const { status, limit, offset, full, shop_id: bodyShopId } = req.body || {};
 
-      // Ưu tiên lấy shop_id từ ctx, nếu không có thì dùng từ body
       const shop_id = ctxShopId || bodyShopId;
       const fullFlag = String(full).toLowerCase() === "true" || full === true;
 
-      // ✅ Nếu là shipper
       if (role === "shipper" && shipper_id) {
         const items = await orderService.listByShipper(shipper_id, {
           status,
@@ -63,14 +49,9 @@ module.exports = {
           offset,
           full: fullFlag,
         });
-        return res.json({
-          items,
-          limit: Number(limit ?? 20),
-          offset: Number(offset ?? 0),
-        });
+        return res.json({ items, limit: Number(limit ?? 20), offset: Number(offset ?? 0) });
       }
 
-      // ✅ Nếu là shop (trường hợp bạn đang cần)
       if ((role === "shop" && shop_id) || bodyShopId) {
         const items = await orderService.listByShop(Number(shop_id), {
           status,
@@ -78,14 +59,9 @@ module.exports = {
           offset,
           full: fullFlag,
         });
-        return res.json({
-          items,
-          limit: Number(limit ?? 20),
-          offset: Number(offset ?? 0),
-        });
+        return res.json({ items, limit: Number(limit ?? 20), offset: Number(offset ?? 0) });
       }
 
-      // ✅ Nếu là user (nếu bạn cần thêm sau này)
       if (role === "user" && user_id) {
         const items = await orderService.listByUser(user_id, {
           status,
@@ -93,14 +69,9 @@ module.exports = {
           offset,
           full: fullFlag,
         });
-        return res.json({
-          items,
-          limit: Number(limit ?? 20),
-          offset: Number(offset ?? 0),
-        });
+        return res.json({ items, limit: Number(limit ?? 20), offset: Number(offset ?? 0) });
       }
 
-      // ❌ Nếu không hợp lệ
       return res
         .status(400)
         .json({ message: "Unsupported role or missing identifiers" });
@@ -110,15 +81,14 @@ module.exports = {
     }
   },
 
-  /**
-   * Tạo đơn rỗng theo ngữ cảnh — ví dụ shop tạo đơn cho khách
-   * body: { payment_method?, delivery_fee? }
-   * user_id, shop_id lấy từ req.ctx
-   */
+  /** ===========================
+   * 🔹 Tạo đơn rỗng theo ngữ cảnh
+   * =========================== */
   async createEmpty(req, res) {
     try {
       const { role, user_id, shop_id } = req.ctx || {};
-      if (!user_id || !shop_id) return res.status(400).json({ message: "Context missing user_id/shop_id" });
+      if (!user_id || !shop_id)
+        return res.status(400).json({ message: "Context missing user_id/shop_id" });
 
       const { payment_method = "COD", delivery_fee = 0 } = req.body || {};
       const order = await orderService.createEmptyOrder({
@@ -133,11 +103,40 @@ module.exports = {
     }
   },
 
-  /**
-   * Gán shipper cho đơn — shipper tự nhận đơn
-   * body: { order_id }
-   * shipper_id lấy từ req.ctx
-   */
+  /** ===========================
+   * 🆕 🔹 Tạo đơn hàng thanh toán tiền mặt
+   * =========================== */
+  async createCashOrder(req, res) {
+    try {
+      const { user_id, shop_id, items = [], note } = req.body;
+
+      if (!user_id || !shop_id)
+        return res.status(400).json({ success: false, message: "Thiếu user_id hoặc shop_id" });
+
+      const order = await orderService.createCashOrder({
+        user_id,
+        shop_id,
+        items,
+        note,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Tạo đơn hàng tiền mặt thành công",
+        order,
+      });
+    } catch (error) {
+      console.error("❌ [createCashOrder Error]:", error);
+      res.status(500).json({
+        success: false,
+        message: "Lỗi khi tạo đơn hàng tiền mặt",
+      });
+    }
+  },
+
+  /** ===========================
+   * 🔹 Gán shipper cho đơn
+   * =========================== */
   async assignMeAsShipper(req, res) {
     try {
       const { shipper_id } = req.ctx || {};
@@ -152,10 +151,9 @@ module.exports = {
     }
   },
 
-  /**
-   * Cập nhật status đơn
-   * body: { order_id, status }
-   */
+  /** ===========================
+   * 🔹 Cập nhật trạng thái đơn
+   * =========================== */
   async updateStatus(req, res) {
     try {
       const { order_id, status } = req.body || {};
@@ -167,10 +165,9 @@ module.exports = {
     }
   },
 
-  /**
-   * Cập nhật payment_status
-   * body: { order_id, payment_status }
-   */
+  /** ===========================
+   * 🔹 Cập nhật trạng thái thanh toán
+   * =========================== */
   async updatePaymentStatus(req, res) {
     try {
       const { order_id, payment_status } = req.body || {};
@@ -182,10 +179,9 @@ module.exports = {
     }
   },
 
-  /**
-   * Đánh dấu settle
-   * body: { order_id }
-   */
+  /** ===========================
+   * 🔹 Đánh dấu settled
+   * =========================== */
   async markSettled(req, res) {
     try {
       const { order_id } = req.body || {};
@@ -197,10 +193,9 @@ module.exports = {
     }
   },
 
-  /**
-   * Thêm nhiều item vào order_details
-   * body: { order_id, items: [{product_id, quantity, unit_price?}], useProvidedUnitPrice? }
-   */
+  /** ===========================
+   * 🔹 Thêm chi tiết món
+   * =========================== */
   async addItems(req, res) {
     try {
       const { order_id, items, useProvidedUnitPrice = false } = req.body || {};
@@ -211,24 +206,24 @@ module.exports = {
     }
   },
 
-  /**
-   * Lấy danh sách chi tiết theo order
-   * body: { order_id, withProduct? }
-   */
+  /** ===========================
+   * 🔹 Lấy chi tiết order
+   * =========================== */
   async listDetails(req, res) {
     try {
       const { order_id, withProduct } = req.body || {};
-      const details = await orderDetailService.list(order_id, { withProduct: toBool(withProduct, true) });
+      const details = await orderDetailService.list(order_id, {
+        withProduct: toBool(withProduct, true),
+      });
       res.json(details);
     } catch (e) {
       res.status(400).json({ message: e.message });
     }
   },
 
-  /**
-   * Cập nhật số lượng 1 dòng chi tiết
-   * body: { detail_id, quantity }
-   */
+  /** ===========================
+   * 🔹 Cập nhật số lượng món
+   * =========================== */
   async updateDetailQuantity(req, res) {
     try {
       const { detail_id, quantity } = req.body || {};
@@ -239,10 +234,9 @@ module.exports = {
     }
   },
 
-  /**
-   * Xoá toàn bộ chi tiết theo order
-   * body: { order_id }
-   */
+  /** ===========================
+   * 🔹 Xoá toàn bộ chi tiết theo order
+   * =========================== */
   async deleteDetailsByOrder(req, res) {
     try {
       const { order_id } = req.body || {};
@@ -253,22 +247,25 @@ module.exports = {
     }
   },
 
+  /** ===========================
+   * 🔹 Lấy danh sách đơn theo shipper kèm details
+   * =========================== */
   async listByShipperIdWithDetails(req, res) {
     try {
       const { shipper_id, status, limit = 20, offset = 0, withProduct = true } = req.body || {};
       if (!Number(shipper_id)) return res.status(400).json({ message: "shipper_id is required" });
 
-      // 1) Lấy danh sách đơn theo shipper
       const orders = await orderService.listByShipper(Number(shipper_id), {
         status,
         limit: Number(limit),
         offset: Number(offset),
       });
 
-      // 2) Lấy details cho từng order
       const items = await Promise.all(
         orders.map(async (o) => {
-          const details = await orderDetailService.list(o.order_id, { withProduct: toBool(withProduct, true) });
+          const details = await orderDetailService.list(o.order_id, {
+            withProduct: toBool(withProduct, true),
+          });
           return { order: o, details };
         })
       );
@@ -277,5 +274,5 @@ module.exports = {
     } catch (e) {
       res.status(400).json({ message: e.message || "Bad request" });
     }
-  }
+  },
 };

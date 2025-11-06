@@ -5,8 +5,7 @@ const orderDetailService = require("./order_detailService");
 
 class OrderService {
   /**
-   * Lấy danh sách đơn theo shipper_id (+ lọc + phân trang)
-   * Chỉ gọi DAO, không query trong service
+   * 📦 Lấy danh sách đơn theo shipper_id
    */
   async listByShipper(shipperId, { status, limit = 20, offset = 0, full = false } = {}) {
     const sid = Number(shipperId);
@@ -27,8 +26,7 @@ class OrderService {
   }
 
   /**
-   * 🏪 Lấy danh sách đơn theo shop_id (+ lọc + phân trang)
-   * Có thể trả dạng đơn giản hoặc kèm chi tiết (full)
+   * 🏪 Lấy danh sách đơn theo shop_id
    */
   async listByShop(shopId, { status, limit = 20, offset = 0, full = false } = {}) {
     const sid = Number(shopId);
@@ -49,7 +47,7 @@ class OrderService {
   }
 
   /**
-   * Lấy full 1 đơn (order + details + user/shop info)
+   * 🔎 Lấy full 1 đơn (order + details + user/shop info)
    */
   async getFull(orderId) {
     const id = Number(orderId);
@@ -60,7 +58,7 @@ class OrderService {
   }
 
   /**
-   * Gán shipper cho đơn
+   * 👷‍♂️ Gán shipper cho đơn
    */
   async assignShipper(orderId, shipperId) {
     const id = Number(orderId);
@@ -70,7 +68,7 @@ class OrderService {
   }
 
   /**
-   * Cập nhật trạng thái đơn
+   * 🔄 Cập nhật trạng thái đơn
    */
   async updateStatus(orderId, status) {
     const id = Number(orderId);
@@ -79,7 +77,7 @@ class OrderService {
   }
 
   /**
-   * Cập nhật trạng thái thanh toán
+   * 💳 Cập nhật trạng thái thanh toán
    */
   async updatePaymentStatus(orderId, paymentStatus) {
     const id = Number(orderId);
@@ -88,7 +86,7 @@ class OrderService {
   }
 
   /**
-   * Đánh dấu settle
+   * 💰 Đánh dấu settled
    */
   async markSettled(orderId) {
     const id = Number(orderId);
@@ -106,7 +104,7 @@ class OrderService {
   }
 
   /**
-   * Tạo 1 order trống (dùng GenericDao.create), rồi FE có thể add items sau
+   * 🆕 Tạo 1 order trống (đơn cơ bản)
    */
   async createEmptyOrder({ user_id, shop_id, payment_method = "COD", delivery_fee = 0 }) {
     const uid = Number(user_id);
@@ -130,8 +128,8 @@ class OrderService {
       shipper_earn: 0,
       admin_earn: 0,
 
-      status: "pending",
-      payment_method,
+      status: "pending", // ✅ khớp với DB enum
+      payment_method,    // ✅ "COD" hoặc "VNPay"
       payment_status: "unpaid",
 
       is_settled: false,
@@ -139,7 +137,7 @@ class OrderService {
   }
 
   /**
-   * Thêm nhiều item vào order_details (gọi DAO) rồi recalc tổng (gọi DAO)
+   * 🍱 Thêm nhiều item vào order_details và tính lại tổng
    */
   async addItems(orderId, items, { useProvidedUnitPrice = false } = {}) {
     const id = Number(orderId);
@@ -153,6 +151,39 @@ class OrderService {
 
     const updatedOrder = await orderDao.recalcTotals(id);
     return { ...result, order: updatedOrder };
+  }
+
+  /**
+   * 💵 Tạo đơn hàng tiền mặt (COD)
+   */
+  async createCashOrder({ user_id, shop_id, items = [], note = "" }) {
+    const uid = Number(user_id);
+    const sid = Number(shop_id);
+
+    if (!uid || !sid) throw new Error("Thiếu user_id hoặc shop_id");
+
+    // 1️⃣ Tạo order trống
+    const order = await this.createEmptyOrder({
+      user_id: uid,
+      shop_id: sid,
+      payment_method: "COD", // ✅ khớp enum trong DB
+      delivery_fee: 15000,
+    });
+
+    // 2️⃣ Thêm sản phẩm
+    if (Array.isArray(items) && items.length > 0) {
+      await orderDetailService.addMany(order.order_id, items, {
+        useProvidedUnitPrice: true,
+      });
+    }
+
+    // 3️⃣ Cập nhật trạng thái ban đầu
+    await orderDao.updateStatus(order.order_id, "pending"); // ✅ khớp enum
+
+    // 4️⃣ Tính lại tổng
+    const updated = await orderDao.recalcTotals(order.order_id);
+
+    return updated;
   }
 }
 
