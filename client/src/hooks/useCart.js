@@ -27,14 +27,16 @@ export const useCart = () => {
       if (data.success && data.data?.items) {
         // Chuẩn hoá data
         const normalizedItems = data.data.items.map((item) => ({
-          id: item.id || item.cart_item_id,
-          product_name: item.product_name,
-          product_description: item.product_description,
-          product_image: item.product_image,
-          quantity: item.quantity,
-          unit_price: Number(item.unit_price),
-          line_total: Number(item.line_total),
-        }));
+  id: item.id || item.cart_item_id,
+  shop_id: item.shop_id,              // ✅ thêm
+  shop_name: item.shop_name,          // ✅ thêm
+  product_name: item.product_name,
+  product_description: item.product_description,
+  product_image: item.product_image,
+  quantity: item.quantity,
+  unit_price: Number(item.unit_price),
+  line_total: Number(item.line_total),
+}));
 
         setCartItems(normalizedItems);
         
