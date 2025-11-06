@@ -57,7 +57,7 @@ export default function OrderTracking() {
     }} className="order-tracking-container">
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
+        background: 'linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)',
         padding: '2rem 1.5rem',
         display: 'flex',
         alignItems: 'center',

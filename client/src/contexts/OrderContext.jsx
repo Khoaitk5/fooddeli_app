@@ -11,7 +11,7 @@ const OrderContext = createContext();
 // 2. Tạo Provider (Component bọc ngoài)
 export const OrderProvider = ({ children }) => {
   // === LẤY CART TỪ BACKEND ===
-  const { cartItems: backendCartItems, cartCount, loading: cartLoading, refreshCart } = useCart();
+  const { cartItems: backendCartItems, cartCount, shopId, loading: cartLoading, refreshCart } = useCart();
   
   // === STATE CỦA ĐƠN HÀNG ===
   const [note, setNote] = useState("");
@@ -161,7 +161,7 @@ export const OrderProvider = ({ children }) => {
   
   const distance = "1.36km"; 
   const distanceNum = parseFloat(distance.replace("km", ""));
-  const shippingFee = 5000 + Math.round(distanceNum * 2000);
+  const shippingFee = 5000 + Math.round(distanceNum * 4000);
 
   let foodDiscount = 0;
   const foodCouponIndex = selectedCoupons.food;
@@ -214,6 +214,7 @@ export const OrderProvider = ({ children }) => {
     shippingDiscount,
     totalPrice,
     couponCount,
+    shopId, // Thêm shopId để navigate đến shop
     cartLoading, // Thêm loading state
     // Cung cấp state và hàm của modal
     confirmation,

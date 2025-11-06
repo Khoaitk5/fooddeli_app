@@ -110,7 +110,7 @@ const OngoingOrderCard = ({ order, cardMargin }) => {
             <div style={{
               fontSize: '1.375rem',
               fontWeight: '700',
-              color: '#ee4d2d',
+              color: '#5EAD1D ',
               marginTop: '0.5rem'
             }}>
               {formatPrice(order.total)}
@@ -126,7 +126,7 @@ const OngoingOrderCard = ({ order, cardMargin }) => {
           style={{
             width: '100%',
             padding: '1.125rem',
-            background: 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
+            background: 'linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)',
             border: 'none',
             borderRadius: '0.75rem',
             color: '#fff',

@@ -28,9 +28,8 @@ class OrderDao extends GenericDao {
       sql += ` AND status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    };`;
+    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
+      };`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));
@@ -94,9 +93,8 @@ class OrderDao extends GenericDao {
       idSql += ` AND o.status = $${baseParams.length}`;
     }
     baseParams.push(limit, offset);
-    idSql += ` ORDER BY o.created_at DESC LIMIT $${
-      baseParams.length - 1
-    } OFFSET $${baseParams.length};`;
+    idSql += ` ORDER BY o.created_at DESC LIMIT $${baseParams.length - 1
+      } OFFSET $${baseParams.length};`;
 
     const idsRes = await pool.query(idSql, baseParams);
     const ids = idsRes.rows.map((r) => r.order_id);
@@ -247,9 +245,8 @@ class OrderDao extends GenericDao {
       sql += ` AND status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    };`;
+    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
+      };`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));
@@ -275,17 +272,88 @@ class OrderDao extends GenericDao {
     return res.rows; // giữ dạng raw để service xử lý tiếp
   }
 
-  // Kiểm tra shipper đang có đơn shipping chưa
+  // Kiểm tra shipper đang có đơn chưa hoàn tất (đã gán hoặc đang giao)
   async hasShippingOfShipper(shipperId) {
     const sql = `
     SELECT 1
     FROM orders
     WHERE shipper_id = $1
-      AND status = 'shipping'
+      AND status IN ('cooking','shipping')  -- coi là bận nếu đã gán hoặc đang shipping
     LIMIT 1;
   `;
     const r = await pool.query(sql, [shipperId]);
     return !!r.rows[0];
+  }
+
+  /**
+ * Lấy danh sách orders theo shop_id (có lọc trạng thái & phân trang)
+ * @param {number} shopId
+ * @param {object} options { status?: string, limit?: number, offset?: number }
+ */
+  async listByShop(shopId, { status, limit = 20, offset = 0 } = {}) {
+    const params = [shopId];
+    let sql = `
+      SELECT
+        o.*,
+        u.full_name  AS user_full_name,
+        u.phone      AS user_phone,
+        sp.shop_name AS shop_name
+      FROM orders o
+      JOIN users u          ON u.id = o.user_id
+      JOIN shop_profiles sp ON sp.id = o.shop_id
+      WHERE o.shop_id = $1
+    `;
+
+    if (status) {
+      params.push(status);
+      sql += ` AND o.status = $${params.length}`;
+    }
+
+    params.push(limit, offset);
+    sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length};`;
+
+    const res = await pool.query(sql, params);
+    return res.rows.map((r) => ({ ...r }));
+  }
+  // Gán shipper nếu đơn còn cooking & chưa ai nhận (KHÔNG đổi status)
+  async assignShipperIfCooking({ orderId, shipperId }) {
+    const result = await pool.query(
+      `
+    UPDATE orders
+       SET shipper_id = $1,
+           updated_at = NOW()
+     WHERE order_id   = $2
+       AND status     = 'cooking'
+       AND shipper_id IS NULL
+    `,
+      [shipperId, orderId]
+    );
+    return result.rowCount > 0;
+  }
+  async updateStatusToShipping({ orderId, shipperId }) {
+    const sql = `
+    UPDATE orders
+       SET status='shipping', updated_at=NOW()
+     WHERE order_id=$1
+       AND shipper_id=$2
+       AND status='cooking'
+  `;
+    const r = await pool.query(sql, [orderId, shipperId]);
+    return r.rowCount > 0;
+  }
+
+  async completeIfOwnedByShipper({ orderId, shipperId }) {
+    const sql = `
+    UPDATE orders
+       SET status='completed',
+           updated_at = NOW()
+     WHERE order_id = $1
+       AND shipper_id = $2
+       AND status IN ('shipping')         -- chặt chẽ: chỉ khi đang giao
+    RETURNING *;
+  `;
+    const r = await pool.query(sql, [orderId, shipperId]);
+    return r.rows[0] || null;
   }
 }
 

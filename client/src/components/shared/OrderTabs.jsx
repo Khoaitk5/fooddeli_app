@@ -15,7 +15,7 @@ const OrderTabs = ({ activeTab, setActiveTab, ongoingOrders, completedOrders }) 
         style={{
           flex: 1,
           padding: '0.875rem',
-          background: activeTab === 'ongoing' ? '#ee4d2d' : 'transparent',
+          background: activeTab === 'ongoing' ? '#5EAD1D' : 'transparent',
           border: 'none',
           borderRadius: '0.625rem',
           color: activeTab === 'ongoing' ? '#fff' : '#666',
@@ -33,7 +33,7 @@ const OrderTabs = ({ activeTab, setActiveTab, ongoingOrders, completedOrders }) 
         style={{
           flex: 1,
           padding: '0.875rem',
-          background: activeTab === 'completed' ? '#ee4d2d' : 'transparent',
+          background: activeTab === 'completed' ? '#5EAD1D' : 'transparent',
           border: 'none',
           borderRadius: '0.625rem',
           color: activeTab === 'completed' ? '#fff' : '#666',

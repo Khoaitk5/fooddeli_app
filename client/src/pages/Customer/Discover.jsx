@@ -4,7 +4,7 @@ import Navbar from "@/components/shared/Navbar";
 import RestaurantCard from "../../components/role-specific/Customer/RestaurantCard";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 
 // Functional component for the Discover page
@@ -47,87 +47,56 @@ const Discover = () => {
     },
   ];
 
-  // Fetch danh sách shops từ API
+  // ✅ Hàm transform shop - tối ưu bằng cách tách riêng
+  const transformShopData = (shop) => ({
+    id: shop.id || shop.shop_profile_id,
+    name: shop.shop_name || "Chưa có tên",
+    imageUrl: shop.shop_image || shop.avatar_url || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg",
+    rating: shop.avg_review_rating && shop.avg_review_rating > 0
+      ? Number(shop.avg_review_rating).toFixed(1)
+      : (shop.rating ? Number(shop.rating).toFixed(1) : "5.0"),
+    reviewCount: shop.review_count || 0,
+    salesCount: shop.completed_orders ? `${shop.completed_orders}+` : "0+",
+    distance: "N/A",
+  });
+
+  // Fetch danh sách shops từ API - Tối ưu hóa
   useEffect(() => {
     const fetchShops = async () => {
+      const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
+      
       try {
         setLoading(true);
         setError(null);
 
-        const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
+        // ✅ Xác định endpoint dựa trên category
+        const endpoint = selectedCategory
+          ? `${API_BASE_URL}/shops/by-food-type?foodType=${encodeURIComponent(selectedCategory)}`
+          : `${API_BASE_URL}/shops/list`;
 
-        // Luôn fetch tất cả shops cho section "Gần tôi!" và "Bán chạy"
-        if (!selectedCategory) {
-          const response = await axios.get(`${API_BASE_URL}/shops/list`, {
-            withCredentials: true,
-          });
+        // ✅ Gọi API một lần duy nhất
+        const response = await axios.get(endpoint, {
+          withCredentials: true,
+          timeout: 5000, // ✅ Thêm timeout 5s
+        });
 
-          if (response.data.success && Array.isArray(response.data.data)) {
-            const transformedShops = response.data.data.map((shop) => {
-              const imageUrl = shop.shop_image || shop.avatar_url || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg";
-              const rating = shop.avg_review_rating && shop.avg_review_rating > 0
-                ? Number(shop.avg_review_rating).toFixed(1)
-                : (shop.rating ? Number(shop.rating).toFixed(1) : "5.0");
-              const reviewCount = shop.review_count || 0;
-              const salesCount = shop.completed_orders ? `${shop.completed_orders}+` : "0+";
-              let distance = "N/A";
-
-              return {
-                id: shop.id || shop.shop_profile_id,
-                name: shop.shop_name || "Chưa có tên",
-                imageUrl,
-                rating,
-                reviewCount,
-                salesCount,
-                distance,
-              };
-            });
-
-            setRestaurants(transformedShops);
-          } else {
-            setRestaurants([]);
-          }
-        } else {
-          // Fetch shops theo category được chọn
-          const response = await axios.get(
-            `${API_BASE_URL}/shops/by-food-type?foodType=${encodeURIComponent(selectedCategory)}`,
-            { withCredentials: true }
-          );
-
-          if (response.data.success && Array.isArray(response.data.data)) {
-            const transformedShops = response.data.data.map((shop) => {
-              const imageUrl = shop.shop_image || shop.avatar_url || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg";
-              const rating = shop.avg_review_rating && shop.avg_review_rating > 0
-                ? Number(shop.avg_review_rating).toFixed(1)
-                : (shop.rating ? Number(shop.rating).toFixed(1) : "5.0");
-              const reviewCount = shop.review_count || 0;
-              const salesCount = shop.completed_orders ? `${shop.completed_orders}+` : "0+";
-              let distance = "N/A";
-
-              return {
-                id: shop.id || shop.shop_profile_id,
-                name: shop.shop_name || "Chưa có tên",
-                imageUrl,
-                rating,
-                reviewCount,
-                salesCount,
-                distance,
-              };
-            });
-
+        // ✅ Kiểm tra và transform data
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const transformedShops = response.data.data.map(transformShopData);
+          
+          // ✅ Set state dựa trên category
+          if (selectedCategory) {
             setFilteredRestaurants(transformedShops);
           } else {
-            setFilteredRestaurants([]);
+            setRestaurants(transformedShops);
           }
+        } else {
+          selectedCategory ? setFilteredRestaurants([]) : setRestaurants([]);
         }
       } catch (err) {
         console.error("❌ Lỗi khi fetch shops:", err);
-        setError("Không thể tải danh sách cửa hàng");
-        if (selectedCategory) {
-          setFilteredRestaurants([]);
-        } else {
-          setRestaurants([]);
-        }
+        setError(err.code === 'ECONNABORTED' ? "Kết nối quá chậm" : "Không thể tải danh sách cửa hàng");
+        selectedCategory ? setFilteredRestaurants([]) : setRestaurants([]);
       } finally {
         setLoading(false);
       }
@@ -173,7 +142,7 @@ const Discover = () => {
           width: "100%",
           height: "12vh",
           position: "fixed",
-          background: "linear-gradient(180deg, #2bcdd2, #fff)", // Vertical gradient from blue to white
+          background: "linear-gradient(180deg, #5EAD1D, #fff)", // Vertical gradient from blue to white
           top: 0,
           left: 0,
           zIndex: 1000,
@@ -491,7 +460,7 @@ const Discover = () => {
                         >
                           <path
                             d="M9.09298 0.967562L8.92614 0.733888C8.22714 -0.244629 6.77289 -0.244629 6.0739 0.733888L5.90706 0.967562C5.53799 1.4842 4.9184 1.76085 4.28739 1.69074L3.54342 1.60808C2.42721 1.48405 1.48405 2.42721 1.60808 3.54342L1.69074 4.28739C1.76085 4.9184 1.4842 5.53799 0.967562 5.90706L0.733888 6.0739C-0.244629 6.77289 -0.244629 8.22714 0.733888 8.92614L0.967562 9.09298C1.4842 9.46207 1.76085 10.0817 1.69074 10.7127L1.60808 11.4566C1.48405 12.5728 2.42721 13.516 3.54342 13.3919L4.28739 13.3093C4.9184 13.2392 5.53799 13.5158 5.90706 14.0325L6.0739 14.2661C6.77289 15.2446 8.22714 15.2446 8.92614 14.2661L9.09298 14.0325C9.46207 13.5158 10.0817 13.2392 10.7127 13.3093L11.4566 13.3919C12.5728 13.516 13.516 12.5728 13.3919 11.4566L13.3093 10.7127C13.2392 10.0817 13.5158 9.46207 14.0325 9.09298L14.2661 8.92614C15.2446 8.22714 15.2446 6.77289 14.2661 6.0739L14.0325 5.90706C13.5158 5.53799 13.2392 4.9184 13.3093 4.28739L13.3919 3.54342C13.516 2.42721 12.5728 1.48405 11.4566 1.60808L10.7127 1.69074C10.0817 1.76085 9.46207 1.4842 9.09298 0.967562Z"
-                            fill="#2BCDD2"
+                            fill="#5EAD1D"
                           />
                           <path
                             d="M4.87109 7.50003L6.46493 9.09387C6.55256 9.1815 6.69469 9.1815 6.78232 9.09387L10.1287 5.7475"

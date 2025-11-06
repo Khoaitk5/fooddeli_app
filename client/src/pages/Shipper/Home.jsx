@@ -171,17 +171,24 @@ const Home = () => {
           <Paper
             elevation={online ? 8 : 2}
             sx={{
+              position: "fixed", // 👈 ghim cố định
+              top: "calc(env(safe-area-inset-top) + 12px)", // tránh tai thỏ iOS
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "min(400px, calc(100% - 32px))", // maxWidth + chừa 2 bên
+              zIndex: 10, // nổi trên bản đồ
               borderRadius: 4,
               p: 2.5,
-              mx: "auto",
-              maxWidth: 400,
               background: "rgba(255,255,255,0.9)",
               border: online
                 ? "2px solid rgba(34,197,94,0.2)"
                 : "1px solid rgba(0,0,0,0.08)",
               backdropFilter: "blur(10px)",
               transition: "all 0.3s ease",
-              transform: online ? "scale(1.02)" : "scale(1)",
+              transformOrigin: "top center",
+              ...(online
+                ? { boxShadow: "0 4px 12px rgba(34,197,94,0.2)" }
+                : {}),
             }}
           >
             <Stack

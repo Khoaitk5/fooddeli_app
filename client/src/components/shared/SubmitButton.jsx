@@ -1,46 +1,41 @@
-const SubmitButton = ({ children, onClick, style, isValid = true, ...props }) => {
-  const containerStyle = {
-    width: '100%',
-    height: "10.125vh",
-    position: 'relative',
-    ...style,
-  };
-
-  const backgroundStyle = {
-    width: "100%",
-    height: "10.125vh",
-    left: 0,
-    top: 0,
-    position: 'absolute',
-    background: 'white',
-    boxShadow: '0px 1px 10px rgba(0, 0, 0, 0.25)',
-    borderTopLeftRadius: "1.6rem",
-    borderTopRightRadius: "1.6rem",
-  };
-
-  const buttonStyle = {
-    width: "87.78vw",
-    height: "6.375vh",
-    left: "50%",
-    top: "1.875vh",
-    transform: 'translateX(-50%)',
-    position: 'absolute',
-    background: isValid ? '#2BCDD2' : '#EAF8F8',
-    borderRadius: 999,
-    cursor: isValid ? 'pointer' : 'not-allowed',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: isValid ? 'white' : '#2BCDD2',
-    fontSize: "1.4rem",
-    fontFamily: 'Be Vietnam Pro',
-    fontWeight: '700',
-  };
-
+const SubmitButton = ({
+  children,
+  onClick,
+  style,
+  isValid = true,
+  ...props
+}) => {
   return (
-    <div style={containerStyle} onClick={isValid ? onClick : undefined} {...props}>
-      <div style={backgroundStyle} />
-      <div style={buttonStyle}>
+    <div
+      onClick={isValid ? onClick : undefined}
+      style={{
+        position: "relative",
+        display: "inline-block",
+        ...style,
+      }}
+      {...props}
+    >
+      <div
+        style={{
+          width: "89.33vw",
+          height: "6.4vh",
+          background: isValid ? "linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)" : "#E8EBE6",
+          boxShadow: isValid ? "0px -1px 0px #46890D inset" : "none",
+          borderRadius: "1.2rem",
+        }}
+      />
+      <div
+        style={{
+          color: isValid ? "white" : "#B6B8B6",
+          fontSize: "1.5rem",
+          fontWeight: "700",
+          whiteSpace: "nowrap",
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
         {children}
       </div>
     </div>
@@ -48,4 +43,3 @@ const SubmitButton = ({ children, onClick, style, isValid = true, ...props }) =>
 };
 
 export default SubmitButton;
-

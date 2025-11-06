@@ -3,7 +3,7 @@ import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
 import SubmitButton from "../../components/shared/SubmitButton";
-import { useCart } from "../../hooks/useCart";
+import { useOrder } from "../../contexts/OrderContext";
 
 export function CartPage({ isMobile, isTablet, onCheckout }) {
   const navigate = useNavigate();
@@ -191,7 +191,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                           color: "#222",
                         }}
                       >
-                        {item.product_name}
+                        {item.name}
                       </h3>
                       {item.product_description && (
                         <p
