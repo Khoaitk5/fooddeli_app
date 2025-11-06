@@ -466,7 +466,6 @@ const Home = () => {
                     }}
                   >
                     <ShareIcon />
-                    <div style={countStyle}>{SHARE_COUNT_DEFAULT}</div>
                   </div>
                 </div>
               </div>

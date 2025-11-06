@@ -219,11 +219,6 @@ const RegisterPhone = () => {
             onChange={(e) => setPhone(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            style={{
-              border: "none",
-              outline: "none",
-              fontSize: "1.5rem",
-            }}
           />
         </InputFrame>
       </div>

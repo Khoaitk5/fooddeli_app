@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Box, Card, CardMedia, Typography, Avatar, Stack, Chip } from "@mui/material";
 import { PlayCircleOutline, Visibility } from "@mui/icons-material";
 
@@ -7,6 +8,8 @@ import { PlayCircleOutline, Visibility } from "@mui/icons-material";
  * Design theo phong cách TikTok/YouTube Shorts
  */
 const VideoResultItem = ({ video }) => {
+  const navigate = useNavigate();
+
   if (!video) return null;
 
   // Format số lượt xem
@@ -25,39 +28,82 @@ const VideoResultItem = ({ video }) => {
     <Card
       sx={{
         position: 'relative',
-        borderRadius: 3,
+        borderRadius: 2,
         overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        backgroundColor: 'transparent',
+        boxShadow: 'none',
         transition: 'all 0.3s ease',
         cursor: 'pointer',
         '&:hover': {
-          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
           transform: 'scale(1.02)',
         },
         '&:hover .play-overlay': {
           opacity: 1,
         },
       }}
+      onClick={() => navigate('/customer/video-detail', { state: { video } })}
     >
       {/* Thumbnail Video */}
       <Box sx={{ position: 'relative', paddingTop: '177.78%' }}> {/* 9:16 aspect ratio */}
-        <CardMedia
-          component="img"
+        <Box
           sx={{
             position: 'absolute',
             top: 0,
             left: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            borderRadius: 2,
+            overflow: 'hidden',
+            backgroundColor: '#000',
           }}
-          image={
-            video.thumbnail_url ||
-            video.video_url ||
-            "https://placehold.co/270x480?text=Video"
-          }
-          alt={video.title}
-        />
+        >
+          {/* ✅ Nếu có video_url thì render video */}
+          {video.video_url ? (
+            <video
+              src={video.video_url}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                backgroundColor: '#000',
+              }}
+              onError={(e) => {
+                console.warn("❌ Lỗi load video:", e);
+                e.target.poster = "/default-thumbnail.jpg";
+              }}
+            />
+          ) : (
+            // ✅ Nếu không có video_url thì fallback ảnh
+            <img
+              src={video.thumbnail_url || "/default-thumbnail.jpg"}
+              alt={video.title}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+              onError={(e) => (e.target.src = "/default-thumbnail.jpg")}
+            />
+          )}
+
+          {/* 🔤 Tiêu đề + view overlay */}
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 8,
+              left: 8,
+              color: 'white',
+              textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+            }}
+          >
+            <Typography sx={{ fontWeight: 600, fontSize: '1.2rem' }}>
+              {video.title || "Video không có tiêu đề"}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, fontSize: '1rem', mt: 0.5 }}>
+              <Visibility sx={{ fontSize: '1.2rem' }} /> {formatViews(views)}
+            </Box>
+          </Box>
+        </Box>
 
         {/* Play Overlay */}
         <Box
@@ -74,6 +120,7 @@ const VideoResultItem = ({ video }) => {
             backgroundColor: 'rgba(0,0,0,0.3)',
             opacity: 0,
             transition: 'opacity 0.3s ease',
+            borderRadius: 2,
           }}
         >
           <PlayCircleOutline sx={{ fontSize: 60, color: 'white' }} />

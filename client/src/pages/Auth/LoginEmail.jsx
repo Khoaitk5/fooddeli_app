@@ -2,12 +2,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SubmitButton from "@/components/shared/SubmitButton";
 import BackArrow from "@/components/shared/BackArrow";
-import OutlineBorder from "@/components/shared/OutlineBorder";
 import InputFrame from "@/components/shared/InputFrame";
-import BlackOutline from "@/components/shared/BlackOutline";
 import MiniLogo from "@/components/shared/MiniLogo";
 import { auth } from "@/firebase/firebaseConfig";
 import { sendSignInLinkToEmail } from "firebase/auth";
+import FooterBar from "@/components/shared/FooterBar";
 
 const LoginEmail = () => {
   const [email, setEmail] = useState("");
@@ -97,14 +96,14 @@ const LoginEmail = () => {
         width: "100%",
         height: "100%",
         position: "relative",
-        background: "white",
+        background: "#fff",
       }}
     >
       {/* Header Group */}
       <div
         style={{
           position: "absolute",
-          top: "5vh",
+          top: "2.88vh",
           left: 0,
           right: 0,
           zIndex: 10,
@@ -136,53 +135,48 @@ const LoginEmail = () => {
         </div>
       </div>
 
-      {/* Tab Labels Group */}
+      {/* Phone Link */}
       <div
         style={{
           position: "absolute",
-          top: "8.75vh",
-          left: 0,
-          right: 0,
+          top: "27.97vh",
+          left: "50%",
+          transform: "translateX(-50%)",
+          cursor: "pointer",
+          color: "#408308",
+          fontSize: "1.2rem",
+          fontWeight: "700",
+          wordWrap: "break-word",
           zIndex: 10,
         }}
+        onClick={() => navigate("/login/phone")}
       >
-        {/* Phone Label */}
-        <div
-          style={{
-            position: "absolute",
-            left: "25%",
-            transform: "translateX(-50%)",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/login/phone")}
-        >
-          <div style={inactiveLabelStyle}>Điện thoại</div>
-        </div>
-
-        {/* Email Label */}
-        <div
-          style={{
-            position: "absolute",
-            left: "75%",
-            transform: "translateX(-50%)",
-          }}
-        >
-          <div style={activeLabelStyle}>Email</div>
-          <div style={outlineStyle}>
-            <BlackOutline width="80px" />
-          </div>
-        </div>
+        Đăng nhập bằng điện thoại
       </div>
 
-      {/* Outline Border */}
+      {/* Login Title */}
       <div
         style={{
           position: "absolute",
-          top: "13vh",
+          top: "8.79vh",
+          zIndex: 10,
+          left: "5.33vw",
         }}
       >
-        <OutlineBorder />
+        <div
+          style={{
+            color: "#363A33",
+            fontSize: "2.5rem",
+            fontWeight: "700",
+            wordWrap: "break-word",
+            maxWidth: "80vw",
+          }}
+        >
+          Đăng nhập vào tài khoản của bạn
+        </div>
       </div>
+
+      <div id="recaptcha-container" style={{ display: "none" }}></div>
 
       {/* Form */}
       <form
@@ -190,14 +184,21 @@ const LoginEmail = () => {
         style={{
           position: "absolute",
           left: "50%",
-          top: "15.875vh",
+          top: "20vh",
           transform: "translateX(-50%)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
         }}
       >
-        <InputFrame isFocused={isFocused}>
+        <InputFrame
+          isFocused={isFocused}
+          style={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
           <input
             type="email"
             placeholder="Email"
@@ -208,15 +209,6 @@ const LoginEmail = () => {
             onKeyDown={(e) => {
               if (e.key === " ") e.preventDefault();
             }}
-            style={{
-              width: "100%",
-              border: "none",
-              outline: "none",
-              fontSize: "1.4rem",
-              fontWeight: "500",
-              color: "#000000",
-              backgroundColor: "transparent",
-            }}
           />
         </InputFrame>
 
@@ -224,12 +216,11 @@ const LoginEmail = () => {
           <div
             style={{
               position: "absolute",
-              top: "22vh",
+              top: "185px",
               left: "50%",
               transform: "translateX(-50%)",
               width: "267px",
               color: "red",
-              textAlign: "center",
             }}
           >
             {error}
@@ -251,28 +242,20 @@ const LoginEmail = () => {
             {success}
           </div>
         )}
-
-        <SubmitButton
-          isValid={isValidEmail}
-          style={{
-            marginTop: "64.625vh"
-          }}
-        >
-          <div
-            style={{
-              textAlign: "center",
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              fontSize: "1.5rem",
-              fontWeight: "600",
-              wordWrap: "break-word",
-            }}
-          >
-            Tiếp tục
-          </div>
-        </SubmitButton>
       </form>
+      <SubmitButton
+        isValid={isValidEmail}
+        style={{
+          position: "fixed",
+          bottom: "9.335vh",
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+        onClick={handleSubmit}
+      >
+        Tiếp tục
+      </SubmitButton>
+      <FooterBar onClick={() => navigate("/register")} />
     </div>
   );
 };
