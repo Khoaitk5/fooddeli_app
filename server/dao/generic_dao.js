@@ -8,19 +8,29 @@ class GenericDao {
     this.Model = Model;
   }
 
-  async create(data) {
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
+async create(data) {
+  // 🚫 Bỏ các khóa tự tăng (Postgres sẽ tự sinh)
+  const cleanData = { ...data };
+  delete cleanData.id;
+  delete cleanData.order_id;
+  delete cleanData.created_at;
+  delete cleanData.updated_at;
 
-    const query = `
-      INSERT INTO ${this.table} (${keys.join(", ")})
-      VALUES (${placeholders})
-      RETURNING *`;
+  const keys = Object.keys(cleanData);
+  const values = Object.values(cleanData);
+  const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
 
-    const res = await pool.query(query, values);
-    return new this.Model(res.rows[0]);
-  }
+  const query = `
+    INSERT INTO ${this.table} (${keys.join(", ")})
+    VALUES (${placeholders})
+    RETURNING *;
+  `;
+// 👀 log để debug
+
+  const res = await pool.query(query, values);
+  return new this.Model(res.rows[0]);
+}
+
 
   async findAll() {
     const res = await pool.query(`SELECT * FROM ${this.table}`);

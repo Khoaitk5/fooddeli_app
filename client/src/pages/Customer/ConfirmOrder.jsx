@@ -12,7 +12,7 @@ export default function ConfirmOrder() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Lấy dữ liệu từ state hoặc localStorage (fallback khi reload)
+  // ✅ Lấy dữ liệu từ state hoặc localStorage
   const savedData = JSON.parse(localStorage.getItem("checkoutData") || "{}");
   const {
     cartItems = [],
@@ -21,7 +21,6 @@ export default function ConfirmOrder() {
     shop_name = "Cửa hàng chưa xác định",
   } = location.state || savedData;
 
-  // Thông tin mặc định
   const address = "Trường Đại Học FPT Đà Nẵng";
   const contactInfo = "Nguyễn Chí Vương | +84778579293";
   const [note, setNote] = useState("");
@@ -41,7 +40,7 @@ export default function ConfirmOrder() {
       currency: "VND",
     }).format(price);
 
-  // Fallback nếu giỏ hàng trống
+  // Nếu giỏ hàng trống
   if (!cartItems.length) {
     return (
       <div
@@ -73,6 +72,83 @@ export default function ConfirmOrder() {
     );
   }
 
+  // ==========================
+  // 🔘 Nút "Đặt đơn"
+  // ==========================
+  const handleConfirmOrder = async () => {
+    if (paymentMethod === "Chuyển khoản") {
+      try {
+        const res = await fetch("http://localhost:5000/api/payments/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderCode: Date.now(),
+            amount: 5000, // test, có thể đổi thành totalPrice
+            description: `FD-${currentUser?.id || 0}-${shop_id}-${Date.now()
+              .toString()
+              .slice(-5)}`,
+            metadata: JSON.stringify({
+              user_id: currentUser?.id,
+              shop_id,
+              items: cartItems.map((i) => ({
+                product_id: i.id,
+                quantity: i.quantity,
+                unit_price: i.unit_price,
+              })),
+            }),
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          // ✅ chuyển đến trang QR của PayOS
+          window.location.href = data.paymentUrl;
+        } else {
+          alert("❌ Không thể tạo link thanh toán");
+          console.error(data.message);
+        }
+      } catch (err) {
+        console.error("PayOS error:", err);
+        alert("Lỗi khi tạo liên kết thanh toán!");
+      }
+    } else {
+      // 💰 Thanh toán tiền mặt
+      try {
+        const res = await fetch("http://localhost:5000/api/orders/create-cash", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: currentUser?.id,
+            shop_id,
+            note,
+            items: cartItems.map((i) => ({
+              product_id: i.id,
+              quantity: i.quantity,
+              unit_price: i.unit_price,
+            })),
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          console.log("✅ Đã tạo đơn tiền mặt:", data.order);
+          navigate("/customer/order-success", {
+            state: { shop_id, shop_name, totalPrice, paymentMethod },
+          });
+        } else {
+          alert("❌ Không thể tạo đơn hàng tiền mặt!");
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tạo đơn hàng tiền mặt:", error);
+        alert("Đã xảy ra lỗi khi gửi yêu cầu!");
+      }
+    }
+  };
+
+  // ==========================
+  // JSX hiển thị giao diện
+  // ==========================
   return (
     <div
       style={{
@@ -319,7 +395,7 @@ export default function ConfirmOrder() {
           </div>
         </div>
 
-        {/* 🔘 Nút đặt đơn */}
+        {/* Nút đặt đơn */}
         <div
           style={{
             position: "absolute",
@@ -332,52 +408,7 @@ export default function ConfirmOrder() {
             bottom: "1.875vh",
             cursor: "pointer",
           }}
-          onClick={async () => {
-            if (paymentMethod === "Chuyển khoản") {
-              try {
-                const res = await fetch(
-                  "http://localhost:5000/api/payments/create",
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      orderCode: Date.now(), // vẫn unique cho mỗi đơn
-                      amount: 5000,
-                      description: `FD-${
-                        currentUser?.id || 0
-                      }-${shop_id}-${Date.now().toString().slice(-5)}`, // ✅ ngắn gọn < 25 ký tự
-                      metadata: JSON.stringify({
-                        user_id: currentUser?.id,
-                        shop_id,
-                        items: cartItems.map((i) => ({
-                          product_id: i.id,
-                          quantity: i.quantity,
-                          unit_price: i.unit_price,
-                        })),
-                      }),
-                    }),
-                  }
-                );
-
-                const data = await res.json();
-
-                if (data.success) {
-                  // ✅ Chuyển thẳng tới trang QR của PayOS
-                  window.location.href = data.paymentUrl;
-                } else {
-                  alert("❌ Không thể tạo link thanh toán");
-                  console.error(data.message);
-                }
-              } catch (err) {
-                console.error("PayOS error:", err);
-                alert("Lỗi khi tạo liên kết thanh toán!");
-              }
-            } else {
-              navigate("/customer/order-success", {
-                state: { shop_id, shop_name, totalPrice, paymentMethod },
-              });
-            }
-          }}
+          onClick={handleConfirmOrder}
         >
           <div
             style={{

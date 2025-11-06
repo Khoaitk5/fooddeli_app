@@ -355,6 +355,30 @@ class OrderDao extends GenericDao {
     const r = await pool.query(sql, [orderId, shipperId]);
     return r.rows[0] || null;
   }
+    /**
+   * ✅ Recalculate total food_price + total_price của order
+   * Tự động tính tổng từ bảng order_details
+   */
+  async recalcTotals(orderId) {
+    const sql = `
+      WITH food_sum AS (
+        SELECT COALESCE(SUM(line_total), 0) AS total
+        FROM order_details
+        WHERE order_id = $1
+      )
+      UPDATE orders
+      SET
+        food_price = fs.total,
+        total_price = fs.total + delivery_fee,
+        updated_at = NOW()
+      FROM food_sum fs
+      WHERE orders.order_id = $1
+      RETURNING *;
+    `;
+    const res = await pool.query(sql, [orderId]);
+    return res.rows[0] || null;
+  }
+
 }
 
 module.exports = new OrderDao();
