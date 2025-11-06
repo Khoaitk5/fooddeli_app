@@ -54,26 +54,12 @@ const Register = () => {
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "#fff",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "space-between",
-        overflow: "hidden",
-      }}
-    >
+    <div>
       {/* 🔹 Logo */}
       <div
         style={{
           position: "absolute",
-          top: "2.82vh",
+          top: "6.75vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -86,7 +72,7 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "17.12vh",
+          top: "21.3675vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 5,
@@ -99,7 +85,7 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "65.75vh",
+          top: "70.375vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -116,11 +102,11 @@ const Register = () => {
         </SubmitButton>
       </div>
 
-      {/* 🔹 Chữ “hoặc” */}
+      {/* 🔹 Chữ "hoặc" */}
       <div
         style={{
           position: "absolute",
-          top: "75vh",
+          top: "79.375vh",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -140,7 +126,7 @@ const Register = () => {
       <div
         style={{
           position: "absolute",
-          top: "80.125vh",
+          top: "84.25vh",
           left: 0,
           right: 0,
           zIndex: 10,

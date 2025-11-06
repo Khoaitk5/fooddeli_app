@@ -2,10 +2,6 @@ import { Box, Typography, Avatar, Chip, Stack } from "@mui/material";
 import { Star, Verified } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
-/**
- * 🏪 ShopResultItem - Component hiển thị kết quả tìm kiếm theo cửa hàng
- * Hiển thị thông tin shop và danh sách món ăn của shop đó
- */
 const ShopResultItem = ({ shop }) => {
   const navigate = useNavigate();
 
@@ -24,7 +20,11 @@ const ShopResultItem = ({ shop }) => {
   // Xử lý click vào shop để xem chi tiết
   const handleShopClick = () => {
     if (shop.shop_id) {
-      navigate(`/shop/${shop.shop_id}`);
+      navigate("/customer/restaurant-details", {
+        state: { shopId: shop.shop_id },
+      });
+    } else {
+      console.warn("No shop_id found:", shop);
     }
   };
 

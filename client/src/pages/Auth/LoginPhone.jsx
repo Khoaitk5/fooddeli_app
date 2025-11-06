@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SubmitButton from "@/components/shared/SubmitButton";
 import BackArrow from "@/components/shared/BackArrow";
-import OutlineBorder from "@/components/shared/OutlineBorder";
 import InputFrame from "@/components/shared/InputFrame";
-import BlackOutline from "@/components/shared/BlackOutline";
 import { auth } from "@/firebase/firebaseConfig";
 import MiniLogo from "@/components/shared/MiniLogo";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import FooterBar from "@/components/shared/FooterBar";
 
 const LoginPhone = () => {
   const [phone, setPhone] = useState("");
@@ -138,7 +137,7 @@ const LoginPhone = () => {
       <div
         style={{
           position: "absolute",
-          top: "5vh",
+          top: "2.88vh",
           left: 0,
           right: 0,
           zIndex: 10,
@@ -170,52 +169,37 @@ const LoginPhone = () => {
         </div>
       </div>
 
-      {/* Tab Labels Group */}
-      <div
-        style={{
-          position: "absolute",
-          top: "8.75vh",
-          left: 0,
-          right: 0,
-          zIndex: 10,
-        }}
-      >
-        {/* Phone Label */}
+        {/* Email Link */}
         <div
           style={{
             position: "absolute",
-            left: "25%",
-            transform: "translateX(-50%)",
-          }}
-        >
-          <div style={activeLabelStyle}>Điện thoại</div>
-          <div style={outlineStyle}>
-            <BlackOutline width="120px" />
-          </div>
-        </div>
-
-        {/* Email Label */}
-        <div
-          style={{
-            position: "absolute",
-            left: "75%",
+            top: "27.97vh",
+            left: "50%",
             transform: "translateX(-50%)",
             cursor: "pointer",
+            color: '#408308',
+            fontSize: '1.2rem',
+            fontWeight: '700',
+            wordWrap: 'break-word',
+            zIndex: 10
           }}
           onClick={() => navigate("/login/email")}
         >
-          <div style={inactiveLabelStyle}>Email</div>
+          Đăng nhập bằng email
         </div>
-      </div>
 
-      {/* Outline Border */}
+      {/* Login Title */}
       <div
         style={{
           position: "absolute",
-          top: "13vh",
+          top: "8.79vh",
+          zIndex: 10,
+          left: "5.33vw"
         }}
       >
-        <OutlineBorder />
+        <div style={{color: '#363A33', fontSize: '2.5rem', fontWeight: '700', wordWrap: 'break-word', maxWidth: '80vw',}}>
+          Đăng nhập vào tài khoản của bạn
+        </div>
       </div>
 
       <div id="recaptcha-container" style={{ display: "none" }}></div>
@@ -226,7 +210,7 @@ const LoginPhone = () => {
         style={{
           position: "absolute",
           left: "50%",
-          top: "15.875vh",
+          top: "20vh",
           transform: "translateX(-50%)",
           display: "flex",
           flexDirection: "column",
@@ -245,15 +229,6 @@ const LoginPhone = () => {
             onChange={handlePhoneChange}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            style={{
-              width: "100%",
-              border: "none",
-              outline: "none",
-              fontSize: "1.5rem",
-              fontWeight: "500",
-              color: "#000000",
-              backgroundColor: "transparent",
-            }}
           />
         </InputFrame>
         {error && (
@@ -270,31 +245,20 @@ const LoginPhone = () => {
             {error}
           </div>
         )}
-        <SubmitButton
-          isValid={phone.length === 10}
-          style={{
-            marginLeft: "auto",
-            marginRight: "auto",
-            marginTop: "64.625vh"
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              textAlign: "center",
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              fontSize: "1.5rem",
-              fontWeight: "600",
-              wordWrap: "break-word",
-            }}
-          >
-            Tiếp tục
-          </div>
-        </SubmitButton>
       </form>
+      <SubmitButton
+        isValid={phone.length === 10}
+        style={{
+          position: 'fixed',
+          bottom: '9.335vh',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
+        onClick={handleSubmit}
+      >
+        Tiếp tục
+      </SubmitButton>
+      <FooterBar onClick={() => navigate("/register")} />
     </div>
   );
 };

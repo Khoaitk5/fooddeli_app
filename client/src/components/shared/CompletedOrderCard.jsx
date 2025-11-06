@@ -108,7 +108,7 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
             <div style={{
               fontSize: '1.375rem',
               fontWeight: '700',
-              color: '#ee4d2d',
+              color: '#5EAD1D',
               marginTop: '0.5rem'
             }}>
               {formatPrice(order.total)}
@@ -141,8 +141,8 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#ee4d2d';
-            e.currentTarget.style.color = '#ee4d2d';
+            e.currentTarget.style.borderColor = '#5EAD1D';
+            e.currentTarget.style.color = '#5EAD1D';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = '#e5e5e5';
@@ -156,7 +156,7 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
           style={{
             flex: 1,
             padding: '1.125rem',
-            background: order.rated ? '#f5f5f5' : 'linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)',
+            background: order.rated ? '#f5f5f5' : 'linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)',
             border: 'none',
             borderRadius: '0.75rem',
             color: order.rated ? '#999' : '#fff',
