@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -144,7 +144,11 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
                 direction="row"
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ mb: 0.5, px: 0.5, gap: 2 }}
+                sx={{
+                  mb: 0.5,
+                  px: 0.5,
+                  gap: 2,
+                }}
               >
                 <Typography sx={{ fontSize: 14, flex: 1 }}>
                   {it.name} × {it.qty}
@@ -187,7 +191,9 @@ const OrderCard = ({ order, onAdvance, onCancel }) => {
             <Typography sx={{ fontWeight: 700, fontSize: 14, display: "inline" }}>
               Ghi chú:
             </Typography>
-            <Typography sx={{ fontSize: 14, display: "inline" }}>{order.note}</Typography>
+            <Typography sx={{ fontSize: 14, display: "inline" }}>
+              {order.note}
+            </Typography>
           </Box>
         )}
 
@@ -243,116 +249,79 @@ const ShopOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("all");
-  const abortRef = useRef(null);
 
-  // So sánh dữ liệu trước/sau để tránh render không cần thiết
-  const stableSerialize = (list) =>
-    JSON.stringify(
-      list.map((o) => ({
-        id: o.id,
-        status: o.status,
-        total: o.total,
-        note: o.note,
-        createdAt: o.createdAt,
-      }))
-    );
+  const fetchOrders = useCallback(async (showLoading = false) => {
+    if (!shopId) return;
+    if (showLoading) setLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE}/list-mine`,
+        { shop_id: shopId, full: true },
+        { withCredentials: true }
+      );
 
-  const fetchOrders = useCallback(
-    async (opts = { silent: false }) => {
-      if (!shopId) return;
-      if (!opts.silent) setLoading(true);
-      try {
-        if (abortRef.current) abortRef.current.abort();
-        abortRef.current = new AbortController();
+      const data = res.data.items || [];
+      const mapped = data.map((item) => {
+        const o = item.order || item;
+        const details = item.details || [];
+        const customer = {
+          name:
+            o.user_full_name ||
+            o.full_name ||
+            o.username ||
+            o.recipient_name ||
+            "Khách hàng",
+          phone:
+            o.user_phone ||
+            o.phone ||
+            o.recipient_phone ||
+            o.receiver_phone ||
+            "—",
+        };
 
-        const res = await axios.post(
-          `${API_BASE}/list-mine`,
-          { shop_id: shopId, full: true },
-          { withCredentials: true, signal: abortRef.current.signal }
-        );
+        const items = details.map((d) => ({
+          name: d.product_name,
+          price: d.product_price,
+          qty: d.quantity,
+        }));
 
-        const data = res.data.items || [];
-        const mapped = data.map((item) => {
-          const o = item.order || item;
-          const details = item.details || [];
-          const customer = {
-            name:
-              o.user_full_name ||
-              o.full_name ||
-              o.username ||
-              o.recipient_name ||
-              "Khách hàng",
-            phone:
-              o.user_phone ||
-              o.phone ||
-              o.recipient_phone ||
-              o.receiver_phone ||
-              "—",
-          };
+        const total =
+          o.total_price ??
+          details.reduce((sum, d) => sum + d.product_price * d.quantity, 0);
 
-          const items = details.map((d) => ({
-            name: d.product_name,
-            price: d.product_price,
-            qty: d.quantity,
-          }));
+        return {
+          id: o.order_id,
+          status: o.status || "pending",
+          customer,
+          total,
+          items,
+          payment: o.payment_method || "COD",
+          note: o.note || "",
+          createdAt: o.created_at,
+        };
+      });
 
-          const total =
-            o.total_price ??
-            details.reduce((sum, d) => sum + d.product_price * d.quantity, 0);
-
-          return {
-            id: o.order_id,
-            status: o.status || "pending",
-            customer,
-            total,
-            items,
-            payment: o.payment_method || "COD",
-            note: o.note || "",
-            createdAt: o.created_at,
-          };
-        });
-
-        setOrders((prev) => {
-          if (stableSerialize(prev) === stableSerialize(mapped)) return prev;
-          return mapped;
-        });
-      } catch (err) {
-        if (err.name !== "CanceledError") console.error("❌ Lỗi khi lấy orders:", err);
-      } finally {
-        if (!opts.silent) setLoading(false);
-      }
-    },
-    [shopId]
-  );
+      setOrders(mapped);
+    } catch (err) {
+      console.error("❌ Lỗi khi lấy orders:", err);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, [shopId]);
 
   useEffect(() => {
-    fetchOrders({ silent: false });
+    // Gọi lần đầu có loading
+    fetchOrders(true);
+
+    // Gọi lại mỗi 5 giây KHÔNG bật loading
+    const interval = setInterval(() => {
+      console.log("🔁 [DEBUG] Làm mới danh sách đơn hàng...");
+      fetchOrders(false);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  // Poll mỗi 5 giây, dừng khi tab ẩn
-  useEffect(() => {
-    let timer = null;
-    const tick = () => fetchOrders({ silent: true });
-    const start = () => {
-      if (!timer) timer = setInterval(tick, 5000);
-    };
-    const stop = () => {
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-      }
-    };
-    const onVis = () => (document.visibilityState === "visible" ? start() : stop());
-    start();
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      stop();
-      document.removeEventListener("visibilitychange", onVis);
-      if (abortRef.current) abortRef.current.abort();
-    };
-  }, [fetchOrders]);
-
-  // Cập nhật trạng thái đơn
   const handleAdvanceStatus = async (orderId, currentStatus) => {
     let nextStatus = null;
     if (currentStatus === "pending") nextStatus = "cooking";
@@ -369,7 +338,6 @@ const ShopOrders = () => {
     }
   };
 
-  // Huỷ đơn
   const handleCancelOrder = async (orderId) => {
     try {
       await axios.post(`${API_BASE}/update-status`, { order_id: orderId, status: "cancelled" });
@@ -430,24 +398,9 @@ const ShopOrders = () => {
             mb: 2.5,
           }}
         >
-          <StatCard
-            label="Chờ xác nhận"
-            value={counts.pending}
-            color="#d08700"
-            icon={<ScheduleIcon sx={{ color: "#d08700" }} />}
-          />
-          <StatCard
-            label="Đang chế biến"
-            value={counts.cooking}
-            color="#155dfc"
-            icon={<CookingIcon sx={{ color: "#155dfc" }} />}
-          />
-          <StatCard
-            label="Đang giao / Hoàn tất / Huỷ"
-            value={counts.done}
-            color="#00a63e"
-            icon={<ShippingIcon sx={{ color: "#00a63e" }} />}
-          />
+          <StatCard label="Chờ xác nhận" value={counts.pending} color="#d08700" icon={<ScheduleIcon sx={{ color: "#d08700" }} />} />
+          <StatCard label="Đang chế biến" value={counts.cooking} color="#155dfc" icon={<CookingIcon sx={{ color: "#155dfc" }} />} />
+          <StatCard label="Đang giao / Hoàn tất / Huỷ" value={counts.done} color="#00a63e" icon={<ShippingIcon sx={{ color: "#00a63e" }} />} />
         </Box>
 
         <Box
@@ -488,12 +441,7 @@ const ShopOrders = () => {
 
         <Stack spacing={2.5}>
           {filtered.map((o) => (
-            <OrderCard
-              key={o.id}
-              order={o}
-              onAdvance={handleAdvanceStatus}
-              onCancel={handleCancelOrder}
-            />
+            <OrderCard key={o.id} order={o} onAdvance={handleAdvanceStatus} onCancel={handleCancelOrder} />
           ))}
         </Stack>
       </Box>
