@@ -9,8 +9,8 @@ class GenericDao {
   }
 
 async create(data) {
-  const keys = Object.keys(cleanData);
-  const values = Object.values(cleanData);
+  const keys = Object.keys(data);
+  const values = Object.values(data);
   const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
 
   const query = `
