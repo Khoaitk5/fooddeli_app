@@ -53,8 +53,11 @@ React.useEffect(() => {
       // metrics
       distance: src.distance ?? '-',  // ví dụ "1.090km" (đã format ở trang trước)
       eta: src.eta ?? '-',
+           deliveryDistance: src.deliveryDistance ?? '-',  // Quán → Khách (đã format)
+     deliveryEta: src.deliveryEta ?? '-',
       cod: Number(src.cod ?? 0),
       bonus: Number(src.bonus ?? 0),
+      shipperEarn: Number(src.shipperEarn ?? src.bonus ?? 0),
       status: orderStatus,
     };
   }, [currentOrder, orderStatus]);
@@ -115,10 +118,16 @@ React.useEffect(() => {
 
 
   // Nếu distance chưa có "km" thì thêm
-  const distanceDisplay =
-    typeof order.distance === 'string' && order.distance.toLowerCase().includes('km')
-      ? order.distance
-      : `${order.distance} km`;
+   // Chọn dữ liệu theo trạng thái:
+ // picking  -> dùng Bạn → Quán
+ // delivering -> dùng Quán → Khách
+ const distanceRaw = order.status === 'picking' ? order.distance : order.deliveryDistance;
+ const etaRaw      = order.status === 'picking' ? order.eta      : order.deliveryEta;
+ // đảm bảo có "km" khi cần
+ const distanceDisplay =
+   typeof distanceRaw === 'string' && distanceRaw.toLowerCase().includes('km')
+     ? distanceRaw
+     : `${distanceRaw} km`;
 
   // Sau khi mọi hook đã được gọi, mới render nhánh fallback
   if (!currentOrder) {
@@ -316,7 +325,9 @@ React.useEffect(() => {
                 <NavigationIcon sx={{ fontSize: 16, color: '#ff6b35' }} />
               </Box>
               <Box>
-                <Typography sx={{ fontSize: 10, color: '#6a7282' }}>Khoảng cách</Typography>
+                 <Typography sx={{ fontSize: 10, color: '#6a7282' }}>
+   {order.status === 'picking' ? 'Bạn → Quán' : 'Quán → Khách'}
+ </Typography>
                 <Typography sx={{ fontSize: 14, color: '#ff6b35', fontWeight: 700 }}>
                   {distanceDisplay}
                 </Typography>
@@ -466,8 +477,10 @@ React.useEffect(() => {
               background: '#f9fafb', borderRadius: 3.5, px: 1.5, py: 1.5,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center'
             }}>
-              <Typography sx={{ fontSize: 16, color: '#4a5565' }}>Thời gian ước tính</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#000' }}>{order.eta}</Typography>
+               <Typography sx={{ fontSize: 16, color: '#4a5565' }}>
+   {order.status === 'picking' ? 'Tới quán (ước tính)' : 'Thời gian giao (ước tính)'}
+ </Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#000' }}>{etaRaw}</Typography>
             </Box>
 
             <Box sx={{
@@ -482,6 +495,28 @@ React.useEffect(() => {
                 {order.cod.toLocaleString()}đ
               </Typography>
             </Box>
+
+              {/* Tiền shipper nhận */}
+   {order.shipperEarn > 0 && (
+     <Box
+       sx={{
+         background: 'linear-gradient(90deg, #dcfce7 0%, #bbf7d0 100%)',
+         borderRadius: 3.5, px: 1.5, py: 1.5,
+         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+         border: '1px solid rgba(34,197,94,0.25)'
+       }}
+     >
+       <Stack direction="row" spacing={1} alignItems="center">
+         <AttachMoneyIcon sx={{ fontSize: 20, color: '#166534' }} />
+         <Typography sx={{ fontSize: 16, color: '#166534', fontWeight: 600 }}>
+           Tiền shipper nhận
+         </Typography>
+       </Stack>
+       <Typography sx={{ fontSize: 16, fontWeight: 900, color: '#166534' }}>
+         +{order.shipperEarn.toLocaleString()}đ
+       </Typography>
+     </Box>
+   )}
           </Stack>
         </Paper>
 

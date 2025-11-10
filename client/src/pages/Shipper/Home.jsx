@@ -18,9 +18,6 @@ import Map4DView from "@/components/Shipper/Map4DView.jsx";
 // --- keys cho bộ nhớ cục bộ ---
 const ACK_KEY = "shipperAckOrderIds"; // các ID đã xác nhận (đã xem)
 
-// helper nhỏ
-const money = (v) => Number(v || 0).toLocaleString("vi-VN");
-
 const formatDistance = (km) => {
   if (km == null || isNaN(km)) return "-";
   const v = Number(km);
@@ -52,7 +49,7 @@ const playPing = () => {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.2);
-  } catch {}
+  } catch { /* empty */ }
 };
 
 // 📳 rung máy (nếu hỗ trợ)
@@ -60,7 +57,7 @@ const vibrate = (pattern) => {
   if (navigator.vibrate) {
     try {
       navigator.vibrate(pattern);
-    } catch {}
+    } catch { /* empty */ }
   }
 };
 
@@ -81,7 +78,7 @@ const Home = () => {
     try {
       const raw = sessionStorage.getItem(ACK_KEY);
       if (raw) ackRef.current = new Set(JSON.parse(raw));
-    } catch {}
+    } catch { /* empty */ }
   }, []);
 
   // Mount map trễ 1 frame để tránh layout shift
@@ -205,7 +202,7 @@ const Home = () => {
       ackRef.current = new Set();
       try {
         sessionStorage.removeItem(ACK_KEY);
-      } catch {}
+      } catch { /* empty */ }
       setIncomingQueue([]);
       fetchIncomingOrders();
     }
@@ -233,7 +230,7 @@ const Home = () => {
         for (const id of ids) ackRef.current.add(id);
         sessionStorage.setItem(ACK_KEY, JSON.stringify(Array.from(ackRef.current)));
       }
-    } catch {}
+    } catch { /* empty */ }
     // xoá queue để ẩn thông báo ngay lập tức
     setIncomingQueue([]);
     resetAvailableOrders();

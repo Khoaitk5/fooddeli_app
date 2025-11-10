@@ -56,6 +56,8 @@ const mapEnrichedToCard = (item) => {
 
     distance: formatDistance(item.distance_km),
     eta: formatDuration(item.duration_sec),
+       deliveryDistance: formatDistance(item.pickup_to_drop_distance_km), // shop -> khách
+   deliveryEta: formatDuration(item.pickup_to_drop_duration_sec),
     cod: o.payment_method === "COD" ? Number(o.total_price || 0) : 0,
     bonus: Math.round(
       Number(o.delivery_fee || 0) * Number(o.shipper_commission_rate || 0.15)
@@ -65,14 +67,14 @@ const mapEnrichedToCard = (item) => {
 };
 
 // ---------------------- SwipeOrderCard giữ nguyên UI, chỉ sửa chỗ order.id ----------------------
-const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
+const SwipeOrderCard = ({ order, onAccepted }) => {
   const navigate = useNavigate();
   const [dragX, setDragX] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const startXRef = React.useRef(0);
 
-  const showLeft = isDragging && dragX < -10;
-  const showRight = isDragging && dragX > 10;
+  const showLeft = isDragging && dragX > 10;
+  const showRight = isDragging && dragX < -10;
 
   const handlePointerDown = (e) => {
     const x = e.touches ? e.touches[0].clientX : e.clientX;
@@ -94,85 +96,133 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
   const handlePointerUp = () => {
     if (!isDragging) return;
     const acceptThreshold = 100;
-    const rejectThreshold = -100;
-    if (dragX > acceptThreshold) {
+
+    // Vuốt quá 100px TRÁI hay PHẢI đều nhận
+    if (Math.abs(dragX) > acceptThreshold) {
       setIsDragging(false);
-      setDragX(520);
+      setDragX(dragX > 0 ? 520 : -520);
       setTimeout(() => {
         resetDrag();
         onAccepted?.(order);
-        navigate(`/shipper/delivering`);
-      }, 220);
-      return;
-    }
-    if (dragX < rejectThreshold) {
-      setIsDragging(false);
-      setDragX(-520);
-      setTimeout(() => {
-        resetDrag();
-        onRejected?.(order);
+        navigate("/shipper/delivering");
       }, 220);
       return;
     }
     resetDrag();
   };
 
+  // đặt ở đầu file (trước return) – helper nhỏ
+const StatCard = ({ icon, label, value, color = "#2563eb", bg = "rgba(37,99,235,0.12)" }) => (
+  <Box
+    sx={{
+      flex: "1 1 0",
+      borderRadius: 4,
+      p: 1.75,
+      background: "linear-gradient(180deg,#ffffff 0%,#f8fafc 100%)",
+      border: "1px solid rgba(15,23,42,0.06)",
+      boxShadow: "0 6px 18px rgba(2,8,23,0.06)",
+      display: "flex",
+      alignItems: "center",
+      gap: 1.25,
+      minWidth: 0,
+    }}
+  >
+    <Box
+      sx={{
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        background: bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      {React.cloneElement(icon, { sx: { fontSize: 18, color } })}
+    </Box>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography sx={{ fontSize: 12, color: "#64748b", fontWeight: 600, lineHeight: 1 }}>
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: 16,
+          fontWeight: 900,
+          color: "#0f172a",
+          lineHeight: 1.25,
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+          overflow: "hidden",
+        }}
+      >
+        {value || "—"}
+      </Typography>
+    </Box>
+  </Box>
+);
+
+
   return (
     <Fade in timeout={500}>
       <Box sx={{ position: "relative", maxWidth: 440, mx: "auto", px: 2 }}>
-        {/* Background indicators khi swipe */}
+        {/* Nền chỉ báo khi swipe (nằm dưới card, không nhận click) */}
         <Box
           sx={{
             position: "absolute",
             inset: "0 16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
             zIndex: 0,
             pointerEvents: "none",
-            borderRadius: 5, // clip theo bo góc của card
-            overflow: "hidden", // ⬅️ ngăn lộ “vệt”
+            borderRadius: 5,
+            overflow: "hidden",
           }}
         >
-          {/* Left indicator - Từ chối */}
+          {/* Tick TRÁI (hiện khi dragX > 30) */}
           <Box
             sx={{
-              display: showLeft ? "flex" : "none",
-              width: 80,
-              height: 80,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: dragX < -30 ? Math.min(1, Math.abs(dragX) / 100) : 0,
-              transform: `scale(${
-                dragX < -30 ? Math.min(1.2, Math.abs(dragX) / 100 + 0.5) : 0.5
+              position: "absolute",
+              left: 24,
+              top: "50%",
+              transform: `translateY(-50%) scale(${
+                dragX > 30 ? Math.min(1.2, dragX / 100 + 0.5) : 0.5
               })`,
-              transition: isDragging
-                ? "none"
-                : "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 8px 24px rgba(239,68,68,0.4)",
-            }}
-          >
-            <CloseRoundedIcon sx={{ fontSize: 40, color: "#fff" }} />
-          </Box>
-          {/* Right indicator - Chấp nhận */}
-          <Box
-            sx={{
-              display: showRight ? "flex" : "none",
               width: 80,
               height: 80,
               borderRadius: "50%",
               background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+              display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              opacity: dragX > 30 ? Math.min(1, dragX / 100) : 0,
-              transform: `scale(${
-                dragX > 30 ? Math.min(1.2, dragX / 100 + 0.5) : 0.5
-              })`,
+              opacity: showLeft ? Math.min(1, dragX / 100) : 0,
               transition: isDragging
                 ? "none"
-                : "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                : "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+              boxShadow: "0 8px 24px rgba(34,197,94,0.4)",
+            }}
+          >
+            <CheckRoundedIcon sx={{ fontSize: 40, color: "#fff" }} />
+          </Box>
+
+          {/* Tick PHẢI (hiện khi dragX < -30) */}
+          <Box
+            sx={{
+              position: "absolute",
+              right: 24,
+              top: "50%",
+              transform: `translateY(-50%) scale(${
+                dragX < -30 ? Math.min(1.2, Math.abs(dragX) / 100 + 0.5) : 0.5
+              })`,
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: showRight ? Math.min(1, Math.abs(dragX) / 100) : 0,
+              transition: isDragging
+                ? "none"
+                : "all 0.3s cubic-bezier(0.4,0,0.2,1)",
               boxShadow: "0 8px 24px rgba(34,197,94,0.4)",
             }}
           >
@@ -180,9 +230,16 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
           </Box>
         </Box>
 
-        {/* Card chính */}
+        {/* === Card chính: di chuyển CẢ Paper (không chỉ phần nội dung) === */}
         <Paper
           elevation={12}
+          onMouseDown={handlePointerDown}
+          onMouseMove={handlePointerMove}
+          onMouseUp={handlePointerUp}
+          onMouseLeave={handlePointerUp}
+          onTouchStart={handlePointerDown}
+          onTouchMove={handlePointerMove}
+          onTouchEnd={handlePointerUp}
           sx={{
             borderRadius: 5,
             overflow: "hidden",
@@ -191,376 +248,305 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
             background: "#fff",
             boxShadow:
               "0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)",
+            // 💡 Di chuyển cả khối, bỏ rotate để không bị “mỏng như giấy”
+            transform: `translate3d(${dragX}px, 0, 0)`,
+            transition: isDragging
+              ? "none"
+              : "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            willChange: "transform",
+            cursor: isDragging ? "grabbing" : "grab",
+            userSelect: "none",
+            touchAction: "pan-y",
           }}
         >
+          {/* Header */}
           <Box
-            onMouseDown={handlePointerDown}
-            onMouseMove={handlePointerMove}
-            onMouseUp={handlePointerUp}
-            onMouseLeave={handlePointerUp}
-            onTouchStart={handlePointerDown}
-            onTouchMove={handlePointerMove}
-            onTouchEnd={handlePointerUp}
             sx={{
+              background: "linear-gradient(135deg, #fff7ed 0%, #ffffff 100%)",
+              borderBottom: "1.5px solid rgba(255,107,53,0.1)",
+              p: 2.5,
               position: "relative",
-              transform: `translateX(${dragX}px) rotate(${Math.max(
-                -6,
-                Math.min(6, dragX / 15)
-              )}deg)`,
-              transition: isDragging
-                ? "none"
-                : "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-              willChange: "transform",
-              cursor: isDragging ? "grabbing" : "grab",
-              userSelect: "none",
-              touchAction: "pan-y",
             }}
           >
-            {/* Overlay tint động */}
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  dragX > 10
-                    ? `linear-gradient(90deg, rgba(34,197,94,${Math.min(
-                        0.15,
-                        dragX / 600
-                      )}) 0%, transparent 100%)`
-                    : dragX < -10
-                    ? `linear-gradient(270deg, rgba(239,68,68,${Math.min(
-                        0.15,
-                        Math.abs(dragX) / 600
-                      )}) 0%, transparent 100%)`
-                    : "transparent",
-                transition: "background 0.2s ease",
-                pointerEvents: "none",
-                borderRadius: 5,
-              }}
-            />
-
-            {/* Header */}
-            <Box
-              sx={{
-                background: "linear-gradient(135deg, #fff7ed 0%, #ffffff 100%)",
-                borderBottom: "1.5px solid rgba(255,107,53,0.1)",
-                p: 2.5,
-                position: "relative",
-              }}
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
             >
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 3,
-                      background:
-                        "linear-gradient(135deg, #fff1e9 0%, #ffe4d6 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(255,107,53,0.15)",
-                    }}
-                  >
-                    <LocalShippingIcon
-                      sx={{ color: "#ff6b35", fontSize: 24 }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      sx={{ fontSize: 13, color: "#9ca3af", fontWeight: 500 }}
-                    >
-                      Mã đơn hàng
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 20,
-                        fontWeight: 800,
-                        color: "#ff6b35",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      {/* order.id là số hiển thị trên thẻ */}
-                      #DH{String(order.id).padStart(3, "0")}
-                    </Typography>
-                  </Box>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Chip
-                    label={`+${money(order.shipperEarn)}đ`}
-                    sx={{
-                      background:
-                        "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
-                      color: "#166534",
-                      fontWeight: 800,
-                      height: 32,
-                      borderRadius: 2,
-                      boxShadow: "0 2px 8px rgba(34,197,94,0.2)",
-                      minWidth: 96, // 👉 rộng tối thiểu
-                      "& .MuiChip-label": {
-                        px: 1.5, // 👉 tăng khoảng đệm ngang
-                        fontSize: 14, // (tùy) chữ to hơn
-                        lineHeight: "32px", // canh giữa theo chiều cao
-                      },
-                    }}
-                  />
-                </Stack>
-              </Stack>
-            </Box>
-
-            {/* Body - Chi tiết đơn hàng */}
-            <Box sx={{ p: 3 }}>
-              {/* Điểm lấy hàng */}
-              {/* GÓI CHUNG: pickup + connector + drop */}
-              {/* Block pickup + connector + drop (2 cột) */}
-              <Box
-                sx={{ display: "flex", gap: 2, alignItems: "stretch", mb: 3 }}
-              >
-                {/* Cột trái: icon + line + icon (tự căn giữa) */}
+              <Stack direction="row" alignItems="center" spacing={1.5}>
                 <Box
                   sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 3,
+                    background:
+                      "linear-gradient(135deg, #fff1e9 0%, #ffe4d6 100%)",
                     display: "flex",
-                    flexDirection: "column",
                     alignItems: "center",
-                    width: 44, // đúng bằng icon
-                    flexShrink: 0,
+                    justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(255,107,53,0.15)",
                   }}
                 >
-                  {/* Icon pickup */}
-                  <Box
-                    sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: "50%",
-                      background:
-                        "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
-                    }}
-                  >
-                    <LocalMallIcon sx={{ color: "#1d4ed8", fontSize: 20 }} />
-                  </Box>
-
-                  {/* Line nối (auto giãn) */}
-                  <Box
-                    sx={{
-                      width: 3,
-                      flex: 1,
-                      my: 1,
-                      borderRadius: 2,
-                      background:
-                        "linear-gradient(180deg, #3b82f6 0%, #ff6b35 100%)",
-                    }}
-                  />
-
-                  {/* Icon drop */}
-                  <Box
-                    sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: "50%",
-                      background:
-                        "linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(255,107,53,0.2)",
-                    }}
-                  >
-                    <PlaceIcon sx={{ color: "#c2410c", fontSize: 22 }} />
-                  </Box>
+                  <LocalShippingIcon sx={{ color: "#ff6b35", fontSize: 24 }} />
                 </Box>
-
-                {/* Cột phải: nội dung pickup + drop */}
-                <Box sx={{ flex: 1 }}>
-                  {/* Pickup text */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        color: "#6b7280",
-                        fontWeight: 500,
-                        mb: 0.5,
-                      }}
-                    >
-                      Lấy hàng tại
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 17,
-                        fontWeight: 700,
-                        color: "#111827",
-                        mb: 0.5,
-                      }}
-                    >
-                      {order.pickupName}
-                    </Typography>
-                    <Typography
-                      sx={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}
-                    >
-                      {order.pickupAddr}
-                    </Typography>
-                  </Box>
-
-                  {/* Drop text */}
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        color: "#6b7280",
-                        fontWeight: 500,
-                        mb: 0.5,
-                      }}
-                    >
-                      Giao đến
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 17,
-                        fontWeight: 700,
-                        color: "#111827",
-                        mb: 0.5,
-                      }}
-                    >
-                      {order.dropName}
-                    </Typography>
-                    <Typography
-                      sx={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}
-                    >
-                      {order.dropAddr}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Stats */}
-              <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-                {[
-                  {
-                    icon: <PlaceIcon />,
-                    label: "Khoảng cách",
-                    value: `${order.distance}`,
-                    color: "#3b82f6",
-                  },
-                  {
-                    icon: <AccessTimeIcon />,
-                    label: "Thời gian",
-                    value: order.eta,
-                    color: "#8b5cf6",
-                  },
-                ].map((item, idx) => (
-                  <Box
-                    key={idx}
+                <Box>
+                  <Typography
+                    sx={{ fontSize: 13, color: "#9ca3af", fontWeight: 500 }}
+                  >
+                    Mã đơn hàng
+                  </Typography>
+                  <Typography
                     sx={{
-                      flex: 1,
-                      background:
-                        "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      borderRadius: 3,
-                      px: 1.5,
-                      py: 2,
-                      textAlign: "center",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                      },
+                      fontSize: 20,
+                      fontWeight: 800,
+                      color: "#ff6b35",
+                      letterSpacing: "0.5px",
                     }}
                   >
-                    <Box
-                      sx={{
-                        color: item.color,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        mb: 0.75,
-                      }}
-                    >
-                      {React.cloneElement(item.icon, { sx: { fontSize: 20 } })}
-                    </Box>
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        color: "#6b7280",
-                        fontWeight: 500,
-                        mb: 0.5,
-                      }}
-                    >
-                      {item.label}
-                    </Typography>
-                    <Typography
-                      sx={{ fontSize: 15, color: "#111827", fontWeight: 800 }}
-                    >
-                      {item.value}
-                    </Typography>
-                  </Box>
-                ))}
+                    #DH{String(order.id).padStart(3, "0")}
+                  </Typography>
+                </Box>
               </Stack>
+              <Chip
+                label={`+${Number(order.shipperEarn || 0).toLocaleString()}đ`}
+                sx={{
+                  background:
+                    "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
+                  color: "#166534",
+                  fontWeight: 800,
+                  height: 32,
+                  borderRadius: 2,
+                  boxShadow: "0 2px 8px rgba(34,197,94,0.2)",
+                  minWidth: 96,
+                  "& .MuiChip-label": {
+                    px: 1.5,
+                    fontSize: 14,
+                    lineHeight: "32px",
+                  },
+                }}
+              />
+            </Stack>
+          </Box>
 
-              {/* Thu hộ */}
+          {/* Body - Chi tiết đơn hàng */}
+          <Box sx={{ p: 3 }}>
+            {/* Điểm lấy hàng */}
+            {/* GÓI CHUNG: pickup + connector + drop */}
+            {/* Block pickup + connector + drop (2 cột) */}
+            <Box sx={{ display: "flex", gap: 2, alignItems: "stretch", mb: 3 }}>
+              {/* Cột trái: icon + line + icon (tự căn giữa) */}
               <Box
                 sx={{
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  background:
-                    "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)",
-                  borderRadius: 4,
-                  px: 3,
-                  py: 2.5,
-                  border: "2px solid rgba(255,107,53,0.2)",
-                  boxShadow: "0 4px 16px rgba(255,107,53,0.15)",
+                  width: 44, // đúng bằng icon
+                  flexShrink: 0,
                 }}
               >
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      background:
-                        "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(255,107,53,0.3)",
-                    }}
-                  >
-                    <AttachMoneyIcon sx={{ color: "#fff", fontSize: 22 }} />
-                  </Box>
-                  <Typography
-                    sx={{ fontSize: 15, color: "#c2410c", fontWeight: 600 }}
-                  >
-                    Thu hộ
-                  </Typography>
-                </Stack>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography
-                    sx={{
-                      fontSize: 24,
-                      color: "#c2410c",
-                      fontWeight: 900,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {money(order.cod)}đ
-                  </Typography>
+                {/* Icon pickup */}
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
+                  }}
+                >
+                  <LocalMallIcon sx={{ color: "#1d4ed8", fontSize: 20 }} />
+                </Box>
+
+                {/* Line nối (auto giãn) */}
+                <Box
+                  sx={{
+                    width: 3,
+                    flex: 1,
+                    my: 1,
+                    borderRadius: 2,
+                    background:
+                      "linear-gradient(180deg, #3b82f6 0%, #ff6b35 100%)",
+                  }}
+                />
+
+                {/* Icon drop */}
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(255,107,53,0.2)",
+                  }}
+                >
+                  <PlaceIcon sx={{ color: "#c2410c", fontSize: 22 }} />
+                </Box>
+              </Box>
+
+              {/* Cột phải: nội dung pickup + drop */}
+              <Box sx={{ flex: 1 }}>
+                {/* Pickup text */}
+                <Box sx={{ mb: 2 }}>
                   <Typography
                     sx={{
                       fontSize: 13,
-                      color: "#16a34a",
-                      fontWeight: 700,
-                      mt: 0.5,
+                      color: "#6b7280",
+                      fontWeight: 500,
+                      mb: 0.5,
                     }}
-                  ></Typography>
+                  >
+                    Lấy hàng tại
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 17,
+                      fontWeight: 700,
+                      color: "#111827",
+                      mb: 0.5,
+                    }}
+                  >
+                    {order.pickupName}
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}
+                  >
+                    {order.pickupAddr}
+                  </Typography>
                 </Box>
+
+                {/* Drop text */}
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#6b7280",
+                      fontWeight: 500,
+                      mb: 0.5,
+                    }}
+                  >
+                    Giao đến
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 17,
+                      fontWeight: 700,
+                      color: "#111827",
+                      mb: 0.5,
+                    }}
+                  >
+                    {order.dropName}
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}
+                  >
+                    {order.dropAddr}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            {/* Stats */}
+{/* Stats – thay nguyên khối cũ */}
+<Stack spacing={1.25} sx={{ mb: 3 }}>
+  <Stack direction="row" spacing={1.25}>
+    <StatCard
+      icon={<PlaceIcon />}
+      label="Bạn → Quán"
+      value={order.distance}
+      color="#2563eb"
+      bg="rgba(37,99,235,0.12)"
+    />
+    <StatCard
+      icon={<AccessTimeIcon />}
+      label="Tới quán"
+      value={order.eta}
+      color="#7c3aed"
+      bg="rgba(124,58,237,0.12)"
+    />
+  </Stack>
+
+  <Stack direction="row" spacing={1.25}>
+    <StatCard
+      icon={<PlaceIcon />}
+      label="Quán → Khách"
+      value={order.deliveryDistance || "Đang tính…"}
+      color="#f97316"
+      bg="rgba(249,115,22,0.12)"
+    />
+    <StatCard
+      icon={<AccessTimeIcon />}
+      label="Thời gian giao"
+      value={order.deliveryEta || "Đang tính…"}
+      color="#ef4444"
+      bg="rgba(239,68,68,0.12)"
+    />
+  </Stack>
+</Stack>
+
+
+
+            {/* Thu hộ */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)",
+                borderRadius: 4,
+                px: 3,
+                py: 2.5,
+                border: "2px solid rgba(255,107,53,0.2)",
+                boxShadow: "0 4px 16px rgba(255,107,53,0.15)",
+              }}
+            >
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(255,107,53,0.3)",
+                  }}
+                >
+                  <AttachMoneyIcon sx={{ color: "#fff", fontSize: 22 }} />
+                </Box>
+                <Typography
+                  sx={{ fontSize: 15, color: "#c2410c", fontWeight: 600 }}
+                >
+                  Thu hộ
+                </Typography>
+              </Stack>
+              <Box sx={{ textAlign: "right" }}>
+                <Typography
+                  sx={{
+                    fontSize: 24,
+                    color: "#c2410c",
+                    fontWeight: 900,
+                    lineHeight: 1,
+                  }}
+                >
+                  {money(order.cod)}đ
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: "#16a34a",
+                    fontWeight: 700,
+                    mt: 0.5,
+                  }}
+                ></Typography>
               </Box>
             </Box>
           </Box>
@@ -779,7 +765,7 @@ const ActiveOrder = () => {
                     letterSpacing: "0.5px",
                   }}
                 >
-                  Xin chào 👋
+                  Xin chào
                 </Typography>
                 <Typography
                   sx={{ fontSize: 24, fontWeight: 800, letterSpacing: "0.5px" }}
@@ -887,7 +873,7 @@ const ActiveOrder = () => {
                   boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                 }}
               >
-                🔄 Quét lại
+                Quét lại
               </Box>
             </Box>
           </Fade>
