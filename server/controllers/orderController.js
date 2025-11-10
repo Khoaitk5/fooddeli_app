@@ -106,33 +106,41 @@ module.exports = {
   /** ===========================
    * 🆕 🔹 Tạo đơn hàng thanh toán tiền mặt
    * =========================== */
-  async createCashOrder(req, res) {
-    try {
-      const { user_id, shop_id, items = [], note } = req.body;
+async createCashOrder(req, res) {
+  console.log("🔥 [Controller] createCashOrder() START với body:", req.body);
+  try {
+    const { user_id, shop_id, items = [], note } = req.body;
 
-      if (!user_id || !shop_id)
-        return res.status(400).json({ success: false, message: "Thiếu user_id hoặc shop_id" });
-
-      const order = await orderService.createCashOrder({
-        user_id,
-        shop_id,
-        items,
-        note,
-      });
-
-      res.status(201).json({
-        success: true,
-        message: "Tạo đơn hàng tiền mặt thành công",
-        order,
-      });
-    } catch (error) {
-      console.error("❌ [createCashOrder Error]:", error);
-      res.status(500).json({
+    if (!user_id || !shop_id) {
+      console.warn("⚠️ Thiếu user_id hoặc shop_id:", { user_id, shop_id });
+      return res.status(400).json({
         success: false,
-        message: "Lỗi khi tạo đơn hàng tiền mặt",
+        message: "Thiếu user_id hoặc shop_id",
       });
     }
-  },
+
+    console.log("📦 Gọi orderService.createCashOrder...");
+    const order = await orderService.createCashOrder({
+      user_id,
+      shop_id,
+      items,
+      note,
+    });
+
+    console.log("✅ [Controller] createCashOrder() DONE:", order);
+    return res.status(201).json({
+      success: true,
+      message: "Tạo đơn hàng tiền mặt thành công",
+      order,
+    });
+  } catch (error) {
+    console.error("❌ [Controller] createCashOrder Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi tạo đơn hàng tiền mặt",
+    });
+  }
+},
 
   /** ===========================
    * 🔹 Gán shipper cho đơn
