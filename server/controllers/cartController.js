@@ -47,24 +47,63 @@ const cartController = {
           .json({ success: false, message: "Thiếu dữ liệu cần thiết" });
       }
 
+      const normalizedShopId = Number(shop_id);
+      const normalizedProductId = Number(product_id);
+      const normalizedQuantity = Number(quantity);
+      const normalizedUnitPrice = Number(unit_price);
+
+      if (
+        !Number.isFinite(normalizedQuantity) ||
+        normalizedQuantity <= 0 ||
+        !Number.isFinite(normalizedUnitPrice) ||
+        normalizedUnitPrice <= 0 ||
+        !Number.isInteger(normalizedShopId) ||
+        !Number.isInteger(normalizedProductId)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Giá trị shop_id, product_id, quantity hoặc unit_price không hợp lệ",
+        });
+      }
+
       const cart = await cartService.getOrCreateCartForUser(sessionUser.id);
 
-      const newItem = await cartItemService.createCartItem({
-        cart_id: cart.cart_id,
-        shop_id,
-        product_id,
-        quantity,
-        unit_price,
-      });
+      const existingItem = await cartItemService.findByCartShopProduct(
+        cart.cart_id,
+        normalizedShopId,
+        normalizedProductId
+      );
+
+      let itemResponse;
+      let message;
+      let statusCode = 201;
+
+      if (existingItem) {
+        const updatedQuantity = Number(existingItem.quantity) + normalizedQuantity;
+        itemResponse = await cartItemService.updateCartItem(existingItem.id, {
+          quantity: updatedQuantity,
+        });
+        message = "Đã tăng số lượng sản phẩm trong giỏ hàng";
+        statusCode = 200;
+      } else {
+        itemResponse = await cartItemService.createCartItem({
+          cart_id: cart.cart_id,
+          shop_id: normalizedShopId,
+          product_id: normalizedProductId,
+          quantity: normalizedQuantity,
+          unit_price: normalizedUnitPrice,
+        });
+        message = "Thêm sản phẩm vào giỏ hàng thành công";
+      }
 
       const items = await cartItemService.getItemsByCartId(cart.cart_id);
       const subtotal = items.reduce((sum, i) => sum + Number(i.line_total), 0);
       await cartService.updateCartSummary(cart.cart_id, subtotal, items.length);
 
-      return res.status(201).json({
+      return res.status(statusCode).json({
         success: true,
-        message: "Thêm sản phẩm vào giỏ hàng thành công",
-        data: newItem,
+        message,
+        data: itemResponse,
       });
     } catch (error) {
       console.error("❌ Lỗi khi thêm sản phẩm:", error);

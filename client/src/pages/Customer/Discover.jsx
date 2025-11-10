@@ -51,7 +51,7 @@ const Discover = () => {
   const transformShopData = (shop) => ({
     id: shop.id || shop.shop_profile_id,
     name: shop.shop_name || "Chưa có tên",
-    imageUrl: shop.shop_image || shop.avatar_url || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg",
+    imageUrl: shop.avatar_url || shop.shop_image || "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg",
     rating: shop.avg_review_rating && shop.avg_review_rating > 0
       ? Number(shop.avg_review_rating).toFixed(1)
       : (shop.rating ? Number(shop.rating).toFixed(1) : "5.0"),
