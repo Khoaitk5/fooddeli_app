@@ -14,11 +14,22 @@ function loadMap4d(key) {
     // Không chèn trùng script
     const existing = document.querySelector('script[data-map4d-sdk="1"]');
     if (existing) {
-      existing.onload = () => resolve(window.map4d);
-      existing.onerror = () =>
-        reject(new Error("Không tải được Map4D SDK (script cũ)"));
-      return;
+           // Nếu script đã gắn, chờ map4d xuất hiện (trường hợp onload đã bắn trước)
+     const iv = setInterval(() => {
+       if (window.map4d) {
+         clearInterval(iv);
+         resolve(window.map4d);
+       }
+     }, 50);
+     existing.addEventListener('error', () => {
+       clearInterval(iv);
+       reject(new Error("Không tải được Map4D SDK (script cũ)"));
+     }, { once: true });
+     // fallback timeout 10s
+     setTimeout(() => clearInterval(iv), 10000);
+     return;
     }
+    
 
     const s = document.createElement("script");
     s.src = MAP4D_SDK_URL(key);
@@ -63,16 +74,17 @@ export default function Map4DView({
           return;
         }
 
-        const map4d = await loadMap4d(key);
-        if (isUnmounted) return;
-
-        // Khởi tạo map
-        console.debug("[Map4D] Init map with:", { initialCenter, zoom });
-        mapRef.current = new map4d.Map(containerRef.current, {
-          center: initialCenter,
-          zoom,
-          controls: false,
-        });
+       const map4d = await loadMap4d(key);
+       if (isUnmounted) return;
+       // Đợi 1 frame để container layout xong
+       await new Promise((r) => requestAnimationFrame(r));
+       if (isUnmounted || !containerRef.current) return;
+       // Khởi tạo map
+       mapRef.current = new map4d.Map(containerRef.current, {
+        center: initialCenter,
+         zoom,
+         controls: false,
+       });
 
         // Tạo marker vị trí shipper
         console.debug("[Map4D] Create marker @", initialCenter);
@@ -145,7 +157,11 @@ export default function Map4DView({
         markerRef.current.setMap(null);
         markerRef.current = null;
       }
-      mapRef.current = null;
+      // Hủy map nếu SDK có destroy()
+     if (mapRef.current?.destroy) {
+       try { mapRef.current.destroy(); } catch { /* empty */ }
+     }
+     mapRef.current = null;
     };
   }, [key, initialCenter, zoom]);
 
