@@ -125,7 +125,7 @@ const AddCoupon = () => {
             width: "91.67vw",
             height: "9.25vh",
             borderRadius: 14,
-            border: selectedCoupons[coupon.status] === index ? "2px solid #2BCDD2" : "1px #D9D9D9 solid",
+            border: selectedCoupons[coupon.status] === index ? "2px solid #5EAD1D" : "1px #D9D9D9 solid",
             display: "flex",
             alignItems: "center",
             cursor: "pointer",

@@ -219,7 +219,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
           }}
         >
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/customer/discover")}
             style={{
               position: "absolute",
               left: "1rem",

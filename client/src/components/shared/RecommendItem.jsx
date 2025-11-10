@@ -2,7 +2,7 @@ const RecommendItem = ({ image, title, distance }) => {
   return (
     <div
       style={{
-        width: "26.94vw", // 👈 ~97px khi base 360px
+        width: "26.94vw",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -12,8 +12,8 @@ const RecommendItem = ({ image, title, distance }) => {
       <img
         style={{
           width: "26.94vw",
-          aspectRatio: "1 / 1", // 👈 luôn vuông
-          borderRadius: 14,
+          aspectRatio: "1 / 1",
+          borderRadius: '1.4rem',
           objectFit: "cover",
         }}
         src={image || "https://placehold.co/97x97"}
@@ -27,11 +27,9 @@ const RecommendItem = ({ image, title, distance }) => {
           width: "100%",
           textAlign: "center",
           color: "black",
-          fontSize: "1.4rem",
-          fontFamily: 'Be Vietnam Pro',
+          fontSize: "1.3rem",
           fontWeight: "500",
-          overflowWrap: "break-word", // 👈 tốt hơn cho responsive
-          lineHeight: 1.3,
+          overflowWrap: "break-word",
         }}
       >
         {title}
@@ -45,7 +43,6 @@ const RecommendItem = ({ image, title, distance }) => {
           textAlign: "center",
           color: "#60635E",
           fontSize: "1.1rem",
-          fontFamily: 'Be Vietnam Pro',
           fontWeight: "500",
         }}
       >

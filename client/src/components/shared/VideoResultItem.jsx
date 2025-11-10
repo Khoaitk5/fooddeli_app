@@ -30,15 +30,19 @@ const VideoResultItem = ({ video }) => {
         position: 'relative',
         borderRadius: 2,
         overflow: 'hidden',
-        backgroundColor: 'transparent',
-        boxShadow: 'none',
-        transition: 'all 0.3s ease',
+        backgroundColor: 'white',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
         '&:hover': {
-          transform: 'scale(1.02)',
+          transform: 'translateY(-4px)',
+          boxShadow: '0 6px 24px rgba(254, 86, 33, 0.2)',
         },
         '&:hover .play-overlay': {
           opacity: 1,
+        },
+        '&:active': {
+          transform: 'scale(0.98)',
         },
       }}
       onClick={() => navigate('/customer/video-detail', { state: { video } })}
@@ -52,7 +56,7 @@ const VideoResultItem = ({ video }) => {
             left: 0,
             width: '100%',
             height: '100%',
-            borderRadius: 2,
+            borderRadius: 0,
             overflow: 'hidden',
             backgroundColor: '#000',
           }}
@@ -90,17 +94,43 @@ const VideoResultItem = ({ video }) => {
           <Box
             sx={{
               position: 'absolute',
-              bottom: 8,
-              left: 8,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)',
               color: 'white',
-              textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+              p: 1.5,
+              pt: 4,
             }}
           >
-            <Typography sx={{ fontWeight: 600, fontSize: '1.2rem' }}>
+            <Typography 
+              sx={{ 
+                fontWeight: 600, 
+                fontSize: '1.3rem',
+                textShadow: '0 2px 4px rgba(0,0,0,0.6)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                lineHeight: 1.3,
+                mb: 0.5,
+              }}
+            >
               {video.title || "Video không có tiêu đề"}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, fontSize: '1rem', mt: 0.5 }}>
-              <Visibility sx={{ fontSize: '1.2rem' }} /> {formatViews(views)}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: 0.5, 
+                fontSize: '1.1rem',
+              }}
+            >
+              <Visibility sx={{ fontSize: '1.4rem' }} /> 
+              <Typography sx={{ fontSize: '1.1rem', fontWeight: 500 }}>
+                {formatViews(views)}
+              </Typography>
             </Box>
           </Box>
         </Box>
@@ -117,13 +147,18 @@ const VideoResultItem = ({ video }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.3)',
+            background: 'linear-gradient(135deg, rgba(254, 86, 33, 0.6) 0%, rgba(255, 122, 80, 0.6) 100%)',
             opacity: 0,
             transition: 'opacity 0.3s ease',
-            borderRadius: 2,
           }}
         >
-          <PlayCircleOutline sx={{ fontSize: 60, color: 'white' }} />
+          <PlayCircleOutline 
+            sx={{ 
+              fontSize: 70, 
+              color: 'white',
+              filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4))',
+            }} 
+          />
         </Box>
 
         {/* Duration Badge */}
@@ -132,48 +167,38 @@ const VideoResultItem = ({ video }) => {
           size="small"
           sx={{
             position: 'absolute',
-            bottom: 8,
+            top: 8,
             right: 8,
-            backgroundColor: 'rgba(0,0,0,0.7)',
+            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%)',
+            backdropFilter: 'blur(10px)',
             color: 'white',
-            fontWeight: 600,
-            fontSize: '1rem',
-            height: 20,
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            height: 24,
+            border: '1px solid rgba(255, 255, 255, 0.2)',
           }}
         />
       </Box>
 
       {/* Video Info */}
-      <Box sx={{ p: 1.5 }}>
-        {/* Title */}
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 500,
-            fontSize: '1.3rem',
-            mb: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            lineHeight: 1.4,
-          }}
-        >
-          {video.title || "Video không có tiêu đề"}
-        </Typography>
-
+      <Box sx={{ p: 1.5, backgroundColor: 'white' }}>
         {/* Shop Info */}
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
           <Avatar
             src={video.shop_avatar || "https://placehold.co/32x32"}
-            sx={{ width: 24, height: 24 }}
+            sx={{ 
+              width: 28, 
+              height: 28,
+              border: '2px solid #F5F5F5',
+              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
+            }}
           />
           <Typography
             variant="body2"
             sx={{
-              color: '#666',
-              fontSize: '1.1rem',
+              color: '#333',
+              fontSize: '1.25rem',
+              fontWeight: 600,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -185,13 +210,25 @@ const VideoResultItem = ({ video }) => {
         </Stack>
 
         {/* Views */}
-        <Stack direction="row" spacing={0.5} alignItems="center">
-          <Visibility sx={{ fontSize: '1.4rem', color: '#999' }} />
+        <Stack 
+          direction="row" 
+          spacing={0.5} 
+          alignItems="center"
+          sx={{
+            backgroundColor: 'rgba(254, 86, 33, 0.08)',
+            px: 1,
+            py: 0.5,
+            borderRadius: 1.5,
+            width: 'fit-content',
+          }}
+        >
+          <Visibility sx={{ fontSize: '1.4rem', color: '#FE5621' }} />
           <Typography
             variant="caption"
             sx={{
-              color: '#999',
-              fontSize: '1.1rem',
+              color: '#FE5621',
+              fontSize: '1.15rem',
+              fontWeight: 600,
             }}
           >
             {formatViews(views)}

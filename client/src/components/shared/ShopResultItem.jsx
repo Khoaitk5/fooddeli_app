@@ -38,10 +38,16 @@ const ShopResultItem = ({ shop }) => {
   return (
     <Box
       sx={{
-        mb: 3,
+        mb: 2.5,
         backgroundColor: 'white',
-        borderRadius: 2,
+        borderRadius: 3,
         overflow: 'hidden',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          boxShadow: '0 4px 20px rgba(254, 86, 33, 0.15)',
+          transform: 'translateY(-2px)',
+        },
       }}
     >
       {/* Header: Thông tin cửa hàng */}
@@ -53,8 +59,11 @@ const ShopResultItem = ({ shop }) => {
           gap: 1.5,
           p: 2,
           cursor: 'pointer',
+          background: 'linear-gradient(135deg, rgba(254, 86, 33, 0.03) 0%, rgba(255, 122, 80, 0.03) 100%)',
+          borderBottom: '1px solid #F5F5F5',
+          transition: 'background 0.2s ease',
           '&:hover': {
-            backgroundColor: '#FAFAFA',
+            background: 'linear-gradient(135deg, rgba(254, 86, 33, 0.08) 0%, rgba(255, 122, 80, 0.08) 100%)',
           },
         }}
       >
@@ -63,9 +72,10 @@ const ShopResultItem = ({ shop }) => {
           src={shop.shop_image || shop.avatar_url || "https://placehold.co/80x80?text=Shop"}
           alt={shop.shop_name}
           sx={{
-            width: 60,
-            height: 60,
-            border: '2px solid #F5F5F5',
+            width: 64,
+            height: 64,
+            border: '2.5px solid white',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
           }}
         />
 
@@ -76,24 +86,35 @@ const ShopResultItem = ({ shop }) => {
             <Typography
               variant="h6"
               sx={{
-                fontWeight: 600,
-                fontSize: '1.5rem',
-                color: '#333',
+                fontWeight: 700,
+                fontSize: '1.6rem',
+                color: '#222',
+                letterSpacing: '-0.3px',
               }}
             >
               {shop.shop_name}
             </Typography>
-            <Verified sx={{ fontSize: '1.6rem', color: '#F9704B' }} />
+            <Verified sx={{ fontSize: '1.8rem', color: '#FE5621' }} />
           </Box>
 
           {/* Rating và loại hình */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-              <Star sx={{ fontSize: '1.4rem', color: '#FFB800' }} />
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 0.4,
+                backgroundColor: 'rgba(255, 184, 0, 0.1)',
+                px: 1,
+                py: 0.3,
+                borderRadius: 1.5,
+              }}
+            >
+              <Star sx={{ fontSize: '1.5rem', color: '#FFB800' }} />
               <Typography
                 sx={{
-                  fontSize: '1.3rem',
-                  fontWeight: 500,
+                  fontSize: '1.35rem',
+                  fontWeight: 600,
                   color: '#333',
                 }}
               >
@@ -112,20 +133,26 @@ const ShopResultItem = ({ shop }) => {
             <Typography
               sx={{
                 fontSize: '1.2rem',
-                color: '#999',
+                color: '#DDD',
               }}
             >
               •
             </Typography>
 
-            <Typography
+            <Chip
+              label={shop.category || shop.products[0]?.category || 'Đồ ăn'}
+              size="small"
               sx={{
                 fontSize: '1.2rem',
-                color: '#666',
+                fontWeight: 500,
+                height: 'auto',
+                py: 0.4,
+                px: 1,
+                backgroundColor: 'rgba(254, 86, 33, 0.1)',
+                color: '#FE5621',
+                border: 'none',
               }}
-            >
-              {shop.category || shop.products[0]?.category || 'Đồ ăn'}
-            </Typography>
+            />
           </Box>
         </Box>
       </Box>
@@ -134,22 +161,22 @@ const ShopResultItem = ({ shop }) => {
       <Box
         sx={{
           display: 'flex',
-          gap: 1.5,
+          gap: 2,
           px: 2,
           pb: 2,
+          pt: 1.5,
           overflowX: 'auto',
           '&::-webkit-scrollbar': {
-            height: 6,
+            height: 5,
           },
           '&::-webkit-scrollbar-track': {
-            backgroundColor: '#F5F5F5',
-            borderRadius: 3,
+            backgroundColor: 'transparent',
           },
           '&::-webkit-scrollbar-thumb': {
-            backgroundColor: '#DDD',
+            backgroundColor: '#E0E0E0',
             borderRadius: 3,
             '&:hover': {
-              backgroundColor: '#CCC',
+              backgroundColor: '#FE5621',
             },
           },
         }}
@@ -159,12 +186,15 @@ const ShopResultItem = ({ shop }) => {
             key={product.product_id}
             onClick={() => handleProductClick(product.product_id)}
             sx={{
-              minWidth: 140,
-              maxWidth: 140,
+              minWidth: 145,
+              maxWidth: 145,
               cursor: 'pointer',
-              transition: 'transform 0.2s ease',
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                transform: 'translateY(-4px)',
+                transform: 'translateY(-6px)',
+              },
+              '&:active': {
+                transform: 'scale(0.97)',
               },
             }}
           >
@@ -173,11 +203,12 @@ const ShopResultItem = ({ shop }) => {
               sx={{
                 position: 'relative',
                 width: '100%',
-                paddingTop: '100%', // 1:1 aspect ratio
-                borderRadius: 2,
+                paddingTop: '100%',
+                borderRadius: 2.5,
                 overflow: 'hidden',
                 backgroundColor: '#F5F5F5',
                 mb: 1,
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
               }}
             >
               <Box
@@ -194,27 +225,31 @@ const ShopResultItem = ({ shop }) => {
                 }}
               />
 
-              {/* Nút thêm (giống Grab/Shopee) */}
+              {/* Nút thêm */}
               <Box
                 sx={{
                   position: 'absolute',
                   bottom: 8,
                   right: 8,
-                  width: 28,
-                  height: 28,
+                  width: 32,
+                  height: 32,
                   borderRadius: '50%',
-                  backgroundColor: 'white',
+                  background: 'linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  boxShadow: '0 3px 12px rgba(254, 86, 33, 0.4)',
                   fontSize: '2rem',
-                  fontWeight: 500,
-                  color: '#F9704B',
+                  fontWeight: 600,
+                  color: 'white',
                   cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                   '&:hover': {
-                    backgroundColor: '#F9704B',
-                    color: 'white',
+                    transform: 'scale(1.1)',
+                    boxShadow: '0 4px 16px rgba(254, 86, 33, 0.6)',
+                  },
+                  '&:active': {
+                    transform: 'scale(0.95)',
                   },
                 }}
               >
@@ -225,10 +260,11 @@ const ShopResultItem = ({ shop }) => {
             {/* Giá tiền */}
             <Typography
               sx={{
-                fontSize: '1.4rem',
+                fontSize: '1.45rem',
                 fontWeight: 700,
-                color: '#333',
+                color: '#FE5621',
                 mb: 0.3,
+                letterSpacing: '-0.3px',
               }}
             >
               {formatPrice(product.price)}
@@ -237,14 +273,15 @@ const ShopResultItem = ({ shop }) => {
             {/* Tên món */}
             <Typography
               sx={{
-                fontSize: '1.2rem',
-                color: '#666',
+                fontSize: '1.25rem',
+                fontWeight: 500,
+                color: '#555',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
-                lineHeight: 1.3,
+                lineHeight: 1.35,
               }}
             >
               {product.name}

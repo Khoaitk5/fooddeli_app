@@ -295,7 +295,7 @@ const Home = () => {
                   right: 0,
                   bottom: 0,
                   background:
-                    "linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent, transparent)",
+                    "linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.3) 30%, transparent 50%, rgba(0, 0, 0, 0.2) 85%, rgba(0, 0, 0, 0.4) 100%)",
                   pointerEvents: "none",
                 }}
               />
@@ -340,15 +340,42 @@ const Home = () => {
               <div
                 style={{
                   position: "absolute",
-                  top: "74.5vh", // Vị trí mới
-                  left: "2.78vw", // Vị trí mới
-                  color: "white",
-                  fontSize: "1.7rem",
-                  fontWeight: "600",
-                  fontFamily: "Be Vietnam Pro",
+                  top: "74.5vh",
+                  left: "2.78vw",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
                 }}
               >
-                {video.shop_name || "Nhà hàng"}
+                <div
+                  style={{
+                    color: "white",
+                    fontSize: "1.7rem",
+                    fontWeight: "700",
+                    fontFamily: "Be Vietnam Pro",
+                    textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
+                    letterSpacing: "-0.3px",
+                  }}
+                >
+                  {video.shop_name || "Nhà hàng"}
+                </div>
+                <div
+                  style={{
+                    width: "1.2rem",
+                    height: "1.2rem",
+                    borderRadius: "50%",
+                    backgroundColor: "#1DA1F2",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.8rem",
+                    color: "white",
+                    fontWeight: "bold",
+                  }}
+                  title="Đã xác thực"
+                >
+                  ✓
+                </div>
               </div>
 
               {/* Caption */}
@@ -364,15 +391,29 @@ const Home = () => {
                 <div
                   style={{
                     fontSize: "1.5rem",
-                    fontWeight: "400",
+                    fontWeight: "500",
+                    lineHeight: "1.4",
+                    textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
                   }}
                 >
                   {video.title || "Video món ăn hấp dẫn 😋"}
                 </div>
                 <div
-                  style={{ fontSize: "1.4rem", opacity: 0.9, fontWeight: 700 }}
+                  style={{
+                    fontSize: "1.35rem",
+                    fontWeight: "600",
+                    marginTop: "0.4rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    backgroundColor: "rgba(254, 86, 33, 0.9)",
+                    padding: "0.3rem 0.7rem",
+                    borderRadius: "1rem",
+                    backdropFilter: "blur(4px)",
+                  }}
                 >
-                  ⭐ {video.shop_rating?.toFixed(1) || 0}
+                  <span style={{ fontSize: "1.2rem" }}>⭐</span>
+                  <span>{video.shop_rating?.toFixed(1) || "0.0"}</span>
                 </div>
               </div>
 
@@ -389,14 +430,11 @@ const Home = () => {
                 }}
               >
                 {/* Profile */}
-                <img
+                <div
                   style={{
-                    width: "4.8rem",
-                    height: "4.8rem",
-                    borderRadius: 9999,
+                    position: "relative",
                     cursor: "pointer",
                   }}
-                  src={video.shop_avatar || "/default-avatar.png"}
                   onClick={() => {
                     if (video.shop_id) {
                       navigate("/customer/restaurant-details", {
@@ -406,8 +444,42 @@ const Home = () => {
                       console.warn("No shop_id found:", video);
                     }
                   }}
-                  alt="Restaurant profile"
-                />
+                >
+                  <img
+                    style={{
+                      width: "4.8rem",
+                      height: "4.8rem",
+                      borderRadius: "50%",
+                      border: "2.5px solid white",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+                      objectFit: "cover",
+                    }}
+                    src={video.shop_avatar || "/default-avatar.png"}
+                    alt="Restaurant profile"
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "-0.5rem",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "1.8rem",
+                      height: "1.8rem",
+                      borderRadius: "50%",
+                      backgroundColor: "#FE5621",
+                      border: "2px solid white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "1.2rem",
+                      fontWeight: "bold",
+                      color: "white",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                    }}
+                  >
+                    +
+                  </div>
+                </div>
 
                 {/* Icons */}
                 <div
@@ -424,15 +496,37 @@ const Home = () => {
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      gap: "1vh",
+                      gap: "0.5vh",
                     }}
                   >
-                    <HeartIcon
-                      fill={likedVideos.has(index) ? "#FF3E5B" : "white"}
+                    <div
+                      style={{
+                        cursor: "pointer",
+                        transition: "transform 0.2s ease",
+                      }}
                       onClick={(e) => handleHeartClick(index, e)}
-                      style={{ cursor: "pointer" }}
-                    />
-                    <div style={countStyle}>
+                      onMouseDown={(e) => {
+                        e.currentTarget.style.transform = "scale(0.9)";
+                      }}
+                      onMouseUp={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      <HeartIcon
+                        fill={likedVideos.has(index) ? "#FF3E5B" : "white"}
+                        style={{ 
+                          cursor: "pointer",
+                          filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
+                        }}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        ...countStyle,
+                        fontWeight: "700",
+                        fontSize: "1.3rem",
+                      }}
+                    >
                       {formatCount(
                         likeCounts[index] !== undefined
                           ? likeCounts[index]
@@ -447,11 +541,35 @@ const Home = () => {
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      gap: "1vh",
+                      gap: "0.5vh",
                     }}
                   >
-                    <CommentIcon onClick={() => setShowMessagePopup(true)} />
-                    <div style={countStyle}>
+                    <div
+                      style={{
+                        cursor: "pointer",
+                        transition: "transform 0.2s ease",
+                      }}
+                      onClick={() => setShowMessagePopup(true)}
+                      onMouseDown={(e) => {
+                        e.currentTarget.style.transform = "scale(0.9)";
+                      }}
+                      onMouseUp={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      <CommentIcon
+                        style={{
+                          filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
+                        }}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        ...countStyle,
+                        fontWeight: "700",
+                        fontSize: "1.3rem",
+                      }}
+                    >
                       {formatCount(video.comments_count || 0)}
                     </div>
                   </div>
@@ -462,10 +580,27 @@ const Home = () => {
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      gap: "1vh",
+                      gap: "0.5vh",
                     }}
                   >
-                    <ShareIcon />
+                    <div
+                      style={{
+                        cursor: "pointer",
+                        transition: "transform 0.2s ease",
+                      }}
+                      onMouseDown={(e) => {
+                        e.currentTarget.style.transform = "scale(0.9)";
+                      }}
+                      onMouseUp={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      <ShareIcon
+                        style={{
+                          filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
