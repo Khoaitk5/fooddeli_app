@@ -7,7 +7,6 @@ const FooterBar = ({ text1 = "Bạn chưa có tài khoản?", text2 = "Đăng k�
     left: 0,
     width: '100%',
     height: '6.875vh',
-    background: '#F7F7F7',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',

@@ -1,15 +1,23 @@
 import React, { useState } from "react";
 import Navbar from "../../components/shared/Navbar";
 import NotificationContent from "../../components/shared/NotificationContent";
+import { MessageCircle, Bell } from "lucide-react";
 
-// Add styles to hide scrollbar
 const hideScrollbarStyles = `
   .hide-scrollbar {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
   .hide-scrollbar::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none;
+  }
+  
+  .tab-button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .tab-button:active {
+    transform: scale(0.97);
   }
 `;
 
@@ -103,100 +111,157 @@ const Notifications = () => {
     setIsNotificationActive(true);
   };
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#FAFAFA" }}>
       <style>{hideScrollbarStyles}</style>
+      
       {/* Fixed Header */}
-      <div style={{ flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, backgroundColor: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
         <div
           style={{
             position: "relative",
             height: "15vh",
-            background: "white",
+            background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
           }}
         >
+          {/* Title with icon */}
           <div
             style={{
               position: "absolute",
-              top: "1.875vh",
+              top: "2.5vh",
               left: "6.11vw",
-              textAlign: "center",
-              justifyContent: "center",
               display: "flex",
-              flexDirection: "column",
-              color: "black",
-              fontSize: "2.2rem",
-              fontWeight: "500",
-              wordWrap: "break-word",
-            }}
-          >
-            Thông báo
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: "7.875vh",
-              left: "6.11vw",
-              width: "42.78vw",
-              height: "4.125vh",
-              background: isNotificationActive ? "rgba(249, 112, 75, 0.10)" : "#54A312",
-              borderRadius: 16.5,
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
               alignItems: "center",
-              cursor: "pointer",
+              gap: "0.75rem",
             }}
-            onClick={handleChatClick}
           >
-            <div
-              style={{
-                color: isNotificationActive ? "#54A312" : "white",
-                fontSize: "1.3rem",
-                fontWeight: "500",
-                wordWrap: "break-word",
-              }}
-            >
-              Trò chuyện
+            <div style={{
+              width: "2.8rem",
+              height: "2.8rem",
+              borderRadius: "50%",
+              backgroundColor: "rgba(255,255,255,0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <Bell size={18} color="white" strokeWidth={2.5} />
             </div>
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: "7.875vh",
-              right: "6.11vw",
-              width: "42.78vw",
-              height: "4.125vh",
-              background: isNotificationActive ? "#54A312" : "rgba(249, 112, 75, 0.10)",
-              borderRadius: 16.5,
-              justifyContent: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              cursor: "pointer",
-            }}
-            onClick={handleNotificationClick}
-          >
             <div
               style={{
-                justifyContent: "center",
-                display: "flex",
-                flexDirection: "column",
-                color: isNotificationActive ? "white" : "#54A312",
-                fontSize: "1.3rem",
-                fontWeight: "500",
-                wordWrap: "break-word",
+                color: "white",
+                fontSize: "2.2rem",
+                fontWeight: "600",
+                letterSpacing: "-0.5px",
+                textShadow: "0 2px 4px rgba(0,0,0,0.1)",
               }}
             >
               Thông báo
+            </div>
+          </div>
+
+          {/* Tab Buttons */}
+          <div
+            style={{
+              position: "absolute",
+              top: "8.5vh",
+              left: "6.11vw",
+              right: "6.11vw",
+              display: "flex",
+              gap: "1rem",
+              padding: "0.4rem",
+              backgroundColor: "rgba(255,255,255,0.15)",
+              borderRadius: "1.2rem",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            {/* Chat Tab */}
+            <div
+              className="tab-button"
+              style={{
+                flex: 1,
+                height: "4.5vh",
+                background: !isNotificationActive 
+                  ? "white" 
+                  : "transparent",
+                borderRadius: "0.9rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                cursor: "pointer",
+                boxShadow: !isNotificationActive 
+                  ? "0 4px 12px rgba(0,0,0,0.15)" 
+                  : "none",
+              }}
+              onClick={handleChatClick}
+            >
+              <MessageCircle 
+                size={16} 
+                color={!isNotificationActive ? "#FE5621" : "white"} 
+                strokeWidth={2.5}
+              />
+              <div
+                style={{
+                  color: !isNotificationActive ? "#FE5621" : "white",
+                  fontSize: "1.35rem",
+                  fontWeight: "600",
+                  letterSpacing: "-0.3px",
+                }}
+              >
+                Trò chuyện
+              </div>
+            </div>
+
+            {/* Notification Tab */}
+            <div
+              className="tab-button"
+              style={{
+                flex: 1,
+                height: "4.5vh",
+                background: isNotificationActive 
+                  ? "white" 
+                  : "transparent",
+                borderRadius: "0.9rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                cursor: "pointer",
+                boxShadow: isNotificationActive 
+                  ? "0 4px 12px rgba(0,0,0,0.15)" 
+                  : "none",
+              }}
+              onClick={handleNotificationClick}
+            >
+              <Bell 
+                size={16} 
+                color={isNotificationActive ? "#FE5621" : "white"} 
+                strokeWidth={2.5}
+              />
+              <div
+                style={{
+                  color: isNotificationActive ? "#FE5621" : "white",
+                  fontSize: "1.35rem",
+                  fontWeight: "600",
+                  letterSpacing: "-0.3px",
+                }}
+              >
+                Thông báo
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Scrollable Content */}
-      <div className="hide-scrollbar" style={{ flex: 1, overflowY: "auto", paddingBottom: "80px" }}>
+      <div 
+        className="hide-scrollbar" 
+        style={{ 
+          flex: 1, 
+          overflowY: "auto", 
+          paddingBottom: "80px",
+          paddingTop: "1rem",
+        }}
+      >
         <NotificationContent
           isNotificationActive={isNotificationActive}
           notifications={notifications}

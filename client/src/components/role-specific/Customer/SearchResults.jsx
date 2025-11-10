@@ -189,21 +189,35 @@ const SearchResults = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#FAFAFA', pb: 2 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#FAFAFA' }}>
       {/* ====== HEADER: SEARCH BAR ====== */}
       <Box
         sx={{
-          position: 'sticky',
+          position: 'fixed',
           top: 0,
+          left: 0,
+          right: 0,
           zIndex: 10,
-          backgroundColor: 'white',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-          pb: 1,
+          background: 'linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)',
+          boxShadow: '0 4px 16px rgba(254, 86, 33, 0.2)',
+          pb: 0.5,
         }}
       >
         {/* Search Bar */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 2 }}>
-          <IconButton onClick={() => navigate(-1)} sx={{ color: '#333' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2 }}>
+          <IconButton 
+            onClick={() => navigate(-1)} 
+            sx={{ 
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
             <ArrowBack />
           </IconButton>
           <Box
@@ -213,13 +227,14 @@ const SearchResults = () => {
               flex: 1,
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: '#F5F5F5',
+              backgroundColor: 'white',
               borderRadius: 3,
               px: 2,
-              py: 1,
+              py: 1.2,
+              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <Search sx={{ color: '#999', mr: 1 }} />
+            <Search sx={{ color: '#FE5621', mr: 1, fontSize: '2rem' }} />
             <input
               type="text"
               placeholder="Tìm kiếm quán ăn hoặc video..."
@@ -236,7 +251,17 @@ const SearchResults = () => {
               }}
             />
             {searchQuery && (
-              <IconButton size="small" onClick={handleClear}>
+              <IconButton 
+                size="small" 
+                onClick={handleClear}
+                sx={{
+                  color: '#999',
+                  '&:hover': {
+                    color: '#FE5621',
+                    backgroundColor: 'rgba(254, 86, 33, 0.1)',
+                  },
+                }}
+              >
                 <Clear sx={{ fontSize: '2rem' }} />
               </IconButton>
             )}
@@ -244,35 +269,71 @@ const SearchResults = () => {
         </Box>
 
         {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="fullWidth"
-          sx={{
-            borderBottom: 1,
-            borderColor: 'divider',
-            '& .MuiTab-root': {
-              fontSize: '1.4rem',
+        <Box sx={{ 
+          px: 2, 
+          pb: 1.5,
+          display: 'flex',
+          gap: 1.5,
+        }}>
+          <Box
+            onClick={() => handleTabChange(null, 0)}
+            sx={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              py: 1.2,
+              px: 2,
+              borderRadius: 2.5,
+              backgroundColor: activeTab === 0 ? 'white' : 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              color: activeTab === 0 ? '#FE5621' : 'white',
               fontWeight: 600,
-              textTransform: 'none',
-              fontFamily: 'Be Vietnam Pro',
-            },
-            '& .Mui-selected': {
-              color: '#F9704B !important',
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#F9704B',
-              height: 3,
-            },
-          }}
-        >
-          <Tab icon={<StorefrontOutlined />} iconPosition="start" label="Quán" />
-          <Tab icon={<VideoLibrary />} iconPosition="start" label="Video" />
-        </Tabs>
+              fontSize: '1.4rem',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: activeTab === 0 ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
+              '&:active': {
+                transform: 'scale(0.97)',
+              },
+            }}
+          >
+            <StorefrontOutlined sx={{ fontSize: '2rem' }} />
+            <span>Quán</span>
+          </Box>
+          <Box
+            onClick={() => handleTabChange(null, 1)}
+            sx={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              py: 1.2,
+              px: 2,
+              borderRadius: 2.5,
+              backgroundColor: activeTab === 1 ? 'white' : 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              color: activeTab === 1 ? '#FE5621' : 'white',
+              fontWeight: 600,
+              fontSize: '1.4rem',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: activeTab === 1 ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
+              '&:active': {
+                transform: 'scale(0.97)',
+              },
+            }}
+          >
+            <VideoLibrary sx={{ fontSize: '2rem' }} />
+            <span>Video</span>
+          </Box>
+        </Box>
       </Box>
 
       {/* ====== CONTENT: KẾT QUẢ TÌM KIẾM ====== */}
-      <Container maxWidth="md" sx={{ mt: 2, px: 2 }}>
+      <Container maxWidth="md" sx={{ mt: '13rem', px: 2, pb: 2 }}>
         {/* Loading State */}
         {loading && renderLoadingSkeleton()}
 
