@@ -1,18 +1,19 @@
 import { useState, useEffect, useMemo } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, ChevronRight, UtensilsCrossed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
-import SubmitButton from "../../components/shared/SubmitButton";
 import { useCart } from "../../hooks/useCart";
 
 export function CartPage({ isMobile, isTablet, onCheckout }) {
   const navigate = useNavigate();
   const { cartItems: initialCartItems, loading, refreshCart } = useCart();
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const [cartItems, setCartItems] = useState(initialCartItems || []);
 
   // Đồng bộ lại cartItems khi dữ liệu hook cập nhật
   useEffect(() => {
-    setCartItems(initialCartItems);
+    if (initialCartItems) {
+      setCartItems(initialCartItems);
+    }
   }, [initialCartItems]);
 
   const formatPrice = (price) =>
@@ -23,6 +24,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
 
   // ✅ Nhóm sản phẩm theo shop
   const groupedCarts = useMemo(() => {
+    if (!cartItems || !Array.isArray(cartItems)) return {};
     return cartItems.reduce((groups, item) => {
       const sid = item.shop_id;
       if (!groups[sid])
@@ -35,318 +37,492 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
     }, {});
   }, [cartItems]);
 
-  const updateQuantity = async (itemId, delta) => {
-    const item = cartItems.find((i) => i.id === itemId);
-    if (!item) return;
-    const newQty = Math.max(1, item.quantity + delta);
+  // ✅ Hàm xử lý khi click vào shop card
+  const handleShopClick = (shopId, group) => {
+    const storeTotal = group.items.reduce(
+      (sum, i) => sum + Number(i.line_total || i.unit_price * i.quantity),
+      0
+    );
 
-    try {
-      const res = await fetch("http://localhost:5000/api/cart/items", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, quantity: newQty }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCartItems((prev) =>
-          prev.map((i) =>
-            i.id === itemId
-              ? { ...i, quantity: newQty, line_total: newQty * i.unit_price }
-              : i
-          )
-        );
-        refreshCart();
-      }
-    } catch (err) {
-      console.error("❌ Lỗi khi cập nhật số lượng:", err);
-    }
+    const checkoutData = {
+      cartItems: group.items,
+      total: storeTotal,
+      shop_id: shopId,
+      shop_name: group.shop_name,
+    };
+
+    localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+    navigate("/customer/confirm-order", { state: checkoutData });
   };
 
-  const removeItem = async (itemId) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/cart/items", {
-        method: "DELETE",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCartItems((prev) => prev.filter((i) => i.id !== itemId));
-        refreshCart();
+  // Keyframe animations
+  const styles = `
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
       }
-    } catch (err) {
-      console.error("❌ Lỗi khi xóa item:", err);
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-  };
+
+    @keyframes shimmer {
+      0% {
+        background-position: -1000px 0;
+      }
+      100% {
+        background-position: 1000px 0;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.8;
+      }
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .cart-card {
+      animation: slideInUp 0.5s ease-out;
+    }
+
+    .shimmer-loading {
+      background: linear-gradient(
+        90deg,
+        #f0f0f0 25%,
+        #e0e0e0 50%,
+        #f0f0f0 75%
+      );
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite;
+    }
+  `;
 
   if (loading)
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "1.25rem",
-          color: "#555",
-        }}
-      >
-        Đang tải giỏ hàng...
-      </div>
+      <>
+        <style>{styles}</style>
+        <div
+          style={{
+            height: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "linear-gradient(135deg, #FFF5F5 0%, #FFF8E1 100%)",
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <div
+              className="shimmer-loading"
+              style={{
+                width: "80px",
+                height: "80px",
+                borderRadius: "50%",
+                margin: "0 auto 1rem",
+              }}
+            />
+            <p style={{ fontSize: "1.1rem", color: "#636E72", fontWeight: 500 }}>
+              Đang tải giỏ hàng...
+            </p>
+          </div>
+        </div>
+      </>
     );
 
   return (
-    <div style={{ width: "100%", minHeight: "100vh", background: "#f7f7f7" }}>
-      {/* Header */}
+    <>
+      <style>{styles}</style>
       <div
         style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          background: "#fff",
-          padding: "1rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
-          fontSize: "1.25rem",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          zIndex: 1100,
+          width: "100%",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #FFF5F5 0%, #FFF8E1 100%)",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <button
-          onClick={() => navigate(-1)}
+        {/* Floating Food Decorations */}
+        <div
           style={{
-            position: "absolute",
-            left: "1rem",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
+            position: "fixed",
+            top: "20%",
+            left: "5%",
+            fontSize: "3rem",
+            opacity: 0.05,
+            animation: "float 6s ease-in-out infinite",
+            pointerEvents: "none",
+            zIndex: 0,
           }}
         >
-          <BackArrow />
-        </button>
-        Giỏ hàng
-      </div>
+          🍕
+        </div>
+        <div
+          style={{
+            position: "fixed",
+            top: "60%",
+            right: "8%",
+            fontSize: "2.5rem",
+            opacity: 0.05,
+            animation: "float 5s ease-in-out infinite 1s",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        >
+          🍔
+        </div>
+        <div
+          style={{
+            position: "fixed",
+            top: "40%",
+            right: "15%",
+            fontSize: "2.8rem",
+            opacity: 0.05,
+            animation: "float 7s ease-in-out infinite 0.5s",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        >
+          🍜
+        </div>
 
-      {/* Nội dung */}
-      <div style={{ padding: "1rem", paddingTop: "5rem", paddingBottom: "8rem" }}>
-        {Object.keys(groupedCarts).length > 0 ? (
-          Object.entries(groupedCarts).map(([shopId, group]) => {
-            const storeTotal = group.items.reduce(
-              (sum, i) => sum + Number(i.line_total || i.unit_price * i.quantity),
-              0
-            );
+        {/* Header */}
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 50%, #FFA726 100%)",
+            padding: "1rem 1rem 1.2rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 800,
+            fontSize: "1.25rem",
+            boxShadow: "0 4px 20px rgba(254, 86, 33, 0.25)",
+            zIndex: 1100,
+            color: "#fff",
+            textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              position: "absolute",
+              left: "1rem",
+              background: "rgba(255, 255, 255, 0.2)",
+              border: "none",
+              cursor: "pointer",
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backdropFilter: "blur(10px)",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+              e.currentTarget.style.transform = "scale(1.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            <BackArrow style={{ color: "#fff" }} />
+          </button>
+          <ShoppingCart
+            size={22}
+            style={{ marginRight: "0.5rem" }}
+            strokeWidth={2.5}
+          />
+          Giỏ hàng
+        </div>
 
-            return (
-              <div key={shopId} style={{ marginBottom: "2rem" }}>
-                <h2
+        {/* Nội dung */}
+        <div
+          style={{
+            padding: "1.5rem 1rem",
+            paddingTop: "5.5rem",
+            paddingBottom: "2rem",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {Object.keys(groupedCarts).length > 0 ? (
+            Object.entries(groupedCarts).map(([shopId, group], index) => {
+              const storeTotal = group.items.reduce(
+                (sum, i) => sum + Number(i.line_total || i.unit_price * i.quantity),
+                0
+              );
+              const totalItems = group.items.reduce((sum, i) => sum + i.quantity, 0);
+              const shopAvatar = group.items[0]?.shop_avatar || "/default-avatar.png";
+
+              return (
+                <div
+                  key={shopId}
+                  className="cart-card"
+                  onClick={() => handleShopClick(shopId, group)}
                   style={{
-                    fontWeight: 700,
-                    fontSize: "1.1rem",
-                    marginBottom: "1rem",
-                    color: "#333",
+                    background: "linear-gradient(135deg, #ffffff 0%, #fffbf8 100%)",
+                    borderRadius: "1.25rem",
+                    padding: "1.5rem",
+                    marginBottom: "1.25rem",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    cursor: "pointer",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    position: "relative",
+                    animationDelay: `${index * 0.05}s`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.02)";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
                   }}
                 >
-                  🏪 {group.shop_name}
-                </h2>
-
-                {/* Danh sách món */}
-                {group.items.map((item) => (
+                  {/* Badge số lượng món */}
                   <div
-                    key={item.id}
                     style={{
-                      background: "#fff",
-                      borderRadius: "1rem",
-                      padding: "1rem",
-                      marginBottom: "1rem",
+                      position: "absolute",
+                      top: "-8px",
+                      right: "1.5rem",
+                      background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
+                      color: "#fff",
+                      padding: "0.35rem 0.75rem",
+                      borderRadius: "20px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      boxShadow: "0 2px 8px rgba(254, 86, 33, 0.3)",
                       display: "flex",
-                      alignItems: "flex-start",
-                      gap: "1rem",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      alignItems: "center",
+                      gap: "0.25rem",
                     }}
                   >
-                    <img
-                      src={item.product_image || "/default-food.jpg"}
-                      alt={item.product_name}
+                    <UtensilsCrossed size={12} />
+                    {totalItems} món
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    {/* Ảnh shop với gradient background */}
+                    <div
                       style={{
-                        width: "90px",
-                        height: "90px",
-                        borderRadius: "12px",
-                        objectFit: "cover",
+                        position: "relative",
                         flexShrink: 0,
                       }}
-                    />
+                    >
+                      {/* Gradient background circle */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
+                          width: "85px",
+                          height: "85px",
+                          borderRadius: "16px",
+                          background: "linear-gradient(135deg, rgba(254, 86, 33, 0.15) 0%, rgba(255, 167, 38, 0.15) 100%)",
+                          filter: "blur(8px)",
+                          zIndex: 0,
+                        }}
+                      />
+                      <img
+                        src={shopAvatar}
+                        alt={group.shop_name}
+                        style={{
+                          position: "relative",
+                          width: "70px",
+                          height: "70px",
+                          borderRadius: "12px",
+                          objectFit: "cover",
+                          display: "block",
+                          boxShadow: "0 6px 20px rgba(254, 86, 33, 0.3)",
+                          zIndex: 1,
+                        }}
+                        onError={(e) => {
+                          e.target.src = "/default-avatar.png";
+                        }}
+                      />
+                    </div>
 
-                    <div style={{ flex: 1 }}>
+                    {/* Thông tin shop */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <h3
                         style={{
                           margin: 0,
-                          fontSize: "1.1rem",
-                          fontWeight: 600,
-                          color: "#222",
+                          fontSize: "1.2rem",
+                          fontWeight: 800,
+                          background: "linear-gradient(135deg, #2D3436 0%, #636E72 100%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                          marginBottom: "0.5rem",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
-                        {item.product_name}
+                        {group.shop_name}
                       </h3>
-                      {item.product_description && (
-                        <p
-                          style={{
-                            margin: "0.25rem 0 0.5rem",
-                            fontSize: "0.9rem",
-                            color: "#777",
-                          }}
-                        >
-                          {item.product_description}
-                        </p>
-                      )}
-
                       <div
                         style={{
                           display: "flex",
-                          justifyContent: "space-between",
                           alignItems: "center",
-                          marginTop: "0.5rem",
+                          gap: "0.5rem",
+                          flexWrap: "wrap",
                         }}
                       >
-                        <span
+                        <p
                           style={{
-                            color: "#ee4d2d",
+                            margin: 0,
+                            fontSize: "1.1rem",
                             fontWeight: 700,
-                            fontSize: "1rem",
+                            background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
                           }}
                         >
-                          {formatPrice(item.unit_price)}
-                        </span>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            background: "#f5f5f5",
-                            borderRadius: "8px",
-                            padding: "2px 6px",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <button
-                            onClick={() =>
-                              item.quantity <= 1
-                                ? removeItem(item.id)
-                                : updateQuantity(item.id, -1)
-                            }
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "6px",
-                              border: "none",
-                              background: "#fff",
-                              color: item.quantity <= 1 ? "#ef4444" : "#333",
-                              cursor: "pointer",
-                              fontSize: item.quantity <= 1 ? "1.2rem" : "1rem",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {item.quantity <= 1 ? "🗑️" : "−"}
-                          </button>
-                          <span
-                            style={{
-                              fontWeight: 600,
-                              fontSize: "1rem",
-                              minWidth: "24px",
-                              textAlign: "center",
-                            }}
-                          >
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "6px",
-                              border: "none",
-                              background: "#fff",
-                              color: "#333",
-                              cursor: "pointer",
-                              fontSize: "1rem",
-                              fontWeight: 600,
-                            }}
-                          >
-                            +
-                          </button>
-                        </div>
+                          {formatPrice(storeTotal)}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
 
-                {/* Tổng kết từng cửa hàng */}
+                    {/* Icon mũi tên với gradient */}
+                    <div
+                      style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        animation: "pulse 2s ease-in-out infinite",
+                      }}
+                    >
+                      <ChevronRight size={20} color="#fff" strokeWidth={3} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div
+              style={{
+                height: "75vh",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                padding: "2rem",
+              }}
+            >
+              {/* Gradient Circle Background */}
+              <div
+                style={{
+                  position: "relative",
+                  marginBottom: "2rem",
+                }}
+              >
                 <div
                   style={{
-                    background: "#fff",
-                    borderRadius: "1rem",
-                    padding: "1rem",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "180px",
+                    height: "180px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #FE5621 0%, #FFA726 100%)",
+                    opacity: 0.1,
+                    animation: "pulse 3s ease-in-out infinite",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "relative",
+                    padding: "2rem",
+                    background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
+                    borderRadius: "50%",
+                    display: "inline-flex",
+                    boxShadow: "0 8px 30px rgba(254, 86, 33, 0.25)",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontWeight: 700,
-                      fontSize: "1.1rem",
-                    }}
-                  >
-                    <span>Tổng cộng:</span>
-                    <span style={{ color: "#ee4d2d" }}>
-                      {formatPrice(storeTotal)}
-                    </span>
-                  </div>
-
-                  {/* ✅ Bổ sung localStorage khi navigate */}
-                  <SubmitButton
-                    isValid={group.items.length > 0}
-                    onClick={() => {
-                      const checkoutData = {
-                        cartItems: group.items,
-                        total: storeTotal,
-                        shop_id: shopId,
-                        shop_name: group.shop_name,
-                      };
-                      localStorage.setItem(
-                        "checkoutData",
-                        JSON.stringify(checkoutData)
-                      );
-                      navigate("/customer/confirm-order", { state: checkoutData });
-                    }}
-                    style={{ marginTop: "1rem" }}
-                  >
-                    Thanh toán cửa hàng này • {formatPrice(storeTotal)}
-                  </SubmitButton>
+                  <ShoppingCart size={64} color="#fff" strokeWidth={2} />
                 </div>
               </div>
-            );
-          })
-        ) : (
-          <div
-            style={{
-              height: "80vh",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#666",
-            }}
-          >
-            <ShoppingCart size={80} color="#ccc" />
-            <p>Giỏ hàng trống</p>
-          </div>
-        )}
+
+              {/* Text */}
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "1.5rem",
+                  fontWeight: 800,
+                  background: "linear-gradient(135deg, #2D3436 0%, #636E72 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Giỏ hàng trống
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "1rem",
+                  color: "#636E72",
+                  marginBottom: "2rem",
+                  maxWidth: "280px",
+                }}
+              >
+                Hãy thêm món ăn yêu thích vào giỏ hàng để bắt đầu đặt hàng nhé!
+              </p>
+
+              {/* Food Emojis Decoration */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  fontSize: "2rem",
+                  opacity: 0.3,
+                }}
+              >
+                <span style={{ animation: "float 3s ease-in-out infinite" }}>🍕</span>
+                <span style={{ animation: "float 3s ease-in-out infinite 0.3s" }}>
+                  🍔
+                </span>
+                <span style={{ animation: "float 3s ease-in-out infinite 0.6s" }}>
+                  🍜
+                </span>
+                <span style={{ animation: "float 3s ease-in-out infinite 0.9s" }}>
+                  🍰
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

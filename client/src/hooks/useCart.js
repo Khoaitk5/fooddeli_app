@@ -28,8 +28,9 @@ export const useCart = () => {
         // Chuẩn hoá data
         const normalizedItems = data.data.items.map((item) => ({
   id: item.id || item.cart_item_id,
-  shop_id: item.shop_id,              // ✅ thêm
-  shop_name: item.shop_name,          // ✅ thêm
+  shop_id: item.shop_id,
+  shop_name: item.shop_name,
+  shop_avatar: item.shop_avatar,      // ✅ thêm shop_avatar
   product_name: item.product_name,
   product_description: item.product_description,
   product_image: item.product_image,
