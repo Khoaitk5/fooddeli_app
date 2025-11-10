@@ -15,6 +15,9 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { useShipper } from "@/hooks/useShipper";
 import Map4DView from "@/components/Shipper/Map4DView.jsx";
 
+// --- keys cho bộ nhớ cục bộ ---
+const ACK_KEY = "shipperAckOrderIds"; // các ID đã xác nhận (đã xem)
+
 // helper nhỏ
 const money = (v) => Number(v || 0).toLocaleString("vi-VN");
 
@@ -32,31 +35,80 @@ const formatDuration = (sec) => {
   return m === 0 ? `${r}s` : `${m}p${r ? ` ${r}s` : ""}`;
 };
 
+// 🔔 âm thanh "ding" ngắn bằng WebAudio (không cần file ngoài)
+const playPing = () => {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  } catch {}
+};
+
+// 📳 rung máy (nếu hỗ trợ)
+const vibrate = (pattern) => {
+  if (navigator.vibrate) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {}
+  }
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const { isOnline, setIsOnline, resetAvailableOrders } = useShipper();
   const online = isOnline;
 
-  // Popup đơn giản
- const [showIncomingOrder, setShowIncomingOrder] = React.useState(false);
- const [countdown, setCountdown] = React.useState(28);
- const [incomingQueue, setIncomingQueue] = React.useState([]); // array các đơn mới
- const activeOrder = incomingQueue[0] || null;                 // đơn đang hiện
- const seenRef = React.useRef(new Set()); // tránh trùng lặp id trong phiên
- // Home.jsx (đầu component)
-const [mountMap, setMountMap] = React.useState(false);
+  // Hàng đợi các đơn mới (để đếm & điều hướng)
+  const [incomingQueue, setIncomingQueue] = React.useState([]);
 
-React.useEffect(() => {
-  const id = requestAnimationFrame(() => setMountMap(true));
-  return () => cancelAnimationFrame(id);
-}, []);
+  // Set này chỉ để tránh thêm trùng lặp trong cùng phiên render (không persist)
+  const seenRef = React.useRef(new Set());
 
+  // Set các ID đã xem (persist qua sessionStorage)
+  const ackRef = React.useRef(new Set());
+  React.useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ACK_KEY);
+      if (raw) ackRef.current = new Set(JSON.parse(raw));
+    } catch {}
+  }, []);
 
-  const timersRef = React.useRef({
-    countdown: null,
-  });
+  // Mount map trễ 1 frame để tránh layout shift
+  const [mountMap, setMountMap] = React.useState(false);
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setMountMap(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
-  // Lấy 1 đơn mới nhất từ DB để hiển thị trong popup
+  // --- ĐO VỊ TRÍ banner để đặt thông báo ngay bên dưới ---
+  const bannerRef = React.useRef(null);
+  const [bannerBottom, setBannerBottom] = React.useState(0);
+
+  const updateBannerBottom = React.useCallback(() => {
+    if (!bannerRef.current) return;
+    const rect = bannerRef.current.getBoundingClientRect();
+    // thêm khoảng cách 12px dưới banner
+    setBannerBottom(rect.bottom + 12);
+  }, []);
+
+  React.useEffect(() => {
+    updateBannerBottom();
+    window.addEventListener("resize", updateBannerBottom);
+    return () => window.removeEventListener("resize", updateBannerBottom);
+  }, [updateBannerBottom]);
+
+  // Lấy đơn gần shipper
   const fetchIncomingOrders = React.useCallback(async () => {
     try {
       // 1) shipper_id
@@ -79,161 +131,135 @@ React.useEffect(() => {
       });
 
       // 3) gọi API nearby (lọc cooking trong bán kính 3km)
-      const res = await fetch(
-        "http://localhost:5000/api/shipper/orders/nearby",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            shipper_id: shipperId,
-            lat: coords.latitude,
-            lon: coords.longitude,
-            radius_km: 3,
-            status: "cooking",
-            limit: 5,
-            offset: 0,
-          }),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/shipper/orders/nearby", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          shipper_id: shipperId,
+          lat: coords.latitude,
+          lon: coords.longitude,
+          radius_km: 3,
+          status: "cooking",
+          limit: 5,
+          offset: 0,
+        }),
+      });
+
       const json = await res.json();
       if (!res.ok || json.success === false)
         throw new Error(json.message || "Không lấy được đơn");
 
-           const list = (json.data || json.items || []).map((it) => {
-       const o = it.order || {};
-       const cod = o.payment_method === "COD" ? Number(o.total_price || 0) : 0;
-       return {
-         id: o.order_id,
-         distanceText: formatDistance(it.distance_km),
-         durationText: formatDuration(it.duration_sec),
-         cod,
-      };
-     });
+      const list = (json.data || json.items || []).map((it) => {
+        const o = it.order || {};
+        const cod = o.payment_method === "COD" ? Number(o.total_price || 0) : 0;
+        return {
+          id: o.order_id,
+          distanceText: formatDistance(it.distance_km),
+          durationText: formatDuration(it.duration_sec),
+          cod,
+        };
+      });
 
-     // nhét vào queue nếu chưa thấy id đó
-     setIncomingQueue((q) => {
-       const next = [...q];
-       for (const item of list) {
-         if (!item.id) continue;
-         if (seenRef.current.has(item.id)) continue;
-         seenRef.current.add(item.id);
-         next.push(item);
-       }
-       return next;
-     });
-     setShowIncomingOrder(true);
+      // Thêm vào queue nếu là đơn MỚI (không nằm trong ackRef & chưa có trong seenRef)
+      let added = 0;
+      setIncomingQueue((q) => {
+        const next = [...q];
+        for (const item of list) {
+          if (!item.id) continue;
+          if (ackRef.current.has(item.id)) continue; // đã xem -> bỏ
+          if (seenRef.current.has(item.id)) continue; // đã add trong phiên -> bỏ
+          seenRef.current.add(item.id);
+          next.push(item);
+          added++;
+        }
+        return next;
+      });
+
+      // Có đơn mới → phát âm thanh + rung
+      if (added > 0) {
+        playPing();
+        vibrate([70, 40, 70]);
+      }
     } catch (e) {
-      console.log("[fetchIncomingOrder] error:", e.message);
-      // Không clear queue ở đây để không làm mất popup hiện tại
+      console.log("[fetchIncomingOrder] error:", e?.message || e);
     }
   }, []);
 
-  // Khi popup mở -> fetch data thật
- React.useEffect(() => {
-   if (!online) return;
-   // fetch ngay lần đầu
-   fetchIncomingOrders();
-   const id = setInterval(fetchIncomingOrders, 10000);
-   return () => clearInterval(id);
- }, [online, fetchIncomingOrders]);
-
-// sau const fetchIncomingOrders = React.useCallback(...)
-
-const prevOnlineRef = React.useRef(online);
-
-React.useEffect(() => {
-  const wasOnline = prevOnlineRef.current;
-
-  // OFF -> ON
-  if (!wasOnline && online) {
-    // cho phép hiện lại đơn cũ
-    seenRef.current = new Set();
-
-    // dọn queue & popup & timer
-    setIncomingQueue([]);
-    setShowIncomingOrder(false);
-    if (timersRef.current.countdown) {
-      clearInterval(timersRef.current.countdown);
-      timersRef.current.countdown = null;
-    }
-
-    // gọi fetch ngay để bật popup nếu có đơn
-    fetchIncomingOrders();
-  }
-
-  // ON -> OFF
-  if (wasOnline && !online) {
-    setShowIncomingOrder(false);
-    setIncomingQueue([]);
-    if (timersRef.current.countdown) {
-      clearInterval(timersRef.current.countdown);
-      timersRef.current.countdown = null;
-    }
-  }
-
-  prevOnlineRef.current = online;
-}, [online, fetchIncomingOrders]);
-
-
-  // Đếm ngược tự đóng popup
+  // Chu kỳ fetch khi Online
   React.useEffect(() => {
-    if (!showIncomingOrder || !activeOrder) {
-      if (timersRef.current.countdown) {
-        clearInterval(timersRef.current.countdown);
-        timersRef.current.countdown = null;
-      }
-      return;
+    if (!online) return;
+    fetchIncomingOrders(); // gọi ngay lần đầu
+    const id = setInterval(fetchIncomingOrders, 10000);
+    return () => clearInterval(id);
+  }, [online, fetchIncomingOrders]);
+
+  // Reset queue khi bật/tắt Online
+  const prevOnlineRef = React.useRef(online);
+  React.useEffect(() => {
+    const wasOnline = prevOnlineRef.current;
+
+    // OFF -> ON: bắt đầu phiên mới, xoá danh sách ack cũ (tuỳ yêu cầu)
+    if (!wasOnline && online) {
+      seenRef.current = new Set();
+      ackRef.current = new Set();
+      try {
+        sessionStorage.removeItem(ACK_KEY);
+      } catch {}
+      setIncomingQueue([]);
+      fetchIncomingOrders();
     }
-    setCountdown(28);
-    timersRef.current.countdown = setInterval(() => {
-      setCountdown((s) => {
-         if (s <= 1) {
-   if (timersRef.current.countdown) {
-     clearInterval(timersRef.current.countdown);
-     timersRef.current.countdown = null;
-   }
-   // shift + quyết định hiển thị theo next length (tránh stale)
-   setIncomingQueue((prev) => {
-     const next = prev.slice(1);
-     if (next.length === 0) setShowIncomingOrder(false);
-     return next;
-   });
-   return 0;
- }
-        return s - 1;
-      });
-    }, 1000);
-    return () => {
-      if (timersRef.current.countdown) {
-        clearInterval(timersRef.current.countdown);
-        timersRef.current.countdown = null;
+
+    // ON -> OFF
+    if (wasOnline && !online) {
+      setIncomingQueue([]);
+      // không nhất thiết xoá ack; để giữ trạng thái đã xem khi bật lại
+    }
+
+    prevOnlineRef.current = online;
+  }, [online, fetchIncomingOrders]);
+
+  // Khi online thay đổi/render xong banner → đo lại vị trí
+  React.useEffect(() => {
+    const id = requestAnimationFrame(updateBannerBottom);
+    return () => cancelAnimationFrame(id);
+  }, [online, updateBannerBottom]);
+
+  // Khi click thông báo: đánh dấu đã xem & điều hướng
+  const handleOpenAvailable = React.useCallback(() => {
+    try {
+      const ids = incomingQueue.map((i) => i.id).filter(Boolean);
+      if (ids.length) {
+        for (const id of ids) ackRef.current.add(id);
+        sessionStorage.setItem(ACK_KEY, JSON.stringify(Array.from(ackRef.current)));
       }
-    };
-  }, [showIncomingOrder, activeOrder, incomingQueue.length]);
+    } catch {}
+    // xoá queue để ẩn thông báo ngay lập tức
+    setIncomingQueue([]);
+    resetAvailableOrders();
+    navigate("/shipper/available");
+  }, [incomingQueue, navigate, resetAvailableOrders]);
 
   return (
     <Box sx={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
       {/* Bản đồ full-screen */}
       <Box sx={{ position: "fixed", inset: 0, zIndex: 0 }}>
-  {mountMap && (
-    <Map4DView height="100vh" hideControls followUser />
-  )}
-</Box>
-
+        {mountMap && <Map4DView height="100vh" hideControls followUser />}
+      </Box>
 
       {/* UI nổi trên map */}
       <Box sx={{ position: "relative", zIndex: 1, px: 2.5, pt: 3, pb: 12 }}>
         <Fade in timeout={600}>
           <Paper
+            ref={bannerRef}
             elevation={online ? 8 : 2}
             sx={{
-              position: "fixed", // 👈 ghim cố định
-              top: "calc(env(safe-area-inset-top) + 12px)", // tránh tai thỏ iOS
+              position: "fixed",
+              top: "calc(env(safe-area-inset-top) + 12px)",
               left: "50%",
               transform: "translateX(-50%)",
-              width: "min(400px, calc(100% - 32px))", // maxWidth + chừa 2 bên
-              zIndex: 10, // nổi trên bản đồ
+              width: "min(400px, calc(100% - 32px))",
+              zIndex: 10,
               borderRadius: 4,
               p: 2.5,
               background: "rgba(255,255,255,0.9)",
@@ -243,16 +269,10 @@ React.useEffect(() => {
               backdropFilter: "blur(10px)",
               transition: "all 0.3s ease",
               transformOrigin: "top center",
-              ...(online
-                ? { boxShadow: "0 4px 12px rgba(34,197,94,0.2)" }
-                : {}),
+              ...(online ? { boxShadow: "0 4px 12px rgba(34,197,94,0.2)" } : {}),
             }}
           >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Stack direction="row" alignItems="center" spacing={2}>
                 <Box
                   sx={{
@@ -266,9 +286,7 @@ React.useEffect(() => {
                     alignItems: "center",
                     justifyContent: "center",
                     position: "relative",
-                    boxShadow: online
-                      ? "0 4px 12px rgba(34,197,94,0.2)"
-                      : "none",
+                    boxShadow: online ? "0 4px 12px rgba(34,197,94,0.2)" : "none",
                   }}
                 >
                   <PowerSettingsNewIcon
@@ -359,111 +377,54 @@ React.useEffect(() => {
         </Box>
       </Box>
 
-      {/* Popup đơn hàng mới (tối giản) */}
-      {online && showIncomingOrder && activeOrder && (
-        <Fade in={showIncomingOrder}>
+      {/* 🔔 Thông báo nổi nằm NGAY BÊN DƯỚI banner trạng thái */}
+      {online && incomingQueue.length > 0 && (
+        <Fade in>
           <Box
+            role="button"
+            aria-label={`Có ${incomingQueue.length} đơn hàng mới gần bạn`}
+            onClick={handleOpenAvailable}
             sx={{
               position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.5)",
+              left: "50%",
+              transform: "translateX(-50%)",
+              top: bannerBottom || 120, // fallback nếu chưa đo được
+              background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+              color: "#fff",
+              borderRadius: 999,
+              px: 2.5,
+              py: 1.5,
+              boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
+              cursor: "pointer",
+              zIndex: 9,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1300,
-              px: 2,
+              gap: 1,
+              transition: "all 0.25s ease",
+              "&:hover": {
+                transform: "translateX(-50%) scale(1.04)",
+                boxShadow: "0 12px 28px rgba(0,0,0,0.22)",
+              },
+              "@keyframes pulse": {
+                "0%": { transform: "translateX(-50%) scale(1)" },
+                "50%": { transform: "translateX(-50%) scale(1.03)" },
+                "100%": { transform: "translateX(-50%) scale(1)" },
+              },
+              animation: "pulse 2.2s ease-in-out infinite",
             }}
-            onClick={() => setShowIncomingOrder(false)}
           >
-            <Slide direction="up" in={showIncomingOrder} timeout={250}>
-              <Paper
-                onClick={(e) => e.stopPropagation()}
-                elevation={12}
-                sx={{ width: "100%", maxWidth: 360, borderRadius: 3, p: 2 }}
-              >
-                {/* Header ngắn gọn */}
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{ mb: 1 }}
-                >
-                  <Typography sx={{ fontWeight: 800, fontSize: 16 }}>
-                    Có đơn hàng mới
-                  </Typography>
-                  <Typography
-                    sx={{ fontSize: 13, color: "#6b7280", fontWeight: 600 }}
-                  >
-                    Đóng sau <b>{countdown}</b> giây
-                  </Typography>
-                </Stack>
-
-                {/* 3 dòng thông tin chính */}
-                <Stack spacing={1.25} sx={{ mb: 1.5 }}>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
-                      Khoảng cách
-                    </Typography>
-                    <Typography sx={{ fontWeight: 800 }}>
-                      {activeOrder.distanceText}
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
-                      Thời gian
-                    </Typography>
-                    <Typography sx={{ fontWeight: 800 }}>
-                      {activeOrder.durationText}
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
-                      Thu hộ
-                    </Typography>
-                    <Typography sx={{ fontWeight: 900, color: "#16a34a" }}>
-                      {money(activeOrder.cod)}đ
-                    </Typography>
-                  </Stack>
-                </Stack>
-
-                {/* Action */}
-                <Stack direction="row" spacing={1}>
-                   <Button
-   variant="outlined"
-   onClick={() => {
-     setIncomingQueue((prev) => {
-       const next = prev.slice(1);
-       if (next.length === 0) setShowIncomingOrder(false);
-       return next;
-     });
-   }}
-   sx={{ flex: 1, textTransform: "none" }}
- >
-                    Để sau
-                  </Button>
-                  <Button
-                    onClick={() => {
-                     // nhận: đóng queue & đi xem danh sách
-                     setIncomingQueue([]);
-                    setShowIncomingOrder(false);
-                     resetAvailableOrders();
-                    navigate("/shipper/available");
-                    }}
-                    sx={{
-                      flex: 1,
-                      textTransform: "none",
-                      background: "linear-gradient(135deg,#ff6b35,#ff5722)",
-                      color: "#fff",
-                      "&:hover": {
-                        background: "linear-gradient(135deg,#ff5722,#f4511e)",
-                      },
-                    }}
-                  >
-                    Xem chi tiết
-                  </Button>
-                </Stack>
-              </Paper>
-            </Slide>
+            <Box
+              sx={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                backgroundColor: "#fff",
+                mr: 1,
+              }}
+            />
+            <Typography sx={{ fontWeight: 700 }}>
+              Có <b>{incomingQueue.length}</b> đơn hàng mới gần bạn — bấm để xem
+            </Typography>
           </Box>
         </Fade>
       )}
