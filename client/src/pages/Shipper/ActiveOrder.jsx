@@ -1,32 +1,32 @@
-import React from 'react';
-import { Box, Stack, Typography, Chip, Paper, Fade } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useShipper } from '@/hooks/useShipper';
-import LocalMallIcon from '@mui/icons-material/LocalMall';
-import PlaceIcon from '@mui/icons-material/Place';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ScaleIcon from '@mui/icons-material/Scale';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import React from "react";
+import { Box, Stack, Typography, Chip, Paper, Fade } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useShipper } from "@/hooks/useShipper";
+import LocalMallIcon from "@mui/icons-material/LocalMall";
+import PlaceIcon from "@mui/icons-material/Place";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import ScaleIcon from "@mui/icons-material/Scale";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 
 // ---------------------- helpers ----------------------
-const money = (v) => (Number(v || 0)).toLocaleString();
+const money = (v) => Number(v || 0).toLocaleString();
 
 // format hiển thị
 const formatDistance = (km) => {
-  if (km == null) return '-';
+  if (km == null) return "-";
   const v = Number(km);
   return v < 1 ? `${Math.round(v * 1000)}m` : `${v.toFixed(3)}km`;
 };
 const formatDuration = (sec) => {
-  if (sec == null) return '-';
+  if (sec == null) return "-";
   const s = Math.max(0, Math.round(Number(sec)));
   const m = Math.floor(s / 60);
   const r = s % 60;
   if (m === 0) return `${r} giây`;
-  return `${m} phút${r ? ` ${r} giây` : ''}`;
+  return `${m} phút${r ? ` ${r} giây` : ""}`;
 };
 
 const mapEnrichedToCard = (item) => {
@@ -40,7 +40,7 @@ const mapEnrichedToCard = (item) => {
   const earnRaw =
     item.shipper_earn ??
     o.shipper_earn ??
-    (Number(o.delivery_fee || 0) * Number(o.shipper_commission_rate || 0.15));
+    Number(o.delivery_fee || 0) * Number(o.shipper_commission_rate || 0.15);
   const shipperEarn = Math.round(Number(earnRaw || 0));
 
   return {
@@ -64,13 +64,15 @@ const mapEnrichedToCard = (item) => {
   };
 };
 
-
 // ---------------------- SwipeOrderCard giữ nguyên UI, chỉ sửa chỗ order.id ----------------------
 const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
   const navigate = useNavigate();
   const [dragX, setDragX] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const startXRef = React.useRef(0);
+
+  const showLeft = isDragging && dragX < -10;
+  const showRight = isDragging && dragX > 10;
 
   const handlePointerDown = (e) => {
     const x = e.touches ? e.touches[0].clientX : e.clientX;
@@ -128,16 +130,18 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
             justifyContent: "space-between",
             zIndex: 0,
             pointerEvents: "none",
+            borderRadius: 5, // clip theo bo góc của card
+            overflow: "hidden", // ⬅️ ngăn lộ “vệt”
           }}
         >
           {/* Left indicator - Từ chối */}
           <Box
             sx={{
+              display: showLeft ? "flex" : "none",
               width: 80,
               height: 80,
               borderRadius: "50%",
               background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               opacity: dragX < -30 ? Math.min(1, Math.abs(dragX) / 100) : 0,
@@ -155,11 +159,11 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
           {/* Right indicator - Chấp nhận */}
           <Box
             sx={{
+              display: showRight ? "flex" : "none",
               width: 80,
               height: 80,
               borderRadius: "50%",
               background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               opacity: dragX > 30 ? Math.min(1, dragX / 100) : 0,
@@ -183,7 +187,7 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
             borderRadius: 5,
             overflow: "hidden",
             position: "relative",
-            zIndex: 1,
+            zIndex: 2,
             background: "#fff",
             boxShadow:
               "0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)",
@@ -288,23 +292,23 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
                 </Stack>
                 <Stack direction="row" spacing={1}>
                   <Chip
-  label={`+${money(order.shipperEarn)}đ`}
-  sx={{
-    background: "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
-    color: "#166534",
-    fontWeight: 800,
-    height: 32,
-    borderRadius: 2,
-    boxShadow: "0 2px 8px rgba(34,197,94,0.2)",
-    minWidth: 96,               // 👉 rộng tối thiểu
-    "& .MuiChip-label": {
-      px: 1.5,                  // 👉 tăng khoảng đệm ngang
-      fontSize: 14,             // (tùy) chữ to hơn
-      lineHeight: "32px",       // canh giữa theo chiều cao
-    },
-  }}
-/>
-
+                    label={`+${money(order.shipperEarn)}đ`}
+                    sx={{
+                      background:
+                        "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
+                      color: "#166534",
+                      fontWeight: 800,
+                      height: 32,
+                      borderRadius: 2,
+                      boxShadow: "0 2px 8px rgba(34,197,94,0.2)",
+                      minWidth: 96, // 👉 rộng tối thiểu
+                      "& .MuiChip-label": {
+                        px: 1.5, // 👉 tăng khoảng đệm ngang
+                        fontSize: 14, // (tùy) chữ to hơn
+                        lineHeight: "32px", // canh giữa theo chiều cao
+                      },
+                    }}
+                  />
                 </Stack>
               </Stack>
             </Box>
@@ -555,8 +559,7 @@ const SwipeOrderCard = ({ order, onAccepted, onRejected }) => {
                       fontWeight: 700,
                       mt: 0.5,
                     }}
-                  >
-                  </Typography>
+                  ></Typography>
                 </Box>
               </Box>
             </Box>
@@ -572,7 +575,7 @@ const ActiveOrder = () => {
   const { availableOrders, setAvailableOrders, setCurrentOrder } = useShipper();
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState('');
+  const [error, setError] = React.useState("");
   const [refreshTick, setRefreshTick] = React.useState(0);
 
   // fetch dữ liệu thật (lặp lại khi ấn "Quét lại")
@@ -607,7 +610,8 @@ const ActiveOrder = () => {
         let coords;
         try {
           coords = await getPosition();
-        } catch (e) {
+          // eslint-disable-next-line no-unused-vars
+        } catch (err) {
           throw new Error("Không lấy được vị trí hiện tại");
         }
 
@@ -639,14 +643,16 @@ const ActiveOrder = () => {
         const cards = enrichedItems.map(mapEnrichedToCard);
         if (!abort) setAvailableOrders(cards);
       } catch (e) {
-        if (!abort) setError(e.message || 'Lỗi tải dữ liệu');
+        if (!abort) setError(e.message || "Lỗi tải dữ liệu");
       } finally {
         if (!abort) setLoading(false);
       }
     };
     load();
 
-    return () => { abort = true; };
+    return () => {
+      abort = true;
+    };
   }, [setAvailableOrders, refreshTick]);
 
   const queue = availableOrders;
@@ -656,78 +662,150 @@ const ActiveOrder = () => {
   };
 
   const handleAccepted = async (order) => {
-  try {
-    const res = await fetch('http://localhost:5000/api/shipper/orders/accept', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ order_id: order.id }) // shipper lấy từ session
-    });
-    const json = await res.json();
-    if (!res.ok || json.success === false) {
-      throw new Error(json.message || 'Nhận đơn thất bại');
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/shipper/orders/accept",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ order_id: order.id }), // shipper lấy từ session
+        }
+      );
+      const json = await res.json();
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message || "Nhận đơn thất bại");
+      }
+
+      // cập nhật state local
+      setCurrentOrder(order);
+      setAvailableOrders((q) => q.filter((o) => o.id !== order.id));
+
+      // điều hướng
+      navigate("/shipper/delivering");
+    } catch (err) {
+      alert(err.message || "Không thể nhận đơn");
     }
-
-    // cập nhật state local
-    setCurrentOrder(order);
-    setAvailableOrders((q) => q.filter((o) => o.id !== order.id));
-
-    // điều hướng
-    navigate('/shipper/delivering');
-  } catch (err) {
-    alert(err.message || 'Không thể nhận đơn');
-  }
-};
-
-
+  };
 
   // UI loading / error
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Typography>Đang tải đơn hàng…</Typography>
       </Box>
     );
   }
   if (error) {
     return (
-      <Box sx={{ minHeight: '100vh', display:'flex', alignItems:'center', justifyContent:'center', p:2, textAlign:'center' }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 2,
+          textAlign: "center",
+        }}
+      >
         <Typography color="error">Lỗi: {error}</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #fff5f2 0%, #f0f9ff 50%, #fef3c7 100%)', pb: 12 }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, #fff5f2 0%, #f0f9ff 50%, #fef3c7 100%)",
+        pb: 12,
+      }}
+    >
       {/* Header */}
-      <Box sx={{
-        background: 'linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)',
-        position: 'relative', overflow: 'hidden',
-        '&::before': {
-          content: '""', position: 'absolute', top: 0, right: 0, width: 300, height: 300,
-          borderRadius: '50%', background: 'rgba(255,255,255,0.1)', transform: 'translate(30%, -30%)'
-        }
-      }}>
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
+          position: "relative",
+          overflow: "hidden",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: 300,
+            height: 300,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.1)",
+            transform: "translate(30%, -30%)",
+          },
+        }}
+      >
         <Fade in timeout={600}>
-          <Box sx={{
-            maxWidth: 480, mx: 'auto', borderBottomLeftRadius: 32, borderBottomRightRadius: 32,
-            color: '#fff', px: 3, pt: 3, pb: 3, boxShadow: '0 12px 32px rgba(0,0,0,0.15)', position: 'relative', zIndex: 1
-          }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Box
+            sx={{
+              maxWidth: 480,
+              mx: "auto",
+              borderBottomLeftRadius: 32,
+              borderBottomRightRadius: 32,
+              color: "#fff",
+              px: 3,
+              pt: 3,
+              pb: 3,
+              boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
               <Box>
-                <Typography sx={{ fontSize: 15, opacity: 0.9, fontWeight: 500, mb: 0.5, letterSpacing: '0.5px' }}>
+                <Typography
+                  sx={{
+                    fontSize: 15,
+                    opacity: 0.9,
+                    fontWeight: 500,
+                    mb: 0.5,
+                    letterSpacing: "0.5px",
+                  }}
+                >
                   Xin chào 👋
                 </Typography>
-                <Typography sx={{ fontSize: 24, fontWeight: 800, letterSpacing: '0.5px' }}>
+                <Typography
+                  sx={{ fontSize: 24, fontWeight: 800, letterSpacing: "0.5px" }}
+                >
                   Đơn hàng khả dụng
                 </Typography>
               </Box>
-              <Box sx={{
-                background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', borderRadius: 3, px: 2.5, py: 1.5,
-                border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-              }}>
-                <Typography sx={{ fontSize: 12, opacity: 0.9, fontWeight: 500, mb: 0.25 }}>Còn lại</Typography>
-                <Typography sx={{ fontSize: 22, fontWeight: 800, letterSpacing: '1px' }}>
+              <Box
+                sx={{
+                  background: "rgba(255,255,255,0.2)",
+                  backdropFilter: "blur(10px)",
+                  borderRadius: 3,
+                  px: 2.5,
+                  py: 1.5,
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
+              >
+                <Typography
+                  sx={{ fontSize: 12, opacity: 0.9, fontWeight: 500, mb: 0.25 }}
+                >
+                  Còn lại
+                </Typography>
+                <Typography
+                  sx={{ fontSize: 22, fontWeight: 800, letterSpacing: "1px" }}
+                >
                   {queue.length} đơn
                 </Typography>
               </Box>
@@ -737,39 +815,80 @@ const ActiveOrder = () => {
       </Box>
 
       {/* Content */}
-      <Box sx={{ mt: -4, position: 'relative', zIndex: 2 }}>
+      <Box sx={{ mt: -4, position: "relative", zIndex: 2 }}>
         {queue.length > 0 ? (
-          <Box sx={{ mt: 6 }}>
-            <SwipeOrderCard order={queue[0]} onRejected={handleRejected} onAccepted={handleAccepted} />
+          <Box sx={{ mt: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+            {queue.map((order, idx) => (
+              <SwipeOrderCard
+                key={order.id || idx}
+                order={order}
+                onRejected={handleRejected}
+                onAccepted={handleAccepted}
+              />
+            ))}
           </Box>
         ) : (
           <Fade in timeout={600}>
-            <Box sx={{ maxWidth: 400, mx: 'auto', mt: 12, px: 3, textAlign: 'center' }}>
-              <Box sx={{
-                width: 120, height: 120, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                mx: 'auto', mb: 3, fontSize: 48, boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
-              }}>
+            <Box
+              sx={{
+                maxWidth: 400,
+                mx: "auto",
+                mt: 12,
+                px: 3,
+                textAlign: "center",
+              }}
+            >
+              <Box
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: "50%",
+                  background:
+                    "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
+                  mb: 3,
+                  fontSize: 48,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                }}
+              >
                 📦
               </Box>
-              <Typography sx={{ fontSize: 20, fontWeight: 700, color: '#374151', mb: 1.5 }}>
+              <Typography
+                sx={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "#374151",
+                  mb: 1.5,
+                }}
+              >
                 Hiện chưa có đơn khả dụng
               </Typography>
-              <Typography sx={{ fontSize: 15, color: '#6b7280', lineHeight: 1.6, mb: 2 }}>
+              <Typography
+                sx={{ fontSize: 15, color: "#6b7280", lineHeight: 1.6, mb: 2 }}
+              >
                 Kéo để làm mới hoặc bấm nút dưới để quét lại.
               </Typography>
               <Box
-               onClick={() => setRefreshTick((n) => n + 1)}
-               sx={{
-                display: 'inline-block',
-                px: 3, py: 1.2, borderRadius: 2, cursor: 'pointer', userSelect: 'none',
-                background: 'linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)',
-                color: '#fff', fontWeight: 700, boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-             }}
-      >
-        🔄 Quét lại
-      </Box>
+                onClick={() => setRefreshTick((n) => n + 1)}
+                sx={{
+                  display: "inline-block",
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  cursor: "pointer",
+                  userSelect: "none",
+                  background:
+                    "linear-gradient(135deg, #ff6b35 0%, #ff5722 100%)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                }}
+              >
+                🔄 Quét lại
+              </Box>
             </Box>
           </Fade>
         )}

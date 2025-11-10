@@ -9,13 +9,6 @@ class GenericDao {
   }
 
 async create(data) {
-  // 🚫 Bỏ các khóa tự tăng (Postgres sẽ tự sinh)
-  const cleanData = { ...data };
-  delete cleanData.id;
-  delete cleanData.order_id;
-  delete cleanData.created_at;
-  delete cleanData.updated_at;
-
   const keys = Object.keys(cleanData);
   const values = Object.values(cleanData);
   const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");

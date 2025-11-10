@@ -121,36 +121,6 @@ const BottomActionBar = ({ active = 'home', onNavigate }) => {
               >
                 {t.label}
               </Typography>
-
-              {/* Badge notification cho Orders */}
-              {t.key === 'orders' && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 4,
-                    right: 'calc(50% - 24px)',
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                    border: '2px solid #fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: '#fff',
-                    boxShadow: '0 4px 12px rgba(34,197,94,0.4)',
-                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    '@keyframes pulse': {
-                      '0%, 100%': { opacity: 1 },
-                      '50%': { opacity: 0.7 },
-                    },
-                  }}
-                >
-                  3
-                </Box>
-              )}
             </Box>
           );
         })}

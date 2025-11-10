@@ -16,7 +16,7 @@ import { useShipper } from "@/hooks/useShipper";
 import Map4DView from "@/components/Shipper/Map4DView.jsx";
 
 // helper nhỏ
-const money = (v) => Number(v || 0).toLocaleString() + "đ";
+const money = (v) => Number(v || 0).toLocaleString("vi-VN");
 
 const formatDistance = (km) => {
   if (km == null || isNaN(km)) return "-";
@@ -38,25 +38,26 @@ const Home = () => {
   const online = isOnline;
 
   // Popup đơn giản
-  const [showIncomingOrder, setShowIncomingOrder] = React.useState(false);
-  const [countdown, setCountdown] = React.useState(28);
-  const [incomingOrder, setIncomingOrder] = React.useState(null); // {id, distance, duration, cod}
+ const [showIncomingOrder, setShowIncomingOrder] = React.useState(false);
+ const [countdown, setCountdown] = React.useState(28);
+ const [incomingQueue, setIncomingQueue] = React.useState([]); // array các đơn mới
+ const activeOrder = incomingQueue[0] || null;                 // đơn đang hiện
+ const seenRef = React.useRef(new Set()); // tránh trùng lặp id trong phiên
+ // Home.jsx (đầu component)
+const [mountMap, setMountMap] = React.useState(false);
+
+React.useEffect(() => {
+  const id = requestAnimationFrame(() => setMountMap(true));
+  return () => cancelAnimationFrame(id);
+}, []);
+
 
   const timersRef = React.useRef({
     countdown: null,
   });
 
-  // Bật online -> mở popup & reset countdown
-  React.useEffect(() => {
-    if (online) {
-      setShowIncomingOrder(true);
-    } else {
-      setShowIncomingOrder(false);
-    }
-  }, [online]);
-
   // Lấy 1 đơn mới nhất từ DB để hiển thị trong popup
-  const fetchIncomingOrder = React.useCallback(async () => {
+  const fetchIncomingOrders = React.useCallback(async () => {
     try {
       // 1) shipper_id
       const meRes = await fetch("http://localhost:5000/api/users/me", {
@@ -90,7 +91,7 @@ const Home = () => {
             lon: coords.longitude,
             radius_km: 3,
             status: "cooking",
-            limit: 1,
+            limit: 5,
             offset: 0,
           }),
         }
@@ -99,37 +100,85 @@ const Home = () => {
       if (!res.ok || json.success === false)
         throw new Error(json.message || "Không lấy được đơn");
 
-      const first = (json.data || json.items || [])[0];
-      if (!first) {
-        setIncomingOrder(null);
-        return;
-      }
+           const list = (json.data || json.items || []).map((it) => {
+       const o = it.order || {};
+       const cod = o.payment_method === "COD" ? Number(o.total_price || 0) : 0;
+       return {
+         id: o.order_id,
+         distanceText: formatDistance(it.distance_km),
+         durationText: formatDuration(it.duration_sec),
+         cod,
+      };
+     });
 
-      const o = first.order || {};
-      const cod = o.payment_method === "COD" ? Number(o.total_price || 0) : 0;
-
-      setIncomingOrder({
-        id: o.order_id,
-        distanceText: formatDistance(first.distance_km),
-        durationText: formatDuration(first.duration_sec),
-        cod,
-      });
+     // nhét vào queue nếu chưa thấy id đó
+     setIncomingQueue((q) => {
+       const next = [...q];
+       for (const item of list) {
+         if (!item.id) continue;
+         if (seenRef.current.has(item.id)) continue;
+         seenRef.current.add(item.id);
+         next.push(item);
+       }
+       return next;
+     });
+     setShowIncomingOrder(true);
     } catch (e) {
       console.log("[fetchIncomingOrder] error:", e.message);
-      setIncomingOrder(null);
+      // Không clear queue ở đây để không làm mất popup hiện tại
     }
   }, []);
 
   // Khi popup mở -> fetch data thật
-  React.useEffect(() => {
-    if (online && showIncomingOrder) {
-      fetchIncomingOrder();
+ React.useEffect(() => {
+   if (!online) return;
+   // fetch ngay lần đầu
+   fetchIncomingOrders();
+   const id = setInterval(fetchIncomingOrders, 10000);
+   return () => clearInterval(id);
+ }, [online, fetchIncomingOrders]);
+
+// sau const fetchIncomingOrders = React.useCallback(...)
+
+const prevOnlineRef = React.useRef(online);
+
+React.useEffect(() => {
+  const wasOnline = prevOnlineRef.current;
+
+  // OFF -> ON
+  if (!wasOnline && online) {
+    // cho phép hiện lại đơn cũ
+    seenRef.current = new Set();
+
+    // dọn queue & popup & timer
+    setIncomingQueue([]);
+    setShowIncomingOrder(false);
+    if (timersRef.current.countdown) {
+      clearInterval(timersRef.current.countdown);
+      timersRef.current.countdown = null;
     }
-  }, [online, showIncomingOrder, fetchIncomingOrder]);
+
+    // gọi fetch ngay để bật popup nếu có đơn
+    fetchIncomingOrders();
+  }
+
+  // ON -> OFF
+  if (wasOnline && !online) {
+    setShowIncomingOrder(false);
+    setIncomingQueue([]);
+    if (timersRef.current.countdown) {
+      clearInterval(timersRef.current.countdown);
+      timersRef.current.countdown = null;
+    }
+  }
+
+  prevOnlineRef.current = online;
+}, [online, fetchIncomingOrders]);
+
 
   // Đếm ngược tự đóng popup
   React.useEffect(() => {
-    if (!showIncomingOrder) {
+    if (!showIncomingOrder || !activeOrder) {
       if (timersRef.current.countdown) {
         clearInterval(timersRef.current.countdown);
         timersRef.current.countdown = null;
@@ -139,14 +188,19 @@ const Home = () => {
     setCountdown(28);
     timersRef.current.countdown = setInterval(() => {
       setCountdown((s) => {
-        if (s <= 1) {
-          if (timersRef.current.countdown) {
-            clearInterval(timersRef.current.countdown);
-            timersRef.current.countdown = null;
-          }
-          setShowIncomingOrder(false);
-          return 0;
-        }
+         if (s <= 1) {
+   if (timersRef.current.countdown) {
+     clearInterval(timersRef.current.countdown);
+     timersRef.current.countdown = null;
+   }
+   // shift + quyết định hiển thị theo next length (tránh stale)
+   setIncomingQueue((prev) => {
+     const next = prev.slice(1);
+     if (next.length === 0) setShowIncomingOrder(false);
+     return next;
+   });
+   return 0;
+ }
         return s - 1;
       });
     }, 1000);
@@ -156,14 +210,17 @@ const Home = () => {
         timersRef.current.countdown = null;
       }
     };
-  }, [showIncomingOrder]);
+  }, [showIncomingOrder, activeOrder, incomingQueue.length]);
 
   return (
     <Box sx={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
       {/* Bản đồ full-screen */}
       <Box sx={{ position: "fixed", inset: 0, zIndex: 0 }}>
-        <Map4DView height="100vh" hideControls followUser />
-      </Box>
+  {mountMap && (
+    <Map4DView height="100vh" hideControls followUser />
+  )}
+</Box>
+
 
       {/* UI nổi trên map */}
       <Box sx={{ position: "relative", zIndex: 1, px: 2.5, pt: 3, pb: 12 }}>
@@ -303,7 +360,7 @@ const Home = () => {
       </Box>
 
       {/* Popup đơn hàng mới (tối giản) */}
-      {online && showIncomingOrder && incomingOrder && (
+      {online && showIncomingOrder && activeOrder && (
         <Fade in={showIncomingOrder}>
           <Box
             sx={{
@@ -348,7 +405,7 @@ const Home = () => {
                       Khoảng cách
                     </Typography>
                     <Typography sx={{ fontWeight: 800 }}>
-                      {incomingOrder?.distanceText ?? "-"}
+                      {activeOrder.distanceText}
                     </Typography>
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
@@ -356,7 +413,7 @@ const Home = () => {
                       Thời gian
                     </Typography>
                     <Typography sx={{ fontWeight: 800 }}>
-                      {incomingOrder?.durationText ?? "-"}
+                      {activeOrder.durationText}
                     </Typography>
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
@@ -364,26 +421,33 @@ const Home = () => {
                       Thu hộ
                     </Typography>
                     <Typography sx={{ fontWeight: 900, color: "#16a34a" }}>
-                      {money(incomingOrder?.cod)}đ
+                      {money(activeOrder.cod)}đ
                     </Typography>
                   </Stack>
                 </Stack>
 
                 {/* Action */}
                 <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setShowIncomingOrder(false)}
-                    sx={{ flex: 1, textTransform: "none" }}
-                  >
+                   <Button
+   variant="outlined"
+   onClick={() => {
+     setIncomingQueue((prev) => {
+       const next = prev.slice(1);
+       if (next.length === 0) setShowIncomingOrder(false);
+       return next;
+     });
+   }}
+   sx={{ flex: 1, textTransform: "none" }}
+ >
                     Để sau
                   </Button>
                   <Button
                     onClick={() => {
-                      setShowIncomingOrder(false);
-                      // Làm mới danh sách & đi tới trang Available để xem chi tiết
-                      resetAvailableOrders();
-                      navigate("/shipper/available");
+                     // nhận: đóng queue & đi xem danh sách
+                     setIncomingQueue([]);
+                    setShowIncomingOrder(false);
+                     resetAvailableOrders();
+                    navigate("/shipper/available");
                     }}
                     sx={{
                       flex: 1,
