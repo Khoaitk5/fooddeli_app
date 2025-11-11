@@ -140,26 +140,17 @@ class ShopProfileDao extends GenericDao {
    * @returns {Promise<object[]>} - Danh sách shops bán loại món đó
    */
   async getShopsByFoodType(foodType) {
-    // Mapping từ UI categories sang product categories trong DB
-    const categoryMapping = {
-      "Đồ Ăn Nhanh": ["Thức ăn", "Combo"],
-      "Cơm - Xôi": ["Thức ăn"],
-      "Bún - Phở - Mỳ": ["Thức ăn"],
-      "Trà Sữa - Cà Phê": ["Đồ uống"],
-      "Tráng miệng": ["Tráng miệng"],
-    };
-
-    const categories = categoryMapping[foodType] || ["Thức ăn"];
-
     const query = `
       WITH filtered_shops AS (
-        -- ⚡ Lọc shops có product phù hợp
+        -- ⚡ Lọc shops có product thuộc đúng category trong bảng categories
         SELECT DISTINCT sp.id
         FROM shop_profiles sp
         INNER JOIN products p ON p.shop_id = sp.id
+        INNER JOIN product_category pc ON pc.product_id = p.product_id
+        INNER JOIN categories c ON c.category_id = pc.category_id
         WHERE sp.status = 'open'
-          AND p.category = ANY($1::varchar[])
           AND p.is_available = true
+          AND c.category_name = $1
       ),
       shop_metrics AS (
         -- ⚡ Tính metrics cho các shops đã lọc
@@ -195,7 +186,7 @@ class ShopProfileDao extends GenericDao {
       ORDER BY sp.created_at DESC
     `;
 
-    const result = await pool.query(query, [categories]);
+    const result = await pool.query(query, [foodType]);
     return result.rows.map(row => {
       const shop = new ShopProfile(row);
       shop.shop_image = row.shop_image;
