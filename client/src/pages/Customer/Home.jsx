@@ -28,6 +28,31 @@ const Home = () => {
   const videoRefs = useRef([]);
   const [activeTab, setActiveTab] = useState("suggestion");
   const [showMessagePopup, setShowMessagePopup] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEnd = (video) => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    if (isLeftSwipe) {
+      if (video.shop_id) {
+        navigate("/customer/restaurant-details", {
+          state: { shopId: video.shop_id },
+        });
+      }
+    }
+  };
 
   // Fetch videos based on user location
   useEffect(() => {
@@ -228,6 +253,9 @@ const Home = () => {
                 scrollSnapAlign: "start",
                 backgroundColor: "black",
               }}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={() => onTouchEnd(video)}
             >
               <video
                 ref={(el) => (videoRefs.current[index] = el)}
@@ -355,6 +383,16 @@ const Home = () => {
                     fontFamily: "Be Vietnam Pro",
                     textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
                     letterSpacing: "-0.3px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    if (video.shop_id) {
+                      navigate("/customer/restaurant-details", {
+                        state: { shopId: video.shop_id },
+                      });
+                    } else {
+                      console.warn("No shop_id found:", video);
+                    }
                   }}
                 >
                   {video.shop_name || "Nhà hàng"}
