@@ -91,7 +91,7 @@ export default function ConfirmOrder() {
               user_id: currentUser?.id,
               shop_id,
               items: cartItems.map((i) => ({
-                product_id: i.id,
+                product_id: i.product_id,
                 quantity: i.quantity,
                 unit_price: i.unit_price,
               })),
@@ -122,7 +122,7 @@ export default function ConfirmOrder() {
             shop_id,
             note,
             items: cartItems.map((i) => ({
-              product_id: i.id,
+              product_id: i.product_id,
               quantity: i.quantity,
               unit_price: i.unit_price,
             })),

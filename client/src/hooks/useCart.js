@@ -10,7 +10,7 @@ export const useCart = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Hàm fetch cart từ backend
+  // 🧩 Hàm fetch giỏ hàng từ backend
   const fetchCart = useCallback(async () => {
     try {
       setLoading(true);
@@ -25,23 +25,24 @@ export const useCart = () => {
       const data = await res.json();
 
       if (data.success && data.data?.items) {
-        // Chuẩn hoá data
+        // ✅ Chuẩn hoá dữ liệu từ backend
         const normalizedItems = data.data.items.map((item) => ({
-  id: item.id || item.cart_item_id,
-  shop_id: item.shop_id,
-  shop_name: item.shop_name,
-  shop_avatar: item.shop_avatar,      // ✅ thêm shop_avatar
-  product_name: item.product_name,
-  product_description: item.product_description,
-  product_image: item.product_image,
-  quantity: item.quantity,
-  unit_price: Number(item.unit_price),
-  line_total: Number(item.line_total),
-}));
+          id: item.id || item.cart_item_id,
+          product_id: item.product_id, // 🔥 THÊM TRƯỜNG NÀY để backend nhận đúng product_id
+          shop_id: item.shop_id,
+          shop_name: item.shop_name,
+          shop_avatar: item.shop_avatar,
+          product_name: item.product_name,
+          product_description: item.product_description,
+          product_image: item.product_image,
+          quantity: item.quantity,
+          unit_price: Number(item.unit_price),
+          line_total: Number(item.line_total),
+        }));
 
         setCartItems(normalizedItems);
-        
-        // Tính tổng số lượng items
+
+        // 🔢 Tính tổng số lượng items
         const totalCount = normalizedItems.reduce(
           (sum, item) => sum + item.quantity,
           0
@@ -61,12 +62,12 @@ export const useCart = () => {
     }
   }, []);
 
-  // Fetch cart khi component mount
+  // 🔁 Fetch cart khi component mount
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
-  // Hàm refresh cart (để gọi sau khi add/update/delete)
+  // ♻️ Hàm refresh cart (để gọi sau khi add/update/delete)
   const refreshCart = useCallback(() => {
     fetchCart();
   }, [fetchCart]);

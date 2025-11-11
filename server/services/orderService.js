@@ -104,15 +104,74 @@ class OrderService {
   }
 
   /**
+   * 💵 Tạo đơn hàng tiền mặt (COD)
+   */
+  async createCashOrder({ user_id, shop_id, items = [], note = "" }) {
+    const uid = Number(user_id);
+    const sid = Number(shop_id);
+
+    if (!uid || !sid) throw new Error("Thiếu user_id hoặc shop_id");
+
+    console.log("🚀 [Service] createCashOrder() START", {
+      user_id: uid,
+      shop_id: sid,
+      itemsCount: items.length,
+    });
+
+    // 1️⃣ Tạo order trống
+    console.log("🧾 [Service] Tạo order rỗng (COD)...");
+    const order = await this.createEmptyOrder({
+      user_id: uid,
+      shop_id: sid,
+      payment_method: "COD",
+      delivery_fee: 15000,
+    });
+    console.log("✅ [Service] Order rỗng tạo xong:", {
+      order_id: order.order_id,
+      status: order.status,
+      total_price: order.total_price,
+    });
+
+    // 2️⃣ Thêm sản phẩm
+    if (Array.isArray(items) && items.length > 0) {
+      console.log("🛒 [Service] Thêm sản phẩm vào order_details...");
+      await orderDetailService.addMany(order.order_id, items, {
+        useProvidedUnitPrice: true,
+      });
+      console.log("✅ [Service] Đã thêm sản phẩm vào order_details.");
+    } else {
+      console.warn("⚠️ [Service] Không có sản phẩm để thêm.");
+    }
+
+    // 3️⃣ Cập nhật trạng thái ban đầu
+    console.log("🔄 [Service] Cập nhật trạng thái order -> 'pending'");
+    await orderDao.updateStatus(order.order_id, "pending");
+
+    // 4️⃣ Tính lại tổng
+    console.log("💰 [Service] Gọi recalcTotals() để tính lại tổng...");
+    const updated = await orderDao.recalcTotals(order.order_id);
+
+    console.log("✅ [Service] Tổng tiền sau tính toán:", {
+      order_id: order.order_id,
+      food_price: updated?.food_price,
+      total_price: updated?.total_price,
+    });
+
+    console.log("🎯 [Service] createCashOrder() HOÀN TẤT.");
+    return updated;
+  }
+
+  /**
    * 🆕 Tạo 1 order trống (đơn cơ bản)
    */
   async createEmptyOrder({ user_id, shop_id, payment_method = "COD", delivery_fee = 0 }) {
     const uid = Number(user_id);
     const sid = Number(shop_id);
-    if (!uid || !sid) throw new Error("user_id and shop_id are required");
+    if (!uid || !sid) throw new Error("user_id và shop_id là bắt buộc");
 
-    // Tạo order rỗng, total_price = delivery_fee (chưa có món)
-    return await orderDao.create({
+    console.log("📦 [Service] createEmptyOrder() - tạo order rỗng...");
+
+    const result = await orderDao.create({
       user_id: uid,
       shop_id: sid,
       shipper_id: null,
@@ -128,62 +187,14 @@ class OrderService {
       shipper_earn: 0,
       admin_earn: 0,
 
-      status: "pending", // ✅ khớp với DB enum
-      payment_method,    // ✅ "COD" hoặc "VNPay"
+      status: "pending",
+      payment_method,
       payment_status: "unpaid",
-
       is_settled: false,
     });
-  }
 
-  /**
-   * 🍱 Thêm nhiều item vào order_details và tính lại tổng
-   */
-  async addItems(orderId, items, { useProvidedUnitPrice = false } = {}) {
-    const id = Number(orderId);
-    if (!id) throw new Error("orderId is required");
-    if (!Array.isArray(items) || items.length === 0) throw new Error("items is empty");
-
-    const result = await orderDetailDao.addMany(id, items, {
-      mergeDuplicates: true,
-      useProvidedUnitPrice,
-    });
-
-    const updatedOrder = await orderDao.recalcTotals(id);
-    return { ...result, order: updatedOrder };
-  }
-
-  /**
-   * 💵 Tạo đơn hàng tiền mặt (COD)
-   */
-  async createCashOrder({ user_id, shop_id, items = [], note = "" }) {
-    const uid = Number(user_id);
-    const sid = Number(shop_id);
-
-    if (!uid || !sid) throw new Error("Thiếu user_id hoặc shop_id");
-
-    // 1️⃣ Tạo order trống
-    const order = await this.createEmptyOrder({
-      user_id: uid,
-      shop_id: sid,
-      payment_method: "COD", // ✅ khớp enum trong DB
-      delivery_fee: 15000,
-    });
-
-    // 2️⃣ Thêm sản phẩm
-    if (Array.isArray(items) && items.length > 0) {
-      await orderDetailService.addMany(order.order_id, items, {
-        useProvidedUnitPrice: true,
-      });
-    }
-
-    // 3️⃣ Cập nhật trạng thái ban đầu
-    await orderDao.updateStatus(order.order_id, "pending"); // ✅ khớp enum
-
-    // 4️⃣ Tính lại tổng
-    const updated = await orderDao.recalcTotals(order.order_id);
-
-    return updated;
+    console.log("✅ [Service] Order rỗng đã tạo:", result);
+    return result;
   }
 }
 

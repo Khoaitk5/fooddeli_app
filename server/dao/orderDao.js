@@ -1,5 +1,5 @@
 // dao/orderDao.js
-const GenericDao = require("./generic_dao"); // GIỮ nguyên cách require theo project của bạn
+const GenericDao = require("./generic_dao");
 const Order = require("../models/order");
 const pool = require("../config/db");
 
@@ -8,15 +8,8 @@ class OrderDao extends GenericDao {
     super("orders", Order);
   }
 
-  /**
-   * Lấy danh sách orders theo shipper_id
-   * @param {number} shipperId
-   * @param {object} options { status?: string, limit?: number, offset?: number }
-   */
-  async getOrdersByShipperId(
-    shipperId,
-    { status, limit = 20, offset = 0 } = {}
-  ) {
+  /** -------------------- LẤY DỮ LIỆU -------------------- **/
+  async getOrdersByShipperId(shipperId, { status, limit = 20, offset = 0 } = {}) {
     const params = [shipperId];
     let sql = `
       SELECT *
@@ -28,17 +21,12 @@ class OrderDao extends GenericDao {
       sql += ` AND status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
-      };`;
+    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length};`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => new this.Model(r));
   }
 
-  /**
-   * Lấy 1 "full order" (order + user + shop + details + products) để FE render đầy đủ
-   * @param {number} orderId
-   */
   async getOrderFullById(orderId) {
     const orderRes = await pool.query(
       `
@@ -75,13 +63,7 @@ class OrderDao extends GenericDao {
     return { order: orderRes.rows[0], details: detailsRes.rows };
   }
 
-  /**
-   * (Tuỳ nhu cầu) Lấy nhiều "full order" theo shipper_id có phân trang
-   */
-  async getFullOrdersByShipperId(
-    shipperId,
-    { status, limit = 20, offset = 0 } = {}
-  ) {
+  async getFullOrdersByShipperId(shipperId, { status, limit = 20, offset = 0 } = {}) {
     const baseParams = [shipperId];
     let idSql = `
       SELECT o.order_id
@@ -93,8 +75,7 @@ class OrderDao extends GenericDao {
       idSql += ` AND o.status = $${baseParams.length}`;
     }
     baseParams.push(limit, offset);
-    idSql += ` ORDER BY o.created_at DESC LIMIT $${baseParams.length - 1
-      } OFFSET $${baseParams.length};`;
+    idSql += ` ORDER BY o.created_at DESC LIMIT $${baseParams.length - 1} OFFSET $${baseParams.length};`;
 
     const idsRes = await pool.query(idSql, baseParams);
     const ids = idsRes.rows.map((r) => r.order_id);
@@ -143,9 +124,7 @@ class OrderDao extends GenericDao {
     }));
   }
 
-  /**
-   * Gán shipper cho đơn
-   */
+  /** -------------------- CẬP NHẬT TRẠNG THÁI -------------------- **/
   async assignShipper(orderId, shipperId) {
     const res = await pool.query(
       `
@@ -160,17 +139,8 @@ class OrderDao extends GenericDao {
     return res.rows[0] ? new this.Model(res.rows[0]) : null;
   }
 
-  /**
-   * Cập nhật trạng thái đơn (đúng constraint)
-   */
   async updateStatus(orderId, status) {
-    const allowed = [
-      "pending",
-      "cooking",
-      "shipping",
-      "completed",
-      "cancelled",
-    ];
+    const allowed = ["pending", "cooking", "shipping", "completed", "cancelled"];
     if (!allowed.includes(status)) throw new Error(`Invalid status: ${status}`);
 
     const res = await pool.query(
@@ -186,13 +156,9 @@ class OrderDao extends GenericDao {
     return res.rows[0] ? new this.Model(res.rows[0]) : null;
   }
 
-  /**
-   * Cập nhật payment_status (schema không có payment_id trong orders)
-   */
   async updatePaymentStatus(orderId, paymentStatus) {
     const allowed = ["unpaid", "paid", "refunded"];
-    if (!allowed.includes(paymentStatus))
-      throw new Error(`Invalid payment status: ${paymentStatus}`);
+    if (!allowed.includes(paymentStatus)) throw new Error(`Invalid payment status: ${paymentStatus}`);
 
     const res = await pool.query(
       `
@@ -207,9 +173,6 @@ class OrderDao extends GenericDao {
     return res.rows[0] ? new this.Model(res.rows[0]) : null;
   }
 
-  /**
-   * Đánh dấu settle
-   */
   async markSettled(orderId) {
     const res = await pool.query(
       `
@@ -225,71 +188,39 @@ class OrderDao extends GenericDao {
     return res.rows[0] ? new this.Model(res.rows[0]) : null;
   }
 
-  /**
-   * Lấy danh sách orders theo shipper_id (có lọc trạng thái & phân trang)
-   * @param {number} shipperId
-   * @param {{status?: string, limit?: number, offset?: number}} options
-   */
-  async getOrdersByShipperId(
-    shipperId,
-    { status, limit = 20, offset = 0 } = {}
-  ) {
-    const params = [shipperId];
-    let sql = `
-      SELECT *
-      FROM orders
-      WHERE shipper_id = $1
-    `;
-    if (status) {
-      params.push(status);
-      sql += ` AND status = $${params.length}`;
-    }
-    params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
-      };`;
-
-    const res = await pool.query(sql, params);
-    return res.rows.map((r) => new this.Model(r));
-  }
-  // Lấy tất cả order status='cooking' + join shop address (để lọc bằng JS)
+  /** -------------------- HỖ TRỢ CHO SHIPPER & SHOP -------------------- **/
   async listCookingWithShopAddress({ limit = 200, offset = 0 } = {}) {
     const sql = `
-    SELECT
-      o.*,
-      sp.shop_name,
-      a.address_id,
-      (a.lat_lon->>'lat')::float AS shop_lat,
-      (a.lat_lon->>'lon')::float AS shop_lon,
-      a.address_line
-    FROM orders o
-    JOIN shop_profiles sp ON sp.id = o.shop_id
-    JOIN addresses a       ON a.address_id = sp.shop_address_id
-    WHERE o.status = 'cooking'
-    ORDER BY o.created_at DESC
-    LIMIT $1 OFFSET $2;
-  `;
+      SELECT
+        o.*,
+        sp.shop_name,
+        a.address_id,
+        (a.lat_lon->>'lat')::float AS shop_lat,
+        (a.lat_lon->>'lon')::float AS shop_lon,
+        a.address_line
+      FROM orders o
+      JOIN shop_profiles sp ON sp.id = o.shop_id
+      JOIN addresses a ON a.address_id = sp.shop_address_id
+      WHERE o.status = 'cooking'
+      ORDER BY o.created_at DESC
+      LIMIT $1 OFFSET $2;
+    `;
     const res = await pool.query(sql, [limit, offset]);
-    return res.rows; // giữ dạng raw để service xử lý tiếp
+    return res.rows;
   }
 
-  // Kiểm tra shipper đang có đơn chưa hoàn tất (đã gán hoặc đang giao)
   async hasShippingOfShipper(shipperId) {
     const sql = `
-    SELECT 1
-    FROM orders
-    WHERE shipper_id = $1
-      AND status IN ('cooking','shipping')  -- coi là bận nếu đã gán hoặc đang shipping
-    LIMIT 1;
-  `;
+      SELECT 1
+      FROM orders
+      WHERE shipper_id = $1
+        AND status IN ('cooking','shipping')
+      LIMIT 1;
+    `;
     const r = await pool.query(sql, [shipperId]);
     return !!r.rows[0];
   }
 
-  /**
- * Lấy danh sách orders theo shop_id (có lọc trạng thái & phân trang)
- * @param {number} shopId
- * @param {object} options { status?: string, limit?: number, offset?: number }
- */
   async listByShop(shopId, { status, limit = 20, offset = 0 } = {}) {
     const params = [shopId];
     let sql = `
@@ -303,81 +234,83 @@ class OrderDao extends GenericDao {
       JOIN shop_profiles sp ON sp.id = o.shop_id
       WHERE o.shop_id = $1
     `;
-
     if (status) {
       params.push(status);
       sql += ` AND o.status = $${params.length}`;
     }
-
     params.push(limit, offset);
     sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length};`;
 
     const res = await pool.query(sql, params);
     return res.rows.map((r) => ({ ...r }));
   }
-  // Gán shipper nếu đơn còn cooking & chưa ai nhận (KHÔNG đổi status)
+
   async assignShipperIfCooking({ orderId, shipperId }) {
     const result = await pool.query(
       `
-    UPDATE orders
-       SET shipper_id = $1,
-           updated_at = NOW()
-     WHERE order_id   = $2
-       AND status     = 'cooking'
-       AND shipper_id IS NULL
-    `,
+      UPDATE orders
+      SET shipper_id = $1, updated_at = NOW()
+      WHERE order_id = $2
+        AND status = 'cooking'
+        AND shipper_id IS NULL;
+      `,
       [shipperId, orderId]
     );
     return result.rowCount > 0;
   }
+
   async updateStatusToShipping({ orderId, shipperId }) {
     const sql = `
-    UPDATE orders
-       SET status='shipping', updated_at=NOW()
-     WHERE order_id=$1
-       AND shipper_id=$2
-       AND status='cooking'
-  `;
+      UPDATE orders
+      SET status='shipping', updated_at=NOW()
+      WHERE order_id=$1
+        AND shipper_id=$2
+        AND status='cooking';
+    `;
     const r = await pool.query(sql, [orderId, shipperId]);
     return r.rowCount > 0;
   }
 
   async completeIfOwnedByShipper({ orderId, shipperId }) {
     const sql = `
-    UPDATE orders
-       SET status='completed',
-           updated_at = NOW()
-     WHERE order_id = $1
-       AND shipper_id = $2
-       AND status IN ('shipping')         -- chặt chẽ: chỉ khi đang giao
-    RETURNING *;
-  `;
+      UPDATE orders
+      SET status='completed', updated_at=NOW()
+      WHERE order_id=$1
+        AND shipper_id=$2
+        AND status IN ('shipping')
+      RETURNING *;
+    `;
     const r = await pool.query(sql, [orderId, shipperId]);
     return r.rows[0] || null;
   }
-    /**
-   * ✅ Recalculate total food_price + total_price của order
-   * Tự động tính tổng từ bảng order_details
-   */
-  async recalcTotals(orderId) {
-    const sql = `
-      WITH food_sum AS (
-        SELECT COALESCE(SUM(line_total), 0) AS total
-        FROM order_details
-        WHERE order_id = $1
-      )
-      UPDATE orders
-      SET
-        food_price = fs.total,
-        total_price = fs.total + delivery_fee,
-        updated_at = NOW()
-      FROM food_sum fs
-      WHERE orders.order_id = $1
-      RETURNING *;
-    `;
-    const res = await pool.query(sql, [orderId]);
-    return res.rows[0] || null;
-  }
+
+async recalcTotals(orderId) {
+  console.log("🧮 [DAO] recalcTotals() bắt đầu với orderId:", orderId);
+
+  const sql = `
+    WITH food_sum AS (
+      SELECT COALESCE(SUM(line_total), 0) AS total
+      FROM order_details
+      WHERE order_id = $1
+    )
+    UPDATE orders
+    SET
+      food_price = fs.total,
+      total_price = fs.total + delivery_fee,
+      merchant_earn = fs.total * (1 - merchant_commission_rate),
+      shipper_earn  = delivery_fee * (1 - shipper_commission_rate),
+      admin_earn    = (fs.total * merchant_commission_rate)
+                    + (delivery_fee * shipper_commission_rate),
+      updated_at = NOW()
+    FROM food_sum fs
+    WHERE orders.order_id = $1
+    RETURNING *;
+  `;
+
+  const res = await pool.query(sql, [orderId]);
+  console.log("✅ [DAO] recalcTotals() KẾT QUẢ:", res.rows[0]);
+  return res.rows[0] || null;
+}
 
 }
 
