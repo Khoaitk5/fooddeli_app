@@ -49,7 +49,12 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="50vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -57,46 +62,73 @@ const Dashboard = () => {
 
   // Thẻ thống kê nhỏ
   const StatCard = ({ title, value, sub, icon }) => (
-    <Paper
-      elevation={0}
+    <Box
       sx={{
-        p: 2,
         borderRadius: 2,
         border: "1px solid",
-        borderColor: "divider",
+        borderColor: "grey.200",
+        bgcolor: "white",
+        p: 2.5,
         height: "100%",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
       }}
     >
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+      <Typography
+        variant="body2"
+        sx={{
+          color: "grey.500",
+          fontSize: "0.875rem",
+        }}
+      >
+        {title}
+      </Typography>
+
+      <Box
+        sx={{
+          mt: 1.5,
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+        }}
+      >
         <Box>
-          <Typography variant="subtitle2" color="text.secondary">
-            {title}
-          </Typography>
-          <Typography variant="h5" sx={{ mt: 0.5 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              color: "grey.800",
+              fontSize: "1.5rem",
+            }}
+          >
             {value ?? "—"}
           </Typography>
-          <Typography variant="caption" color="success.main">
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: "grey.500",
+              fontSize: "0.75rem",
+            }}
+          >
             {sub}
           </Typography>
         </Box>
-        {icon}
-      </Stack>
-    </Paper>
+      </Box>
+    </Box>
   );
 
   return (
     <Box>
-      {/* Tiêu đề */}
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Dashboard Tổng quan
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Tổng quan về hoạt động và hiệu quả kinh doanh hệ thống giao đồ ăn
-      </Typography>
-
       {/* 4 Thẻ thống kê */}
       <Grid
         container
@@ -117,7 +149,11 @@ const Dashboard = () => {
                 : "₫ 0"
             }
             sub="Tổng doanh thu từ đơn hoàn tất"
-            icon={<Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>💰</Avatar>}
+            icon={
+              <Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>
+                💰
+              </Avatar>
+            }
           />
         </Grid>
 
@@ -126,7 +162,11 @@ const Dashboard = () => {
             title="Tổng đơn hàng"
             value={stats?.total_orders ?? 0}
             sub="Đơn hàng hoàn thành"
-            icon={<Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>📦</Avatar>}
+            icon={
+              <Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>
+                📦
+              </Avatar>
+            }
           />
         </Grid>
 
@@ -135,7 +175,11 @@ const Dashboard = () => {
             title="Khách hàng"
             value={stats?.total_customers ?? 0}
             sub="Người dùng đã đăng ký"
-            icon={<Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>👤</Avatar>}
+            icon={
+              <Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>
+                👤
+              </Avatar>
+            }
           />
         </Grid>
 
@@ -144,7 +188,11 @@ const Dashboard = () => {
             title="Cửa hàng / Shipper"
             value={`${stats?.total_shops ?? 0} / ${stats?.total_shippers ?? 0}`}
             sub="Tổng số cửa hàng & shipper"
-            icon={<Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>🚚</Avatar>}
+            icon={
+              <Avatar sx={{ bgcolor: "#FFF1EC", color: "primary.main" }}>
+                🚚
+              </Avatar>
+            }
           />
         </Grid>
       </Grid>
@@ -163,7 +211,12 @@ const Dashboard = () => {
               height: "100%",
             }}
           >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ mb: 1 }}
+            >
               <Typography variant="subtitle1" fontWeight={600}>
                 Doanh thu theo tháng
               </Typography>
@@ -219,12 +272,22 @@ const Dashboard = () => {
               height: "100%",
             }}
           >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ mb: 1 }}
+            >
               <Typography variant="subtitle1" fontWeight={600}>
                 Đơn hàng trong tuần
               </Typography>
               <Stack direction="row" spacing={1}>
-                <Chip size="small" label="Tuần này" color="primary" variant="outlined" />
+                <Chip
+                  size="small"
+                  label="Tuần này"
+                  color="primary"
+                  variant="outlined"
+                />
                 <Chip size="small" label="Tuần trước" variant="outlined" />
               </Stack>
             </Stack>
@@ -240,24 +303,46 @@ const Dashboard = () => {
       <Box sx={{ mt: 3 }}>
         <Grid container spacing={2} sx={{ flexWrap: "nowrap" }}>
           <Grid item xs={12} md={6} lg={6} sx={{ flex: 1, minWidth: 0 }}>
-            <Paper
-              elevation={0}
+            <Box
               sx={{
-                p: 2,
                 borderRadius: 2,
                 border: "1px solid",
-                borderColor: "divider",
+                borderColor: "grey.200",
+                bgcolor: "white",
+                p: { xs: 2.5, sm: 3 },
                 height: "100%",
               }}
             >
-              <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-                Phân bố người dùng
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 4.5 }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: "grey.800",
+                    fontSize: "1.125rem",
+                  }}
+                >
+                  Phân bố người dùng
+                </Typography>
+                <Box>{/* Placeholder for dropdown if needed */}</Box>
+              </Stack>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "grey.500",
+                  mb: 1,
+                  fontSize: "0.875rem",
+                }}
+              >
                 Tỷ lệ khách hàng, cửa hàng và shipper
               </Typography>
               <PieChartMini fetchData={getUserDistribution} />
-            </Paper>
+            </Box>
           </Grid>
 
           <Grid item xs={12} md={6} lg={6} sx={{ flex: 1, minWidth: 0 }}>
@@ -284,19 +369,36 @@ const Dashboard = () => {
                   "Có 3 đăng ký shipper chờ duyệt",
                   "Doanh thu hôm nay đã đạt 45 triệu VND",
                 ].map((txt, idx) => (
-                  <Stack key={idx} direction="row" spacing={1} alignItems="center">
+                  <Stack
+                    key={idx}
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                  >
                     <Box
                       sx={{
                         width: 8,
                         height: 8,
-                        bgcolor: ["success.main", "info.main", "warning.main", "secondary.main"][idx],
+                        bgcolor: [
+                          "success.main",
+                          "info.main",
+                          "warning.main",
+                          "secondary.main",
+                        ][idx],
                         borderRadius: "50%",
                       }}
                     />
                     <Typography variant="body2">{txt}</Typography>
                     <Chip
                       size="small"
-                      label={["5 phút trước", "15 phút trước", "30 phút trước", "1 giờ trước"][idx]}
+                      label={
+                        [
+                          "5 phút trước",
+                          "15 phút trước",
+                          "30 phút trước",
+                          "1 giờ trước",
+                        ][idx]
+                      }
                       variant="outlined"
                     />
                   </Stack>
