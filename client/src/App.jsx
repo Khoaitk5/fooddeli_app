@@ -55,6 +55,7 @@ import PaymentMethod from "./pages/Customer/PaymentMethod";
 import QRPayment from "./pages/Customer/QRPayment";
 import FoodDetail from "./pages/Customer/FoodDetail";
 import { CartPage } from "./pages/Customer/Cart";
+import CustomerSettings from "./pages/Customer/Settings";
 
 // ====================== AUTH ======================
 import Login from "./pages/Auth/Login";
@@ -154,6 +155,7 @@ function App() {
           <Route path="payment-method" element={<PaymentMethod />} />
           <Route path="qr-payment" element={<QRPayment />} />
           <Route path="food-detail" element={<FoodDetail />} />
+          <Route path="settings" element={<CustomerSettings />} />
         </Route>
 
         {/* ========== SHIPPER ========== */}
