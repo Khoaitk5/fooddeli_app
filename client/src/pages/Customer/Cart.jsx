@@ -1,3 +1,5 @@
+// File: src/pages/Customer/Cart.jsx (Đã sửa)
+
 import { useState, useEffect, useMemo } from "react";
 import { ShoppingCart, ChevronRight, UtensilsCrossed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +11,12 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
   const { cartItems: initialCartItems, loading, refreshCart } = useCart();
   const [cartItems, setCartItems] = useState(initialCartItems || []);
   const [swipeStates, setSwipeStates] = useState({}); // { [shopId]: { offset: 0, startX: 0, isSwiping: false, isMouseDown: false, isJustSwiped: false } }
+
+  // --- ✅ SỬA: Tự động làm mới giỏ hàng mỗi khi vào trang ---
+  useEffect(() => {
+    refreshCart();
+  }, []); // [] nghĩa là "chỉ chạy 1 lần khi component được tải"
+  // --- HẾT SỬA ---
 
   // Function to remove item from cart
   const removeItem = async (shopId) => {
