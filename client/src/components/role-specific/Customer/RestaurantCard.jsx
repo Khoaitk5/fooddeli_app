@@ -7,7 +7,7 @@ const RestaurantCard = ({
   style,
   restaurant, // Thêm prop restaurant object
   name,
-  imageUrl,
+  avatar_url,
   rating = 5,
   reviewCount = 13,
   salesCount = "200+",
@@ -16,7 +16,7 @@ const RestaurantCard = ({
 }) => {
   // Nếu có restaurant object, sử dụng data từ đó
   const displayName = restaurant?.name || name;
-  const displayImageUrl = restaurant?.imageUrl || imageUrl;
+  const displayAvatarUrl = restaurant?.avatar_url || avatar_url;
   const displayRating = restaurant?.rating || rating;
   const displayReviewCount = restaurant?.reviewCount || reviewCount;
   const displaySalesCount = restaurant?.salesCount || salesCount;
@@ -60,7 +60,7 @@ const RestaurantCard = ({
       {/* PHẦN ẢNH */}
       <img
         src={
-          displayImageUrl ||
+          displayAvatarUrl ||
           "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg"
         }
         style={imageStyle}

@@ -56,8 +56,7 @@ const Discover = () => {
   const transformShopData = (shop) => ({
     id: shop.id || shop.shop_profile_id,
     name: shop.shop_name || "Chưa có tên",
-    imageUrl:
-      shop.shop_image ||
+    avatar_url:
       shop.avatar_url ||
       "https://upload.urbox.vn/strapi/phuc_long_5_c188a69da5.jpg",
     rating:
