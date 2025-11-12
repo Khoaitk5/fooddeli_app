@@ -1,112 +1,157 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Navbar from '../../components/shared/Navbar';
-import OrderHeader from '../../components/shared/OrderHeader';
-import OngoingOrderCard from '../../components/shared/OngoingOrderCard';
-import CompletedOrderCard from '../../components/shared/CompletedOrderCard';
-import EmptyState from '../../components/shared/EmptyState';
-import { useTheme, useMediaQuery } from '@mui/material';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/shared/Navbar";
+import OrderHeader from "../../components/shared/OrderHeader";
+import OngoingOrderCard from "../../components/shared/OngoingOrderCard";
+import CompletedOrderCard from "../../components/shared/CompletedOrderCard";
+import EmptyState from "../../components/shared/EmptyState";
 
 function OrdersPage({ isMobile = false, isTablet = false, onTrackOrder = () => {} }) {
-  const [activeTab, setActiveTab] = useState('ongoing');
+  const [activeTab, setActiveTab] = useState("ongoing");
+  const [ongoingOrders, setOngoingOrders] = useState([]);
+  const [completedOrders, setCompletedOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const paddingApplied = useRef(false);
-  const theme = useTheme();
+  const intervalRef = useRef(null);
 
-  // Add safe area padding for mobile status bar
-  useEffect(() => {
-    console.log('paddingApplied:', paddingApplied.current);
-    if (isMobile && !paddingApplied.current) {
-      const originalPadding = document.body.style.paddingTop;
-      document.body.style.paddingTop = '3rem';
-      paddingApplied.current = true;
-      console.log('Applied padding, original was:', originalPadding);
-      
-      return () => {
-        document.body.style.paddingTop = originalPadding;
-        paddingApplied.current = false;
-        console.log('Removed padding, restored to:', originalPadding);
-      };
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = currentUser?.id;
+
+  // 🧠 Helper format địa chỉ JSON -> Chuỗi dễ đọc
+  const formatAddress = (address) => {
+    if (!address) return "Chưa có địa chỉ";
+    try {
+      const obj = typeof address === "string" ? JSON.parse(address) : address;
+      const parts = [obj.detail, obj.ward, obj.district, obj.city].filter(Boolean);
+      return parts.join(", ");
+    } catch {
+      return String(address);
     }
-  }, [isMobile]);
-
-  // Mock data for ongoing orders
-  const ongoingOrders = [
-    {
-      id: '2024100912345',
-      restaurant: 'Quán Phở Ngon',
-      restaurantAddress: '123 Nguyễn Huệ, Q.1',
-      status: 'Đang giao hàng',
-      estimatedTime: '14:30',
-      items: [
-        { name: 'Phở bò tái', quantity: 2, price: 80000 },
-        { name: 'Gỏi cuốn tôm thịt', quantity: 1, price: 30000 },
-        { name: 'Trà sữa trân châu', quantity: 1, price: 35000 }
-      ],
-      total: 145000,
-      image: 'https://images.unsplash.com/photo-1656945843375-207bb6e47750?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aWV0bmFtZXNlJTIwZm9vZCUyMG5vb2RsZXN8ZW58MXx8fHwxNzU5OTkyOTMwfDA&ixlib=rb-4.1.0&q=80&w=1080'
-    }
-  ];
-
-  // Mock data for completed orders
-  const completedOrders = [
-    {
-      id: '2024100812344',
-      restaurant: 'Bún Chả Hà Nội',
-      restaurantAddress: '789 Trần Hưng Đạo, Q.5',
-      deliveredAt: 'Hôm qua, 12:30',
-      items: [
-        { name: 'Bún chả Hà Nội', quantity: 2, price: 70000 },
-        { name: 'Nem cua bể', quantity: 1, price: 40000 }
-      ],
-      total: 110000,
-      image: 'https://images.unsplash.com/photo-1559847844-5315695dadae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aWV0bmFtZXNlJTIwYnVuJTIwY2hhfGVufDF8fHx8MTc2MDAyNjkzMHww&ixlib=rb-4.1.0&q=80&w=1080',
-      rated: false
-    },
-    {
-      id: '2024100712343',
-      restaurant: 'Cơm Tấm Sườn Bì',
-      restaurantAddress: '321 Võ Văn Tần, Q.3',
-      deliveredAt: '2 ngày trước, 19:15',
-      items: [
-        { name: 'Cơm tấm sườn bì chả', quantity: 1, price: 45000 },
-        { name: 'Trà đá', quantity: 1, price: 5000 }
-      ],
-      total: 50000,
-      image: 'https://images.unsplash.com/photo-1626804475297-41608ea09aeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZGlzaCUyMHZpZXRuYW1lc2V8ZW58MXx8fHwxNzYwMDI2OTMwfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      rated: true,
-      rating: 5
-    },
-    {
-      id: '2024100612342',
-      restaurant: 'Bánh Mì Huỳnh Hoa',
-      restaurantAddress: '26 Lê Thị Riêng, Q.1',
-      deliveredAt: '3 ngày trước, 08:45',
-      items: [
-        { name: 'Bánh mì đặc biệt', quantity: 3, price: 75000 }
-      ],
-      total: 75000,
-      image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYW5oJTIwbWl8ZW58MXx8fHwxNzYwMDI2OTMwfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      rated: true,
-      rating: 4
-    }
-  ];
-
-  const padding = '2rem';
-  const cardMargin = '1.25rem';
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
+  // 🧠 Helper chọn ảnh đại diện đơn hàng
+  const getOrderImage = (order) => {
+    const productWithImage = order.details?.find((d) => d.product_image);
+    return (
+      productWithImage?.product_image ||
+      "https://cdn-icons-png.flaticon.com/512/3075/3075977.png"
+    );
+  };
+
+  // ✅ Gọi API lấy danh sách đơn hàng từ DB
+  const fetchOrders = async (signal) => {
+    if (!userId) return;
+    try {
+      const res = await fetch("http://localhost:5000/api/orders/list-mine", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId }),
+        signal,
+      });
+
+      const data = await res.json();
+      console.log("📦 API /list-mine trả về:", data);
+
+      if (data.message === "Unsupported role or missing identifiers") {
+        console.warn("⚠️ Backend không nhận ra user_id.");
+        setOngoingOrders([]);
+        setCompletedOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      const orders = data.items || data.data?.orders || [];
+
+      // 🔸 Đơn đang xử lý
+      const ongoing = orders
+        .filter((o) => ["pending", "cooking", "shipping"].includes(o.status))
+        .map((order) => ({
+          id: order.order_id,
+          restaurant: order.shop_name || "Quán chưa rõ",
+          restaurantAddress: formatAddress(order.shop_address) || "Địa chỉ quán chưa có",
+          status:
+            order.status === "pending"
+              ? "Đang chờ xác nhận"
+              : order.status === "cooking"
+              ? "Đang chuẩn bị"
+              : order.status === "shipping"
+              ? "Đang giao hàng"
+              : "Không xác định",
+          estimatedTime: order.estimated_time || "Đang cập nhật",
+          total: Number(order.total_price || 0),
+          items:
+            order.details?.map((d) => ({
+              name: d.product_name,
+              quantity: d.quantity,
+              price: d.unit_price,
+              image: d.product_image, // ✅ Ảnh món thật
+            })) || [],
+          shop_image: order.shop_image || null, // ✅ thêm dòng này
+image: order.shop_image || getOrderImage(order), // ✅ ưu tiên ảnh quán // ✅ Ảnh đại diện đơn hàng
+        }));
+
+      // 🔹 Đơn đã hoàn tất
+      const completed = orders
+        .filter((o) => ["completed", "cancelled"].includes(o.status))
+        .map((order) => ({
+          id: order.order_id,
+          restaurant: order.shop_name || "Quán chưa rõ",
+          restaurantAddress: formatAddress(order.shop_address) || "Địa chỉ quán chưa có",
+          deliveredAt: order.updated_at || "Vừa xong",
+          total: Number(order.total_price || 0),
+          items:
+            order.details?.map((d) => ({
+              name: d.product_name,
+              quantity: d.quantity,
+              price: d.unit_price,
+              image: d.product_image,
+            })) || [],
+          shop_image: order.shop_image || null,
+image: order.shop_image || getOrderImage(order),
+          rated: false,
+        }));
+
+      setOngoingOrders(ongoing);
+      setCompletedOrders(completed);
+    } catch (err) {
+      if (err.name !== "AbortError") console.error("❌ Lỗi khi fetch đơn hàng:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🧠 Gọi khi load trang
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchOrders(controller.signal);
+    return () => controller.abort();
+  }, [userId]);
+
+  // 🔄 Polling 5s
+  useEffect(() => {
+    if (!userId) return;
+    intervalRef.current = setInterval(() => {
+      const controller = new AbortController();
+      fetchOrders(controller.signal);
+      setTimeout(() => controller.abort(), 4500);
+    }, 5000);
+
+    return () => clearInterval(intervalRef.current);
+  }, [userId]);
+
+  const padding = "2rem";
+  const cardMargin = "1.25rem";
+
   return (
-    <div style={{ 
-      width: '100%', 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column'
-    }}>
-      {/* Header */}
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <OrderHeader
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -115,41 +160,35 @@ function OrdersPage({ isMobile = false, isTablet = false, onTrackOrder = () => {
         padding={padding}
       />
 
-      {/* Content */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        padding: padding,
-        paddingBottom: '9rem',
-        background: '#f5f5f5'
-      }}>
-        {activeTab === 'ongoing' ? (
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          padding: padding,
+          paddingBottom: "9rem",
+          background: "#f5f5f5",
+        }}
+      >
+        {loading ? (
+          <EmptyState message="Đang tải đơn hàng từ máy chủ..." />
+        ) : activeTab === "ongoing" ? (
           ongoingOrders.length > 0 ? (
-            ongoingOrders.map(order => (
-              <OngoingOrderCard
-                key={order.id}
-                order={order}
-                cardMargin={cardMargin}
-              />
+            ongoingOrders.map((order) => (
+              <OngoingOrderCard key={order.id} order={order} cardMargin={cardMargin} />
             ))
           ) : (
             <EmptyState message="Chưa có đơn hàng nào đang giao" />
           )
+        ) : completedOrders.length > 0 ? (
+          completedOrders.map((order) => (
+            <CompletedOrderCard key={order.id} order={order} cardMargin={cardMargin} />
+          ))
         ) : (
-          completedOrders.length > 0 ? (
-            completedOrders.map(order => (
-              <CompletedOrderCard
-                key={order.id}
-                order={order}
-                cardMargin={cardMargin}
-              />
-            ))
-          ) : (
-            <EmptyState message="Chưa có đơn hàng nào đã giao" />
-          )
+          <EmptyState message="Chưa có đơn hàng nào đã giao" />
         )}
       </div>
+
       <Navbar isProfilePage={false} />
     </div>
   );

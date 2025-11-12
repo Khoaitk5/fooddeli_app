@@ -196,6 +196,29 @@ class OrderService {
     console.log("✅ [Service] Order rỗng đã tạo:", result);
     return result;
   }
+async listByUser(userId, { status, limit = 20, offset = 0, full = false } = {}) {
+  const uid = Number(userId);
+  if (!uid) throw new Error("userId is required");
+  if (full) {
+    return await orderDao.getFullOrdersByUserId(uid, { status, limit, offset });
+  }
+  return await orderDao.listByUser(uid, { status, limit, offset });
+}
+
+async getStatusOnly(orderId) {
+  const id = Number(orderId);
+  if (!id) throw new Error("orderId is required");
+  return await orderDao.getStatusOnly(id);
+}
+/**
+ * 👤 Lấy danh sách đầy đủ đơn theo user_id (bao gồm shop + shipper + details)
+ */
+async getFullOrdersByUserId(userId, { status, limit = 20, offset = 0 } = {}) {
+  const uid = Number(userId);
+  if (!uid) throw new Error("userId is required");
+  return await orderDao.getFullOrdersByUserId(uid, { status, limit, offset });
+}
+
 }
 
 module.exports = new OrderService();

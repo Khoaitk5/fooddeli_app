@@ -20,5 +20,7 @@ router.post("/details/delete-all", orderController.deleteDetailsByOrder);
 // 🆕 Tạo đơn hàng tiền mặt
 router.post("/create-cash", orderController.createCashOrder);
 
+// 🆕 Lấy danh sách đơn theo user (cho FE polling)
+router.post("/list-by-user", orderController.listByUser);
 
 module.exports = router;

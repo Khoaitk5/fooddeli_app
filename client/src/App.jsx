@@ -137,7 +137,7 @@ function App() {
           <Route path="confirm-order" element={<ConfirmOrder />} />
           <Route path="add-coupon" element={<AddCoupon />} />
           <Route path="orders" element={<Order />} />
-          <Route path="order-tracking" element={<OrderTracking />} />
+          <Route path="order/:orderId" element={<OrderTracking />} />
           <Route path="order-success" element={<OrderSuccess />} />
           <Route path="order-history" element={<OrderHistory />} />
           <Route path="delivery-man-call" element={<DeliveryManCallScreen />} />
