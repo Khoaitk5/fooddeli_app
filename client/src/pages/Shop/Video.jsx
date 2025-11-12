@@ -38,6 +38,7 @@ const VideoManagement = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [moderating, setModerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
 
@@ -47,7 +48,10 @@ const VideoManagement = () => {
 
   // ===== Load videos by shop =====
   useEffect(() => {
-    if (!shopId) return;
+    if (!shopId) {
+      console.warn("⚠️ Chưa có shopId từ context");
+      return;
+    }
     const fetchVideosByShop = async () => {
       try {
         const res = await fetch(`http://localhost:5000/api/videos/shop/${shopId}`);
@@ -84,39 +88,113 @@ const VideoManagement = () => {
     try {
       setUploading(true);
       setProgress(10);
+      console.log("[CLIENT] Bắt đầu upload", { hasFile: Boolean(videoFile), title: title.trim() });
+
+      const isTestMode = !shopId;
+
+      if (isTestMode) {
+        console.warn("⚠️ [UPLOAD] Không có shopId — chạy ở chế độ test, bỏ qua bước lưu video vào DB.");
+      } else {
+        console.log("📤 [UPLOAD] shopId:", shopId, "type:", typeof shopId);
+      }
 
       const formData = new FormData();
       formData.append("video", videoFile);
       formData.append("title", title);
-      formData.append("shop_id", shopId);
+      if (!isTestMode) {
+        formData.append("shop_id", shopId);
+      }
 
+      setProgress(30);
       const uploadRes = await fetch("http://localhost:5000/api/videos/upload", {
         method: "POST",
         body: formData,
       });
 
       const uploadData = await uploadRes.json();
-      const videoUrl = uploadData.video_url || uploadData.videoUrl;
-      if (!uploadRes.ok || !videoUrl) throw new Error("Upload thất bại");
+      setProgress(50);
+      console.log("[CLIENT] Upload xong", { status: uploadRes.status, ok: uploadRes.ok, uploadData });
 
-      const newVideoData = {
-        title: title.trim(),
-        description: description.trim() || "—",
-        video_url: videoUrl,
-        shop_id: Number(shopId),
-      };
+      if (!uploadRes.ok || !uploadData.videoUrl) {
+        throw new Error(uploadData.message || "Upload thất bại");
+      }
 
-      const saveRes = await fetch("http://localhost:5000/api/videos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newVideoData),
-      });
+      setModerating(true);
+      setProgress(70);
 
-      const saveData = await saveRes.json();
-      if (!saveRes.ok) throw new Error(saveData.message || "Không thể lưu video");
+      const moderationResult = uploadData.moderationResult;
+      console.log("[CLIENT] Kết quả moderation", moderationResult);
 
-      setVideos((prev) => [saveData.data, ...prev]);
-      setToast({ open: true, message: "✅ Upload video thành công!", severity: "success" });
+      if (moderationResult.status === "rejected") {
+        console.error("[CLIENT] REJECTED", moderationResult);
+        setToast({
+          open: true,
+          message: `❌ Video bị từ chối: ${moderationResult.reason}`,
+          severity: "error",
+        });
+        setModerating(false);
+        setUploading(false);
+        return;
+      }
+
+      if (moderationResult.status === "pending") {
+        console.warn("[CLIENT] PENDING", moderationResult);
+        setToast({
+          open: true,
+          message: `⏳ Video đang chờ kiểm duyệt thủ công: ${moderationResult.reason}`,
+          severity: "warning",
+        });
+      }
+
+      if (!isTestMode) {
+        const savedVideo = uploadData.savedVideo;
+        setProgress(90);
+
+        if (moderationResult.status === "approved" && savedVideo) {
+          setVideos((prev) => [savedVideo, ...prev]);
+          setToast({
+            open: true,
+            message: "✅ Video đã được AI phê duyệt và đăng thành công!",
+            severity: "success",
+          });
+        } else {
+          const newVideoData = {
+            title: title.trim(),
+            description: description.trim() || "—",
+            video_url: uploadData.videoUrl,
+            shop_id: Number(shopId),
+            status: moderationResult.status,
+            moderation_result: moderationResult,
+          };
+
+          const saveRes = await fetch("http://localhost:5000/api/videos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newVideoData),
+          });
+
+          const saveData = await saveRes.json();
+          if (!saveRes.ok) throw new Error(saveData.message || "Không thể lưu video");
+
+          if (moderationResult.status === "approved") {
+            setVideos((prev) => [saveData.data, ...prev]);
+            setToast({
+              open: true,
+              message: "✅ Video đã được AI phê duyệt và đăng thành công!",
+              severity: "success",
+            });
+          }
+        }
+      } else {
+        console.log("[CLIENT] TEST MODE: Upload & moderation hoàn tất", uploadData);
+        setToast({
+          open: true,
+          message: "✅ Upload & kiểm duyệt AI ở chế độ test thành công!",
+          severity: "success",
+        });
+      }
+
+      setProgress(100);
       resetForm();
       setOpenUpload(false);
     } catch (err) {
@@ -124,6 +202,7 @@ const VideoManagement = () => {
       setToast({ open: true, message: err.message, severity: "error" });
     } finally {
       setUploading(false);
+      setModerating(false);
     }
   };
 
@@ -136,6 +215,7 @@ const VideoManagement = () => {
       setVideos((prev) => prev.filter((v) => v.id !== id && v.video_id !== id));
       setToast({ open: true, message: "🗑️ Video đã được xoá", severity: "success" });
     } catch (err) {
+      console.error("❌ Delete lỗi:", err);
       setToast({ open: true, message: "Không thể xoá video", severity: "error" });
     }
   };
@@ -179,6 +259,8 @@ const VideoManagement = () => {
   // ===== UI =====
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: { xs: 2, sm: 3, md: 4 } }}>
+      {/* Kiểm tra shopId */}
+
       {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Typography variant="h6">Quản lý video</Typography>
@@ -392,6 +474,17 @@ const VideoManagement = () => {
 
           <TextField label="Tiêu đề video" fullWidth sx={{ mb: 2 }} value={title} onChange={(e) => setTitle(e.target.value)} />
           <TextField label="Mô tả" fullWidth multiline minRows={3} sx={{ mb: 2 }} value={description} onChange={(e) => setDescription(e.target.value)} />
+
+          {moderating && (
+            <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: "#f5f5f5", borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ color: "#ad46ff", fontWeight: 600, mb: 1 }}>
+                🤖 AI đang phân tích và kiểm duyệt video...
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Hệ thống đang cắt video thành frames và sử dụng Gemini AI để phát hiện nội dung không phù hợp
+              </Typography>
+            </Box>
+          )}
 
           {uploading && <LinearProgress variant="determinate" value={progress} />}
         </DialogContent>

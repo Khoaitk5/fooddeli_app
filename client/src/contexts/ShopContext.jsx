@@ -1,41 +1,55 @@
-import React, { createContext, useEffect, useState } from "react";
+ import React, { createContext, useEffect, useState, useContext } from "react";
+ import { AuthContext } from "./AuthContext";
+ import { getMyShop } from "../api/userApi";
 
 export const ShopContext = createContext(null);
 
 export const ShopProvider = ({ children }) => {
   const [shopId, setShopId] = useState(null);
 
+  const { user, loading } = useContext(AuthContext);
+
   useEffect(() => {
-    const fetchShopId = async () => {
+    if (loading) return;
+    const resolveShopId = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/users/me", {
-          credentials: "include",
-        });
-        const me = await res.json();
-
-        console.log("DEBUG /api/users/me =", me);
-
-        // ✅ Lấy đúng shop_profile_id trong JSON của bạn
-        const id =
-          me?.user?.shop_profile?.shop_profile_id ??
-          me?.shop_profile?.shop_profile_id ??
+        // Ưu tiên lấy từ /users/me
+        const idFromUser =
+          user?.shop_profile?.shop_profile_id ??
+          user?.shop_profile?.id ??
+          user?.shop_profile?.shop_id ??
           null;
 
-        if (id) {
-          console.log("✅ Found shopId from context:", id);
-          setShopId(Number(id));
-        } else {
-          console.warn("⚠️ Không tìm thấy shop_profile_id trong /api/users/me");
+        if (idFromUser) {
+          console.log("✅ Found shopId from context:", idFromUser);
+          setShopId(Number(idFromUser));
+          return;
         }
+
+        // Fallback: gọi API lấy shop của user hiện tại
+        if (user?.role === "shop") {
+          const shop = await getMyShop();
+          const idFromApi = shop?.shop_profile_id ?? shop?.id ?? shop?.shop_id ?? null;
+          if (idFromApi) {
+            console.log("✅ Found shopId via API:", idFromApi);
+            setShopId(Number(idFromApi));
+            return;
+          }
+        }
+
+        console.warn("⚠️ Không tìm thấy shop_profile_id trong /api/users/me hoặc /api/users/shops/me");
+        setShopId(null);
       } catch (err) {
         console.error("❌ [ShopProvider] Lỗi khi lấy shopId:", err);
+        setShopId(null);
       }
     };
+    resolveShopId();
+  }, [loading, user]);
 
-    fetchShopId();
-  }, []);
+  if (loading) {
+    return null;
+  }
 
-  return (
-    <ShopContext.Provider value={shopId}>{children}</ShopContext.Provider>
-  );
+  return <ShopContext.Provider value={shopId}>{children}</ShopContext.Provider>;
 };
