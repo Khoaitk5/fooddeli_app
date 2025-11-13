@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Store, Phone, Mail, CreditCard, FileText, Camera, MapPin, Clock, Tag, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Store, Phone, Mail, CreditCard, FileText, Camera, MapPin, Clock, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import ShopTermsModal from '../../components/shared/ShopTermsModal';
 import FileUploadBox from '../../components/shared/FileUploadBox';
 import { getCurrentUser, getMyShop } from '../../api/userApi';
 import React from 'react';
+
+// API base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function ShopRegistration() {
   const navigate = useNavigate();
@@ -21,42 +24,50 @@ export default function ShopRegistration() {
     phone: '',
     email: '',
     businessLicenseNumber: '',
+    shopType: 'household', // household | individual | company
+    taxCode: '',
+    idCardNumber: '',
     bankAccountNumber: '',
     bankAccountName: '',
     bankName: '',
     openingTime: '08:00',
     closingTime: '22:00',
-    foodCategories: []
   });
 
   const [files, setFiles] = useState({
-    businessLicense: null,
+    // Common (optional branding)
     shopLogo: null,
-    shopCover: null
+    shopCover: null,
+    // Household business
+    idCardFront: null, // Mặt trước CCCD
+    idCardBack: null, // Mặt sau CCCD
+    householdBusinessRegistration: null, // Giấy ĐK HKD cá thể
+    storefrontPhoto: null, // Hình ảnh mặt tiền
+    taxCodeDoc: null, // Tài liệu mã số thuế (cho Cá nhân)
+    // Company
+    companyBusinessRegistration: null, // Giấy Phép ĐKKD
+    authorizationLetter: null, // Giấy ủy quyền
+    foodSafetyCertificate: null, // Giấy ATTP
+    representativeIdFront: null, // Mặt trước CCCD đại diện
+    representativeIdBack: null // Mặt sau CCCD đại diện
   });
 
   const [previews, setPreviews] = useState({
-    businessLicense: null,
     shopLogo: null,
-    shopCover: null
+    shopCover: null,
+    idCardFront: null,
+    idCardBack: null,
+    householdBusinessRegistration: null,
+    storefrontPhoto: null,
+    taxCodeDoc: null,
+    companyBusinessRegistration: null,
+    authorizationLetter: null,
+    foodSafetyCertificate: null,
+    representativeIdFront: null,
+    representativeIdBack: null
   });
 
-  const foodCategoryOptions = [
-    'Món Việt',
-    'Món Hàn',
-    'Món Nhật',
-    'Món Thái',
-    'Món Trung',
-    'Đồ ăn nhanh',
-    'Cafe & Trà sữa',
-    'Tráng miệng',
-    'Bánh kem',
-    'Lẩu',
-    'Nướng',
-    'Chay',
-    'Hải sản',
-    'Khác'
-  ];
+  
 
   // Auto-fill user information and check registration eligibility on component mount
   React.useEffect(() => {
@@ -161,14 +172,7 @@ export default function ShopRegistration() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCategoryToggle = (category) => {
-    setFormData(prev => ({
-      ...prev,
-      foodCategories: prev.foodCategories.includes(category)
-        ? prev.foodCategories.filter(c => c !== category)
-        : [...prev.foodCategories, category]
-    }));
-  };
+  
 
   const handleSafeNavigate = (path) => {
     try {
@@ -211,39 +215,100 @@ export default function ShopRegistration() {
       return;
     }
 
-    if (formData.foodCategories.length === 0) {
-      alert('⚠️ Vui lòng chọn ít nhất một danh mục món ăn');
-      return;
-    }
-
-    if (!files.businessLicense || !files.shopLogo || !files.shopCover) {
-      alert('⚠️ Vui lòng tải lên đầy đủ các ảnh yêu cầu');
-      return;
+    
+    // Dynamic document validation by shop type
+    const type = formData.shopType;
+    if (type === 'household') {
+      if (!formData.idCardNumber || !files.idCardFront || !files.idCardBack || !files.householdBusinessRegistration || !files.storefrontPhoto) {
+        alert('⚠️ Vui lòng nhập Số CCCD và tải lên: CCCD mặt trước & mặt sau, Giấy ĐK Hộ kinh doanh cá thể, và Ảnh mặt tiền nhà hàng.');
+        return;
+      }
+    } else if (type === 'individual') {
+      if (!formData.idCardNumber || !files.idCardFront || !files.idCardBack || !files.storefrontPhoto || !files.taxCodeDoc) {
+        alert('⚠️ Vui lòng nhập Số CCCD và tải lên: CCCD mặt trước & mặt sau, Ảnh mặt tiền nhà hàng và Tài liệu Mã số thuế.');
+        return;
+      }
+    } else if (type === 'company') {
+      if (!files.companyBusinessRegistration || !files.authorizationLetter || !files.foodSafetyCertificate || !files.representativeIdFront || !files.representativeIdBack || !files.storefrontPhoto) {
+        alert('⚠️ Vui lòng tải lên đầy đủ hồ sơ công ty: ĐKKD, Ủy quyền, ATTP, CCCD đại diện (2 mặt) và Ảnh mặt tiền.');
+        return;
+      }
     }
 
     try {
       setLoading(true);
       
-      // Create FormData for file upload
-      const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'foodCategories') {
-          submitData.append(key, JSON.stringify(formData[key]));
-        } else {
-          submitData.append(key, formData[key]);
-        }
-      });
-      Object.keys(files).forEach(key => {
-        if (files[key]) {
-          submitData.append(key, files[key]);
-        }
-      });
+      // Helper: upload file and return URL using per-user shop contract folder
+      const uploadFile = async (file) => {
+        if (!file) return null;
+        const fd = new FormData();
+        fd.append('image', file);
+        const res = await axios.post(`${API_BASE_URL}/images/upload/shop-contract`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true,
+        });
+        return res.data?.imageUrl || null;
+      };
 
-      const response = await axios.post('http://localhost:5000/api/shop/register', submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // Upload files in parallel
+      const [shop_logo_url, shop_cover_url, id_card_front_url, id_card_back_url, household_business_cert_url, storefront_photo_url, tax_code_doc_url, company_business_cert_url, authorization_letter_url, food_safety_cert_url, representative_id_card_front_url, representative_id_card_back_url] = await Promise.all([
+        uploadFile(files.shopLogo),
+        uploadFile(files.shopCover),
+        uploadFile(files.idCardFront),
+        uploadFile(files.idCardBack),
+        uploadFile(files.householdBusinessRegistration),
+        uploadFile(files.storefrontPhoto),
+        uploadFile(files.taxCodeDoc),
+        uploadFile(files.companyBusinessRegistration),
+        uploadFile(files.authorizationLetter),
+        uploadFile(files.foodSafetyCertificate),
+        uploadFile(files.representativeIdFront),
+        uploadFile(files.representativeIdBack),
+      ]);
+
+      // Get current user id for linking
+      const me = await getCurrentUser();
+      const user_id = me?.user?.id;
+
+      // Build payload for shop_contracts
+      const payload = {
+        shop_name: String(formData.shopName || '').trim(),
+        shop_description: String(formData.shopDescription || '').trim(),
+        shop_address: String(formData.shopAddress || '').trim(),
+        phone: String(formData.phone || '').trim(),
+        email: formData.email || null,
+        business_license_number: formData.shopType !== 'individual' ? (formData.businessLicenseNumber || null) : null,
+        opening_time: formData.openingTime,
+        closing_time: formData.closingTime,
+        business_type: formData.shopType,
+        bank_name: formData.bankName ? String(formData.bankName).trim() : null,
+        bank_account_number: formData.bankAccountNumber ? String(formData.bankAccountNumber).trim() : null,
+        bank_account_name: formData.bankAccountName ? String(formData.bankAccountName).trim() : null,
+        id_card_number: (formData.shopType === 'household' || formData.shopType === 'individual') ? (formData.idCardNumber || null) : null,
+        // urls
+        shop_logo_url: shop_logo_url || null,
+        shop_cover_url: shop_cover_url || null,
+        id_card_front_url: id_card_front_url || null,
+        id_card_back_url: id_card_back_url || null,
+        household_business_cert_url: household_business_cert_url || null,
+        storefront_photo_url: storefront_photo_url || null,
+        tax_code_doc_url: tax_code_doc_url || null,
+        company_business_cert_url: company_business_cert_url || null,
+        authorization_letter_url: authorization_letter_url || null,
+        food_safety_cert_url: food_safety_cert_url || null,
+        representative_id_card_front_url: representative_id_card_front_url || null,
+        representative_id_card_back_url: representative_id_card_back_url || null,
+        status: 'pending',
+      };
+
+      // Create contract
+      const createRes = await axios.post(`${API_BASE_URL}/shop-contracts`, payload, { withCredentials: true });
+      const contract = createRes.data?.data;
+
+      // Link user <-> contract
+      if (user_id && contract?.id) {
+        await axios.post(`${API_BASE_URL}/user-shop-contracts`, { user_id, contract_id: contract.id, status: 'active', is_active: true }, { withCredentials: true });
+      }
 
       alert('✅ Đăng ký thành công! Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48 giờ.');
       handleSafeNavigate('/customer/profile');
@@ -687,29 +752,33 @@ export default function ShopRegistration() {
               fontWeight: '500',
               color: '#333'
             }}>
-              Số giấy phép kinh doanh <span style={{ color: '#ee4d2d' }}>*</span>
+              Số giấy phép kinh doanh {formData.shopType !== 'individual' && (<span style={{ color: '#ee4d2d' }}>*</span>)}
             </label>
-            <input
-              type="text"
-              name="businessLicenseNumber"
-              value={formData.businessLicenseNumber}
-              onChange={handleInputChange}
-              placeholder="Nhập số giấy phép kinh doanh"
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '0.0625rem solid #ddd',
-                borderRadius: '0.5rem',
-                fontSize: '1rem',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#10b981'}
-              onBlur={(e) => e.target.style.borderColor = '#ddd'}
-            />
+            {formData.shopType !== 'individual' && (
+              <input
+                type="text"
+                name="businessLicenseNumber"
+                value={formData.businessLicenseNumber}
+                onChange={handleInputChange}
+                placeholder="Nhập số giấy phép kinh doanh"
+                required={formData.shopType !== 'individual'}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '0.0625rem solid #ddd',
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+            )}
           </div>
+
+          
         </div>
 
         {/* Operating Hours */}
@@ -806,75 +875,7 @@ export default function ShopRegistration() {
           </div>
         </div>
 
-        {/* Food Categories */}
-        <div style={{
-          background: '#fff',
-          borderRadius: '1rem',
-          padding: '1.5rem',
-          marginBottom: '1rem',
-          boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)'
-        }}>
-          <h2 style={{
-            fontSize: '1.125rem',
-            fontWeight: '600',
-            color: '#333',
-            marginTop: 0,
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            <Tag size={20} color="#10b981" />
-            Danh mục món ăn
-          </h2>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-            gap: '0.75rem'
-          }}>
-            {foodCategoryOptions.map((category) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => handleCategoryToggle(category)}
-                style={{
-                  padding: '0.75rem 1rem',
-                  border: formData.foodCategories.includes(category) 
-                    ? '0.125rem solid #10b981' 
-                    : '0.0625rem solid #ddd',
-                  borderRadius: '0.5rem',
-                  background: formData.foodCategories.includes(category) ? '#d1fae5' : '#fff',
-                  color: formData.foodCategories.includes(category) ? '#10b981' : '#666',
-                  fontSize: '0.9375rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontWeight: formData.foodCategories.includes(category) ? '600' : '400'
-                }}
-                onMouseEnter={(e) => {
-                  if (!formData.foodCategories.includes(category)) {
-                    e.currentTarget.style.borderColor = '#10b981';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!formData.foodCategories.includes(category)) {
-                    e.currentTarget.style.borderColor = '#ddd';
-                  }
-                }}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-          <div style={{ 
-            marginTop: '1rem', 
-            fontSize: '0.875rem', 
-            color: '#666',
-            fontStyle: 'italic'
-          }}>
-            Đã chọn: {formData.foodCategories.length} danh mục
-          </div>
-        </div>
+        
 
         {/* Bank Information */}
         <div style={{
@@ -995,7 +996,8 @@ export default function ShopRegistration() {
           </div>
         </div>
 
-        {/* Document Uploads */}
+        {/* Document Uploads */
+        }
         <div style={{
           background: '#fff',
           borderRadius: '1rem',
@@ -1014,9 +1016,10 @@ export default function ShopRegistration() {
             gap: '0.5rem'
           }}>
             <Camera size={20} color="#10b981" />
-            Hình ảnh cửa hàng
+            Hồ sơ đăng ký
           </h2>
 
+          {/* Branding */}
           <FileUploadBox 
             label="Logo cửa hàng" 
             fieldName="shopLogo" 
@@ -1033,14 +1036,282 @@ export default function ShopRegistration() {
             preview={previews.shopCover}
             onFileChange={(e) => handleFileChange(e, 'shopCover')}
           />
-          <FileUploadBox 
-            label="Ảnh giấy phép kinh doanh" 
-            fieldName="businessLicense" 
-            icon={FileText} 
-            aspectRatio="square"
-            preview={previews.businessLicense}
-            onFileChange={(e) => handleFileChange(e, 'businessLicense')}
-          />
+
+          {/* Shop Type Selector */}
+          <div style={{ margin: '1rem 0 1.25rem' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '0.5rem',
+              fontSize: '0.9375rem',
+              fontWeight: '500',
+              color: '#333'
+            }}>
+              Loại hình kinh doanh <span style={{ color: '#ee4d2d' }}>*</span>
+            </label>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              gap: '0.75rem',
+              width: '100%'
+            }}>
+              {[
+                { key: 'household', label: 'Hộ kinh doanh' },
+                { key: 'individual', label: 'Cá nhân' },
+                { key: 'company', label: 'Công ty' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, shopType: opt.key }))}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: formData.shopType === opt.key ? '0.125rem solid #10b981' : '0.0625rem solid #ddd',
+                    borderRadius: '0.5rem',
+                    background: formData.shopType === opt.key ? '#d1fae5' : '#fff',
+                    color: formData.shopType === opt.key ? '#10b981' : '#666',
+                    cursor: 'pointer',
+                    fontWeight: formData.shopType === opt.key ? 600 : 400
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Required documents by shop type */}
+          {formData.shopType === 'household' && (
+            <div>
+              <div style={{
+                background: '#f9fafb',
+                border: '0.0625rem solid #eee',
+                borderRadius: '0.5rem',
+                padding: '0.75rem',
+                marginBottom: '0.75rem',
+                color: '#374151',
+                fontSize: '0.9375rem'
+              }}>
+                - CCCD/Hộ chiếu (2 mặt, hình chụp bản gốc)
+                <br />- Giấy Đăng ký Hộ kinh doanh cá thể
+                <br />- Hình ảnh mặt tiền nhà hàng (Rõ ràng, đầy đủ bảng hiệu và địa chỉ)
+              </div>
+              {/* ID card number */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9375rem',
+                  fontWeight: '500',
+                  color: '#333'
+                }}>
+                  Số CCCD <span style={{ color: '#ee4d2d' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="idCardNumber"
+                  value={formData.idCardNumber}
+                  onChange={handleInputChange}
+                  placeholder="Nhập số CCCD"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '0.0625rem solid #ddd',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                  onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                />
+              </div>
+              <FileUploadBox 
+                label="CCCD/Hộ chiếu - Mặt trước" 
+                fieldName="idCardFront" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.idCardFront}
+                onFileChange={(e) => handleFileChange(e, 'idCardFront')}
+              />
+              <FileUploadBox 
+                label="CCCD/Hộ chiếu - Mặt sau" 
+                fieldName="idCardBack" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.idCardBack}
+                onFileChange={(e) => handleFileChange(e, 'idCardBack')}
+              />
+              <FileUploadBox 
+                label="Giấy ĐK Hộ kinh doanh cá thể" 
+                fieldName="householdBusinessRegistration" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.householdBusinessRegistration}
+                onFileChange={(e) => handleFileChange(e, 'householdBusinessRegistration')}
+              />
+              <FileUploadBox 
+                label="Ảnh mặt tiền nhà hàng" 
+                fieldName="storefrontPhoto" 
+                icon={Camera} 
+                aspectRatio="wide"
+                preview={previews.storefrontPhoto}
+                onFileChange={(e) => handleFileChange(e, 'storefrontPhoto')}
+              />
+            </div>
+          )}
+
+          {formData.shopType === 'individual' && (
+            <div>
+              <div style={{
+                background: '#f9fafb',
+                border: '0.0625rem solid #eee',
+                borderRadius: '0.5rem',
+                padding: '0.75rem',
+                marginBottom: '0.75rem',
+                color: '#374151',
+                fontSize: '0.9375rem'
+              }}>
+                - CCCD/Hộ chiếu (2 mặt, hình chụp bản gốc)
+                <br />- Hình ảnh mặt tiền nhà hàng (Rõ ràng, đầy đủ bảng hiệu và địa chỉ)
+                <br />- Tài liệu Mã số thuế
+              </div>
+              {/* ID card number */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9375rem',
+                  fontWeight: '500',
+                  color: '#333'
+                }}>
+                  Số CCCD <span style={{ color: '#ee4d2d' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="idCardNumber"
+                  value={formData.idCardNumber}
+                  onChange={handleInputChange}
+                  placeholder="Nhập số CCCD"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '0.0625rem solid #ddd',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                  onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                />
+              </div>
+              <FileUploadBox 
+                label="CCCD/Hộ chiếu - Mặt trước" 
+                fieldName="idCardFront" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.idCardFront}
+                onFileChange={(e) => handleFileChange(e, 'idCardFront')}
+              />
+              <FileUploadBox 
+                label="CCCD/Hộ chiếu - Mặt sau" 
+                fieldName="idCardBack" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.idCardBack}
+                onFileChange={(e) => handleFileChange(e, 'idCardBack')}
+              />
+              <FileUploadBox 
+                label="Ảnh mặt tiền nhà hàng" 
+                fieldName="storefrontPhoto" 
+                icon={Camera} 
+                aspectRatio="wide"
+                preview={previews.storefrontPhoto}
+                onFileChange={(e) => handleFileChange(e, 'storefrontPhoto')}
+              />
+              <FileUploadBox 
+                label="Tài liệu Mã số thuế" 
+                fieldName="taxCodeDoc" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.taxCodeDoc}
+                onFileChange={(e) => handleFileChange(e, 'taxCodeDoc')}
+              />
+            </div>
+          )}
+
+          {formData.shopType === 'company' && (
+            <div>
+              <div style={{
+                background: '#f9fafb',
+                border: '0.0625rem solid #eee',
+                borderRadius: '0.5rem',
+                padding: '0.75rem',
+                marginBottom: '0.75rem',
+                color: '#374151',
+                fontSize: '0.9375rem'
+              }}>
+                - Giấy Phép Đăng Ký Kinh Doanh
+                <br />- Giấy ủy quyền cho người đại diện ký thay
+                <br />- Giấy chứng nhận vệ sinh an toàn thực phẩm
+                <br />- CCCD/Hộ chiếu người đại diện (Hình chụp bản gốc)
+                <br />- Hình ảnh mặt tiền nhà hàng (Rõ ràng, đầy đủ bảng hiệu và địa chỉ)
+              </div>
+              <FileUploadBox 
+                label="Giấy Phép Đăng Ký Kinh Doanh" 
+                fieldName="companyBusinessRegistration" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.companyBusinessRegistration}
+                onFileChange={(e) => handleFileChange(e, 'companyBusinessRegistration')}
+              />
+              <FileUploadBox 
+                label="Giấy ủy quyền cho người đại diện" 
+                fieldName="authorizationLetter" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.authorizationLetter}
+                onFileChange={(e) => handleFileChange(e, 'authorizationLetter')}
+              />
+              <FileUploadBox 
+                label="Giấy chứng nhận VSATTP" 
+                fieldName="foodSafetyCertificate" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.foodSafetyCertificate}
+                onFileChange={(e) => handleFileChange(e, 'foodSafetyCertificate')}
+              />
+              <FileUploadBox 
+                label="CCCD người đại diện - Mặt trước" 
+                fieldName="representativeIdFront" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.representativeIdFront}
+                onFileChange={(e) => handleFileChange(e, 'representativeIdFront')}
+              />
+              <FileUploadBox 
+                label="CCCD người đại diện - Mặt sau" 
+                fieldName="representativeIdBack" 
+                icon={FileText} 
+                aspectRatio="square"
+                preview={previews.representativeIdBack}
+                onFileChange={(e) => handleFileChange(e, 'representativeIdBack')}
+              />
+              <FileUploadBox 
+                label="Ảnh mặt tiền nhà hàng" 
+                fieldName="storefrontPhoto" 
+                icon={Camera} 
+                aspectRatio="wide"
+                preview={previews.storefrontPhoto}
+                onFileChange={(e) => handleFileChange(e, 'storefrontPhoto')}
+              />
+            </div>
+          )}
         </div>
 
         {/* Terms Agreement */}
@@ -1188,4 +1459,3 @@ export default function ShopRegistration() {
     </div>
   );
 }
-

@@ -7,6 +7,9 @@ import FileUploadBox from '../../components/shared/FileUploadBox';
 import { getCurrentUser } from '../../api/userApi';
 import React from 'react';
 
+// API base URL (keep consistent with userApi.js)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 export default function ShipperRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -18,13 +21,18 @@ export default function ShipperRegistration() {
     fullName: '',
     phone: '',
     email: '',
-    vehicleType: 'motorcycle',
     vehiclePlateNumber: '',
     idCardNumber: '',
     driverLicenseNumber: '',
     bankAccountNumber: '',
     bankAccountName: '',
-    bankName: ''
+    bankName: '',
+    // extended to match shipper_contract
+    relativeName: '',
+    relativePhone: '',
+    relativeRelationship: '',
+    bankOwnerName: '',
+    idDocumentExpiryDate: '',
   });
 
   const [files, setFiles] = useState({
@@ -33,8 +41,18 @@ export default function ShipperRegistration() {
     idCardBack: null,
     vehicleRegistration: null,
     drivingLicense: null,
-    proofImage: null
+    proofImage: null,
+    healthCertificate: null,
+    criminalRecord: null,
+    lltp01: null,
+    lltpAppointment: null,
+    drivingLicenseBack: null,
+    motorcycleLicenseFront: null,
+    motorcycleLicenseBack: null,
   });
+
+  // Option for Legal Record submission: 'lltp2' or 'lltp1_combo'
+  const [lltpOption, setLltpOption] = useState('lltp2');
 
   const [previews, setPreviews] = useState({
     profilePhoto: null,
@@ -42,7 +60,14 @@ export default function ShipperRegistration() {
     idCardBack: null,
     vehicleRegistration: null,
     drivingLicense: null,
-    proofImage: null
+    proofImage: null,
+    healthCertificate: null,
+    criminalRecord: null,
+    lltp01: null,
+    lltpAppointment: null,
+    drivingLicenseBack: null,
+    motorcycleLicenseFront: null,
+    motorcycleLicenseBack: null,
   });
 
   // Auto-fill user information and check registration eligibility on component mount
@@ -101,7 +126,6 @@ export default function ShipperRegistration() {
             
             setFormData(prev => ({
               ...prev,
-              vehicleType: shipperData.vehicle_type ? String(shipperData.vehicle_type).trim() : prev.vehicleType,
               vehiclePlateNumber: shipperData.vehicle_number ? String(shipperData.vehicle_number).trim() : prev.vehiclePlateNumber,
               idCardNumber: shipperData.identity_card ? String(shipperData.identity_card).trim() : prev.idCardNumber,
             }));
@@ -167,30 +191,102 @@ export default function ShipperRegistration() {
       return;
     }
 
-    if (!files.profilePhoto || !files.idCardFront || !files.idCardBack || !files.vehicleRegistration) {
-      alert('⚠️ Vui lòng tải lên đầy đủ các ảnh yêu cầu');
+    // Validate required contract docs based on chosen option
+    const hasHealth = Boolean(files.healthCertificate);
+    const hasCriminal = Boolean(files.criminalRecord);
+    const hasLltpCombo = Boolean(files.lltp01) && Boolean(files.lltpAppointment);
+    if (!hasHealth) {
+      alert('⚠️ Yêu cầu giấy khám sức khỏe.');
+      return;
+    }
+    if (lltpOption === 'lltp2' && !hasCriminal) {
+      alert('⚠️ Vui lòng tải lên LLTP số 02.');
+      return;
+    }
+    if (lltpOption === 'lltp1_combo' && !hasLltpCombo) {
+      alert('⚠️ Vui lòng tải lên LLTP số 01 và Giấy hẹn LLTP số 02.');
       return;
     }
 
     try {
       setLoading(true);
-      
-      // Create FormData for file upload
-      const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        submitData.append(key, formData[key]);
-      });
-      Object.keys(files).forEach(key => {
-        if (files[key]) {
-          submitData.append(key, files[key]);
-        }
-      });
 
-      const response = await axios.post('http://localhost:5000/api/shippers/register', submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // Helper: upload file and return URL
+      const uploadFile = async (file) => {
+        if (!file) return null;
+        const fd = new FormData();
+        fd.append('image', file);
+        const res = await axios.post(`${API_BASE_URL}/images/upload/shipper-contract`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true,
+        });
+        return res.data?.imageUrl || null;
+      };
+
+      // Upload selected files and collect URLs
+      const [portrait_photo_url, id_card_front_url, id_card_back_url, vehicle_registration_url, driving_license_front_url, driving_license_back_url, motorcycle_license_front_url, motorcycle_license_back_url, proof_image_url, health_certificate_url, criminal_record_url, lltp_01_url, lltp_appointment_url] = await Promise.all([
+        uploadFile(files.profilePhoto),
+        uploadFile(files.idCardFront),
+        uploadFile(files.idCardBack),
+        uploadFile(files.vehicleRegistration),
+        uploadFile(files.drivingLicense),
+        uploadFile(files.drivingLicenseBack),
+        uploadFile(files.motorcycleLicenseFront),
+        uploadFile(files.motorcycleLicenseBack),
+        uploadFile(files.proofImage),
+        uploadFile(files.healthCertificate),
+        uploadFile(files.criminalRecord),
+        uploadFile(files.lltp01),
+        uploadFile(files.lltpAppointment),
+      ]);
+
+      // Get current user id for linking
+      const me = await getCurrentUser();
+      const user_id = me?.user?.id;
+
+      // Build payload matching shipper_contracts model
+      const payload = {
+        user_id,
+        full_name: String(formData.fullName || '').trim(),
+        phone: String(formData.phone || '').trim(),
+        email: formData.email || null,
+        // relatives
+        relative_name: formData.relativeName ? String(formData.relativeName).trim() : null,
+        relative_phone: formData.relativePhone ? String(formData.relativePhone).trim() : null,
+        relative_relationship: formData.relativeRelationship ? String(formData.relativeRelationship).trim() : null,
+        // bank
+        bank_owner_name: formData.bankAccountName ? String(formData.bankAccountName).trim() : null,
+        bank_name: formData.bankName ? String(formData.bankName).trim() : null,
+        bank_account_number: formData.bankAccountNumber ? String(formData.bankAccountNumber).trim() : null,
+        bank_account_name: formData.bankAccountName ? String(formData.bankAccountName).trim() : null,
+        // vehicle
+        vehicle_plate_number: formData.vehiclePlateNumber ? String(formData.vehiclePlateNumber).trim() : null,
+        // IDs
+        id_card_number: formData.idCardNumber ? String(formData.idCardNumber).trim() : null,
+        id_document_expiry_date: formData.idDocumentExpiryDate || null,
+        driver_license_number: formData.driverLicenseNumber ? String(formData.driverLicenseNumber).trim() : null,
+        // uploads
+        portrait_photo_url: portrait_photo_url || null,
+        id_card_front_url: id_card_front_url || null,
+        id_card_back_url: id_card_back_url || null,
+        vehicle_registration_url: vehicle_registration_url || null,
+        driving_license_front_url: driving_license_front_url || null,
+        driving_license_back_url: driving_license_back_url || null,
+        motorcycle_license_front_url: motorcycle_license_front_url || null,
+        motorcycle_license_back_url: motorcycle_license_back_url || null,
+        health_certificate_url: health_certificate_url || null,
+        criminal_record_url: criminal_record_url || null,
+        lltp_01_url: lltp_01_url || null,
+        lltp_appointment_url: lltp_appointment_url || null,
+        proof_image_url: proof_image_url || null,
+        
+      };
+
+      const response = await axios.post(
+        `${API_BASE_URL}/shipper/register`,
+        payload,
+        { withCredentials: true }
+      );
 
       alert('✅ Đăng ký thành công! Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48 giờ.');
       handleSafeNavigate('/customer/profile');
@@ -590,6 +686,82 @@ export default function ShipperRegistration() {
               onBlur={(e) => e.target.style.borderColor = '#ddd'}
             />
           </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9375rem', fontWeight: '500', color: '#333' }}>
+                Ngày hết hạn giấy tờ (CMND/CCCD)
+              </label>
+              <input
+                type="date"
+                name="idDocumentExpiryDate"
+                value={formData.idDocumentExpiryDate}
+                onChange={handleInputChange}
+                style={{ width: '100%', padding: '0.75rem', border: '0.0625rem solid #ddd', borderRadius: '0.5rem', fontSize: '1rem', outline: 'none' }}
+                onFocus={(e) => e.target.style.borderColor = '#f97316'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+            </div>
+            
+          </div>
+
+          
+        </div>
+
+        {/* Relative Contact */}
+        <div style={{
+          background: '#fff',
+          borderRadius: '1rem',
+          padding: '1.5rem',
+          marginBottom: '1rem',
+          boxShadow: '0 0.125rem 1rem rgba(0, 0, 0, 0.06)'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: '600',
+            color: '#333',
+            marginTop: 0,
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <User size={20} color="#f97316" />
+            Thông tin người thân
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9375rem', fontWeight: '500', color: '#333' }}>
+                Người thân liên hệ
+              </label>
+              <input type="text" name="relativeName" value={formData.relativeName} onChange={handleInputChange} placeholder="Họ tên" style={{ width: '100%', padding: '0.75rem', border: '0.0625rem solid #ddd', borderRadius: '0.5rem' }} />
+            </div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9375rem', fontWeight: '500', color: '#333' }}>
+                SĐT người thân
+              </label>
+              <input type="text" name="relativePhone" value={formData.relativePhone} onChange={handleInputChange} placeholder="Số điện thoại" style={{ width: '100%', padding: '0.75rem', border: '0.0625rem solid #ddd', borderRadius: '0.5rem' }} />
+            </div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9375rem', fontWeight: '500', color: '#333' }}>
+                Quan hệ
+              </label>
+              <select
+                name="relativeRelationship"
+                value={formData.relativeRelationship}
+                onChange={handleInputChange}
+                style={{ width: '100%', padding: '0.75rem', border: '0.0625rem solid #ddd', borderRadius: '0.5rem', background: '#fff', fontSize: '1.05rem' }}
+              >
+                <option value="">Chọn quan hệ</option>
+                <option value="Cha/Mẹ">Cha/Mẹ</option>
+                <option value="Anh/Chị/Em">Anh/Chị/Em</option>
+                <option value="Vợ/Chồng">Vợ/Chồng</option>
+                <option value="Bạn bè">Bạn bè</option>
+                <option value="Khác">Khác</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Vehicle Information */}
@@ -614,39 +786,7 @@ export default function ShipperRegistration() {
             Thông tin phương tiện
           </h2>
 
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '0.5rem',
-              fontSize: '0.9375rem',
-              fontWeight: '500',
-              color: '#333'
-            }}>
-              Loại phương tiện <span style={{ color: '#ee4d2d' }}>*</span>
-            </label>
-            <select
-              name="vehicleType"
-              value={formData.vehicleType}
-              onChange={handleInputChange}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '0.0625rem solid #ddd',
-                borderRadius: '0.5rem',
-                fontSize: '1rem',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
-                background: '#fff'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#f97316'}
-              onBlur={(e) => e.target.style.borderColor = '#ddd'}
-            >
-              <option value="motorcycle">Xe máy</option>
-              <option value="bicycle">Xe đạp</option>
-              <option value="car">Ô tô</option>
-            </select>
-          </div>
+          
 
           <div style={{ marginBottom: '1.25rem' }}>
             <label style={{
@@ -798,6 +938,22 @@ export default function ShipperRegistration() {
               onBlur={(e) => e.target.style.borderColor = '#ddd'}
             />
           </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9375rem', fontWeight: '500', color: '#333' }}>
+              Tên chủ tài khoản (xác minh theo hợp đồng)
+            </label>
+            <input
+              type="text"
+              name="bankOwnerName"
+              value={formData.bankOwnerName}
+              onChange={handleInputChange}
+              placeholder="Nhập tên chủ tài khoản theo ngân hàng"
+              style={{ width: '100%', padding: '0.75rem', border: '0.0625rem solid #ddd', borderRadius: '0.5rem', fontSize: '1rem', outline: 'none' }}
+              onFocus={(e) => e.target.style.borderColor = '#f97316'}
+              onBlur={(e) => e.target.style.borderColor = '#ddd'}
+            />
+          </div>
         </div>
 
         {/* Driver License Information */}
@@ -906,11 +1062,102 @@ export default function ShipperRegistration() {
             onFileChange={(e) => handleFileChange(e, 'vehicleRegistration')}
           />
           <FileUploadBox 
-            label="Ảnh giấy phép lái xe" 
+            label="Ảnh GPLX (mặt trước)" 
             fieldName="drivingLicense" 
             icon={FileText}
             preview={previews.drivingLicense}
             onFileChange={(e) => handleFileChange(e, 'drivingLicense')}
+          />
+          <FileUploadBox 
+            label="Ảnh GPLX (mặt sau)" 
+            fieldName="drivingLicenseBack" 
+            icon={FileText}
+            preview={previews.drivingLicenseBack}
+            onFileChange={(e) => handleFileChange(e, 'drivingLicenseBack')}
+          />
+          {/* LLTP option selector (buttons) */}
+          <div style={{ margin: '0 0 1rem 0', padding: '0.75rem', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '0.5rem' }}>
+            <div style={{ fontWeight: 600, color: '#92400e', marginBottom: '0.5rem' }}>Chọn hình thức nộp LLTP</div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '0.75rem',
+              width: '100%'
+            }}>
+              {[
+                { key: 'lltp2', label: 'Nộp LLTP số 02' },
+                { key: 'lltp1_combo', label: 'LLTP số 01 + Giấy hẹn số 02' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setLltpOption(opt.key)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: lltpOption === opt.key ? '0.125rem solid #f97316' : '0.0625rem solid #fdba74',
+                    borderRadius: '0.5rem',
+                    background: lltpOption === opt.key ? '#ffedd5' : '#fff',
+                    color: lltpOption === opt.key ? '#c2410c' : '#92400e',
+                    cursor: 'pointer',
+                    fontWeight: lltpOption === opt.key ? 600 : 500
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Health certificate (always required) */}
+          <FileUploadBox 
+            label="Giấy khám sức khỏe (bắt buộc)" 
+            fieldName="healthCertificate" 
+            icon={FileText}
+            preview={previews.healthCertificate}
+            onFileChange={(e) => handleFileChange(e, 'healthCertificate')}
+          />
+
+          {/* Conditional LLTP inputs */}
+          {lltpOption === 'lltp2' ? (
+            <FileUploadBox 
+              label="LLTP số 02 (bắt buộc)" 
+              fieldName="criminalRecord" 
+              icon={FileText}
+              preview={previews.criminalRecord}
+              onFileChange={(e) => handleFileChange(e, 'criminalRecord')}
+            />
+          ) : (
+            <>
+              <FileUploadBox 
+                label="LLTP số 01 (bắt buộc)" 
+                fieldName="lltp01" 
+                icon={FileText}
+                preview={previews.lltp01}
+                onFileChange={(e) => handleFileChange(e, 'lltp01')}
+              />
+              <FileUploadBox 
+                label="Giấy hẹn LLTP số 02 (bắt buộc)" 
+                fieldName="lltpAppointment" 
+                icon={FileText}
+                preview={previews.lltpAppointment}
+                onFileChange={(e) => handleFileChange(e, 'lltpAppointment')}
+              />
+            </>
+          )}
+          <FileUploadBox 
+            label="Bằng lái xe máy (mặt trước)" 
+            fieldName="motorcycleLicenseFront" 
+            icon={FileText}
+            preview={previews.motorcycleLicenseFront}
+            onFileChange={(e) => handleFileChange(e, 'motorcycleLicenseFront')}
+          />
+          <FileUploadBox 
+            label="Bằng lái xe máy (mặt sau)" 
+            fieldName="motorcycleLicenseBack" 
+            icon={FileText}
+            preview={previews.motorcycleLicenseBack}
+            onFileChange={(e) => handleFileChange(e, 'motorcycleLicenseBack')}
           />
           <FileUploadBox 
             label="Ảnh minh chứng khác" 
@@ -1056,4 +1303,3 @@ export default function ShipperRegistration() {
     </div>
   );
 }
-
