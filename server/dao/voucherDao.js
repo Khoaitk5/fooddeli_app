@@ -1,6 +1,7 @@
 // dao/voucherDao.js
 const GenericDao = require("./generic_dao");
 const Voucher = require("../models/voucher");
+const pool = require("../config/db");
 
 class VoucherDao extends GenericDao {
   constructor() {

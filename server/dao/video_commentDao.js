@@ -1,6 +1,7 @@
 // dao/videoCommentDao.js
 const GenericDao = require("./generic_dao");
 const VideoComment = require("../models/video_comment");
+const pool = require("../config/db");
 
 class VideoCommentDao extends GenericDao {
   constructor() {

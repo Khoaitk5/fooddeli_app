@@ -6,7 +6,11 @@ import OngoingOrderCard from "../../components/shared/OngoingOrderCard";
 import CompletedOrderCard from "../../components/shared/CompletedOrderCard";
 import EmptyState from "../../components/shared/EmptyState";
 
-function OrdersPage({ isMobile = false, isTablet = false, onTrackOrder = () => {} }) {
+function OrdersPage({
+  isMobile = false,
+  isTablet = false,
+  onTrackOrder = () => {},
+}) {
   const [activeTab, setActiveTab] = useState("ongoing");
   const [ongoingOrders, setOngoingOrders] = useState([]);
   const [completedOrders, setCompletedOrders] = useState([]);
@@ -22,7 +26,9 @@ function OrdersPage({ isMobile = false, isTablet = false, onTrackOrder = () => {
     if (!address) return "Chưa có địa chỉ";
     try {
       const obj = typeof address === "string" ? JSON.parse(address) : address;
-      const parts = [obj.detail, obj.ward, obj.district, obj.city].filter(Boolean);
+      const parts = [obj.detail, obj.ward, obj.district, obj.city].filter(
+        Boolean
+      );
       return parts.join(", ");
     } catch {
       return String(address);
@@ -69,7 +75,8 @@ function OrdersPage({ isMobile = false, isTablet = false, onTrackOrder = () => {
         .map((order) => ({
           id: order.order_id,
           restaurant: order.shop_name || "Quán chưa rõ",
-          restaurantAddress: formatAddress(order.shop_address) || "Địa chỉ quán chưa có",
+          restaurantAddress:
+            formatAddress(order.shop_address) || "Địa chỉ quán chưa có",
           status:
             order.status === "pending"
               ? "Đang chờ xác nhận"
@@ -88,7 +95,7 @@ function OrdersPage({ isMobile = false, isTablet = false, onTrackOrder = () => {
               image: d.product_image, // ✅ Ảnh món thật
             })) || [],
           shop_image: order.shop_image || null, // ✅ thêm dòng này
-image: order.shop_image || getOrderImage(order), // ✅ ưu tiên ảnh quán // ✅ Ảnh đại diện đơn hàng
+          image: order.shop_image || getOrderImage(order), // ✅ ưu tiên ảnh quán // ✅ Ảnh đại diện đơn hàng
         }));
 
       // 🔹 Đơn đã hoàn tất
@@ -97,7 +104,8 @@ image: order.shop_image || getOrderImage(order), // ✅ ưu tiên ảnh quán //
         .map((order) => ({
           id: order.order_id,
           restaurant: order.shop_name || "Quán chưa rõ",
-          restaurantAddress: formatAddress(order.shop_address) || "Địa chỉ quán chưa có",
+          restaurantAddress:
+            formatAddress(order.shop_address) || "Địa chỉ quán chưa có",
           deliveredAt: order.updated_at || "Vừa xong",
           total: Number(order.total_price || 0),
           items:
@@ -108,14 +116,21 @@ image: order.shop_image || getOrderImage(order), // ✅ ưu tiên ảnh quán //
               image: d.product_image,
             })) || [],
           shop_image: order.shop_image || null,
-image: order.shop_image || getOrderImage(order),
-          rated: false,
+          image: order.shop_image || getOrderImage(order),
+          // Thêm thông tin cho đánh giá
+          shipperId: order.shipper_id,
+          shopId: order.shop_id,
+          userId: order.user_id,
+          shipperName: order.shipper_name,
+          shipperAvatar: order.shipper_avatar,
+          rated: false, // sẽ được cập nhật trong CompletedOrderCard
         }));
 
       setOngoingOrders(ongoing);
       setCompletedOrders(completed);
     } catch (err) {
-      if (err.name !== "AbortError") console.error("❌ Lỗi khi fetch đơn hàng:", err);
+      if (err.name !== "AbortError")
+        console.error("❌ Lỗi khi fetch đơn hàng:", err);
     } finally {
       setLoading(false);
     }
@@ -175,14 +190,22 @@ image: order.shop_image || getOrderImage(order),
         ) : activeTab === "ongoing" ? (
           ongoingOrders.length > 0 ? (
             ongoingOrders.map((order) => (
-              <OngoingOrderCard key={order.id} order={order} cardMargin={cardMargin} />
+              <OngoingOrderCard
+                key={order.id}
+                order={order}
+                cardMargin={cardMargin}
+              />
             ))
           ) : (
             <EmptyState message="Chưa có đơn hàng nào đang giao" />
           )
         ) : completedOrders.length > 0 ? (
           completedOrders.map((order) => (
-            <CompletedOrderCard key={order.id} order={order} cardMargin={cardMargin} />
+            <CompletedOrderCard
+              key={order.id}
+              order={order}
+              cardMargin={cardMargin}
+            />
           ))
         ) : (
           <EmptyState message="Chưa có đơn hàng nào đã giao" />
