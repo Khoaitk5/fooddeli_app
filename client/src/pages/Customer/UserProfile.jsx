@@ -1,22 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme, useMediaQuery } from "@mui/material";
+import { useTheme, useMediaQuery, Box, Stack, Skeleton, Slide, Fade } from "@mui/material";
 import {
   MapPin,
   CreditCard,
-  Clock,
   Settings,
   ChevronRight,
-  LogOut,
   Edit3,
   Truck,
   Store,
+  Phone,
+  Mail,
 } from "lucide-react";
 import axios from "axios";
 import { EditProfileDialog } from "@/components/role-specific/Customer/EditProfileDialog";
 import { AddressesDialog } from "@/components/role-specific/Customer/AddressesDialog";
-import { SettingsDialog } from "@/components/role-specific/Customer/SettingsDialog";
-import { PaymentMethodsDialog } from "@/components/role-specific/Customer/PaymentMethodsDialog";
 import { useAuth } from "../../hooks/useAuth";
 import Navbar from "../../components/shared/Navbar";
 import AnimatedLogoutButton from "../../components/shared/AnimatedLogoutButton";
@@ -31,6 +29,7 @@ export function UserProfile({
   const navigate = useNavigate();
   const { logout } = useAuth();
   const theme = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   const detectedIsMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const detectedIsTablet = useMediaQuery(theme.breakpoints.down("md"));
@@ -44,8 +43,6 @@ export function UserProfile({
   // 🔹 Dialog states
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showAddresses, setShowAddresses] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showPaymentMethods, setShowPaymentMethods] = useState(false); // ✅ Thêm dòng này
 
   // 🔹 Fetch user info from backend
   useEffect(() => {
@@ -81,6 +78,10 @@ export function UserProfile({
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleSaveProfile = (formData) => {
     setUserData((prev) => ({ ...prev, ...formData }));
     setShowEditProfile(false);
@@ -93,18 +94,52 @@ export function UserProfile({
 
   if (loading || !userData) {
     return (
-      <div
-        style={{
-          width: "100%",
-          height: "100vh",
+      <Box sx={{ width: "100%", minHeight: "100vh", bgcolor: "#f5f5f5" }}>
+        <Box sx={{
+          p: "2.5rem 1.5rem 5rem",
           display: "flex",
-          justifyContent: "center",
+          flexDirection: "column",
           alignItems: "center",
-          color: "#666",
-        }}
-      >
-        Đang tải thông tin người dùng...
-      </div>
+          background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
+          position: "relative"
+        }}>
+          <Stack alignItems="center" spacing={1.25} sx={{ zIndex: 1 }}>
+            <Skeleton variant="circular" width={128} height={128} sx={{ border: "4px solid #fff", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }} />
+            <Skeleton variant="text" width={200} height={28} sx={{ bgcolor: "rgba(255,255,255,0.6)" }} />
+            <Skeleton variant="text" width={260} height={22} sx={{ bgcolor: "rgba(255,255,255,0.5)" }} />
+          </Stack>
+        </Box>
+
+        <Box sx={{ p: "0 1.5rem", mt: -7, mb: 2 }}>
+          <Box sx={{
+            background: "#fff",
+            borderRadius: "1.75rem",
+            p: "1.75rem 1.25rem",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: "1.5rem",
+          }}>
+            <Skeleton variant="rounded" height={96} />
+            <Skeleton variant="rounded" height={96} />
+          </Box>
+        </Box>
+
+        <Box sx={{ p: "0 1.5rem", mb: 2 }}>
+          <Box sx={{ background: "#fff", borderRadius: "1.75rem", overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
+            {[...Array(3)].map((_, i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2, p: "1.25rem 1.5rem", borderBottom: i < 2 ? "1px solid #f0f0f0" : "none" }}>
+                <Skeleton variant="rounded" width={52} height={52} sx={{ borderRadius: 3 }} />
+                <Skeleton variant="text" width="60%" height={22} />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        <Box sx={{ p: "0 1.5rem 8rem" }}>
+          <Skeleton variant="rounded" height={54} />
+        </Box>
+      </Box>
     );
   }
 
@@ -114,6 +149,14 @@ export function UserProfile({
     userData.shipper_profile && typeof userData.shipper_profile === "object";
   const isShopRole = userData.role === "shop";
   const isShipperRole = userData.role === "shipper";
+  const roleLabel = isShopRole ? "Chủ Shop" : isShipperRole ? "Shipper" : "Khách hàng";
+  const rating = userData.stats.orders > 0 ? "4.8" : "0";
+  const membership = userData.stats.orders >= 50
+    ? { label: "Hạng Vàng", color: "#f59e0b" }
+    : userData.stats.orders >= 10
+    ? { label: "Hạng Bạc", color: "#64748b" }
+    : { label: "Thành viên mới", color: "#94a3b8" };
+  const roleColor = isShopRole ? "#10b981" : isShipperRole ? "#f97316" : "#60a5fa";
 
   // 🔹 Menu Items
   const menuItems = [
@@ -165,26 +208,49 @@ export function UserProfile({
       icon: Settings,
       title: "Cài đặt",
       color: "#64748b",
-      onClick: () => setShowSettings(true),
+      onClick: () => navigate("/customer/settings"),
     },
   ];
 
-  const padding = isMobile ? "1rem" : isTablet ? "1.25rem" : "1.5rem";
-  const avatarSize = isMobile ? "5rem" : isTablet ? "6rem" : "7rem";
-
   return (
     <div style={{ width: "100%", minHeight: "100vh", background: "#f5f5f5" }}>
-      {/* Header */}
-      <div
-        style={{
-          padding: "2.5rem 1.5rem 5rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
-          position: "relative",
-        }}
-      >
+      <Slide in={mounted} direction="down" timeout={600}>
+        <div
+          style={{
+            padding: "2.5rem 1.5rem 5rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
+            position: "relative",
+          }}
+        >
+        {/* Decorative glows */}
+        <div
+          style={{
+            position: "absolute",
+            top: -30,
+            left: -30,
+            width: 160,
+            height: 160,
+            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%)",
+            filter: "blur(10px)",
+            opacity: 0.6,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: -40,
+            right: -20,
+            width: 220,
+            height: 220,
+            background: "radial-gradient(circle at 70% 70%, rgba(255,255,255,0.25), rgba(255,255,255,0) 60%)",
+            filter: "blur(16px)",
+            opacity: 0.6,
+          }}
+        />
+
         <div
           style={{
             position: "relative",
@@ -194,17 +260,27 @@ export function UserProfile({
         >
           <div
             style={{
-              width: "8rem",
-              height: "8rem",
+              width: "8.75rem",
+              height: "8.75rem",
               borderRadius: "50%",
-              overflow: "hidden",
-              border: "4px solid #fff",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-              backgroundImage: `url(${userData.avatar})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
+              padding: "5px",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.55) 100%)",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
             }}
-          />
+          >
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                overflow: "hidden",
+                border: "3px solid rgba(255,255,255,0.85)",
+                backgroundImage: `url(${userData.avatar})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+          </div>
           <button
             onClick={() => setShowEditProfile(true)}
             style={{
@@ -226,10 +302,14 @@ export function UserProfile({
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.1)";
               e.currentTarget.style.background = "#FE5621";
+              const svg = e.currentTarget.querySelector('svg');
+              if (svg) svg.setAttribute('stroke', '#fff');
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "scale(1)";
               e.currentTarget.style.background = "#fff";
+              const svg = e.currentTarget.querySelector('svg');
+              if (svg) svg.setAttribute('stroke', '#FE5621');
             }}
           >
             <Edit3 size={18} color="#FE5621" strokeWidth={2.5} />
@@ -253,221 +333,269 @@ export function UserProfile({
         </h2>
         <div
           style={{
-            fontSize: "1.05rem",
-            color: "rgba(255,255,255,0.95)",
-            marginBottom: "0.35rem",
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
             gap: "0.5rem",
-            zIndex: 1,
-            fontWeight: "500",
-          }}
-        >
-          📞 {userData.phone}
-        </div>
-        {userData.email && (
-          <div
-            style={{
-              fontSize: "0.95rem",
-              color: "rgba(255,255,255,0.9)",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              zIndex: 1,
-              fontWeight: "500",
-            }}
-          >
-            ✉️ {userData.email}
-          </div>
-        )}
-      </div>
-
-      {/* Stats Cards */}
-      <div
-        style={{
-          padding: "0 1.5rem",
-          marginTop: "-3.5rem",
-          marginBottom: "1.5rem",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "1.75rem",
-            padding: "1.75rem 1.25rem",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "1.5rem",
-          }}
-        >
-          <div style={{ textAlign: "center" }}>
-            <div
-              style={{
-                width: "4rem",
-                height: "4rem",
-                margin: "0 auto 0.75rem",
-                borderRadius: "1.125rem",
-                background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.75rem",
-                boxShadow: "0 4px 12px rgba(254, 86, 33, 0.25)",
-              }}
-            >
-              📦
-            </div>
-            <div style={{ fontSize: "1.85rem", fontWeight: "700", color: "#FE5621", marginBottom: "0.25rem" }}>
-              {userData.stats.orders}
-            </div>
-            <div style={{ fontSize: "0.95rem", color: "#666", fontWeight: "500" }}>
-              Đơn hàng
-            </div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div
-              style={{
-                width: "4rem",
-                height: "4rem",
-                margin: "0 auto 0.75rem",
-                borderRadius: "1.125rem",
-                background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.75rem",
-                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)",
-              }}
-            >
-              ⭐
-            </div>
-            <div style={{ fontSize: "1.85rem", fontWeight: "700", color: "#10b981", marginBottom: "0.25rem" }}>
-              {userData.stats.orders > 0 ? "4.8" : "0"}
-            </div>
-            <div style={{ fontSize: "0.95rem", color: "#666", fontWeight: "500" }}>
-              Đánh giá
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Menu */}
-      <div style={{ padding: "0 1.5rem", marginBottom: "1.5rem" }}>
-        <h3 style={{
-          fontSize: "1.35rem",
-          fontWeight: "700",
-          color: "#1a1a1a",
-          marginBottom: "1rem",
-          marginLeft: "0.25rem",
-          letterSpacing: "-0.5px",
-        }}>
-          Tài khoản của tôi
-        </h3>
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "1.75rem",
-            overflow: "hidden",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-          }}
-        >
-          {menuItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={index}
-                onClick={item.onClick}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  padding: "1.25rem 1.5rem",
-                  background: "#fff",
-                  border: "none",
-                  borderBottom:
-                    index < menuItems.length - 1 ? "1px solid #f0f0f0" : "none",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#fafafa";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#fff";
-                }}
-              >
-                <div
-                  style={{
-                    width: "3.25rem",
-                    height: "3.25rem",
-                    borderRadius: "1rem",
-                    background: `${item.color}12`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={22} color={item.color} strokeWidth={2.5} />
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    fontSize: "1.05rem",
-                    fontWeight: "600",
-                    color: "#1a1a1a",
-                    letterSpacing: "-0.25px",
-                  }}
-                >
-                  {item.title}
-                </div>
-                <ChevronRight size={22} color="#bbb" strokeWidth={2.5} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Logout */}
-      <div style={{ padding: "0 1.5rem 8rem" }}>
-        <button
-          style={{
-            width: "100%",
-            padding: "1.25rem",
-            background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
-            border: "none",
-            borderRadius: "1.5rem",
+            padding: "0.35rem 0.75rem",
+            borderRadius: "999px",
+            background: "rgba(255,255,255,0.18)",
+            border: "1px solid rgba(255,255,255,0.35)",
             color: "#fff",
-            fontSize: "1.15rem",
-            fontWeight: "700",
-            cursor: "pointer",
+            fontWeight: "800",
+            fontSize: "0.8rem",
+            marginBottom: "0.5rem",
+            backdropFilter: "blur(6px)",
+            zIndex: 1,
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: roleColor, boxShadow: "0 0 0 3px rgba(255,255,255,0.25)" }} />
+          {roleLabel}
+        </div>
+
+        <div
+          style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "0.625rem",
-            transition: "all 0.3s",
-            boxShadow: "0 6px 20px rgba(254, 86, 33, 0.35)",
-            letterSpacing: "-0.25px",
+            gap: "0.5rem",
+            flexWrap: "wrap",
+            zIndex: 1,
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-3px)";
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(254, 86, 33, 0.45)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(254, 86, 33, 0.35)";
-          }}
-          onClick={handleLogout}
         >
-          <LogOut size={22} strokeWidth={2.5} />
-          Đăng xuất
-        </button>
-      </div>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.5rem 0.75rem",
+              borderRadius: "999px",
+              background: "rgba(255,255,255,0.18)",
+              border: "1px solid rgba(255,255,255,0.35)",
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: "0.95rem",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            <Phone size={16} strokeWidth={2.5} />
+            {userData.phone}
+          </div>
+          {userData.email && (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.5rem 0.75rem",
+                borderRadius: "999px",
+                background: "rgba(255,255,255,0.18)",
+                border: "1px solid rgba(255,255,255,0.35)",
+                color: "#fff",
+                fontWeight: "700",
+                fontSize: "0.95rem",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <Mail size={16} strokeWidth={2.5} />
+              {userData.email}
+            </div>
+          )}
+        </div>
+        </div>
+      </Slide>
+
+      <Fade in={mounted} timeout={800}>
+        <div
+          style={{
+            padding: "0 1.5rem",
+            marginTop: "-3.5rem",
+            marginBottom: "1.5rem",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "1.75rem",
+              padding: "1.25rem",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+                gap: "1rem",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    width: "3.5rem",
+                    height: "3.5rem",
+                    margin: "0 auto 0.5rem",
+                    borderRadius: "1rem",
+                    background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.5rem",
+                    boxShadow: "0 4px 12px rgba(254, 86, 33, 0.25)",
+                  }}
+                >
+                  📦
+                </div>
+                <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#FE5621", marginBottom: "0.1rem" }}>
+                  {userData.stats.orders}
+                </div>
+                <div style={{ fontSize: "0.9rem", color: "#64748b", fontWeight: "600" }}>
+                  Đơn hàng
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    width: "3.5rem",
+                    height: "3.5rem",
+                    margin: "0 auto 0.5rem",
+                    borderRadius: "1rem",
+                    background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.5rem",
+                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)",
+                  }}
+                >
+                  ⭐
+                </div>
+                <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#10b981", marginBottom: "0.1rem" }}>
+                  {rating}
+                </div>
+                <div style={{ fontSize: "0.9rem", color: "#64748b", fontWeight: "600" }}>
+                  Đánh giá
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    width: "3.5rem",
+                    height: "3.5rem",
+                    margin: "0 auto 0.5rem",
+                    borderRadius: "1rem",
+                    background: "linear-gradient(135deg, #6366F1 0%, #A78BFA 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.5rem",
+                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)",
+                  }}
+                >
+                  🎖️
+                </div>
+                <div style={{ fontSize: "1.15rem", fontWeight: "800", color: membership.color, marginBottom: "0.1rem" }}>
+                  {membership.label}
+                </div>
+                <div style={{ fontSize: "0.9rem", color: "#64748b", fontWeight: "600" }}>
+                  Thành viên
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Fade>
+
+      <Fade in={mounted} timeout={900}>
+        <div style={{ padding: "0 1.5rem", marginBottom: "1.5rem" }}>
+          <h3 style={{
+            fontSize: "1.35rem",
+            fontWeight: "700",
+            color: "#1a1a1a",
+            marginBottom: "1rem",
+            marginLeft: "0.25rem",
+            letterSpacing: "-0.5px",
+          }}>
+            Hành động nhanh
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(3, 1fr)" : "repeat(3, 1fr)",
+              gap: "1rem",
+            }}
+          >
+            {menuItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={index}
+                  onClick={item.onClick}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    padding: "1rem",
+                    background: "#fff",
+                    border: "1px solid #f1f5f9",
+                    borderRadius: "1.25rem",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "transform 0.2s, box-shadow 0.2s, background 0.2s",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-3px)";
+                    e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.1)";
+                    e.currentTarget.style.background = "#fafafa";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
+                    e.currentTarget.style.background = "#fff";
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "3rem",
+                      height: "3rem",
+                      borderRadius: "0.9rem",
+                      background: `${item.color}12`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon size={22} color={item.color} strokeWidth={2.5} />
+                  </div>
+                  <div
+                    style={{
+                      flex: 1,
+                      fontSize: "1.05rem",
+                      fontWeight: "700",
+                      color: "#0f172a",
+                      letterSpacing: "-0.25px",
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                  <ChevronRight size={20} color="#cbd5e1" strokeWidth={2.5} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </Fade>
+
+      <Fade in={mounted} timeout={1000}>
+        <div style={{ padding: "0 1.5rem 8rem" }}>
+          <AnimatedLogoutButton onLogout={handleLogout} />
+        </div>
+      </Fade>
 
       {/* Dialogs */}
       <EditProfileDialog
@@ -481,16 +609,6 @@ export function UserProfile({
       <AddressesDialog
         isOpen={showAddresses}
         onClose={() => setShowAddresses(false)}
-      />
-      <PaymentMethodsDialog
-        isOpen={showPaymentMethods}
-        onClose={() => setShowPaymentMethods(false)}
-        isMobile={isMobile}
-        isTablet={isTablet}
-      />
-      <SettingsDialog
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
       />
       <Navbar isProfilePage={true} />
     </div>

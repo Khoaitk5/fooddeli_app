@@ -6,7 +6,6 @@ import { useState } from "react";
 import MobileLayout from "./components/layout/MobileLayout";
 import MobileShopLayout from "./components/layout/MobileShopLayout";
 import MobileShipperLayout from "./components/layout/MobileShipperLayout";
-import DesktopLayout from "./components/layout/DesktopLayout";
 import DesktopAdminLayout from "./components/layout/DesktopAdminLayout";
 
 // Contexts
@@ -34,20 +33,18 @@ import Home from "./pages/Customer/Home";
 import Discover from "./pages/Customer/Discover";
 import Order from "./pages/Customer/Order";
 import OrderTracking from "./pages/Customer/OrderTracking";
-import Checkout from "./pages/Customer/Checkout";
 import ConfirmOrder from "./pages/Customer/ConfirmOrder";
 import AddCoupon from "./pages/Customer/AddCoupon";
-import OrderHistory from "./pages/Customer/OrderHistory";
 import DeliveryManCallScreen from "./pages/Customer/DeliveryManCallScreen";
 import DeliveryManMessageScreen from "./pages/Customer/DeliveryManMessageScreen";
-import OrderPlaced from "./pages/Customer/OrderPlaced";
 import OrderSuccess from "./pages/Customer/OrderSuccess";
+import OrderReview from "./pages/Customer/OrderReview";
+import ShipperReview from "./pages/Customer/ShipperReview";
 import Notifications from "./pages/Customer/Notifications";
 import RestaurantDetail from "./components/role-specific/Customer/RestaurantDetail";
 import { UserProfile } from "./pages/Customer/UserProfile";
 import SearchPage from "./pages/Customer/SearchPage";
 import SearchResults from "./components/role-specific/Customer/SearchResults";
-import FoodFilters from "./pages/Customer/FoodFilters";
 import VideoDetail from "./pages/Customer/VideoDetail";
 import ShipperRegistration from "./pages/Customer/ShipperRegistration";
 import ShopRegistration from "./pages/Customer/ShopRegistration";
@@ -55,6 +52,7 @@ import PaymentMethod from "./pages/Customer/PaymentMethod";
 import QRPayment from "./pages/Customer/QRPayment";
 import FoodDetail from "./pages/Customer/FoodDetail";
 import { CartPage } from "./pages/Customer/Cart";
+import CustomerSettings from "./pages/Customer/Settings";
 
 // ====================== AUTH ======================
 import Login from "./pages/Auth/Login";
@@ -132,28 +130,27 @@ function App() {
           <Route path="home" element={<Home />} />
           <Route path="discover" element={<Discover />} />
           <Route path="cart" element={<CartPage />} />
-          <Route path="checkout" element={<Checkout />} />
           <Route path="confirm-order" element={<ConfirmOrder />} />
           <Route path="add-coupon" element={<AddCoupon />} />
           <Route path="orders" element={<Order />} />
-          <Route path="order-tracking" element={<OrderTracking />} />
+          <Route path="order-tracking/:orderId" element={<OrderTracking />} />
           <Route path="order-success" element={<OrderSuccess />} />
-          <Route path="order-history" element={<OrderHistory />} />
+          <Route path="order-review" element={<OrderReview />} />
+          <Route path="shipper-review" element={<ShipperReview />} />
           <Route path="delivery-man-call" element={<DeliveryManCallScreen />} />
           <Route path="delivery-man-message" element={<DeliveryManMessageScreen />} />
-          <Route path="order-placed" element={<OrderPlaced />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="restaurant-details" element={<RestaurantDetail />} />
           <Route path="profile" element={<UserProfile />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="search-results" element={<SearchResults />} />
-          <Route path="filters" element={<FoodFilters />} />
           <Route path="video-detail" element={<VideoDetail />} />
           <Route path="register-shipper" element={<ShipperRegistration />} />
           <Route path="register-shop" element={<ShopRegistration />} />
           <Route path="payment-method" element={<PaymentMethod />} />
           <Route path="qr-payment" element={<QRPayment />} />
           <Route path="food-detail" element={<FoodDetail />} />
+          <Route path="settings" element={<CustomerSettings />} />
         </Route>
 
         {/* ========== SHIPPER ========== */}

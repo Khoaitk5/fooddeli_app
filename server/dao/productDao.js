@@ -113,9 +113,13 @@ class ProductDao extends GenericDao {
    */
   async getAvailableProducts() {
     const query = `
-      SELECT * FROM products
-      WHERE is_available = TRUE
-      ORDER BY updated_at DESC;
+      SELECT
+        p.*,
+        sp.shop_name
+      FROM products p
+      LEFT JOIN shop_profiles sp ON p.shop_id = sp.id
+      WHERE p.is_available = TRUE
+      ORDER BY p.updated_at DESC;
     `;
     const result = await pool.query(query);
     return result.rows;

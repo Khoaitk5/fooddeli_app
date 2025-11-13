@@ -32,54 +32,68 @@ module.exports = {
   },
 
   /** ===========================
-   * 🔹 Lấy danh sách đơn theo ngữ cảnh (shop / user / shipper)
-   * =========================== */
-  async listMine(req, res) {
-    try {
-      const { role, shipper_id, shop_id: ctxShopId, user_id } = req.ctx || {};
-      const { status, limit, offset, full, shop_id: bodyShopId } = req.body || {};
+ * 🔹 Lấy danh sách đơn theo ngữ cảnh (shop / user / shipper)
+ * =========================== */
+async listMine(req, res) {
+  try {
+    const { role: ctxRole, shipper_id, shop_id: ctxShopId, user_id: ctxUserId } = req.ctx || {};
+    const { status, limit, offset, full, shop_id: bodyShopId, user_id: bodyUserId } = req.body || {};
 
-      const shop_id = ctxShopId || bodyShopId;
-      const fullFlag = String(full).toLowerCase() === "true" || full === true;
+    const role = ctxRole || "user";
+    const user_id = ctxUserId || bodyUserId;
+    const shop_id = ctxShopId || bodyShopId;
+    const fullFlag = String(full).toLowerCase() === "true" || full === true;
 
-      if (role === "shipper" && shipper_id) {
-        const items = await orderService.listByShipper(shipper_id, {
-          status,
-          limit,
-          offset,
-          full: fullFlag,
-        });
-        return res.json({ items, limit: Number(limit ?? 20), offset: Number(offset ?? 0) });
-      }
-
-      if ((role === "shop" && shop_id) || bodyShopId) {
-        const items = await orderService.listByShop(Number(shop_id), {
-          status,
-          limit,
-          offset,
-          full: fullFlag,
-        });
-        return res.json({ items, limit: Number(limit ?? 20), offset: Number(offset ?? 0) });
-      }
-
-      if (role === "user" && user_id) {
-        const items = await orderService.listByUser(user_id, {
-          status,
-          limit,
-          offset,
-          full: fullFlag,
-        });
-        return res.json({ items, limit: Number(limit ?? 20), offset: Number(offset ?? 0) });
-      }
-
-      return res
-        .status(400)
-        .json({ message: "Unsupported role or missing identifiers" });
-    } catch (e) {
-      console.error("❌ Lỗi listMine:", e);
-      res.status(400).json({ message: e.message || "Bad request" });
+    // === SHIPPER ===
+    if (role === "shipper" && shipper_id) {
+      const items = await orderService.listByShipper(shipper_id, {
+        status,
+        limit,
+        offset,
+        full: fullFlag,
+      });
+      return res.json({ items });
     }
-  },
+
+    // === SHOP ===
+    if ((role === "shop" && shop_id) || bodyShopId) {
+      const items = await orderService.listByShop(Number(shop_id), {
+        status,
+        limit,
+        offset,
+        full: fullFlag,
+      });
+      return res.json({ items });
+    }
+
+    // === USER ===
+    if (role === "user" && user_id) {
+
+
+      // 👉 Gọi dao full join (shop + shipper)
+      const orders = await orderService.getFullOrdersByUserId(user_id, {
+        status,
+        limit,
+        offset,
+      });
+
+      // Chuẩn hóa output
+      return res.json({
+        success: true,
+        count: orders.length,
+        items: orders.map(o => ({
+          ...o.order,
+          details: o.details || [],
+        })),
+      });
+    }
+
+    return res.status(400).json({ message: "Unsupported role or missing identifiers" });
+  } catch (e) {
+    console.error("❌ Lỗi listMine:", e);
+    res.status(400).json({ message: e.message || "Bad request" });
+  }
+},
 
   /** ===========================
    * 🔹 Tạo đơn rỗng theo ngữ cảnh
@@ -106,33 +120,40 @@ module.exports = {
   /** ===========================
    * 🆕 🔹 Tạo đơn hàng thanh toán tiền mặt
    * =========================== */
-  async createCashOrder(req, res) {
-    try {
-      const { user_id, shop_id, items = [], note } = req.body;
+async createCashOrder(req, res) {
 
-      if (!user_id || !shop_id)
-        return res.status(400).json({ success: false, message: "Thiếu user_id hoặc shop_id" });
+  try {
+    const { user_id, shop_id, items = [], note } = req.body;
 
-      const order = await orderService.createCashOrder({
-        user_id,
-        shop_id,
-        items,
-        note,
-      });
-
-      res.status(201).json({
-        success: true,
-        message: "Tạo đơn hàng tiền mặt thành công",
-        order,
-      });
-    } catch (error) {
-      console.error("❌ [createCashOrder Error]:", error);
-      res.status(500).json({
+    if (!user_id || !shop_id) {
+      console.warn("⚠️ Thiếu user_id hoặc shop_id:", { user_id, shop_id });
+      return res.status(400).json({
         success: false,
-        message: "Lỗi khi tạo đơn hàng tiền mặt",
+        message: "Thiếu user_id hoặc shop_id",
       });
     }
-  },
+
+    const order = await orderService.createCashOrder({
+      user_id,
+      shop_id,
+      items,
+      note,
+    });
+
+    console.log("✅ [Controller] createCashOrder() DONE:", order);
+    return res.status(201).json({
+      success: true,
+      message: "Tạo đơn hàng tiền mặt thành công",
+      order,
+    });
+  } catch (error) {
+    console.error("❌ [Controller] createCashOrder Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi tạo đơn hàng tiền mặt",
+    });
+  }
+},
 
   /** ===========================
    * 🔹 Gán shipper cho đơn
@@ -275,6 +296,7 @@ module.exports = {
       res.status(400).json({ message: e.message || "Bad request" });
     }
   },
+<<<<<<< HEAD
 
   /** ===========================
    * 🔹 Lấy danh sách orders của shipper
@@ -315,4 +337,46 @@ module.exports = {
       });
     }
   },
+=======
+  /** ===========================
+ * 🔹 Lấy danh sách đơn theo user (cho FE polling)
+ * =========================== */
+async listByUser(req, res) {
+  try {
+    const { user_id, status, limit = 20, offset = 0 } = req.body || {};
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu user_id",
+      });
+    }
+
+    console.log("📦 [Controller] listByUser() gọi service với:", {
+      user_id,
+      status,
+      limit,
+      offset,
+    });
+
+    const orders = await orderService.listByUser(Number(user_id), {
+      status,
+      limit: Number(limit),
+      offset: Number(offset),
+      full: true,
+    });
+
+    res.json({
+      success: true,
+      data: { orders },
+    });
+  } catch (e) {
+    console.error("❌ Lỗi listByUser:", e);
+    res.status(500).json({
+      success: false,
+      message: e.message || "Lỗi khi lấy danh sách đơn hàng",
+    });
+  }
+},
+>>>>>>> 8571ab25aaf1a82e88ca14773d0fa1b324453b15
 };

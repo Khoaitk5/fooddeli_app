@@ -1,9 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Star, RotateCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CompletedOrderCard = ({ order, cardMargin }) => {
+  const navigate = useNavigate();
+  const [shipperRated, setShipperRated] = useState(false);
+  const [shopRated, setShopRated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  };
+
+  // Kiểm tra trạng thái đánh giá
+  useEffect(() => {
+    const checkReviewStatus = async () => {
+      if (!order.id) {
+        console.log('⚠️ Missing order ID');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
+        
+        console.log('🔍 Checking review status for order:', order.id);
+        
+        // Gọi API mới để check review status cho đơn hàng này
+        const response = await fetch(`${API_BASE_URL}/reviews/order/${order.id}/status`, {
+          credentials: 'include'
+        });
+        
+        const result = await response.json();
+        console.log('📊 Review status from API:', result);
+        
+        if (result.success) {
+          setShipperRated(result.data.shipperReviewed);
+          setShopRated(result.data.shopReviewed);
+          console.log('✅ Updated review status:', {
+            shipperRated: result.data.shipperReviewed,
+            shopRated: result.data.shopReviewed
+          });
+        }
+
+      } catch (error) {
+        console.error('Error checking review status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkReviewStatus();
+  }, [order.id]);
+
+  const handleReviewClick = () => {
+    // Không cho phép click nếu đã đánh giá cả shipper và shop
+    if (shipperRated && shopRated) {
+      return;
+    }
+
+    if (!shipperRated) {
+      // Chuyển đến đánh giá shipper
+      navigate('/customer/shipper-review', {
+        state: {
+          orderId: order.id,
+          shipperName: order.shipperName,
+          shipperAvatar: order.shipperAvatar,
+          shopName: order.restaurant,
+          shopAvatar: order.shop_image,
+        }
+      });
+    } else if (!shopRated) {
+      // Chuyển đến đánh giá shop
+      navigate('/customer/order-review', {
+        state: {
+          orderId: order.id,
+          shopName: order.restaurant,
+          shopAvatar: order.shop_image,
+        }
+      });
+    }
   };
 
   return (
@@ -156,36 +232,37 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
           style={{
             flex: 1,
             padding: '1.125rem',
-            background: order.rated ? '#f5f5f5' : 'linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)',
+            background: (shipperRated && shopRated) ? '#f5f5f5' : 'linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)',
             border: 'none',
             borderRadius: '0.75rem',
-            color: order.rated ? '#999' : '#fff',
+            color: (shipperRated && shopRated) ? '#999' : '#fff',
             fontSize: '1.375rem',
             fontWeight: '600',
-            cursor: order.rated ? 'default' : 'pointer',
+            cursor: (shipperRated && shopRated) ? 'default' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '0.5rem',
-            boxShadow: order.rated ? 'none' : '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)',
+            boxShadow: (shipperRated && shopRated) ? 'none' : '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)',
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => {
-            if (!order.rated) {
+            if (!(shipperRated && shopRated)) {
               e.currentTarget.style.transform = 'translateY(-0.125rem)';
               e.currentTarget.style.boxShadow = '0 0.375rem 1rem rgba(238, 77, 45, 0.4)';
             }
           }}
           onMouseLeave={(e) => {
-            if (!order.rated) {
+            if (!(shipperRated && shopRated)) {
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)';
             }
           }}
-          disabled={order.rated}
+          onClick={handleReviewClick}
         >
-          <Star size={20} strokeWidth={2} fill={order.rated ? '#999' : 'none'} />
-          {order.rated ? 'Đã đánh giá' : 'Đánh giá'}
+          <Star size={20} strokeWidth={2} fill={(shipperRated && shopRated) ? '#999' : 'none'} />
+          {(shipperRated && shopRated) ? 'Đã đánh giá' : 
+           !shipperRated ? 'Đánh giá shipper' : 'Đánh giá quán'}
         </button>
       </div>
     </div>

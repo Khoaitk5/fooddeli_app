@@ -1,3 +1,5 @@
+// File: src/pages/Customer/Cart.jsx (Đã sửa)
+
 import { useState, useEffect, useMemo } from "react";
 import { ShoppingCart, ChevronRight, UtensilsCrossed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +10,93 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
   const navigate = useNavigate();
   const { cartItems: initialCartItems, loading, refreshCart } = useCart();
   const [cartItems, setCartItems] = useState(initialCartItems || []);
+  const [swipeStates, setSwipeStates] = useState({}); // { [shopId]: { offset: 0, startX: 0, isSwiping: false, isMouseDown: false, isJustSwiped: false } }
+
+  // --- ✅ SỬA: Tự động làm mới giỏ hàng mỗi khi vào trang ---
+  useEffect(() => {
+    refreshCart();
+  }, []); // [] nghĩa là "chỉ chạy 1 lần khi component được tải"
+  // --- HẾT SỬA ---
+
+  // Function to remove item from cart
+  const removeItem = async (shopId) => {
+    try {
+      // Assuming API endpoint DELETE /api/cart/:shopId or something
+      // Since grouped by shop, perhaps remove all items of that shop
+      // Or need to modify to remove specific items
+      // For simplicity, remove all items of the shop
+      const group = groupedCarts[shopId];
+      if (!group) return;
+
+      // Call API for each item
+      const promises = group.items.map(item =>
+        fetch(`http://localhost:5000/api/cart/items`, {
+          method: "DELETE",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ itemId: item.id }),
+        })
+      );
+
+      await Promise.all(promises);
+      refreshCart(); // Refresh cart after delete
+    } catch (error) {
+      console.error("Error removing item:", error);
+    }
+  };
+
+  // Swipe handlers
+  const handleTouchStart = (shopId, e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const isMouse = !e.touches;
+    setSwipeStates(prev => ({
+      ...prev,
+      [shopId]: { offset: 0, startX: clientX, isSwiping: false, isMouseDown: isMouse }
+    }));
+  };
+
+  const handleTouchMove = (shopId, e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const state = swipeStates[shopId];
+    if (!state || (e.type === 'mousemove' && !state.isMouseDown)) return;
+
+    const deltaX = clientX - state.startX;
+    if (deltaX < 0) { // Only allow left swipe
+      if (e.preventDefault) e.preventDefault(); // Prevent scroll or selection
+      const offset = Math.max(deltaX, -120); // Max 120px
+      setSwipeStates(prev => ({
+        ...prev,
+        [shopId]: { ...prev[shopId], offset, isSwiping: true }
+      }));
+    }
+  };
+
+  const handleTouchEnd = (shopId) => {
+    const state = swipeStates[shopId];
+    if (!state) return;
+
+    let isJustSwiped = false;
+    if (state.offset < -80) { // If swiped more than 80px left, delete
+      removeItem(shopId);
+      isJustSwiped = true;
+    }
+
+    // Reset offset
+    setSwipeStates(prev => ({
+      ...prev,
+      [shopId]: { ...prev[shopId], offset: 0, isSwiping: false, isMouseDown: false, isJustSwiped }
+    }));
+
+    // Reset isJustSwiped after a short delay
+    if (isJustSwiped) {
+      setTimeout(() => {
+        setSwipeStates(prev => ({
+          ...prev,
+          [shopId]: { ...prev[shopId], isJustSwiped: false }
+        }));
+      }, 100);
+    }
+  };
 
   // Đồng bộ lại cartItems khi dữ liệu hook cập nhật
   useEffect(() => {
@@ -277,7 +366,17 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                 <div
                   key={shopId}
                   className="cart-card"
-                  onClick={() => handleShopClick(shopId, group)}
+                  onClick={() => {
+                    if (!swipeStates[shopId]?.isJustSwiped) {
+                      handleShopClick(shopId, group);
+                    }
+                  }}
+                  onTouchStart={(e) => handleTouchStart(shopId, e)}
+                  onTouchMove={(e) => handleTouchMove(shopId, e)}
+                  onTouchEnd={() => handleTouchEnd(shopId)}
+                  onMouseDown={(e) => handleTouchStart(shopId, e)}
+                  onMouseMove={(e) => handleTouchMove(shopId, e)}
+                  onMouseUp={() => handleTouchEnd(shopId)}
                   style={{
                     background: "linear-gradient(135deg, #ffffff 0%, #fffbf8 100%)",
                     borderRadius: "1.25rem",
@@ -288,6 +387,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     position: "relative",
                     animationDelay: `${index * 0.05}s`,
+                    transform: `translateX(${swipeStates[shopId]?.offset || 0}px)`,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "scale(1.02)";
@@ -296,8 +396,29 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "scale(1)";
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+                    handleTouchEnd(shopId);
                   }}
                 >
+                  {/* Delete Button */}
+                  {swipeStates[shopId]?.offset < -40 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: "1rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "#ff4757",
+                        color: "#fff",
+                        padding: "0.5rem 1rem",
+                        borderRadius: "0.5rem",
+                        fontSize: "0.9rem",
+                        fontWeight: 600,
+                        boxShadow: "0 2px 8px rgba(255, 71, 87, 0.3)",
+                      }}
+                    >
+                      Xóa
+                    </div>
+                  )}
                   {/* Badge số lượng món */}
                   <div
                     style={{

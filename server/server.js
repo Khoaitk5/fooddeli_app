@@ -21,6 +21,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import voucherRoutes from "./routes/voucherRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js"; // 🔹 PayOS route
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 dotenv.config();
 
@@ -81,6 +82,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/shipper", shipperRoutes);
 app.use("/api/payments", paymentRoutes); // ✅ Mount route PayOS
+app.use("/api/reviews", reviewRoutes);
 
 // ✅ Route kiểm tra nhanh
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));
