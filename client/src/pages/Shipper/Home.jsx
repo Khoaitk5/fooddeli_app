@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Paper,
@@ -63,9 +63,10 @@ const vibrate = (pattern) => {
 
 const Home = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isOnline, setIsOnline, resetAvailableOrders } = useShipper();
   const online = isOnline;
-
+  const [navRequest, setNavRequest] = React.useState(null);
   // Hàng đợi các đơn mới (để đếm & điều hướng)
   const [incomingQueue, setIncomingQueue] = React.useState([]);
 
@@ -237,11 +238,32 @@ const Home = () => {
     navigate("/shipper/available");
   }, [incomingQueue, navigate, resetAvailableOrders]);
 
+
+    // Nhận yêu cầu điều hướng từ Delivering (mở chỉ đường ngay trong app)
+  React.useEffect(() => {
+    const s = location.state;
+    if (s?.startNavigation && s?.dest) {
+     const { target, dest, orderId } = s;
+      setNavRequest({ start: true, target, dest, orderId });
+      // Xóa state ngay sau khi nhận để tránh chạy lại
+      navigate(".", { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
   return (
     <Box sx={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
       {/* Bản đồ full-screen */}
       <Box sx={{ position: "fixed", inset: 0, zIndex: 0 }}>
-        {mountMap && <Map4DView height="100vh" hideControls followUser />}
+            {mountMap && (
+      <Map4DView
+        height="100vh"
+       hideControls
+        followUser
+        navRequest={navRequest}
+        onNavDone={() => setNavRequest(null)}
+      />
+    )}
       </Box>
 
       {/* UI nổi trên map */}

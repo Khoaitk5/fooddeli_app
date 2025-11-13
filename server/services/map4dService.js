@@ -4,10 +4,46 @@ const MAP4D_CONFIG = require("../config/map4d");
 const key = MAP4D_CONFIG.API_KEY;
 const base = MAP4D_CONFIG.BASE_URL;
 
-exports.getRoute = async (origin, destination) => {
-  const url = `${base}/route?key=${key}&origin=${origin}&destination=${destination}`;
-  const res = await fetch(url);
-  return res.json();
+exports.getRoute = async (origin, destination, mode = "car") => {
+  // Lưu ý: 1 số phiên bản Map4D cần 'vehicle=car' hoặc 'mode=car'. Tuỳ doc bạn dùng.
+  // Dùng encodeURIComponent để tránh lỗi URL.
+  const url =
+    `${base}/route?key=${encodeURIComponent(key)}` +
+    `&origin=${encodeURIComponent(origin)}` +
+    `&destination=${encodeURIComponent(destination)}` +
+    `&mode=${encodeURIComponent(mode)}`;
+
+  console.log("[Map4D:getRoute] URL =", url);
+
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (e) {
+    console.error("[Map4D:getRoute] fetch error:", e);
+    return { __upstreamError: true, status: 502, message: e?.message || "Fetch to Map4D failed" };
+  }
+
+  const text = await res.text();
+  try {
+    const json = JSON.parse(text);
+    if (!res.ok) {
+      return {
+        __upstreamError: true,
+        status: res.status,
+        message: json?.message || `Upstream HTTP ${res.status}`,
+        body: text,
+      };
+    }
+    return json;
+  } catch {
+    // Upstream không trả JSON → trả thẳng body để FE debug
+    return {
+      __upstreamError: true,
+      status: res.status,
+      message: `Upstream not JSON (HTTP ${res.status})`,
+      body: text,
+    };
+  }
 };
 
 exports.getMatrix = async (origins, destinations) => {

@@ -7,9 +7,16 @@ class OrderDao extends GenericDao {
     super("orders", Order);
   }
 
+<<<<<<< HEAD
+  /**
+   * Lấy 1 "full order" (order + user + shop + details + products) để FE render đầy đủ
+   * @param {number} orderId
+   */
+=======
   /** ============================================================
    * 📦 LẤY ĐƠN HÀNG ĐẦY ĐỦ THEO order_id
    * ============================================================ */
+>>>>>>> 8571ab25aaf1a82e88ca14773d0fa1b324453b15
   async getOrderFullById(orderId) {
     const sql = `
       SELECT
@@ -229,9 +236,39 @@ class OrderDao extends GenericDao {
     return res.rows[0] ? new this.Model(res.rows[0]) : null;
   }
 
-  /** ============================================================
-   * 🧮 HỖ TRỢ SHOP / SHIPPER
-   * ============================================================ */
+  /**
+   * Lấy danh sách orders theo shipper_id (có lọc trạng thái & phân trang)
+   * @param {number} shipperId
+   * @param {{status?: string, limit?: number, offset?: number}} options
+   */
+  async getOrdersByShipperId(
+    shipperId,
+    { status, limit = 20, offset = 0 } = {}
+  ) {
+    const params = [shipperId];
+    let sql = `
+      SELECT 
+        o.*,
+        u.full_name AS user_full_name,
+        u.phone AS user_phone,
+        sp.shop_name,
+        sp.id AS shop_profile_id
+      FROM orders o
+      LEFT JOIN users u ON u.id = o.user_id
+      LEFT JOIN shop_profiles sp ON sp.id = o.shop_id
+      WHERE o.shipper_id = $1
+    `;
+    if (status) {
+      params.push(status);
+      sql += ` AND o.status = $${params.length}`;
+    }
+    params.push(limit, offset);
+    sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length};`;
+
+    const res = await pool.query(sql, params);
+    return res.rows;
+  }
+  // Lấy tất cả order status='cooking' + join shop address (để lọc bằng JS)
   async listCookingWithShopAddress({ limit = 200, offset = 0 } = {}) {
     const sql = `
       SELECT

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
   Fade,
   Slide,
   Avatar,
+  CircularProgress,
 } from "@mui/material";
 import {
   Star,
@@ -26,27 +27,226 @@ import {
   Speed,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { getCurrentUser, getOrdersByShipperId } from "../../api/userApi";
+
+// Helper function để format ngày tham gia
+const formatJoinDate = (dateString) => {
+  if (!dateString) return "Chưa có";
+  const date = new Date(dateString);
+  const months = [
+    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+  ];
+  return `${months[date.getMonth()]}, ${date.getFullYear()}`;
+};
+
+// Helper function để format tiền
+const formatCurrency = (amount) => {
+  if (!amount || amount === 0) return "0đ";
+  if (amount >= 1000000) {
+    return `${(amount / 1000000).toFixed(1)}Mđ`;
+  } else if (amount >= 1000) {
+    return `${(amount / 1000).toFixed(0)}Kđ`;
+  }
+  return `${amount.toFixed(0)}đ`;
+};
+
+// Helper function để kiểm tra xem ngày có phải hôm nay không (xử lý offset Việt Nam +7 giờ)
+const isToday = (dateString) => {
+  if (!dateString) {
+    console.log("⚠️ [isToday] dateString is null/undefined");
+    return false;
+  }
+  
+  try {
+    // Parse UTC datetime từ backend
+    const utcDate = new Date(dateString);
+    
+    // DB lưu UTC, nhưng cần so sánh với giờ Việt Nam (UTC+7)
+    // Lấy hôm nay theo giờ Việt Nam (hiện tại)
+    const vietnamOffset = 7 * 60 * 60 * 1000; // 7 giờ
+    
+    // Ngày DB đã convert sang Việt Nam
+    const dbDateVN = new Date(utcDate.getTime() + vietnamOffset);
+    
+    // Hôm nay Việt Nam
+    const nowVN = new Date(new Date().getTime() + vietnamOffset);
+    
+    // Hôm qua Việt Nam (vì DB có thể lưu từ hôm qua do UTC chậm hơn)
+    const yesterdayVN = new Date(nowVN.getTime() - 24 * 60 * 60 * 1000);
+    
+    // So sánh ngày
+    const dbYear = dbDateVN.getUTCFullYear();
+    const dbMonth = dbDateVN.getUTCMonth() + 1;
+    const dbDate = dbDateVN.getUTCDate();
+    
+    const todayYear = nowVN.getUTCFullYear();
+    const todayMonth = nowVN.getUTCMonth() + 1;
+    const todayDate = nowVN.getUTCDate();
+    
+    const yesterdayYear = yesterdayVN.getUTCFullYear();
+    const yesterdayMonth = yesterdayVN.getUTCMonth() + 1;
+    const yesterdayDate = yesterdayVN.getUTCDate();
+    
+    // Nếu DB date là hôm nay HOẶC hôm qua (do offset) → coi như hôm nay
+    const isMatch = 
+      (dbYear === todayYear && dbMonth === todayMonth && dbDate === todayDate) ||
+      (dbYear === yesterdayYear && dbMonth === yesterdayMonth && dbDate === yesterdayDate);
+    
+    console.log(`📅 [isToday] dateString=${dateString}`);
+    console.log(`📅 [isToday] DB VN: ${dbYear}-${String(dbMonth).padStart(2,'0')}-${String(dbDate).padStart(2,'0')}`);
+    console.log(`📅 [isToday] Today VN: ${todayYear}-${String(todayMonth).padStart(2,'0')}-${String(todayDate).padStart(2,'0')}`);
+    console.log(`📅 [isToday] Yesterday VN: ${yesterdayYear}-${String(yesterdayMonth).padStart(2,'0')}-${String(yesterdayDate).padStart(2,'0')}`);
+    console.log(`📅 [isToday] match=${isMatch}`);
+    
+    return isMatch;
+  } catch (error) {
+    console.error("❌ [isToday] Lỗi parse date:", dateString, error);
+    return false;
+  }
+};
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [shipperData, setShipperData] = useState(null);
+  
+  useEffect(() => {
+    const fetchShipperData = async () => {
+      try {
+        setLoading(true);
+        const res = await getCurrentUser();
+        
+        if (!res?.success || !res?.user) {
+          console.error("❌ Không thể lấy thông tin user");
+          return;
+        }
+        
+        const user = res.user;
+        const shipperProfile = user.shipper_profile;
+        
+        if (!shipperProfile || !shipperProfile.id) {
+          console.error("❌ Không tìm thấy shipper_profile");
+          return;
+        }
+        
+        const shipperId = shipperProfile.id;
+        
+        // Gọi API để lấy orders của shipper
+        const ordersRes = await getOrdersByShipperId(shipperId, { limit: 100 });
+        
+        // Kiểm tra response format
+        if (!ordersRes || !ordersRes.success) {
+          console.error("❌ [Profile] API không trả về success:", ordersRes);
+        }
+        
+        // API đã filter chỉ trả về orders completed
+        const allOrders = ordersRes?.success ? (ordersRes.data || []) : [];
+        console.log("📦 [Profile] Tất cả orders completed nhận được:", allOrders.length);
+        console.log("📦 [Profile] Chi tiết orders:", allOrders);
+        
+        // Lọc orders hôm nay (dựa vào updated_at - thời điểm hoàn thành đơn)
+        const todayOrders = allOrders.filter(order => {
+          // Dùng updated_at vì đó là thời điểm shipper hoàn thành đơn (status = 'completed')
+          const dateToCheck = order.updated_at || order.created_at;
+          if (!dateToCheck) {
+            console.log(`⚠️ [Profile] Order ${order.order_id} không có updated_at và created_at`);
+            return false;
+          }
+          const isTodayResult = isToday(dateToCheck);
+          console.log(`📅 [Profile] Order ${order.order_id}: updated_at=${order.updated_at}, isToday=${isTodayResult}`);
+          return isTodayResult;
+        });
+        
+        console.log("📅 [Profile] Orders completed hôm nay:", todayOrders.length);
+        console.log("📅 [Profile] Chi tiết orders hôm nay:", todayOrders);
+        
+        // Tính tổng thu nhập hôm nay (tất cả orders đã là completed rồi)
+        const todayIncome = todayOrders.reduce((sum, order) => {
+          // Ưu tiên shipper_earn, nếu không có thì dùng delivery_fee
+          const earn = parseFloat(order.shipper_earn) || parseFloat(order.delivery_fee) || 0;
+          console.log(`💰 [Profile] Order ${order.order_id}: shipper_earn=${order.shipper_earn}, delivery_fee=${order.delivery_fee}, earn=${earn}`);
+          return sum + earn;
+        }, 0);
+        
+        console.log("💰 [Profile] Tổng thu nhập hôm nay:", todayIncome);
+        console.log("💰 [Profile] Formatted income:", formatCurrency(todayIncome));
+        
+        // Lấy địa chỉ từ addresses
+        const primaryAddress = user.addresses?.find(addr => addr.is_primary) || user.addresses?.[0];
+        const location = primaryAddress?.address_line?.address || "Chưa cập nhật";
+        
+        // Lấy avatar, nếu null thì dùng default
+        const avatar = user.avatar_url || "https://cdn-icons-png.flaticon.com/512/201/201818.png";
+        
+        // Format dữ liệu để hiển thị
+        setShipperData({
+          name: user.full_name || user.username || "Shipper",
+          joinDate: formatJoinDate(shipperProfile.created_at || user.created_at),
+          phone: user.phone || "Chưa cập nhật",
+          email: user.email || "Chưa cập nhật",
+          location: location,
+          avatar: avatar,
+          rating: user.rating,
+          vehicleType: shipperProfile.vehicle_type || "Chưa cập nhật",
+          vehicleNumber: shipperProfile.vehicle_number || "Chưa cập nhật",
+          status: shipperProfile.status || "pending",
+          onlineStatus: shipperProfile.online_status || "offline",
+          todayOrders: todayOrders.length || 0,
+          todayIncome: todayIncome > 0 ? formatCurrency(todayIncome) : "0đ",
+        });
+      } catch (error) {
+        console.error("❌ Lỗi khi lấy thông tin shipper:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchShipperData();
+  }, []);
+  
+  if (loading) {
+    return (
+      <Box sx={{ 
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(135deg, #fff5f2 0%, #f0f9ff 100%)",
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  
+  if (!shipperData) {
+    return (
+      <Box sx={{ 
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(135deg, #fff5f2 0%, #f0f9ff 100%)",
+        p: 3
+      }}>
+        <Typography color="error">
+          Không thể tải thông tin shipper. Vui lòng thử lại sau.
+        </Typography>
+      </Box>
+    );
+  }
   
   const shipper = {
-    name: "Nguyễn Văn Shipper",
-    joinDate: "Tháng 3, 2023",
-    phone: "0901234567",
-    email: "shipper@example.com",
-    location: "Quận 1, TP.HCM",
-    rating: 4.8,
-    rank: "Kim Cương",
-    todayOrders: 12,
-    todayIncome: "285Kđ",
-    avgRating: 4.8,
-    completionRate: "98.5%",
-    progress: 75,
-    nextRank: "Huyền Thoại",
-    totalOrders: 1247,
-    totalIncome: "45.8Mđ",
-    fiveStars: 856,
+    ...shipperData,
+    // Tạm thời set các giá trị mặc định cho phần thống kê (sẽ cập nhật sau)
+    rank: "Mới",
+    avgRating: shipperData.rating,
+    completionRate: "0%",
+    progress: 0,
+    nextRank: "Đồng",
+    totalOrders: 0,
+    totalIncome: "0đ",
+    fiveStars: 0,
   };
 
   return (
@@ -83,7 +283,7 @@ const Profile = () => {
         >
           <Stack direction="row" spacing={2.5} alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
             <Avatar
-              src="https://cdn-icons-png.flaticon.com/512/201/201818.png"
+              src={shipper.avatar}
               alt="avatar"
               sx={{
                 width: 88,
@@ -109,7 +309,9 @@ const Profile = () => {
                   border: '1px solid rgba(255,255,255,0.3)'
                 }}>
                   <Star sx={{ fontSize: 18, color: "#fde047" }} />
-                  <Typography sx={{ fontWeight: 700, fontSize: 16 }}>{shipper.rating}</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+                    {shipper.rating !== "Chưa có" ? shipper.rating : "N/A"}
+                  </Typography>
                 </Box>
                 <Box
                   sx={{

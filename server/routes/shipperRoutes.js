@@ -30,6 +30,9 @@ router.delete("/:id", shipperController.deleteShipper);
 // lấy toàn bộ đơn của shipper kèm chi tiết, user, shop
 router.post("/orders/nearby", shipperController.listNearbyCookingFull);
 
+// lấy orders của 1 shipper (enriched: details, shop, customer, distances/durations)
+router.post("/orders/by-shipper", shipperController.listOrdersByShipperFull);
+
 // routes/shipperRoutes.js
 router.post("/orders/accept", shipperController.acceptOrder); // ➕ thêm dòng này
 

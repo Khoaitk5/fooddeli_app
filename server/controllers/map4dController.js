@@ -1,9 +1,40 @@
 const map4dService = require("../services/map4dService");
 
 exports.routeHandler = async (req, res) => {
-  const { origin, destination } = req.query;
-  const data = await map4dService.getRoute(origin, destination);
-  res.json(data);
+  try {
+    const { origin, destination, mode } = req.query;
+
+    if (!origin || !destination) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing origin/destination. Expect 'lat,lon'.",
+      });
+    }
+
+    // OPTIONAL: chuẩn hoá / validate đơn giản (ngăn 'undefined,undefined')
+    const isPair = (s) => typeof s === 'string' && /^\s*-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?\s*$/.test(s);
+    if (!isPair(origin) || !isPair(destination)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid origin/destination format. Use 'lat,lon'.",
+      });
+    }
+
+    const data = await map4dService.getRoute(origin.trim(), destination.trim(), mode);
+    // Nếu upstream gán statusCode tuỳ biến bên service, phản hồi theo
+    if (data && data.__upstreamError) {
+      return res.status(data.status || 500).json({
+        success: false,
+        message: data.message || "Map4D upstream error",
+        upstream: data.body?.slice?.(0, 200),
+      });
+    }
+
+    return res.json(data);
+  } catch (e) {
+    console.error("[routeHandler] error:", e);
+    return res.status(500).json({ success: false, message: e?.message || "Map4D route error" });
+  }
 };
 
 exports.matrixHandler = async (req, res) => {

@@ -296,6 +296,48 @@ async createCashOrder(req, res) {
       res.status(400).json({ message: e.message || "Bad request" });
     }
   },
+<<<<<<< HEAD
+
+  /** ===========================
+   * 🔹 Lấy danh sách orders của shipper
+   * POST /api/orders/shipper/orders
+   * Body: { shipper_id, status?, limit?, offset? }
+   * =========================== */
+  async getOrdersByShipperId(req, res) {
+    try {
+      const { shipper_id, status, limit = 20, offset = 0 } = req.body || {};
+
+      if (!Number(shipper_id)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "shipper_id is required and must be a number" 
+        });
+      }
+
+      const orders = await orderService.getOrdersByShipperId(Number(shipper_id), {
+        status,
+        limit: Number(limit),
+        offset: Number(offset),
+      });
+
+      res.status(200).json({
+        success: true,
+        data: orders,
+        meta: {
+          total: orders.length,
+          limit: Number(limit),
+          offset: Number(offset),
+        },
+      });
+    } catch (error) {
+      console.error("❌ Error getting orders by shipperId:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Lỗi khi lấy danh sách đơn hàng",
+      });
+    }
+  },
+=======
   /** ===========================
  * 🔹 Lấy danh sách đơn theo user (cho FE polling)
  * =========================== */
@@ -336,4 +378,5 @@ async listByUser(req, res) {
     });
   }
 },
+>>>>>>> 8571ab25aaf1a82e88ca14773d0fa1b324453b15
 };
