@@ -296,7 +296,6 @@ async createCashOrder(req, res) {
       res.status(400).json({ message: e.message || "Bad request" });
     }
   },
-<<<<<<< HEAD
 
   /** ===========================
    * 🔹 Lấy danh sách orders của shipper
@@ -337,46 +336,4 @@ async createCashOrder(req, res) {
       });
     }
   },
-=======
-  /** ===========================
- * 🔹 Lấy danh sách đơn theo user (cho FE polling)
- * =========================== */
-async listByUser(req, res) {
-  try {
-    const { user_id, status, limit = 20, offset = 0 } = req.body || {};
-
-    if (!user_id) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu user_id",
-      });
-    }
-
-    console.log("📦 [Controller] listByUser() gọi service với:", {
-      user_id,
-      status,
-      limit,
-      offset,
-    });
-
-    const orders = await orderService.listByUser(Number(user_id), {
-      status,
-      limit: Number(limit),
-      offset: Number(offset),
-      full: true,
-    });
-
-    res.json({
-      success: true,
-      data: { orders },
-    });
-  } catch (e) {
-    console.error("❌ Lỗi listByUser:", e);
-    res.status(500).json({
-      success: false,
-      message: e.message || "Lỗi khi lấy danh sách đơn hàng",
-    });
-  }
-},
->>>>>>> 8571ab25aaf1a82e88ca14773d0fa1b324453b15
 };
