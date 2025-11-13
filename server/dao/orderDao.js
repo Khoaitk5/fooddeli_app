@@ -9,33 +9,6 @@ class OrderDao extends GenericDao {
   }
 
   /**
-   * Lấy danh sách orders theo shipper_id
-   * @param {number} shipperId
-   * @param {object} options { status?: string, limit?: number, offset?: number }
-   */
-  async getOrdersByShipperId(
-    shipperId,
-    { status, limit = 20, offset = 0 } = {}
-  ) {
-    const params = [shipperId];
-    let sql = `
-      SELECT *
-      FROM orders
-      WHERE shipper_id = $1
-    `;
-    if (status) {
-      params.push(status);
-      sql += ` AND status = $${params.length}`;
-    }
-    params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
-      };`;
-
-    const res = await pool.query(sql, params);
-    return res.rows.map((r) => new this.Model(r));
-  }
-
-  /**
    * Lấy 1 "full order" (order + user + shop + details + products) để FE render đầy đủ
    * @param {number} orderId
    */
@@ -236,20 +209,26 @@ class OrderDao extends GenericDao {
   ) {
     const params = [shipperId];
     let sql = `
-      SELECT *
-      FROM orders
-      WHERE shipper_id = $1
+      SELECT 
+        o.*,
+        u.full_name AS user_full_name,
+        u.phone AS user_phone,
+        sp.shop_name,
+        sp.id AS shop_profile_id
+      FROM orders o
+      LEFT JOIN users u ON u.id = o.user_id
+      LEFT JOIN shop_profiles sp ON sp.id = o.shop_id
+      WHERE o.shipper_id = $1
     `;
     if (status) {
       params.push(status);
-      sql += ` AND status = $${params.length}`;
+      sql += ` AND o.status = $${params.length}`;
     }
     params.push(limit, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length
-      };`;
+    sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length};`;
 
     const res = await pool.query(sql, params);
-    return res.rows.map((r) => new this.Model(r));
+    return res.rows;
   }
   // Lấy tất cả order status='cooking' + join shop address (để lọc bằng JS)
   async listCookingWithShopAddress({ limit = 200, offset = 0 } = {}) {

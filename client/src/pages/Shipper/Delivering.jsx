@@ -66,10 +66,39 @@ React.useEffect(() => {
 
   const handleCall = (phone) => { if (phone) window.location.href = `tel:${phone}`; };
 
-  const openMapTo = (addr) => {
-    if (!addr) return;
-    const destination = encodeURIComponent(addr);
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`, '_blank');
+    // Điều hướng trong app: đẩy yêu cầu về Home để Map4DView xử lý
+  const handleInAppNavigate = (target) => {
+    // target: 'shop' | 'customer'
+    if (!currentOrder) return;
+    let dest = null;
+
+    if (target === 'shop') {
+      const lat = currentOrder?.pickupLat;
+      const lon = currentOrder?.pickupLon;
+      if (lat == null || lon == null) {
+        alert('Thiếu tọa độ của shop (pickupLat/pickupLon).');
+        return;
+      }
+      dest = { lat, lon };
+    } else {
+      const lat = currentOrder?.dropLat;
+      const lon = currentOrder?.dropLon;
+      if (lat == null || lon == null) {
+        alert('Thiếu tọa độ của khách (dropLat/dropLon).');
+        return;
+      }
+      dest = { lat, lon };
+    }
+
+    navigate('/shipper/home', {
+      state: {
+        startNavigation: true,
+        target,                         // 'shop' hoặc 'customer'
+        dest,                           // { lat, lon }
+        orderId: currentOrder?.id || null
+      },
+      replace: true                     // tránh thêm lịch sử thừa
+    });
   };
 
   const handlePickedUp = async () => {
@@ -388,7 +417,7 @@ React.useEffect(() => {
               </Button>
               <Button
                 variant="contained"
-                onClick={() => openMapTo(order.pickupAddr)}
+                onClick={() => handleInAppNavigate('shop')}
                 startIcon={<NavigationIcon />}
                 sx={{
                   flex: 1, background: 'linear-gradient(90deg, #ff6b35 0%, #ff6900 100%)',
@@ -450,7 +479,7 @@ React.useEffect(() => {
                 </Button>
                 <Button
                   variant="contained"
-                  onClick={() => openMapTo(order.dropAddr)}
+                  onClick={() => handleInAppNavigate('customer')}
                   startIcon={<NavigationIcon />}
                   sx={{
                     flex: 1, background: 'linear-gradient(90deg, #ff6b35 0%, #ff6900 100%)',

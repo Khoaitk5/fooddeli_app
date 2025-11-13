@@ -254,3 +254,33 @@ exports.completeOrder = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.listOrdersByShipperFull = async (req, res) => {
+  try {
+    // shipper_id can be provided in body or inferred from session
+    let { shipper_id, status, limit, offset } = req.body || {};
+
+    if (!shipper_id) {
+      const sessionUser = req.session?.user;
+      if (sessionUser) {
+        shipper_id = sessionUser?.shipper_profile?.id || null;
+      }
+    }
+
+    if (!shipper_id) {
+      return res.status(400).json({ success: false, message: "shipper_id required" });
+    }
+
+    const r = await ShipperProfileService.listOrdersOfShipperFull({
+      shipperId: Number(shipper_id),
+      status: status ?? null,
+      limit: Number(limit) || 50,
+      offset: Number(offset) || 0,
+    });
+
+    return res.json({ success: true, data: r.items, meta: r.meta });
+  } catch (err) {
+    console.error('[ShipperCtrl:listOrdersByShipperFull]', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};

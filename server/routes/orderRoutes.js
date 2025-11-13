@@ -20,5 +20,7 @@ router.post("/details/delete-all", orderController.deleteDetailsByOrder);
 // 🆕 Tạo đơn hàng tiền mặt
 router.post("/create-cash", orderController.createCashOrder);
 
+// 📦 Lấy danh sách orders của shipper (POST để không lộ ID trên URL)
+router.post("/shipper/orders", orderController.getOrdersByShipperId);
 
 module.exports = router;

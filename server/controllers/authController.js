@@ -490,11 +490,20 @@ exports.checkEmailExists = async (req, res) => {
  */
 exports.changePassword = async (req, res) => {
   try {
-    const { userId, oldPassword, newPassword } = req.body;
-    if (!userId || !oldPassword || !newPassword) {
+    const userId = req.session?.userId;
+    const { oldPassword, newPassword } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Vui lòng đăng nhập trước.",
+      });
+    }
+    
+    if (!oldPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "Vui lòng nhập đầy đủ thông tin đổi mật khẩu.",
+        message: "Vui lòng nhập đầy đủ mật khẩu cũ và mật khẩu mới.",
       });
     }
 

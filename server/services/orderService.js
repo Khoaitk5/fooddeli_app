@@ -26,6 +26,23 @@ class OrderService {
   }
 
   /**
+   * 📦 Lấy danh sách orders của shipper (chỉ lấy orders completed)
+   * @param {number} shipperId
+   * @param {object} options { status?, limit?, offset? }
+   */
+  async getOrdersByShipperId(shipperId, options = {}) {
+    const sid = Number(shipperId);
+    if (!sid) throw new Error("shipperId is required");
+    
+    // Chỉ lấy orders có status = 'completed'
+    return await orderDao.getOrdersByShipperId(sid, {
+      status: 'completed', // Luôn filter chỉ lấy completed
+      limit: Number(options.limit) || 20,
+      offset: Number(options.offset) || 0,
+    });
+  }
+
+  /**
    * 🏪 Lấy danh sách đơn theo shop_id
    */
   async listByShop(shopId, { status, limit = 20, offset = 0, full = false } = {}) {
