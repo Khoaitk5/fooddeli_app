@@ -165,7 +165,7 @@ const OngoingOrderCard = ({ order, cardMargin }) => {
       {/* Nút theo dõi */}
       <div style={{ padding: "1.25rem" }}>
         <button
-          onClick={() => navigate(`/customer/order/${order.id}`)}
+          onClick={() => navigate(`/customer/order-tracking/${order.id}`)}
           style={{
             width: "100%",
             padding: "1.125rem",

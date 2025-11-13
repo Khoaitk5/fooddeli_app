@@ -64,8 +64,50 @@ export default function OrderTracking() {
     return () => clearInterval(interval);
   }, [orderId]);
 
+  // 🆕 Khi đơn hàng completed, chuyển đến đánh giá shipper
+  // useEffect(() => {
+  //   if (order && order.status === 'completed') {
+  //     // Kiểm tra xem đã đánh giá shipper chưa
+  //     const checkShipperReview = async () => {
+  //       try {
+  //         const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
+  //         const response = await fetch(`${API_BASE_URL}/reviews/shipper/${order.shipper_id}/stats`, {
+  //           credentials: 'include'
+  //         });
+  //         const result = await response.json();
+          
+  //         // Nếu chưa có review nào từ user này cho shipper này
+  //         const userReviews = result.data?.reviews?.filter(r => r.reviewer_id === order.user_id) || [];
+          
+  //         if (userReviews.length === 0) {
+  //           // Chuyển đến đánh giá shipper
+  //           navigate('/customer/shipper-review', {
+  //             state: {
+  //               orderId: order.order_id,
+  //               shipperName: order.shipper_name,
+  //               shipperAvatar: order.shipper_avatar,
+  //               shopName: order.shop_name,
+  //               shopAvatar: order.shop_image,
+  //               userId: order.user_id,
+  //             }
+  //           });
+  //         }
+  //       } catch (error) {
+  //         console.error('Error checking shipper review:', error);
+  //       }
+  //     };
+      
+  //     checkShipperReview();
+  //   }
+  // }, [order, navigate]);
+
   if (loading) return <div style={{ padding: "2rem" }}>⏳ Đang tải đơn hàng...</div>;
   if (!order) return <div style={{ padding: "2rem" }}>❌ Không tìm thấy đơn hàng!</div>;
+
+  // Đảm bảo order.details là array
+  if (!order.details) {
+    order.details = [];
+  }
 
   // map dữ liệu cho các component con (an toàn)
 // --- Shipper info ---
