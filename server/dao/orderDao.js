@@ -7,16 +7,10 @@ class OrderDao extends GenericDao {
     super("orders", Order);
   }
 
-<<<<<<< HEAD
   /**
    * Lấy 1 "full order" (order + user + shop + details + products) để FE render đầy đủ
    * @param {number} orderId
    */
-=======
-  /** ============================================================
-   * 📦 LẤY ĐƠN HÀNG ĐẦY ĐỦ THEO order_id
-   * ============================================================ */
->>>>>>> 8571ab25aaf1a82e88ca14773d0fa1b324453b15
   async getOrderFullById(orderId) {
     const sql = `
       SELECT
