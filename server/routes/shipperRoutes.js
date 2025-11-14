@@ -40,4 +40,7 @@ router.post('/orders/pickup', shipperController.pickupOrder);
 
 router.post("/orders/complete", shipperController.completeOrder);
 
+// 🗺️ Lấy thông tin quãng đường và thời gian
+router.post("/route-info", shipperController.getRouteInfo);
+
 module.exports = router;
