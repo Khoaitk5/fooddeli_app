@@ -8,6 +8,8 @@ import SearchIcon from "../../components/shared/SearchIcon";
 import TabItem from "../../components/role-specific/Customer/TabItem.jsx";
 import MessagePopup from "../../components/shared/MessagePopup";
 
+
+
 // Utility function to format counts (e.g., 1200 -> "1.2K")
 const formatCount = (num) => {
   if (num >= 1000000)
@@ -20,6 +22,8 @@ const formatCount = (num) => {
 const SHARE_COUNT_DEFAULT = "132.5K";
 
 const Home = () => {
+  const [selectedVideoId, setSelectedVideoId] = useState(null);
+
   const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
   const [loadingVideos, setLoadingVideos] = useState({});
@@ -587,7 +591,9 @@ const Home = () => {
                         cursor: "pointer",
                         transition: "transform 0.2s ease",
                       }}
-                      onClick={() => setShowMessagePopup(true)}
+                      onClick={() => {
+                        setSelectedVideoId(video.video_id);
+                        setShowMessagePopup(true)}}
                       onMouseDown={(e) => {
                         e.currentTarget.style.transform = "scale(0.9)";
                       }}
@@ -650,6 +656,7 @@ const Home = () => {
       <MessagePopup
         isVisible={showMessagePopup}
         onClose={() => setShowMessagePopup(false)}
+        videoId={selectedVideoId}
       />
       <Navbar />
     </>

@@ -5,7 +5,10 @@ import CloseIcon from "../../components/shared/CloseIcon";
 const OrderSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const orderId = location.state?.order_id; // ✅ nhận từ ConfirmOrder
+
+  const orderId = location.state?.order_id;   // ID đơn hàng
+
+
 
   return (
     <div
@@ -64,7 +67,7 @@ const OrderSuccess = () => {
           Đơn hàng của bạn đã được đặt.
         </div>
 
-        {/* ✅ Nút Theo dõi đơn hàng */}
+        {/* Nút Theo dõi đơn hàng */}
         <div
           style={{
             width: "87.78vw",
@@ -85,7 +88,7 @@ const OrderSuccess = () => {
           }}
           onClick={() => {
             if (orderId) {
-              navigate(`/customer/order/${orderId}`); // ✅ chuyển đúng orderId
+              navigate(`/customer/order-tracking/${orderId}`);
             } else {
               alert("Không tìm thấy ID đơn hàng!");
             }
