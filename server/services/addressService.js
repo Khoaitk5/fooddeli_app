@@ -15,13 +15,12 @@ class AddressService {
       const addressJSON = {
         detail: raw.detail ?? "",
         ward: raw.ward ?? "",
-        district: raw.district ?? "",
-        city: raw.city ?? "",
+        province: raw.province ?? "", // Không còn district
       };
 
       const address = await addressDao.create({
         address_line: JSON.stringify(addressJSON),
-        lat_lon: addressData.lat_lon ?? null,
+        lat_lon: addressData.lat_lon ? JSON.stringify(addressData.lat_lon) : null,
         note: addressData.note ?? "",
         address_type: addressData.address_type ?? "Nhà",
       });

@@ -1,4 +1,4 @@
-const dotenv = require("dotenv");
+import dotenv from "dotenv";
 dotenv.config();
 
 const MAP4D_CONFIG = {
@@ -6,4 +6,4 @@ const MAP4D_CONFIG = {
   BASE_URL: "https://api.map4d.vn/v2",
 };
 
-module.exports = MAP4D_CONFIG;
+export default MAP4D_CONFIG;

@@ -160,19 +160,44 @@ export default function RestaurantDetail() {
   return (
     <div
       style={{
-        backgroundColor: "#fff",
+        backgroundColor: "#FAFAFA",
         minHeight: "100vh",
         position: "relative",
-        paddingBottom: cartCount > 0 ? "95px" : "0", // Thêm padding khi có giỏ hàng
+        paddingBottom: cartCount > 0 ? "95px" : "0",
       }}
     >
-      {/* Header */}
+      {/* Header Image */}
       <div style={{ position: "relative" }}>
-        <img
-          src={shop.avatar_url || "/default-avatar.png"}
-          alt={shop.shop_name}
-          style={{ width: "100%", height: "260px", objectFit: "cover" }}
-        />
+        <div
+          style={{
+            width: "100%",
+            height: "280px",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <img
+            src={shop.avatar_url || "/default-avatar.png"}
+            alt={shop.shop_name}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+          {/* Gradient overlay */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: "120px",
+              background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)",
+            }}
+          />
+        </div>
+        
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate(-1)}
@@ -180,52 +205,93 @@ export default function RestaurantDetail() {
             position: "absolute",
             top: 20,
             left: 20,
-            backgroundColor: "rgba(255,255,255,0.8)",
+            backgroundColor: "rgba(255,255,255,0.95)",
             borderRadius: "50%",
             border: "none",
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            cursor: "pointer",
           }}
         >
-          <ChevronLeft />
+          <ChevronLeft size={24} strokeWidth={2.5} />
         </motion.button>
       </div>
 
-      {/* Info */}
-      <div style={{ padding: "1.5rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: "700" }}>
+      {/* Shop Info Card */}
+      <div
+        style={{
+          margin: "0 4.17vw",
+          marginTop: "-40px",
+          background: "white",
+          borderRadius: "1.6rem",
+          padding: "2rem 1.5rem",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "2rem",
+            fontWeight: "700",
+            color: "#1A1A1A",
+            marginBottom: "0.5rem",
+          }}
+        >
           {shop.shop_name}
         </h1>
-        <p style={{ color: "#666", marginTop: 6 }}>
+        <p
+          style={{
+            color: "#666",
+            fontSize: "1.3rem",
+            lineHeight: "1.6",
+            marginBottom: "1rem",
+          }}
+        >
           {shop.description || "Chưa có mô tả"}
         </p>
 
-        {/* Rating + distance + time */}
+        {/* Stats Row */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "1rem",
-            marginTop: "0.8rem",
-            color: "#555",
+            gap: "1.5rem",
+            padding: "1rem 0",
+            borderTop: "1px solid #F0F0F0",
+            borderBottom: "1px solid #F0F0F0",
+            marginTop: "1rem",
           }}
         >
-          <span style={{ display: "flex", alignItems: "center" }}>
-            <Star fill="#fbbf24" color="#fbbf24" size={18} />
-            <span style={{ marginLeft: 4 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              background: "#FFF5F0",
+              padding: "0.5rem 1rem",
+              borderRadius: "8px",
+            }}
+          >
+            <Star fill="#FE5621" color="#FE5621" size={18} />
+            <span style={{ fontWeight: "600", color: "#FE5621", fontSize: "1.4rem" }}>
               {Number(shop.rating || 0).toFixed(1)}
             </span>
-          </span>
-          <span>•</span>
-          <MapPin size={16} />
-          <span>2.1 km</span>
-          <span>•</span>
-          <Clock size={16} />
-          <span>25–30 phút</span>
+          </div>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
+            <MapPin size={16} strokeWidth={2} />
+            <span>2.1 km</span>
+          </div>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
+            <Clock size={16} strokeWidth={2} />
+            <span>25–30 phút</span>
+          </div>
         </div>
 
         {/* Follow button */}
@@ -233,139 +299,164 @@ export default function RestaurantDetail() {
           whileTap={{ scale: 0.96 }}
           onClick={async () => {
             try {
-              // ✅ Log bước đầu tiên
-              console.log("🧠 [DEBUG] Follow button clicked!");
-              console.log("👉 isFollowing:", isFollowing);
-              console.log("👉 shop.user_id:", shop.user_id);
-
               const endpoint = isFollowing
                 ? "http://localhost:5000/api/follows/unfollow"
                 : "http://localhost:5000/api/follows/follow";
 
-              console.log("🌐 [DEBUG] Sending request to:", endpoint);
-
               const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                credentials: "include", // ⚡ để gửi cookie session
+                credentials: "include",
                 body: JSON.stringify({ shopUserId: shop.user_id }),
               });
 
-              // ✅ Log response cơ bản
-              console.log("📡 [DEBUG] Response status:", res.status);
               const text = await res.text();
-              console.log("📦 [DEBUG raw body]:", text);
-
-              // ✅ Parse JSON cẩn thận
               let data = {};
               try {
                 data = JSON.parse(text);
               } catch (err) {
-                console.warn("⚠️ [DEBUG] Không parse được JSON:", err);
+                console.warn("⚠️ Không parse được JSON:", err);
               }
 
-              console.log("✅ [DEBUG] Parsed response data:", data);
-
-              // ✅ Kiểm tra kết quả
               if (res.ok && data.success) {
-                console.log("🎉 [DEBUG] Follow/unfollow thành công!");
                 setIsFollowing(!isFollowing);
-              } else {
-                console.warn(
-                  "⚠️ [DEBUG] Follow/unfollow thất bại:",
-                  data.message
-                );
               }
             } catch (err) {
-              console.error("❌ [DEBUG] Lỗi khi gọi API follow/unfollow:", err);
+              console.error("❌ Lỗi khi gọi API follow/unfollow:", err);
             }
           }}
           style={{
             width: "100%",
-            marginTop: 20,
-            padding: "12px 0",
-            border: "none",
-            borderRadius: 12,
-            fontWeight: 600,
-            color: isFollowing ? "#222" : "#fff",
+            marginTop: "1.5rem",
+            padding: "1.4rem 0",
+            border: isFollowing ? "2px solid #E0E0E0" : "none",
+            borderRadius: "12px",
+            fontWeight: "700",
+            fontSize: "1.4rem",
+            color: isFollowing ? "#666" : "#fff",
             background: isFollowing
-              ? "#f3f4f6"
-              : "linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)",
-            boxShadow: "0 3px 8px rgba(255,107,53,0.3)",
+              ? "white"
+              : "linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)",
+            boxShadow: isFollowing ? "none" : "0 4px 12px rgba(254, 86, 33, 0.3)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            transition: "all 0.3s ease",
           }}
         >
           <AnimatePresence mode="wait">
             {isFollowing ? (
-              <motion.div key="f" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                <UserCheck size={18} /> Đã theo dõi
+              <motion.div
+                key="f"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                <UserCheck size={20} strokeWidth={2.5} />
+                <span>Đã theo dõi</span>
               </motion.div>
             ) : (
-              <motion.div key="u" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                <UserPlus size={18} /> Theo dõi cửa hàng
+              <motion.div
+                key="u"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                <UserPlus size={20} strokeWidth={2.5} />
+                <span>Theo dõi cửa hàng</span>
               </motion.div>
             )}
           </AnimatePresence>
         </motion.button>
+      </div>
 
-        {/* Tabs */}
-        <div
-          style={{
-            display: "flex",
-            marginTop: 24,
-            borderBottom: "1px solid #eee",
-          }}
-        >
+      {/* Tabs */}
+      <div
+        style={{
+          background: "white",
+          margin: "1.5rem 4.17vw 0",
+          borderRadius: "1.2rem",
+          overflow: "hidden",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        }}
+      >
+        <div style={{ display: "flex" }}>
           {["videos", "menu"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
                 flex: 1,
-                padding: "12px 0",
+                padding: "1.4rem 0",
                 border: "none",
-                background: "transparent",
-                fontWeight: 600,
-                borderBottom: activeTab === tab ? "2px solid #5EAD1D" : "none",
-                color: activeTab === tab ? "#5EAD1D" : "#333",
+                background: activeTab === tab ? "#FFF5F0" : "transparent",
+                fontWeight: "700",
+                fontSize: "1.4rem",
+                color: activeTab === tab ? "#FE5621" : "#666",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                position: "relative",
               }}
             >
               {tab === "videos" ? "Video" : "Thực đơn"}
+              {activeTab === tab && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: "20%",
+                    right: "20%",
+                    height: "3px",
+                    background: "#FE5621",
+                    borderRadius: "3px 3px 0 0",
+                  }}
+                />
+              )}
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Content Container */}
+      <div style={{ padding: "0 4.17vw", marginTop: "1.5rem" }}>
 
         {/* Videos */}
         {activeTab === "videos" && (
           <div
             style={{
-              marginTop: 20,
               display: "grid",
               gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 14,
+              gap: "1rem",
             }}
           >
             {videos.length === 0 ? (
-              <p
+              <div
                 style={{
                   gridColumn: "span 2",
                   textAlign: "center",
-                  color: "#888",
+                  padding: "3rem 0",
+                  color: "#999",
+                  fontSize: "1.3rem",
                 }}
               >
                 Chưa có video nào
-              </p>
+              </div>
             ) : (
               videos.map((v) => (
-                <div
+                <motion.div
                   key={v.video_id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   style={{
                     position: "relative",
-                    borderRadius: 12,
+                    borderRadius: "1.2rem",
                     overflow: "hidden",
                     backgroundColor: "#000",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                   }}
                 >
-                  {/* ✅ Nếu có video_url (TikTok mp4) thì render video */}
                   {v.video_url ? (
                     <video
                       src={v.video_url}
@@ -373,7 +464,7 @@ export default function RestaurantDetail() {
                       playsInline
                       style={{
                         width: "100%",
-                        height: "220px",
+                        height: "240px",
                         objectFit: "cover",
                         backgroundColor: "#000",
                       }}
@@ -383,46 +474,64 @@ export default function RestaurantDetail() {
                       }}
                     />
                   ) : (
-                    // ✅ Nếu không có video_url thì fallback ảnh
                     <img
                       src={v.thumbnail_url || "/default-thumbnail.jpg"}
                       alt={v.title}
                       style={{
                         width: "100%",
-                        height: "220px",
+                        height: "240px",
                         objectFit: "cover",
                       }}
                       onError={(e) => (e.target.src = "/default-thumbnail.jpg")}
                     />
                   )}
 
-                  {/* 🔤 Tiêu đề + view/like overlay */}
                   <div
                     style={{
                       position: "absolute",
-                      bottom: 8,
-                      left: 8,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)",
+                      padding: "2rem 1rem 1rem",
                       color: "white",
-                      textShadow: "0 1px 3px rgba(0,0,0,0.6)",
                     }}
                   >
-                    <p style={{ fontWeight: 600 }}>{v.title}</p>
+                    <p
+                      style={{
+                        fontWeight: "600",
+                        fontSize: "1.2rem",
+                        marginBottom: "0.5rem",
+                        textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      {v.title}
+                    </p>
                     {(v.views_count || v.likes_count) && (
-                      <div style={{ display: "flex", gap: 10, fontSize: 12 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "1rem",
+                          fontSize: "1.1rem",
+                          alignItems: "center",
+                        }}
+                      >
                         {v.views_count && (
-                          <>
-                            <Eye size={14} /> {v.views_count}
-                          </>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                            <Eye size={14} />
+                            <span>{v.views_count}</span>
+                          </div>
                         )}
                         {v.likes_count && (
-                          <>
-                            <Heart size={14} /> {v.likes_count}
-                          </>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                            <Heart size={14} />
+                            <span>{v.likes_count}</span>
+                          </div>
                         )}
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
           </div>
@@ -430,115 +539,145 @@ export default function RestaurantDetail() {
 
         {/* Menu */}
         {activeTab === "menu" && (
-          <div style={{ marginTop: 20 }}>
+          <div>
             {Object.entries(groupedMenu).map(([category, items]) => (
-              <div key={category} style={{ marginBottom: 24 }}>
-                <h3
+              <div key={category} style={{ marginBottom: "2rem" }}>
+                <div
                   style={{
-                    color: "#5EAD1D",
-                    fontWeight: 700,
-                    fontSize: 18,
-                    marginBottom: 10,
+                    background: "white",
+                    padding: "1rem 1.5rem",
+                    borderRadius: "1rem",
+                    marginBottom: "1rem",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                   }}
                 >
-                  {category}
-                </h3>
-                {items.map((item) => (
-                  <div
-                    key={item.product_id}
+                  <h3
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                      padding: "10px 0",
-                      borderBottom: "1px solid #eee",
+                      color: "#FE5621",
+                      fontWeight: "700",
+                      fontSize: "1.6rem",
+                      margin: 0,
                     }}
                   >
-                    <img
-                      src={item.image_url || "/default-food.jpg"}
-                      alt={item.name}
+                    {category}
+                  </h3>
+                </div>
+                
+                <div
+                  style={{
+                    background: "white",
+                    borderRadius: "1.2rem",
+                    overflow: "hidden",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  {items.map((item, index) => (
+                    <motion.div
+                      key={item.product_id}
+                      whileHover={{ backgroundColor: "#FAFAFA" }}
                       style={{
-                        width: 80,
-                        height: 80,
-                        objectFit: "cover",
-                        borderRadius: 12,
-                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "1.2rem",
+                        padding: "1.2rem",
+                        borderBottom: index < items.length - 1 ? "1px solid #F5F5F5" : "none",
+                        transition: "background-color 0.2s ease",
                       }}
-                      onClick={() =>
-                        navigate("/customer/food-detail", {
-                          state: {
-                            foodId: item.product_id,
-                            foodName: item.name,
-                            foodPrice: item.price,
-                            foodDescription: item.description,
-                            foodImage: item.image_url,
-                            shopId: shop.id,
-                          },
-                        })
-                      }
-                    />
-                    <div
-                      style={{ flex: 1, cursor: "pointer" }}
-                      onClick={() =>
-                        navigate("/customer/food-detail", {
-                          state: {
-                            foodId: item.product_id,
-                            foodName: item.name,
-                            foodPrice: item.price,
-                            foodDescription: item.description,
-                            foodImage: item.image_url,
-                            shopId: shop.id,
-                          },
-                        })
-                      }
                     >
-                      <h4 style={{ fontWeight: 600 }}>{item.name}</h4>
-                      <p style={{ fontSize: 14, color: "#777" }}>
-                        {item.description}
-                      </p>
-                      <div style={{ marginTop: 4 }}>
+                      <img
+                        src={item.image_url || "/default-food.jpg"}
+                        alt={item.name}
+                        style={{
+                          width: "90px",
+                          height: "90px",
+                          objectFit: "cover",
+                          borderRadius: "1.2rem",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        }}
+                        onClick={() =>
+                          navigate("/customer/food-detail", {
+                            state: {
+                              foodId: item.product_id,
+                              foodName: item.name,
+                              foodPrice: item.price,
+                              foodDescription: item.description,
+                              foodImage: item.image_url,
+                              shopId: shop.id,
+                            },
+                          })
+                        }
+                      />
+                      <div
+                        style={{ flex: 1, cursor: "pointer" }}
+                        onClick={() =>
+                          navigate("/customer/food-detail", {
+                            state: {
+                              foodId: item.product_id,
+                              foodName: item.name,
+                              foodPrice: item.price,
+                              foodDescription: item.description,
+                              foodImage: item.image_url,
+                              shopId: shop.id,
+                            },
+                          })
+                        }
+                      >
+                        <h4
+                          style={{
+                            fontWeight: "700",
+                            fontSize: "1.4rem",
+                            color: "#1A1A1A",
+                            marginBottom: "0.4rem",
+                          }}
+                        >
+                          {item.name}
+                        </h4>
+                        <p
+                          style={{
+                            fontSize: "1.2rem",
+                            color: "#888",
+                            marginBottom: "0.6rem",
+                            lineHeight: "1.4",
+                          }}
+                        >
+                          {item.description}
+                        </p>
                         <span
                           style={{
-                            color: "#5EAD1D",
-                            fontWeight: 700,
-                            fontSize: 16,
+                            color: "#FE5621",
+                            fontWeight: "700",
+                            fontSize: "1.5rem",
                           }}
                         >
                           {Number(item.price).toLocaleString("vi-VN")}đ
                         </span>
                       </div>
-                    </div>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleAddToCart(item)}
-                      style={{
-                        border: "1.5px solid #5EAD1D",
-                        borderRadius: "10px",
-                        width: 42,
-                        height: 28,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "#fff",
-                        color: "#5EAD1D",
-                        fontSize: 18,
-                        fontWeight: 600,
-                        lineHeight: "0",
-                        cursor: "pointer",
-                        boxShadow: "0 1px 3px rgba(255,107,53,0.1)",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#fff5f0")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#fff")
-                      }
-                    >
-                      +
-                    </motion.button>
-                  </div>
-                ))}
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        whileHover={{ scale: 1.05 }}
+                        onClick={() => handleAddToCart(item)}
+                        style={{
+                          background: "linear-gradient(135deg, #FE5621 0%, #EE4D2D 100%)",
+                          border: "none",
+                          borderRadius: "12px",
+                          width: "44px",
+                          height: "44px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "white",
+                          fontSize: "2rem",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          boxShadow: "0 4px 12px rgba(254, 86, 33, 0.3)",
+                        }}
+                      >
+                        +
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
