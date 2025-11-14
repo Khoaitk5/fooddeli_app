@@ -3,6 +3,7 @@ const shopProfileDao = require("../dao/shop_profileDao");
 const addressDao = require("../dao/addressDao");
 const userDao = require("../dao/userDao");
 const videoService = require("./videoService");
+const AddressService = require("./addressService"); 
 
 class ShopProfileService {
   /**
@@ -67,15 +68,33 @@ class ShopProfileService {
    * 📦 Lấy chi tiết cửa hàng + danh sách video của shop
    */
   async getShopDetail(shopId) {
-    try {
-      const shop = await this.getShopById(shopId);
-      const videos = await videoService.getVideosByShop(shopId);
-      return { shop, videos };
-    } catch (err) {
-      console.error("[ShopProfileService:getShopDetail]", err.message);
-      throw new Error("Không thể lấy thông tin chi tiết cửa hàng.");
+  try {
+    // 1) Lấy shop cơ bản
+    const shop = await this.getShopById(shopId);
+    if (!shop) throw new Error("Không tìm thấy cửa hàng.");
+
+    // 2) Lấy địa chỉ theo shop.shop_address_id và gắn vào shop.address
+    let address = null;
+    if (shop?.shop_address_id) {
+      try {
+        address = await AddressService.getAddressById(shop.shop_address_id);
+      } catch (e) {
+        console.warn("[ShopProfileService:getShopDetail] Không lấy được address:", e.message);
+      }
     }
+
+    const shopWithAddress = { ...shop, address };
+
+    // 3) Lấy videos như cũ
+    const videos = await videoService.getVideosByShop(shopId);
+
+    // 4) Trả về đúng format FE đang dùng
+    return { shop: shopWithAddress, videos };
+  } catch (err) {
+    console.error("[ShopProfileService:getShopDetail]", err.message);
+    throw new Error("Không thể lấy thông tin chi tiết cửa hàng.");
   }
+}
 
   /**
    * 📋 Lấy danh sách tất cả cửa hàng

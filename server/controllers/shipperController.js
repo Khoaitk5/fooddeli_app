@@ -414,3 +414,37 @@ exports.listOrdersByShipperFull = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+/**
+ * 🗺️ Lấy thông tin quãng đường và thời gian giữa 2 điểm
+ * POST /api/shipper/route-info
+ * Body: { originLat, originLon, destLat, destLon }
+ */
+exports.getRouteInfo = async (req, res) => {
+  try {
+    const { originLat, originLon, destLat, destLon } = req.body;
+
+    // Chuyển đổi sang số và kiểm tra
+    const oLat = Number(originLat);
+    const oLon = Number(originLon);
+    const dLat = Number(destLat);
+    const dLon = Number(destLon);
+
+    if (
+      !Number.isFinite(oLat) || !Number.isFinite(oLon) ||
+      !Number.isFinite(dLat) || !Number.isFinite(dLon)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Tọa độ không hợp lệ. Cần có originLat, originLon, destLat, destLon ở dạng số.",
+      });
+    }
+
+    const routeInfo = await ShipperProfileService.getRouteInfo({ originLat: oLat, originLon: oLon, destLat: dLat, destLon: dLon });
+
+    return res.status(200).json({ success: true, data: routeInfo });
+  } catch (err) {
+    console.error("❌ [shipperController.getRouteInfo]", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
