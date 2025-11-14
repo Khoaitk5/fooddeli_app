@@ -405,6 +405,196 @@ async listNearbyCookingFull({
   return { items, meta: { busy: false, total: items.length, limit, offset } };
 },
 
+  /**
+   * 📦 Lấy danh sách orders của 1 shipper và enrich giống listNearbyCookingFull
+   * @param {object} options { shipperId, status, limit, offset }
+   */
+  async listOrdersOfShipperFull({ shipperId, status = null, limit = 50, offset = 0 } = {}) {
+    if (!shipperId) throw new Error("shipperId is required");
+
+    // 1) Lấy orders theo shipper
+    const rows = await orderDao.getOrdersByShipperId(shipperId, { status, limit, offset });
+
+    // 2) Lấy vị trí hiện tại của shipper (nếu có) để tính khoảng cách shipper->shop
+    let shipperProfile = null;
+    try {
+      shipperProfile = await shipperProfileDao.findById(shipperId);
+    } catch (e) {
+      shipperProfile = null;
+    }
+
+    const originLat = Number(shipperProfile?.current_location?.lat);
+    const originLon = Number(shipperProfile?.current_location?.lon);
+    const hasOrigin = Number.isFinite(originLat) && Number.isFinite(originLon);
+
+    // 3) Chuẩn bị destinations (shop lat,lon) để gọi matrix 1 lần
+    const shortlisted = [];
+    const destinations = [];
+    for (const row of rows) {
+      // shop lat/lon chưa có trong rows => lấy shop info sau nhưng cần push shop id first
+      shortlisted.push({ row });
+    }
+
+    // 4) Lấy tất cả shop địa chỉ song song để build destinations
+    for (let i = 0; i < shortlisted.length; i++) {
+      const item = shortlisted[i];
+      const shopInfoRaw = await shopService.getShopProfilesAndAddressesByShopId(item.row.shop_id);
+      const shopLat = Number(shopInfoRaw?.address?.lat_lon?.lat);
+      const shopLon = Number(shopInfoRaw?.address?.lat_lon?.lon);
+      item.shopInfoRaw = shopInfoRaw || null;
+      item.shopLat = Number.isFinite(shopLat) ? shopLat : null;
+      item.shopLon = Number.isFinite(shopLon) ? shopLon : null;
+      if (hasOrigin && item.shopLat != null && item.shopLon != null) {
+        destinations.push(`${item.shopLat},${item.shopLon}`);
+      }
+    }
+
+    // 5) Gọi Matrix cho chặng shipper -> shop (nếu có origin)
+    let elements = [];
+    if (hasOrigin && destinations.length > 0) {
+      try {
+        const origin = `${originLat},${originLon}`;
+        const matrix = await map4dService.getMatrix(origin, destinations.join("|"));
+        elements = matrix?.rows?.[0]?.elements || matrix?.elements || [];
+      } catch (e) {
+        console.error("[Map4D matrix shipper->shop (by-shipper)] error:", e.message);
+        elements = [];
+      }
+    }
+
+    // helpers (reuse from above)
+    const readDurationSeconds = (el) => {
+      if (!el) return null;
+      if (el?.duration?.value != null) return Math.round(Number(el.duration.value));
+      if (el?.duration != null && Number.isFinite(Number(el.duration)))
+        return Math.round(Number(el.duration));
+      if (el?.time != null && Number.isFinite(Number(el.time)))
+        return Math.round(Number(el.time));
+      if (el?.travelTime != null && Number.isFinite(Number(el.travelTime)))
+        return Math.round(Number(el.travelTime));
+      if (el?.duration_in_traffic?.value != null)
+        return Math.round(Number(el.duration_in_traffic.value));
+      return null;
+    };
+
+    const readDistanceKm = (el, fallbackKm) => {
+      if (!el) return fallbackKm;
+      if (el?.distance?.value != null) return Number(el.distance.value) / 1000;
+      if (el?.distance != null && Number.isFinite(Number(el.distance))) {
+        const m = Number(el.distance);
+        return m > 1000 ? m / 1000 : fallbackKm;
+      }
+      if (el?.length != null && Number.isFinite(Number(el.length))) {
+        return Number(el.length) / 1000;
+      }
+      return fallbackKm;
+    };
+
+    // 6) Enrich mỗi order giống listNearbyCookingFull
+    const items = [];
+    for (let i = 0; i < shortlisted.length; i++) {
+      const { row, shopInfoRaw, shopLat, shopLon } = shortlisted[i];
+      const el = elements[i] || null;
+
+      let distance_km = null;
+      let duration_sec = null;
+      if (hasOrigin && shopLat != null && shopLon != null) {
+        const fallbackKm = calculateDistance(originLat, originLon, shopLat, shopLon);
+        distance_km = readDistanceKm(el, fallbackKm);
+        distance_km = Number(distance_km.toFixed(2));
+        duration_sec = readDurationSeconds(el);
+        if (duration_sec == null) {
+          const AVG_SPEED_KMH = 22;
+          duration_sec = Math.round((distance_km / AVG_SPEED_KMH) * 3600);
+        }
+      }
+
+      const [details, userAddresses] = await Promise.all([
+        orderDetailService.list(row.order_id, { withProduct: true }),
+        addressService.getUserAddresses(row.user_id),
+      ]);
+
+      const user_addresses = pickOneAndNormalize(userAddresses);
+
+      const shop_info = shopInfoRaw
+        ? {
+            ...shopInfoRaw,
+            address: shopInfoRaw.address
+              ? {
+                  ...shopInfoRaw.address,
+                  address_line: {
+                    ...(shopInfoRaw.address.address_line || {}),
+                    address: composeAddress(shopInfoRaw.address.address_line || {}),
+                  },
+                }
+              : null,
+          }
+        : null;
+
+      // pickup -> drop (shop -> customer)
+      const dropRaw = Array.isArray(user_addresses) ? user_addresses[0] : user_addresses;
+      const dropLat = Number(dropRaw?.lat_lon?.lat);
+      const dropLon = Number(dropRaw?.lat_lon?.lon);
+
+      let pickup_to_drop_distance_km = null;
+      let pickup_to_drop_duration_sec = null;
+
+      if (
+        Number.isFinite(shopLat) && Number.isFinite(shopLon) &&
+        Number.isFinite(dropLat) && Number.isFinite(dropLon)
+      ) {
+        try {
+          const m2 = await map4dService.getMatrix(`${shopLat},${shopLon}`, `${dropLat},${dropLon}`);
+          const el2 = m2?.rows?.[0]?.elements?.[0] ?? m2?.elements?.[0] ?? null;
+
+          const fallbackKm = calculateDistance(shopLat, shopLon, dropLat, dropLon);
+          pickup_to_drop_distance_km = Number(readDistanceKm(el2, fallbackKm).toFixed(2));
+
+          pickup_to_drop_duration_sec = readDurationSeconds(el2);
+          if (pickup_to_drop_duration_sec == null) {
+            const AVG_SPEED_KMH = 22;
+            pickup_to_drop_duration_sec = Math.round((pickup_to_drop_distance_km / AVG_SPEED_KMH) * 3600);
+          }
+        } catch (e) {
+          console.error("[Map4D matrix shop->drop (by-shipper)] error:", e.message);
+          const fallbackKm = calculateDistance(shopLat, shopLon, dropLat, dropLon);
+          pickup_to_drop_distance_km = Number(fallbackKm.toFixed(2));
+          const AVG_SPEED_KMH = 22;
+          pickup_to_drop_duration_sec = Math.round((pickup_to_drop_distance_km / AVG_SPEED_KMH) * 3600);
+        }
+      }
+
+      // contact
+      const [customerUser, shopOwnerUser] = await Promise.all([
+        userDao.findById(row.user_id),
+        shopInfoRaw?.user_id ? userDao.findById(shopInfoRaw.user_id) : null,
+      ]);
+
+      const customer_name = customerUser?.full_name || customerUser?.username || "Khách hàng";
+      const customer_phone = customerUser?.phone || null;
+
+      const shop_contact_name =
+        shopOwnerUser?.full_name || shopOwnerUser?.username || (shopInfoRaw?.shop_name ?? null);
+      const shop_phone = shopOwnerUser?.phone || null;
+
+      items.push({
+        order: row,
+        details,
+        user_addresses,
+        shop_info,
+        distance_km,
+        duration_sec,
+        pickup_to_drop_distance_km,
+        pickup_to_drop_duration_sec,
+        customer_name,
+        customer_phone,
+        shop_contact_name,
+        shop_phone,
+      });
+    }
+
+    return { items, meta: { busy: false, total: items.length, limit, offset } };
+  },
 
   async acceptOrder({ orderId, shipperId }) {
     if (!orderId || !shipperId) {

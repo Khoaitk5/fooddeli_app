@@ -37,6 +37,7 @@ class ShipperProfile extends User {
     });
 
     this.shipper_profile_id = id;
+    this.user_id = user_id;
     this.vehicle_type = vehicle_type;
     this.vehicle_number = vehicle_number;
     this.identity_card = identity_card;

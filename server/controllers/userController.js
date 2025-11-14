@@ -1,6 +1,8 @@
 const userService = require("../services/userService");
 const addressService = require("../services/addressService");
 const shopProfileService = require("../services/shop_profileService");
+const orderDao = require("../dao/orderDao");
+const reviewDao = require("../dao/reviewDao");
 
 /**
  * 📌 Lấy danh sách tất cả người dùng (chỉ admin)
@@ -78,11 +80,22 @@ const getCurrentUser = async (req, res) => {
 
     let ongoing_role = "user";
     
+    // 📊 Tính toán thống kê user
+    const orderCount = await orderDao.countOrdersByUserId(user.id);
+    const reviewCount = await reviewDao.countReviewsByReviewer(user.id);
+    
     const { password, ...safeUser } = user;
 
     return res.status(200).json({
       success: true,
-      user: { ...safeUser, addresses, shop_profile, shipper_profile },
+      user: { 
+        ...safeUser, 
+        addresses, 
+        shop_profile, 
+        shipper_profile,
+        order_count: orderCount,
+        review_count: reviewCount
+      },
       ongoing_role,
     });
   } catch (error) {

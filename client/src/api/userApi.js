@@ -243,3 +243,32 @@ export const getShipperEarnings = async (shipperId, period = "month") => {
     throw error;
   }
 };
+
+/**
+ * 🔹 Lấy danh sách orders của shipper
+ * POST /api/orders/shipper/orders
+ * Body: { shipper_id, status?, limit?, offset? }
+ */
+export const getOrdersByShipperId = async (shipperId, options = {}) => {
+  try {
+    const { status, limit = 100, offset = 0 } = options;
+    const res = await axios.post(
+      `${API_BASE_URL}/orders/shipper/orders`,
+      {
+        shipper_id: shipperId,
+        status,
+        limit,
+        offset,
+      },
+      axiosConfig
+    );
+    return res.data;
+  } catch (error) {
+    console.error("❌ getOrdersByShipperId:", error);
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || "Không thể lấy danh sách đơn hàng",
+    };
+  }
+};

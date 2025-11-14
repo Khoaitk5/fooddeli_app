@@ -1,9 +1,9 @@
-const dotenv = require("dotenv");
+import dotenv from "dotenv";
 dotenv.config();
 
 const MAP4D_CONFIG = {
   API_KEY: process.env.MAP4D_API_KEY,
-  BASE_URL: "https://api.map4d.vn/sdk"
+  BASE_URL: "https://api.map4d.vn/v2",
 };
 
-module.exports = MAP4D_CONFIG;
+export default MAP4D_CONFIG;

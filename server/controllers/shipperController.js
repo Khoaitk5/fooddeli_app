@@ -1,13 +1,143 @@
 // controllers/shipperController.js
 const ShipperProfileService = require("../services/shipper_profileService");
+const shipperContractService = require("../services/shipperContractService");
+const userShipperContractService = require("../services/userShipperContractService");
 
-// ➕ Tạo shipper mới
+// ➕ Đăng ký shipper (phiên bản dùng bảng shipper_contracts)
 exports.createShipper = async (req, res) => {
   try {
-    const result = await ShipperProfileService.createShipperProfile(req.body.user_id, req.body);
-    res.status(201).json(result);
+    const body = req.body || {};
+
+    const {
+      user_id,
+      // personal
+      full_name,
+      phone,
+      email,
+      // relative
+      relative_name,
+      relative_phone,
+      relative_relationship,
+      // bank
+      bank_owner_name,
+      bank_name,
+      bank_account_number,
+      bank_account_name,
+      // vehicle
+      vehicle_plate_number,
+      // IDs
+      id_card_number,
+      id_document_expiry_date,
+      driver_license_number,
+      // uploads
+      portrait_photo_url,
+      id_card_front_url,
+      id_card_back_url,
+      vehicle_registration_url,
+      driving_license_front_url,
+      driving_license_back_url,
+      motorcycle_license_front_url,
+      motorcycle_license_back_url,
+      health_certificate_url,
+      criminal_record_url,
+      lltp_01_url,
+      lltp_appointment_url,
+      proof_image_url,
+      // optional legacy profile fields
+      vehicle_type,
+      create_profile,
+    } = body;
+
+    if (!user_id) {
+      return res.status(400).json({ success: false, message: "user_id là bắt buộc" });
+    }
+    if (!full_name || !phone) {
+      return res.status(400).json({ success: false, message: "Thiếu thông tin bắt buộc: full_name, phone" });
+    }
+
+    // Logic ràng buộc theo DB mới (soft-validate; DB vẫn check lần nữa)
+    if (!health_certificate_url) {
+      return res.status(400).json({ success: false, message: "Thiếu giấy khám sức khỏe (health_certificate_url)" });
+    }
+    const hasLLTP2 = Boolean(criminal_record_url);
+    const hasLLTP1WithAppt = Boolean(lltp_01_url) && Boolean(lltp_appointment_url);
+    if (!hasLLTP2 && !hasLLTP1WithAppt) {
+      return res.status(400).json({
+        success: false,
+        message: "Cần LLTP số 02 hoặc (LLTP số 01 + giấy hẹn LLTP02)",
+      });
+    }
+
+    // Chuẩn hóa payload cho shipper_contracts
+    const contractData = {
+      full_name,
+      phone,
+      email: email ?? null,
+      relative_name: relative_name ?? null,
+      relative_phone: relative_phone ?? null,
+      relative_relationship: relative_relationship ?? null,
+      bank_owner_name: bank_owner_name ?? null,
+      bank_name: bank_name ?? null,
+      bank_account_number: bank_account_number ?? null,
+      bank_account_name: bank_account_name ?? null,
+      vehicle_plate_number: vehicle_plate_number ?? null,
+      id_card_number: id_card_number ?? null,
+      id_document_expiry_date: id_document_expiry_date ?? null,
+      driver_license_number: driver_license_number ?? null,
+      portrait_photo_url: portrait_photo_url ?? null,
+      id_card_front_url: id_card_front_url ?? null,
+      id_card_back_url: id_card_back_url ?? null,
+      vehicle_registration_url: vehicle_registration_url ?? null,
+      driving_license_front_url: driving_license_front_url ?? null,
+      driving_license_back_url: driving_license_back_url ?? null,
+      motorcycle_license_front_url: motorcycle_license_front_url ?? null,
+      motorcycle_license_back_url: motorcycle_license_back_url ?? null,
+      health_certificate_url,
+      criminal_record_url: criminal_record_url ?? null,
+      lltp_01_url: lltp_01_url ?? null,
+      lltp_appointment_url: lltp_appointment_url ?? null,
+      status: "pending",
+    };
+
+    const createdContract = await shipperContractService.create(contractData);
+
+    // Tạo liên kết user <-> contract
+    const link = await userShipperContractService.link({
+      user_id,
+      contract_id: createdContract.id,
+      status: "active",
+      is_active: true,
+    });
+
+    // Giữ lại logic cũ: tạo shipper_profile nếu có thông tin phù hợp
+    // (tùy chọn - không làm hỏng flow hợp đồng)
+    let createdProfile = null;
+    const shouldCreateProfile = Boolean(create_profile) || Boolean(vehicle_type) || Boolean(vehicle_plate_number) || Boolean(id_card_number);
+    if (shouldCreateProfile) {
+      try {
+        createdProfile = await ShipperProfileService.createShipperProfile({
+          user_id,
+          vehicle_type: vehicle_type || "motorcycle",
+          vehicle_number: vehicle_plate_number || null,
+          identity_card: id_card_number || null,
+        });
+      } catch (e) {
+        // Không chặn quy trình chính
+        console.warn("⚠️ Tạo shipper_profile thất bại (bỏ qua):", e.message);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        contract: createdContract,
+        link,
+        profile: createdProfile,
+      },
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ [shipperController.createShipper]", err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -251,6 +381,36 @@ exports.completeOrder = async (req, res) => {
       return res.status(409).json({ success: false, message: err.message });
     }
     console.error("[completeOrder]", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.listOrdersByShipperFull = async (req, res) => {
+  try {
+    // shipper_id can be provided in body or inferred from session
+    let { shipper_id, status, limit, offset } = req.body || {};
+
+    if (!shipper_id) {
+      const sessionUser = req.session?.user;
+      if (sessionUser) {
+        shipper_id = sessionUser?.shipper_profile?.id || null;
+      }
+    }
+
+    if (!shipper_id) {
+      return res.status(400).json({ success: false, message: "shipper_id required" });
+    }
+
+    const r = await ShipperProfileService.listOrdersOfShipperFull({
+      shipperId: Number(shipper_id),
+      status: status ?? null,
+      limit: Number(limit) || 50,
+      offset: Number(offset) || 0,
+    });
+
+    return res.json({ success: true, data: r.items, meta: r.meta });
+  } catch (err) {
+    console.error('[ShipperCtrl:listOrdersByShipperFull]', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };

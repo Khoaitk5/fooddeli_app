@@ -38,6 +38,7 @@ class ShopProfile extends User {
     });
 
     this.shop_profile_id = id;
+    this.user_id = user_id;
     this.shop_name = shop_name;
     this.shop_address_id = shop_address_id;
     this.description = description;

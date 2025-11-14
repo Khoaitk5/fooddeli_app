@@ -1,12 +1,19 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import CloseIcon from "../../components/shared/CloseIcon";
 
 const OrderSuccess = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const orderId = location.state?.order_id;   // ID đơn hàng
+
+
 
   return (
-    <div style={{ position: "relative", height: "100vh", backgroundColor: "#F2F2F2" }}>
+    <div
+      style={{ position: "relative", height: "100vh", backgroundColor: "#F2F2F2" }}
+    >
       <div
         style={{
           position: "relative",
@@ -23,9 +30,10 @@ const OrderSuccess = () => {
             top: "3.375vh",
             cursor: "pointer",
           }}
-          onClick={() => navigate('/customer/home')}
+          onClick={() => navigate("/customer/home")}
         />
       </div>
+
       <div
         style={{
           display: "flex",
@@ -45,6 +53,7 @@ const OrderSuccess = () => {
         >
           🎉 Tuyệt vời!
         </div>
+
         <div
           style={{
             fontSize: "1.4rem",
@@ -57,6 +66,8 @@ const OrderSuccess = () => {
         >
           Đơn hàng của bạn đã được đặt.
         </div>
+
+        {/* Nút Theo dõi đơn hàng */}
         <div
           style={{
             width: "87.78vw",
@@ -75,7 +86,13 @@ const OrderSuccess = () => {
             left: "50%",
             transform: "translateX(-50%)",
           }}
-          onClick={() => navigate('/customer/order-tracking')}
+          onClick={() => {
+            if (orderId) {
+              navigate(`/customer/order-tracking/${orderId}`);
+            } else {
+              alert("Không tìm thấy ID đơn hàng!");
+            }
+          }}
         >
           Theo dõi đơn hàng
         </div>

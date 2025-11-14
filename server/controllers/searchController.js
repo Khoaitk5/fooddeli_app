@@ -1,15 +1,12 @@
 const pool = require("../config/db");
 
-/**
- * 🧹 Hàm loại bỏ dấu tiếng Việt (để so sánh không dấu)
- */
+// Hàm chuyển đổi tiếng Việt có dấu sang không dấu
 const removeVietnameseTones = (str) => {
   return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // xóa dấu thanh
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase();
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
 };
 
 /**
@@ -26,13 +23,15 @@ exports.searchAll = async (req, res) => {
       });
     }
 
-    const normalized = removeVietnameseTones(keyword.trim());
-    console.log("🔍 Từ khóa tìm kiếm:", normalized);
+    console.log("🔍 Từ khóa tìm kiếm:", keyword);
+
+    // Tạo các phiên bản tìm kiếm
+    const keywordLower = keyword.toLowerCase();
+    const keywordNoTone = removeVietnameseTones(keywordLower);
 
     /**
-     * 🧱 Lấy toàn bộ dữ liệu thô (vì ta cần xử lý không dấu ở tầng ứng dụng)
-     * Ở thực tế bạn nên có limit nhỏ để tránh query quá nặng.
-     * JOIN với shop_profiles để lấy thông tin shop
+     * 🧱 Lấy tất cả dữ liệu và filter ở application level
+     * vì PostgreSQL không hỗ trợ remove Vietnamese tones built-in
      */
     const [productsRaw, videosRaw, accountsRaw] = await Promise.all([
       pool.query(`
@@ -60,33 +59,52 @@ exports.searchAll = async (req, res) => {
         LEFT JOIN shop_profiles sp ON p.shop_id = sp.id
         LEFT JOIN users u ON sp.user_id = u.id
         WHERE p.is_available = TRUE
+        ORDER BY p.updated_at DESC
+        LIMIT 200
+      `),
+      pool.query(`
+        SELECT * FROM videos
+        ORDER BY created_at DESC
         LIMIT 100
       `),
-      pool.query("SELECT * FROM videos LIMIT 100"),
-      pool.query(
-        "SELECT id, username, email, full_name, avatar_url, role FROM users LIMIT 100"
-      ),
+      pool.query(`
+        SELECT id, username, email, full_name, avatar_url, role FROM users
+        ORDER BY created_at DESC
+        LIMIT 100
+      `),
     ]);
 
     /**
-     * 🧮 Lọc dữ liệu thủ công không dấu
+     * 🧮 Filter dữ liệu ở application level với hỗ trợ tiếng Việt không dấu
      */
-    const products = productsRaw.rows.filter((p) => {
-      const name = removeVietnameseTones(p.name || "");
-      const desc = removeVietnameseTones(p.description || "");
-      return name.includes(normalized) || desc.includes(normalized);
+    const products = productsRaw.rows.filter(product => {
+      const productName = (product.name || '').toLowerCase();
+      const productDesc = (product.description || '').toLowerCase();
+      const productNameNoTone = removeVietnameseTones(productName);
+      const productDescNoTone = removeVietnameseTones(productDesc);
+
+      return productName.includes(keywordLower) || productDesc.includes(keywordLower) ||
+             productNameNoTone.includes(keywordNoTone) || productDescNoTone.includes(keywordNoTone);
     });
 
-    const videos = videosRaw.rows.filter((v) => {
-      const title = removeVietnameseTones(v.title || "");
-      const desc = removeVietnameseTones(v.description || "");
-      return title.includes(normalized) || desc.includes(normalized);
+    const videos = videosRaw.rows.filter(video => {
+      const videoTitle = (video.title || '').toLowerCase();
+      const videoDesc = (video.description || '').toLowerCase();
+      const videoTitleNoTone = removeVietnameseTones(videoTitle);
+      const videoDescNoTone = removeVietnameseTones(videoDesc);
+
+      return videoTitle.includes(keywordLower) || videoDesc.includes(keywordLower) ||
+             videoTitleNoTone.includes(keywordNoTone) || videoDescNoTone.includes(keywordNoTone);
     });
 
-    const accounts = accountsRaw.rows.filter((a) => {
-      const username = removeVietnameseTones(a.username || "");
-      const fullname = removeVietnameseTones(a.full_name || "");
-      return username.includes(normalized) || fullname.includes(normalized);
+    const accounts = accountsRaw.rows.filter(account => {
+      const username = (account.username || '').toLowerCase();
+      const fullName = (account.full_name || '').toLowerCase();
+      const usernameNoTone = removeVietnameseTones(username);
+      const fullNameNoTone = removeVietnameseTones(fullName);
+
+      return username.includes(keywordLower) || fullName.includes(keywordLower) ||
+             usernameNoTone.includes(keywordNoTone) || fullNameNoTone.includes(keywordNoTone);
     });
 
     return res.status(200).json({

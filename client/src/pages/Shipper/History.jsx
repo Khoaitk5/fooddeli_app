@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from "@mui/material";
 import {
   Search,
@@ -46,116 +47,129 @@ const History = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState(0);
-  const [expandedOrder, setExpandedOrder] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
 
-  // Mock data - trong thực tế sẽ fetch từ API
-  const orders = [
-    {
-      id: "DH001234",
-      date: "10/10/2024",
-      time: "14:30",
-      customerName: "Nguyễn Văn A",
-      customerPhone: "0901234567",
-      pickupAddress: "KFC Nguyễn Huệ, Q.1",
-      deliveryAddress: "123 Lê Lợi, P.Bến Thành, Q.1",
-      distance: "2.5 km",
-      income: "35,000đ",
-      tip: "10,000đ",
-      status: "completed",
-      rating: 5,
-      comment: "Giao hàng nhanh, đúng giờ!",
-      items: [
-        { name: "Gà rán 3 miếng", quantity: 1, price: "85,000đ" },
-        { name: "Pepsi lon", quantity: 2, price: "20,000đ" },
-      ],
-      totalPrice: "105,000đ",
-      deliveryTime: "25 phút",
-    },
-    {
-      id: "DH001235",
-      date: "10/10/2024",
-      time: "13:15",
-      customerName: "Trần Thị B",
-      customerPhone: "0912345678",
-      pickupAddress: "The Pizza Company, Q.3",
-      deliveryAddress: "456 Võ Văn Tần, Q.3",
-      distance: "1.8 km",
-      income: "30,000đ",
-      tip: "5,000đ",
-      status: "completed",
-      rating: 4,
-      comment: "Tốt",
-      items: [
-        { name: "Pizza Hải sản", quantity: 1, price: "199,000đ" },
-      ],
-      totalPrice: "199,000đ",
-      deliveryTime: "18 phút",
-    },
-    {
-      id: "DH001236",
-      date: "09/10/2024",
-      time: "19:45",
-      customerName: "Lê Văn C",
-      customerPhone: "0923456789",
-      pickupAddress: "Lotteria Bến Thành, Q.1",
-      deliveryAddress: "789 Nguyễn Thị Minh Khai, Q.3",
-      distance: "3.2 km",
-      income: "40,000đ",
-      tip: "0đ",
-      status: "cancelled",
-      rating: null,
-      comment: null,
-      items: [
-        { name: "Burger Bò", quantity: 2, price: "120,000đ" },
-      ],
-      totalPrice: "120,000đ",
-      deliveryTime: null,
-    },
-    {
-      id: "DH001237",
-      date: "09/10/2024",
-      time: "12:20",
-      customerName: "Phạm Thị D",
-      customerPhone: "0934567890",
-      pickupAddress: "Highlands Coffee, Q.1",
-      deliveryAddress: "321 Trần Hưng Đạo, Q.5",
-      distance: "4.1 km",
-      income: "45,000đ",
-      tip: "15,000đ",
-      status: "completed",
-      rating: 5,
-      comment: "Shipper rất nhiệt tình!",
-      items: [
-        { name: "Cà phê sữa đá", quantity: 3, price: "105,000đ" },
-        { name: "Bánh mì", quantity: 2, price: "40,000đ" },
-      ],
-      totalPrice: "145,000đ",
-      deliveryTime: "32 phút",
-    },
-    {
-      id: "DH001238",
-      date: "08/10/2024",
-      time: "11:00",
-      customerName: "Hoàng Văn E",
-      customerPhone: "0945678901",
-      pickupAddress: "Gongcha Pasteur, Q.1",
-      deliveryAddress: "555 Điện Biên Phủ, Q.Bình Thạnh",
-      distance: "5.3 km",
-      income: "50,000đ",
-      tip: "20,000đ",
-      status: "completed",
-      rating: 5,
-      comment: "Tuyệt vời!",
-      items: [
-        { name: "Trà sữa Oolong", quantity: 2, price: "80,000đ" },
-      ],
-      totalPrice: "80,000đ",
-      deliveryTime: "38 phút",
-    },
-  ];
+  // Orders will be loaded from API
+  const [orders, setOrders] = React.useState([]);
+  const [loadingOrders, setLoadingOrders] = React.useState(true);
+  const [ordersError, setOrdersError] = React.useState(null);
+
+  // Helper: format number -> VND string
+  const formatVND = (v) => {
+    const n = Number(v) || 0;
+    return n.toLocaleString("vi-VN") + "đ";
+  };
+
+  React.useEffect(() => {
+    let mounted = true;
+    const fetchOrders = async () => {
+      setLoadingOrders(true);
+      setOrdersError(null);
+      try {
+        // get current user to obtain shipper_id (use same pattern as other shipper pages)
+        const meRes = await fetch("http://localhost:5000/api/users/me", { credentials: "include" });
+        const meJson = await meRes.json();
+        const shipperId = meJson?.user?.shipper_profile?.id;
+        if (!shipperId) throw new Error("Không tìm thấy shipper_id");
+
+        const res = await fetch("http://localhost:5000/api/shipper/orders/by-shipper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ shipper_id: shipperId, limit: 200 }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        if (!payload || !payload.success) {
+          throw new Error(payload?.message || "Không thể lấy dữ liệu");
+        }
+
+        const items = Array.isArray(payload.data) ? payload.data : [];
+
+        // Map server enriched items to UI shape
+        const mapped = items.map((it) => {
+          const row = it.order || {};
+          // id (prefix with #DH as requested, e.g., #DH958)
+          const rawId = String(row.order_id ?? row.id ?? Math.random());
+          const id = `#DH${rawId}`;
+
+          // date/time
+          let dateStr = "";
+          let timeStr = "";
+          try {
+            if (row.created_at) {
+              const d = new Date(row.created_at);
+              dateStr = d.toLocaleDateString("vi-VN");
+              timeStr = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+            }
+          } catch (e) { console.error(e); }
+
+          const customerName = it.customer_name || row.user_full_name || "Khách hàng";
+          const customerPhone = it.customer_phone || row.user_phone || "";
+
+          const pickupAddress = it.shop_info?.address?.address_line?.address || it.shop_info?.address?.address || (it.shop_info?.shop_name || "");
+          const deliveryAddress = (Array.isArray(it.user_addresses) && it.user_addresses[0]) ?
+            (it.user_addresses[0].address_line?.address || it.user_addresses[0].address) : "";
+
+          const distance = (it.distance_km != null) ? `${Number(it.distance_km).toFixed(2)} km` : (it.pickup_to_drop_distance_km != null ? `${Number(it.pickup_to_drop_distance_km).toFixed(2)} km` : "");
+
+          const incomeVal = row.shipper_earn != null ? Number(row.shipper_earn) : (row.delivery_fee != null ? Number(row.delivery_fee) : 0);
+          const tipVal = row.tip != null ? Number(row.tip) : (row.shipper_tip != null ? Number(row.shipper_tip) : 0);
+
+          const itemsList = Array.isArray(it.details) ? it.details.map((d) => ({
+            name: d.product_name || d.name || d.product_name,
+            quantity: d.quantity || d.qty || d.count || 1,
+            price: formatVND(d.unit_price || d.price || d.product_price || 0),
+          })) : [];
+
+          const totalPriceVal = row.total_price != null ? Number(row.total_price) : null;
+
+          // prefer pickup_to_drop_duration_sec
+          let deliveryTimeText = null;
+          if (it.pickup_to_drop_duration_sec != null) {
+            const m = Math.round(Number(it.pickup_to_drop_duration_sec) / 60);
+            deliveryTimeText = `${m} phút`;
+          } else if (it.duration_sec != null) {
+            const m = Math.round(Number(it.duration_sec) / 60);
+            deliveryTimeText = `${m} phút`;
+          }
+
+          return {
+            id,
+            date: dateStr,
+            time: timeStr,
+            customerName,
+            customerPhone,
+            pickupAddress,
+            deliveryAddress,
+            distance,
+            income: formatVND(incomeVal),
+            tip: formatVND(tipVal),
+            status: row.status || "",
+            rating: row.shipper_rating || row.rating || null,
+            comment: row.shipper_comment || row.comment || null,
+            items: itemsList,
+            totalPrice: totalPriceVal != null ? formatVND(totalPriceVal) : "",
+            deliveryTime: deliveryTimeText,
+            // keep raw for debugging
+            _raw: it,
+          };
+        });
+
+        if (mounted) setOrders(mapped);
+      } catch (err) {
+        console.error("[History] fetch orders error:", err);
+        if (mounted) setOrdersError(err.message || String(err));
+      } finally {
+        if (mounted) setLoadingOrders(false);
+      }
+    };
+
+    fetchOrders();
+    return () => { mounted = false; };
+  }, []);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch = 
@@ -219,7 +233,9 @@ const History = () => {
   };
 
   const handleOrderClick = (order) => {
-    setSelectedOrder(order);
+    // toggle dialog / expanded selection
+    if (selectedOrder && selectedOrder.id === order.id) setSelectedOrder(null);
+    else setSelectedOrder(order);
   };
 
   const handleCloseDialog = () => {
@@ -511,7 +527,19 @@ const History = () => {
 
         {/* Orders List */}
         <Stack spacing={2}>
-          {filteredOrders.length === 0 ? (
+          {loadingOrders ? (
+            <Card sx={{ p: 6, borderRadius: 3, textAlign: "center", background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+              <Stack alignItems="center" spacing={2}>
+                <CircularProgress />
+                <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#6b7280" }}>Đang tải đơn hàng...</Typography>
+              </Stack>
+            </Card>
+          ) : ordersError ? (
+            <Card sx={{ p: 6, borderRadius: 3, textAlign: "center", background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+              <Typography sx={{ fontSize: 20, mb: 1 }}>⚠️ Lỗi</Typography>
+              <Typography sx={{ fontSize: 14, color: "#9ca3af" }}>{ordersError}</Typography>
+            </Card>
+          ) : filteredOrders.length === 0 ? (
             <Card
               sx={{
                 p: 6,
@@ -768,7 +796,7 @@ const History = () => {
                       fullWidth
                       onClick={() => handleOrderClick(order)}
                       endIcon={
-                        expandedOrder === order.id ? (
+                        selectedOrder && selectedOrder.id === order.id ? (
                           <KeyboardArrowUp />
                         ) : (
                           <KeyboardArrowDown />
@@ -796,76 +824,7 @@ const History = () => {
           )}
         </Stack>
 
-        {/* Monthly Summary */}
-        {filteredOrders.length > 0 && (
-          <Fade in timeout={2000}>
-            <Card
-              sx={{
-                mt: 3,
-                p: 3,
-                borderRadius: 3,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                background: "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)",
-                border: "1px solid rgba(255,107,53,0.1)",
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.7)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 24,
-                  }}
-                >
-                  📊
-                </Box>
-                <Box>
-                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: "#c2410c" }}>
-                    Tổng kết
-                  </Typography>
-                  <Typography sx={{ fontSize: 13, color: "#92400e" }}>
-                    Thống kê tổng quan của bạn
-                  </Typography>
-                </Box>
-              </Stack>
-              <Stack spacing={1.5}>
-                {[
-                  { label: "Tổng thu nhập", value: `${(stats.totalIncome / 1000).toFixed(0)}K đ`, icon: "💰" },
-                  { label: "Tổng tiền tip", value: `${(stats.totalTips / 1000).toFixed(0)}K đ`, icon: "🎁" },
-                  { label: "Đơn hoàn thành", value: `${stats.completed}/${stats.total}`, icon: "✅" },
-                  { label: "Đánh giá trung bình", value: `${stats.avgRating} ⭐`, icon: "📈" },
-                ].map((item, idx) => (
-                  <Stack
-                    key={idx}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{
-                      background: "rgba(255,255,255,0.5)",
-                      borderRadius: 2,
-                      p: 1.5,
-                    }}
-                  >
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                      <Typography sx={{ fontSize: 20 }}>{item.icon}</Typography>
-                      <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#78350f" }}>
-                        {item.label}
-                      </Typography>
-                    </Stack>
-                    <Typography sx={{ fontSize: 16, fontWeight: 900, color: "#c2410c" }}>
-                      {item.value}
-                    </Typography>
-                  </Stack>
-                ))}
-              </Stack>
-            </Card>
-          </Fade>
-        )}
+
       </Box>
 
       {/* Order Detail Dialog */}

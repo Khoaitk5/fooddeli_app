@@ -43,8 +43,17 @@ const mapEnrichedToCard = (item) => {
     Number(o.delivery_fee || 0) * Number(o.shipper_commission_rate || 0.15);
   const shipperEarn = Math.round(Number(earnRaw || 0));
 
+
+   const pickupLat = shopInfo?.address?.lat_lon?.lat ?? null;
+  const pickupLon = shopInfo?.address?.lat_lon?.lon ?? null;
+  const dropLat   = userAddr?.lat_lon?.lat ?? null;
+  const dropLon   = userAddr?.lat_lon?.lon ?? null;
   return {
     id: o.order_id,
+
+    pickupLat, pickupLon,
+    dropLat,   dropLon,
+
     pickupName: shopInfo.shop_name || `Shop #${o.shop_id}`,
     pickupAddr: shopAddr,
     pickupContactName: item.shop_contact_name || null,
@@ -63,12 +72,12 @@ const mapEnrichedToCard = (item) => {
       Number(o.delivery_fee || 0) * Number(o.shipper_commission_rate || 0.15)
     ),
     shipperEarn,
+    
   };
 };
 
 // ---------------------- SwipeOrderCard giữ nguyên UI, chỉ sửa chỗ order.id ----------------------
 const SwipeOrderCard = ({ order, onAccepted }) => {
-  const navigate = useNavigate();
   const [dragX, setDragX] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const startXRef = React.useRef(0);
@@ -104,7 +113,6 @@ const SwipeOrderCard = ({ order, onAccepted }) => {
       setTimeout(() => {
         resetDrag();
         onAccepted?.(order);
-        navigate("/shipper/delivering");
       }, 220);
       return;
     }

@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme, useMediaQuery, Box, Stack, Skeleton, Slide, Fade } from "@mui/material";
+import {
+  useTheme,
+  useMediaQuery,
+  Box,
+  Stack,
+  Skeleton,
+  Slide,
+  Fade,
+} from "@mui/material";
 import {
   MapPin,
   CreditCard,
@@ -63,6 +71,7 @@ export function UserProfile({
               "https://cdn-icons-png.flaticon.com/512/847/847969.png",
             stats: {
               orders: u.order_count || 0,
+              reviews: u.review_count || 0,
             },
             role: u.role,
             shop_profile: u.shop_profile,
@@ -94,42 +103,72 @@ export function UserProfile({
 
   if (loading || !userData) {
     return (
-      <Box sx={{ width: "100%", minHeight: "100vh", bgcolor: "#f5f5f5" }}>
-        <Box sx={{
-          p: "2.5rem 1.5rem 5rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
-          position: "relative"
-        }}>
-          <Stack alignItems="center" spacing={1.25} sx={{ zIndex: 1 }}>
-            <Skeleton variant="circular" width={128} height={128} sx={{ border: "4px solid #fff", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }} />
-            <Skeleton variant="text" width={200} height={28} sx={{ bgcolor: "rgba(255,255,255,0.6)" }} />
-            <Skeleton variant="text" width={260} height={22} sx={{ bgcolor: "rgba(255,255,255,0.5)" }} />
+      <Box sx={{ width: "100%", minHeight: "100vh", bgcolor: "#FAFAFA" }}>
+        <Box
+          sx={{
+            p: "2.5rem 1.5rem 4rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            background: "linear-gradient(135deg, #FE5621 0%, #FF8A65 100%)",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+          }}
+        >
+          <Stack alignItems="center" spacing={1.5}>
+            <Skeleton
+              variant="circular"
+              width={140}
+              height={140}
+              sx={{ boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}
+            />
+            <Skeleton variant="text" width={180} height={32} />
+            <Skeleton variant="text" width={220} height={24} />
           </Stack>
         </Box>
 
         <Box sx={{ p: "0 1.5rem", mt: -7, mb: 2 }}>
-          <Box sx={{
-            background: "#fff",
-            borderRadius: "1.75rem",
-            p: "1.75rem 1.25rem",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "1.5rem",
-          }}>
+          <Box
+            sx={{
+              background: "#fff",
+              borderRadius: "1.75rem",
+              p: "1.75rem 1.25rem",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "1.5rem",
+            }}
+          >
             <Skeleton variant="rounded" height={96} />
             <Skeleton variant="rounded" height={96} />
           </Box>
         </Box>
 
         <Box sx={{ p: "0 1.5rem", mb: 2 }}>
-          <Box sx={{ background: "#fff", borderRadius: "1.75rem", overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
+          <Box
+            sx={{
+              background: "#fff",
+              borderRadius: "1.75rem",
+              overflow: "hidden",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+            }}
+          >
             {[...Array(3)].map((_, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2, p: "1.25rem 1.5rem", borderBottom: i < 2 ? "1px solid #f0f0f0" : "none" }}>
-                <Skeleton variant="rounded" width={52} height={52} sx={{ borderRadius: 3 }} />
+              <Box
+                key={i}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  p: "1.25rem 1.5rem",
+                  borderBottom: i < 2 ? "1px solid #f0f0f0" : "none",
+                }}
+              >
+                <Skeleton
+                  variant="rounded"
+                  width={52}
+                  height={52}
+                  sx={{ borderRadius: 3 }}
+                />
                 <Skeleton variant="text" width="60%" height={22} />
               </Box>
             ))}
@@ -149,14 +188,23 @@ export function UserProfile({
     userData.shipper_profile && typeof userData.shipper_profile === "object";
   const isShopRole = userData.role === "shop";
   const isShipperRole = userData.role === "shipper";
-  const roleLabel = isShopRole ? "Chủ Shop" : isShipperRole ? "Shipper" : "Khách hàng";
-  const rating = userData.stats.orders > 0 ? "4.8" : "0";
-  const membership = userData.stats.orders >= 50
-    ? { label: "Hạng Vàng", color: "#f59e0b" }
-    : userData.stats.orders >= 10
-    ? { label: "Hạng Bạc", color: "#64748b" }
-    : { label: "Thành viên mới", color: "#94a3b8" };
-  const roleColor = isShopRole ? "#10b981" : isShipperRole ? "#f97316" : "#60a5fa";
+  const roleLabel = isShopRole
+    ? "Chủ Shop"
+    : isShipperRole
+    ? "Shipper"
+    : "Khách hàng";
+  const rating = userData.rating ? userData.rating.toFixed(1) : "0";
+  const membership =
+    userData.stats.orders >= 50
+      ? { label: "Hạng Vàng", color: "#f59e0b" }
+      : userData.stats.orders >= 10
+      ? { label: "Hạng Bạc", color: "#64748b" }
+      : { label: "Thành viên mới", color: "#94a3b8" };
+  const roleColor = isShopRole
+    ? "#10b981"
+    : isShipperRole
+    ? "#f97316"
+    : "#60a5fa";
 
   // 🔹 Menu Items
   const menuItems = [
@@ -213,194 +261,159 @@ export function UserProfile({
   ];
 
   return (
-    <div style={{ width: "100%", minHeight: "100vh", background: "#f5f5f5" }}>
+    <div style={{ width: "100%", minHeight: "100vh", background: "#FAFAFA" }}>
       <Slide in={mounted} direction="down" timeout={600}>
         <div
           style={{
-            padding: "2.5rem 1.5rem 5rem",
+            padding: "2.5rem 1.5rem 4rem",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
+            background: "linear-gradient(135deg, #FE5621 0%, #FF8A65 100%)",
             position: "relative",
-          }}
-        >
-        {/* Decorative glows */}
-        <div
-          style={{
-            position: "absolute",
-            top: -30,
-            left: -30,
-            width: 160,
-            height: 160,
-            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%)",
-            filter: "blur(10px)",
-            opacity: 0.6,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: -40,
-            right: -20,
-            width: 220,
-            height: 220,
-            background: "radial-gradient(circle at 70% 70%, rgba(255,255,255,0.25), rgba(255,255,255,0) 60%)",
-            filter: "blur(16px)",
-            opacity: 0.6,
-          }}
-        />
-
-        <div
-          style={{
-            position: "relative",
-            marginBottom: "1.25rem",
-            zIndex: 1,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
           }}
         >
           <div
             style={{
-              width: "8.75rem",
-              height: "8.75rem",
-              borderRadius: "50%",
-              padding: "5px",
-              background: "linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.55) 100%)",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
+              position: "relative",
+              marginBottom: "1.5rem",
             }}
           >
             <div
               style={{
-                width: "100%",
-                height: "100%",
+                width: "10rem",
+                height: "10rem",
                 borderRadius: "50%",
                 overflow: "hidden",
-                border: "3px solid rgba(255,255,255,0.85)",
+                border: "4px solid #FE5621",
+                boxShadow: "0 8px 30px rgba(254, 86, 33, 0.25)",
                 backgroundImage: `url(${userData.avatar})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
             />
+            <button
+              onClick={() => setShowEditProfile(true)}
+              style={{
+                position: "absolute",
+                bottom: "0.5rem",
+                right: "0.5rem",
+                width: "3.5rem",
+                height: "3.5rem",
+                borderRadius: "50%",
+                background: "#FE5621",
+                border: "3px solid white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                boxShadow: "0 4px 16px rgba(254, 86, 33, 0.35)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.08)";
+                e.currentTarget.style.boxShadow =
+                  "0 6px 20px rgba(254, 86, 33, 0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 16px rgba(254, 86, 33, 0.35)";
+              }}
+            >
+              <Edit3 size={20} color="white" strokeWidth={2.5} />
+            </button>
           </div>
-          <button
-            onClick={() => setShowEditProfile(true)}
+
+          <h2
             style={{
-              position: "absolute",
-              bottom: "0",
-              right: "0",
-              width: "3rem",
-              height: "3rem",
-              borderRadius: "50%",
-              background: "#fff",
-              border: "3px solid #FE5621",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              boxShadow: "0 4px 16px rgba(254, 86, 33, 0.4)",
-              transition: "all 0.3s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.1)";
-              e.currentTarget.style.background = "#FE5621";
-              const svg = e.currentTarget.querySelector('svg');
-              if (svg) svg.setAttribute('stroke', '#fff');
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.background = "#fff";
-              const svg = e.currentTarget.querySelector('svg');
-              if (svg) svg.setAttribute('stroke', '#FE5621');
+              margin: 0,
+              fontSize: "2rem",
+              fontWeight: "700",
+              color: "white",
+              marginBottom: "0.8rem",
+              letterSpacing: "-0.5px",
+              textAlign: "center",
+              textShadow: "0 2px 8px rgba(0,0,0,0.15)",
             }}
           >
-            <Edit3 size={18} color="#FE5621" strokeWidth={2.5} />
-          </button>
-        </div>
-
-        <h2
-          style={{
-            margin: 0,
-            fontSize: "1.75rem",
-            fontWeight: "700",
-            color: "#fff",
-            marginBottom: "0.5rem",
-            textShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            zIndex: 1,
-            letterSpacing: "-0.5px",
-            textAlign: "center",
-          }}
-        >
-          {userData.name}
-        </h2>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.35rem 0.75rem",
-            borderRadius: "999px",
-            background: "rgba(255,255,255,0.18)",
-            border: "1px solid rgba(255,255,255,0.35)",
-            color: "#fff",
-            fontWeight: "800",
-            fontSize: "0.8rem",
-            marginBottom: "0.5rem",
-            backdropFilter: "blur(6px)",
-            zIndex: 1,
-          }}
-        >
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: roleColor, boxShadow: "0 0 0 3px rgba(255,255,255,0.25)" }} />
-          {roleLabel}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.5rem",
-            flexWrap: "wrap",
-            zIndex: 1,
-          }}
-        >
+            {userData.name}
+          </h2>
           <div
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: "0.5rem",
-              padding: "0.5rem 0.75rem",
+              padding: "0.5rem 1rem",
               borderRadius: "999px",
-              background: "rgba(255,255,255,0.18)",
-              border: "1px solid rgba(255,255,255,0.35)",
-              color: "#fff",
+              background: "rgba(255,255,255,0.25)",
+              border: "2px solid white",
+              color: "white",
               fontWeight: "700",
-              fontSize: "0.95rem",
-              backdropFilter: "blur(6px)",
+              fontSize: "1.1rem",
+              marginBottom: "1rem",
+              backdropFilter: "blur(10px)",
             }}
           >
-            <Phone size={16} strokeWidth={2.5} />
-            {userData.phone}
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: "white",
+                boxShadow: "0 0 0 2px rgba(255,255,255,0.3)",
+              }}
+            />
+            {roleLabel}
           </div>
-          {userData.email && (
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.8rem",
+              flexWrap: "wrap",
+            }}
+          >
             <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "0.5rem",
-                padding: "0.5rem 0.75rem",
-                borderRadius: "999px",
-                background: "rgba(255,255,255,0.18)",
-                border: "1px solid rgba(255,255,255,0.35)",
-                color: "#fff",
-                fontWeight: "700",
-                fontSize: "0.95rem",
-                backdropFilter: "blur(6px)",
+                padding: "0.6rem 1rem",
+                borderRadius: "10px",
+                background: "rgba(255,255,255,0.2)",
+                color: "white",
+                fontWeight: "600",
+                fontSize: "1.1rem",
+                backdropFilter: "blur(10px)",
               }}
             >
-              <Mail size={16} strokeWidth={2.5} />
-              {userData.email}
+              <Phone size={18} strokeWidth={2} />
+              {userData.phone}
             </div>
-          )}
-        </div>
+            {userData.email && (
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.6rem 1rem",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.2)",
+                  color: "white",
+                  fontWeight: "600",
+                  fontSize: "1.1rem",
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                <Mail size={18} strokeWidth={2} />
+                {userData.email}
+              </div>
+            )}
+          </div>
         </div>
       </Slide>
 
@@ -408,48 +421,62 @@ export function UserProfile({
         <div
           style={{
             padding: "0 1.5rem",
-            marginTop: "-3.5rem",
+            marginTop: "1.5rem",
             marginBottom: "1.5rem",
-            position: "relative",
-            zIndex: 2,
           }}
         >
           <div
             style={{
-              background: "#fff",
-              borderRadius: "1.75rem",
-              padding: "1.25rem",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+              background: "white",
+              borderRadius: "1.6rem",
+              padding: "1.5rem",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
             }}
           >
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+                gridTemplateColumns: isMobile
+                  ? "repeat(2, 1fr)"
+                  : "repeat(3, 1fr)",
                 gap: "1rem",
               }}
             >
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    width: "3.5rem",
-                    height: "3.5rem",
-                    margin: "0 auto 0.5rem",
-                    borderRadius: "1rem",
-                    background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
+                    width: "4rem",
+                    height: "4rem",
+                    margin: "0 auto 0.8rem",
+                    borderRadius: "1.2rem",
+                    background:
+                      "linear-gradient(135deg, #FFF5F0 0%, #FFE5DB 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "1.5rem",
-                    boxShadow: "0 4px 12px rgba(254, 86, 33, 0.25)",
+                    fontSize: "2rem",
+                    boxShadow: "0 4px 12px rgba(254, 86, 33, 0.15)",
                   }}
                 >
                   📦
                 </div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#FE5621", marginBottom: "0.1rem" }}>
+                <div
+                  style={{
+                    fontSize: "1.8rem",
+                    fontWeight: "700",
+                    color: "#1A1A1A",
+                    marginBottom: "0.3rem",
+                  }}
+                >
                   {userData.stats.orders}
                 </div>
-                <div style={{ fontSize: "0.9rem", color: "#64748b", fontWeight: "600" }}>
+                <div
+                  style={{
+                    fontSize: "1.1rem",
+                    color: "#666",
+                    fontWeight: "600",
+                  }}
+                >
                   Đơn hàng
                 </div>
               </div>
@@ -457,49 +484,77 @@ export function UserProfile({
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    width: "3.5rem",
-                    height: "3.5rem",
-                    margin: "0 auto 0.5rem",
-                    borderRadius: "1rem",
-                    background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+                    width: "4rem",
+                    height: "4rem",
+                    margin: "0 auto 0.8rem",
+                    borderRadius: "1.2rem",
+                    background:
+                      "linear-gradient(135deg, #F0FDF4 0%, #D1FAE5 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "1.5rem",
-                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)",
+                    fontSize: "2rem",
+                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)",
                   }}
                 >
                   ⭐
                 </div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#10b981", marginBottom: "0.1rem" }}>
+                <div
+                  style={{
+                    fontSize: "1.8rem",
+                    fontWeight: "700",
+                    color: "#1A1A1A",
+                    marginBottom: "0.3rem",
+                  }}
+                >
                   {rating}
                 </div>
-                <div style={{ fontSize: "0.9rem", color: "#64748b", fontWeight: "600" }}>
-                  Đánh giá
+                <div
+                  style={{
+                    fontSize: "1.1rem",
+                    color: "#666",
+                    fontWeight: "600",
+                  }}
+                >
+                  {userData.stats.reviews} đánh giá
                 </div>
               </div>
 
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    width: "3.5rem",
-                    height: "3.5rem",
-                    margin: "0 auto 0.5rem",
-                    borderRadius: "1rem",
-                    background: "linear-gradient(135deg, #6366F1 0%, #A78BFA 100%)",
+                    width: "4rem",
+                    height: "4rem",
+                    margin: "0 auto 0.8rem",
+                    borderRadius: "1.2rem",
+                    background:
+                      "linear-gradient(135deg, #F5F3FF 0%, #E9D5FF 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "1.5rem",
-                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)",
+                    fontSize: "2rem",
+                    boxShadow: "0 4px 12px rgba(139, 92, 246, 0.15)",
                   }}
                 >
                   🎖️
                 </div>
-                <div style={{ fontSize: "1.15rem", fontWeight: "800", color: membership.color, marginBottom: "0.1rem" }}>
+                <div
+                  style={{
+                    fontSize: "1.3rem",
+                    fontWeight: "700",
+                    color: membership.color,
+                    marginBottom: "0.3rem",
+                  }}
+                >
                   {membership.label}
                 </div>
-                <div style={{ fontSize: "0.9rem", color: "#64748b", fontWeight: "600" }}>
+                <div
+                  style={{
+                    fontSize: "1.1rem",
+                    color: "#666",
+                    fontWeight: "600",
+                  }}
+                >
                   Thành viên
                 </div>
               </div>
@@ -510,20 +565,25 @@ export function UserProfile({
 
       <Fade in={mounted} timeout={900}>
         <div style={{ padding: "0 1.5rem", marginBottom: "1.5rem" }}>
-          <h3 style={{
-            fontSize: "1.35rem",
-            fontWeight: "700",
-            color: "#1a1a1a",
-            marginBottom: "1rem",
-            marginLeft: "0.25rem",
-            letterSpacing: "-0.5px",
-          }}>
+          <h3
+            style={{
+              fontSize: "1.6rem",
+              fontWeight: "700",
+              color: "#1A1A1A",
+              marginBottom: "1.2rem",
+              letterSpacing: "-0.5px",
+            }}
+          >
             Hành động nhanh
           </h3>
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(3, 1fr)" : "repeat(3, 1fr)",
+              gridTemplateColumns: isMobile
+                ? "repeat(2, 1fr)"
+                : isTablet
+                ? "repeat(3, 1fr)"
+                : "repeat(3, 1fr)",
               gap: "1rem",
             }}
           >
@@ -537,53 +597,53 @@ export function UserProfile({
                     width: "100%",
                     display: "flex",
                     alignItems: "center",
-                    gap: "0.75rem",
-                    padding: "1rem",
-                    background: "#fff",
-                    border: "1px solid #f1f5f9",
-                    borderRadius: "1.25rem",
+                    gap: "1rem",
+                    padding: "1.2rem",
+                    background: "white",
+                    border: "none",
+                    borderRadius: "1.2rem",
                     cursor: "pointer",
                     textAlign: "left",
-                    transition: "transform 0.2s, box-shadow 0.2s, background 0.2s",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.1)";
-                    e.currentTarget.style.background = "#fafafa";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 20px rgba(0,0,0,0.1)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
-                    e.currentTarget.style.background = "#fff";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 12px rgba(0,0,0,0.06)";
                   }}
                 >
                   <div
                     style={{
-                      width: "3rem",
-                      height: "3rem",
-                      borderRadius: "0.9rem",
-                      background: `${item.color}12`,
+                      width: "3.5rem",
+                      height: "3.5rem",
+                      borderRadius: "1rem",
+                      background: `${item.color}20`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
+                      boxShadow: `0 2px 8px ${item.color}15`,
                     }}
                   >
-                    <Icon size={22} color={item.color} strokeWidth={2.5} />
+                    <Icon size={24} color={item.color} strokeWidth={2.5} />
                   </div>
                   <div
                     style={{
                       flex: 1,
-                      fontSize: "1.05rem",
-                      fontWeight: "700",
-                      color: "#0f172a",
-                      letterSpacing: "-0.25px",
+                      fontSize: "1.2rem",
+                      fontWeight: "600",
+                      color: "#1A1A1A",
                     }}
                   >
                     {item.title}
                   </div>
-                  <ChevronRight size={20} color="#cbd5e1" strokeWidth={2.5} />
+                  <ChevronRight size={22} color="#999" strokeWidth={2} />
                 </button>
               );
             })}

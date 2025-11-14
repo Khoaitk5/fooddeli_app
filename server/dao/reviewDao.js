@@ -1,6 +1,7 @@
 // dao/reviewDao.js
 const GenericDao = require("./generic_dao");
 const Review = require("../models/review");
+const pool = require("../config/db");
 
 class ReviewDao extends GenericDao {
   constructor() {
@@ -55,20 +56,48 @@ class ReviewDao extends GenericDao {
   }
 
   /**
-   * Kiểm tra xem 1 reviewer đã đánh giá 1 đối tượng chưa
+   * Kiểm tra xem 1 reviewer đã đánh giá 1 đối tượng cho đơn hàng cụ thể chưa
    * @param {number} reviewerId - ID người đánh giá
    * @param {number} targetId - ID đối tượng được đánh giá
    * @param {string} targetType - 'user' | 'shop' | 'shipper'
+   * @param {number} orderId - ID đơn hàng (optional)
    * @returns {Promise<boolean>} - true nếu đã đánh giá, false nếu chưa
    */
-  async hasReviewed(reviewerId, targetId, targetType) {
-    const query = `
-      SELECT 1 FROM reviews
-      WHERE reviewer_id = $1 AND target_id = $2 AND target_type = $3
-      LIMIT 1;
-    `;
-    const result = await pool.query(query, [reviewerId, targetId, targetType]);
+  async hasReviewed(reviewerId, targetId, targetType, orderId = null) {
+    let query, params;
+    
+    if (orderId) {
+      // Kiểm tra theo đơn hàng cụ thể
+      query = `
+        SELECT * FROM reviews
+        WHERE reviewer_id = $1 AND target_id = $2 AND target_type = $3 AND order_id = $4
+        LIMIT 1;
+      `;
+      params = [reviewerId, targetId, targetType, orderId];
+    } else {
+      // Kiểm tra chung (không phân biệt đơn hàng)
+      query = `
+        SELECT * FROM reviews
+        WHERE reviewer_id = $1 AND target_id = $2 AND target_type = $3
+        LIMIT 1;
+      `;
+      params = [reviewerId, targetId, targetType];
+    }
+    
+    const result = await pool.query(query, params);
+    console.log('hasReviewed query:', { query, params, rowCount: result.rowCount, rows: result.rows });
     return result.rowCount > 0;
+  }
+
+  /**
+   * Đếm số đánh giá mà một user đã viết
+   * @param {number} reviewerId - ID người đánh giá
+   * @returns {Promise<number>} - Số đánh giá
+   */
+  async countReviewsByReviewer(reviewerId) {
+    const query = `SELECT COUNT(*) as count FROM reviews WHERE reviewer_id = $1`;
+    const result = await pool.query(query, [reviewerId]);
+    return parseInt(result.rows[0].count) || 0;
   }
 }
 

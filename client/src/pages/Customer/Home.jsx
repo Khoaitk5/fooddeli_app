@@ -20,6 +20,9 @@ const formatCount = (num) => {
 const SHARE_COUNT_DEFAULT = "132.5K";
 
 const Home = () => {
+  const [selectedVideoId, setSelectedVideoId] = useState(null);
+
+  const [commentCounts, setCommentCounts] = useState({});
   const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
   const [loadingVideos, setLoadingVideos] = useState({});
@@ -33,6 +36,10 @@ const Home = () => {
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
+
+  const handlePopupClose = () => {
+  setShowMessagePopup(false);
+  };
 
   const onTouchStart = (e) => {
     setTouchEnd(null);
@@ -75,7 +82,24 @@ const Home = () => {
 
             if (data.success) {
               setVideos(data.data);
+              // 🔥 Fetch số comment thật cho từng video
+              data.data.forEach(async (video) => {
+                try {
+                  const res = await fetch(
+                    `http://localhost:5000/api/video-comments/video/${video.video_id}`
+                  );
+                  const cmt = await res.json();
 
+                  if (cmt.success) {
+                    setCommentCounts((prev) => ({
+                      ...prev,
+                      [video.video_id]: cmt.data.length,
+                    }));
+                  }
+                } catch (err) {
+                  console.log("Fetch comment count failed:", err);
+                }
+              });
               // Check like status for each video
               const checkPromises = data.data.map(async (video, index) => {
                 try {
@@ -215,6 +239,24 @@ const Home = () => {
       console.error("API error:", err);
     }
   };
+  const reloadCommentCount = async (videoId) => {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/video-comments/video/${videoId}`
+    );
+    const data = await res.json();
+
+    if (data.success) {
+      setCommentCounts((prev) => ({
+        ...prev,
+        [videoId]: data.data.length,
+      }));
+    }
+  } catch (err) {
+    console.log("Reload comment error:", err);
+  }
+};
+
 
   // Cleanup on unmount
   useEffect(() => {
@@ -552,7 +594,7 @@ const Home = () => {
                     >
                       <HeartIcon
                         fill={likedVideos.has(index) ? "#FF3E5B" : "white"}
-                        style={{ 
+                        style={{
                           cursor: "pointer",
                           filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
                         }}
@@ -587,7 +629,10 @@ const Home = () => {
                         cursor: "pointer",
                         transition: "transform 0.2s ease",
                       }}
-                      onClick={() => setShowMessagePopup(true)}
+                      onClick={() => {
+                        setSelectedVideoId(video.video_id);
+                        setShowMessagePopup(true);
+                      }}
                       onMouseDown={(e) => {
                         e.currentTarget.style.transform = "scale(0.9)";
                       }}
@@ -608,7 +653,7 @@ const Home = () => {
                         fontSize: "1.3rem",
                       }}
                     >
-                      {formatCount(video.comments_count || 0)}
+                      {formatCount(commentCounts[video.video_id] ?? video.comments_count ?? 0)}
                     </div>
                   </div>
 
@@ -647,10 +692,22 @@ const Home = () => {
         </div>
       </div>
 
-      <MessagePopup
-        isVisible={showMessagePopup}
-        onClose={() => setShowMessagePopup(false)}
-      />
+<MessagePopup
+  isVisible={showMessagePopup}
+  onClose={handlePopupClose}
+  videoId={selectedVideoId}
+  onCommentCountChange={(newCount) => {
+    if (newCount === "reload") {
+      reloadCommentCount(selectedVideoId);
+      return;
+    }
+
+    setCommentCounts((prev) => ({
+      ...prev,
+      [selectedVideoId]: newCount,
+    }));
+  }}
+/>
       <Navbar />
     </>
   );

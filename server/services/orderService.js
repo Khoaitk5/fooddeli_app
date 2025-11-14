@@ -26,6 +26,23 @@ class OrderService {
   }
 
   /**
+   * 📦 Lấy danh sách orders của shipper (chỉ lấy orders completed)
+   * @param {number} shipperId
+   * @param {object} options { status?, limit?, offset? }
+   */
+  async getOrdersByShipperId(shipperId, options = {}) {
+    const sid = Number(shipperId);
+    if (!sid) throw new Error("shipperId is required");
+    
+    // Chỉ lấy orders có status = 'completed'
+    return await orderDao.getOrdersByShipperId(sid, {
+      status: 'completed', // Luôn filter chỉ lấy completed
+      limit: Number(options.limit) || 20,
+      offset: Number(options.offset) || 0,
+    });
+  }
+
+  /**
    * 🏪 Lấy danh sách đơn theo shop_id
    */
   async listByShop(shopId, { status, limit = 20, offset = 0, full = false } = {}) {
@@ -196,6 +213,29 @@ class OrderService {
     console.log("✅ [Service] Order rỗng đã tạo:", result);
     return result;
   }
+async listByUser(userId, { status, limit = 20, offset = 0, full = false } = {}) {
+  const uid = Number(userId);
+  if (!uid) throw new Error("userId is required");
+  if (full) {
+    return await orderDao.getFullOrdersByUserId(uid, { status, limit, offset });
+  }
+  return await orderDao.listByUser(uid, { status, limit, offset });
+}
+
+async getStatusOnly(orderId) {
+  const id = Number(orderId);
+  if (!id) throw new Error("orderId is required");
+  return await orderDao.getStatusOnly(id);
+}
+/**
+ * 👤 Lấy danh sách đầy đủ đơn theo user_id (bao gồm shop + shipper + details)
+ */
+async getFullOrdersByUserId(userId, { status, limit = 20, offset = 0 } = {}) {
+  const uid = Number(userId);
+  if (!uid) throw new Error("userId is required");
+  return await orderDao.getFullOrdersByUserId(uid, { status, limit, offset });
+}
+
 }
 
 module.exports = new OrderService();

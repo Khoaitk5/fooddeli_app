@@ -1,6 +1,6 @@
 // File: src/pages/Customer/ConfirmOrder.jsx (Phiên bản hoàn chỉnh)
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
 import LocationIcon from "../../components/shared/LocationIcon";
@@ -10,6 +10,8 @@ import TagIcon from "../../components/shared/TagIcon";
 import CardIcon from "../../components/shared/CardIcon";
 import PlusIcon from "../../components/shared/PlusIcon";
 import MinusIcon from "../../components/shared/MinusIcon";
+import AddressSelector from "../../components/role-specific/Customer/AddressSelector";
+import axios from "axios";
 
 // --- Styles cho Modal ---
 const modalStyles = {
@@ -19,49 +21,53 @@ const modalStyles = {
     left: 0,
     width: "100%",
     height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 100,
+    backdropFilter: "blur(4px)",
   },
   content: {
     background: "white",
-    padding: "20px",
-    borderRadius: "8px",
-    width: "80vw",
-    maxWidth: "300px",
+    padding: "2.5rem 2rem",
+    borderRadius: "1.6rem",
+    width: "85vw",
+    maxWidth: "340px",
     textAlign: "center",
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
   },
   text: {
-    fontSize: "1.4rem",
-    color: "#333",
-    marginBottom: "20px",
-    lineHeight: 1.4,
+    fontSize: "1.5rem",
+    color: "#1A1A1A",
+    marginBottom: "2rem",
+    lineHeight: 1.5,
+    fontWeight: "500",
   },
   buttonContainer: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "10px",
+    gap: "1rem",
   },
   button: {
-    padding: "10px 0",
+    padding: "1.2rem 0",
     flex: 1,
-    borderRadius: "999px",
+    borderRadius: "12px",
     border: "none",
-    fontSize: "1.2rem",
-    fontWeight: "600",
+    fontSize: "1.4rem",
+    fontWeight: "700",
     cursor: "pointer",
+    transition: "all 0.3s ease",
   },
   buttonCancel: {
-    border: "1px solid #ccc",
-    background: "#fff",
-    color: "#555",
+    border: "2px solid #E0E0E0",
+    background: "white",
+    color: "#666",
   },
   buttonConfirm: {
-    background: "#FE5621",
+    background: "linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)",
     color: "white",
+    boxShadow: "0 4px 12px rgba(254, 86, 33, 0.3)",
   },
 };
 // --- Hết Styles Modal ---
@@ -86,9 +92,9 @@ export default function ConfirmOrder() {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
-
-  const address = "Trường Đại Học FPT Đà Nẵng";
-  const contactInfo = "Nguyễn Chí Vương | +84778579293";
+  
+  const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState(null);
   const [note, setNote] = useState("");
   const savedPayment =
     localStorage.getItem("selectedPaymentMethod") || "Tiền mặt";
@@ -108,6 +114,66 @@ export default function ConfirmOrder() {
   const totalPrice = totalItemPrice + shippingFee - foodDiscount - shippingDiscount;
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  
+  // Format contact info từ user data
+  const contactInfo = currentUser?.full_name && currentUser?.phone_number 
+    ? `${currentUser.full_name} | ${currentUser.phone_number}`
+    : currentUser?.email || "Chưa có thông tin liên hệ";
+
+  // Fetch địa chỉ mặc định khi component mount
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/addresses/user-addresses', {
+          withCredentials: true,
+        });
+        
+        console.log('📍 Fetched addresses:', res.data);
+        
+        // API trả về res.data.data thay vì res.data.addresses
+        const addresses = res.data?.data || [];
+        
+        if (res.data?.success && addresses.length > 0) {
+          // Tìm địa chỉ mặc định hoặc lấy địa chỉ đầu tiên
+          const defaultAddr = addresses.find(addr => addr.is_primary) || addresses[0];
+          console.log('✅ Default address:', defaultAddr);
+          setCurrentAddress(defaultAddr);
+          
+          // Tự động set địa chỉ mặc định trên backend nếu chưa có địa chỉ mặc định
+          if (defaultAddr && !defaultAddr.is_primary) {
+            try {
+              await axios.put(
+                `http://localhost:5000/api/addresses/user-addresses/${defaultAddr.address_id}/set-default`,
+                {},
+                { withCredentials: true }
+              );
+              console.log('✅ Auto-set default address:', defaultAddr.address_id);
+            } catch (err) {
+              console.error('❌ Error auto-setting default:', err);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('❌ Error fetching address:', err);
+      }
+    };
+    
+    fetchDefaultAddress();
+  }, []);
+
+  // Format địa chỉ hiển thị
+  const formatAddress = (addr) => {
+    if (!addr || !addr.address_line) return "Chưa có địa chỉ giao hàng";
+    const { detail, ward, province } = addr.address_line;
+    return `${detail}, ${ward}, ${province}`;
+  };
+
+  // Xử lý khi chọn địa chỉ mới
+  const handleSelectAddress = (address) => {
+    console.log('🔄 Address selected:', address);
+    setCurrentAddress(address);
+    setAddressSelectorOpen(false);
+  };
 
   // --- Styles cho PaymentDetails ---
   const paymentStyles = {
@@ -117,52 +183,41 @@ export default function ConfirmOrder() {
       marginTop: "2.5vh",
       width: "91.67vw",
       background: "white",
-      borderRadius: "1.4rem",
-      paddingTop: "2.75vh",
-      paddingBottom: "2.125vh",
+      borderRadius: "1.6rem",
+      padding: "2rem 1.5rem",
+      boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
     },
     paymentTitle: {
-      marginLeft: "3.89vw",
-      color: "black",
-      fontSize: "1.3rem",
-      fontWeight: "600",
-      wordWrap: "break-word",
-      lineHeight: "1",
+      color: "#1A1A1A",
+      fontSize: "1.5rem",
+      fontWeight: "700",
+      marginBottom: "1.5rem",
     },
     paymentRow: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingLeft: "3.89vw",
-      paddingRight: "3.89vw",
+      marginBottom: "1.2rem",
     },
     paymentLabel: {
-      color: "rgba(0, 0, 0, 0.50)",
+      color: "#666",
       fontSize: "1.3rem",
       fontWeight: "500",
-      wordWrap: "break-word",
-      lineHeight: "1",
     },
     paymentValue: {
-      color: "black",
+      color: "#1A1A1A",
       fontSize: "1.3rem",
-      fontWeight: "500",
-      wordWrap: "break-word",
-      lineHeight: "1",
+      fontWeight: "600",
     },
     paymentTotalLabel: {
-      color: "black",
-      fontSize: "1.3rem",
-      fontWeight: "500",
-      wordWrap: "break-word",
-      lineHeight: "1",
+      color: "#1A1A1A",
+      fontSize: "1.5rem",
+      fontWeight: "700",
     },
     paymentTotalValue: {
-      color: "#FE5621", // Đổi sang màu cam
-      fontSize: "1.4rem",
-      fontWeight: "500",
-      wordWrap: "break-word",
-      lineHeight: "1",
+      color: "#FE5621",
+      fontSize: "1.7rem",
+      fontWeight: "700",
     },
   };
   // --- Hết ---
@@ -371,8 +426,8 @@ export default function ConfirmOrder() {
   return (
     <div
       style={{
-        backgroundColor: "#F2F2F2",
-        height: "100vh",
+        backgroundColor: "#FAFAFA",
+        minHeight: "100vh",
         overflowY: "auto",
         paddingTop: "8.5vh",
         paddingBottom: "13.875vh",
@@ -414,16 +469,17 @@ export default function ConfirmOrder() {
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 1,
-          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+          zIndex: 10,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
         }}
       >
         <BackArrow
           style={{
             position: "absolute",
             top: "50%",
-            left: "5vw",
+            left: "4.17vw",
             transform: "translateY(-50%)",
+            cursor: "pointer",
           }}
           onClick={() => navigate("/customer/cart")}
         />
@@ -436,10 +492,10 @@ export default function ConfirmOrder() {
             textAlign: "center",
           }}
         >
-          <div style={{ color: "black", fontSize: "1.6rem", fontWeight: 600 }}>
+          <div style={{ color: "#1A1A1A", fontSize: "1.7rem", fontWeight: 700 }}>
             Thanh toán
           </div>
-          <div style={{ color: "#555", fontSize: "1.1rem", fontWeight: 500 }}>
+          <div style={{ color: "#666", fontSize: "1.2rem", fontWeight: 500, marginTop: "0.2rem" }}>
             {shop_name}
           </div>
         </div>
@@ -449,26 +505,32 @@ export default function ConfirmOrder() {
       <div
         style={{
           background: "white",
-          borderRadius: "1.4rem",
+          borderRadius: "1.6rem",
           margin: "2.5vh auto",
-          padding: "1rem",
+          padding: "1.5rem",
           width: "91.67vw",
-          height: "13.5vh",
+          boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <LocationIcon />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: "1.3rem" }}>{address}</div>
-            <div style={{ color: "#777" }}>{contactInfo}</div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
+          <LocationIcon style={{ marginTop: "0.2rem" }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: "1.4rem", color: "#1A1A1A", marginBottom: "0.5rem" }}>
+              {formatAddress(currentAddress)}
+            </div>
+            <div style={{ color: "#888", fontSize: "1.2rem" }}>{contactInfo}</div>
           </div>
           <div
+            onClick={() => setAddressSelectorOpen(true)}
             style={{
-              marginLeft: "auto",
               color: "#FE5621",
-              fontWeight: 600,
+              fontWeight: 700,
+              fontSize: "1.3rem",
               cursor: "pointer",
+              transition: "opacity 0.2s",
             }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
           >
             Sửa
           </div>
@@ -477,8 +539,12 @@ export default function ConfirmOrder() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "1rem",
-            marginTop: "1rem",
+            gap: "0.8rem",
+            marginTop: "1.2rem",
+            paddingTop: "1.2rem",
+            borderTop: "1px solid #F5F5F5",
+            color: "#666",
+            fontSize: "1.3rem",
           }}
         >
           <ClockIcon2 />
@@ -486,15 +552,23 @@ export default function ConfirmOrder() {
         </div>
       </div>
 
+      {/* AddressSelector Modal */}
+      <AddressSelector
+        isOpen={addressSelectorOpen}
+        onClose={() => setAddressSelectorOpen(false)}
+        onSelectAddress={handleSelectAddress}
+        currentAddress={currentAddress}
+      />
+
       {/* Danh sách món */}
       <div
         style={{
           background: "white",
-          borderRadius: "1.4rem",
+          borderRadius: "1.6rem",
           margin: "2.5vh auto",
           width: "91.67vw",
-          // Bỏ height cứng, thêm padding
-          paddingBottom: "1.875vh",
+          paddingBottom: "1rem",
+          boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
         }}
       >
         <div
@@ -503,17 +577,14 @@ export default function ConfirmOrder() {
             alignItems: "center",
             justifyContent: "space-between",
             width: "100%",
-            paddingTop: "1.875vh",
+            padding: "1.5rem 1.5rem 1rem",
           }}
         >
           <div
             style={{
-              color: "black",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              wordWrap: "break-word",
-              lineHeight: 1,
-              marginLeft: "4.17vw",
+              color: "#1A1A1A",
+              fontSize: "1.5rem",
+              fontWeight: "700",
             }}
           >
             Tóm tắt đơn
@@ -522,12 +593,9 @@ export default function ConfirmOrder() {
           <div
             style={{
               color: "#FE5621",
-              fontSize: "1.2rem",
-              fontWeight: "600",
-              wordWrap: "break-word",
+              fontSize: "1.3rem",
+              fontWeight: "700",
               cursor: "pointer",
-              lineHeight: 1,
-              marginRight: "4.17vw",
             }}
             onClick={() =>
               navigate("/customer/restaurant-details", {
@@ -535,7 +603,7 @@ export default function ConfirmOrder() {
               })
             }
           >
-            Thêm món
+            + Thêm món
           </div>
         </div>
 
@@ -562,20 +630,23 @@ export default function ConfirmOrder() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                paddingTop: "1.875vh",
-                paddingBottom: "1.875vh",
+                padding: "1.2rem 1.5rem",
+                borderBottom: cartItems[cartItems.length - 1].id !== item.id ? "1px solid #F5F5F5" : "none",
+                transition: "background-color 0.2s ease",
               }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#FAFAFA"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "white"}
             >
               <img
                 src={item.product_image || "/default-food.jpg"}
                 alt={item.product_name}
                 style={{
-                  width: "4.5rem",
-                  height: "4.5rem",
-                  borderRadius: "0.8rem",
+                  width: "5.5rem",
+                  height: "5.5rem",
+                  borderRadius: "1.2rem",
                   objectFit: "cover",
-                  marginRight: "4.17vw",
-                  marginLeft: "4.17vw",
+                  marginRight: "1rem",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                 }}
               />
               <div
@@ -583,28 +654,23 @@ export default function ConfirmOrder() {
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "space-between",
-                  height: "4.5rem",
+                  gap: "0.5rem",
                 }}
               >
                 <div
                   style={{
-                    color: "black",
-                    fontSize: "1.3rem",
-                    fontWeight: "600",
-                    wordWrap: "break-word",
-                    lineHeight: 1,
+                    color: "#1A1A1A",
+                    fontSize: "1.4rem",
+                    fontWeight: "700",
                   }}
                 >
                   {item.product_name}
                 </div>
                 <div
                   style={{
-                    color: "black",
-                    fontSize: "1.2rem",
-                    fontWeight: "600",
-                    wordWrap: "break-word",
-                    lineHeight: 1,
+                    color: "#FE5621",
+                    fontSize: "1.4rem",
+                    fontWeight: "700",
                   }}
                 >
                   {formatPrice(item.unit_price)}
@@ -612,28 +678,31 @@ export default function ConfirmOrder() {
               </div>
               <div
                 style={{
-                  width: "18.33vw",
-                  height: "3.625vh",
-                  borderRadius: "1.4rem",
-                  border: "0.1rem #FE5621 solid",
-                  marginRight: "4.17vw",
-                  marginLeft: "auto",
+                  minWidth: "90px",
+                  height: "36px",
+                  borderRadius: "12px",
+                  border: "2px solid #FE5621",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "0 0.5rem",
+                  padding: "0 0.8rem",
+                  background: "white",
                 }}
               >
                 <MinusIcon
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: "pointer", transition: "transform 0.2s ease" }}
                   onClick={handleDecreaseClick}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.2)"}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
                 />
-                <span style={{ fontSize: "1.2rem", fontWeight: "600" }}>
+                <span style={{ fontSize: "1.4rem", fontWeight: "700", color: "#1A1A1A" }}>
                   {item.quantity}
                 </span>
                 <PlusIcon
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: "pointer", transition: "transform 0.2s ease" }}
                   onClick={handleIncreaseClick}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.2)"}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
                 />
               </div>
             </div>
@@ -647,7 +716,7 @@ export default function ConfirmOrder() {
         <div style={paymentStyles.paymentTitle}>Chi tiết thanh toán</div>
 
         {/* Row 1: Tổng giá món */}
-        <div style={{ ...paymentStyles.paymentRow, marginTop: "1.875vh" }}>
+        <div style={paymentStyles.paymentRow}>
           <div style={paymentStyles.paymentLabel}>
             Tổng giá món ({totalQuantity} món)
           </div>
@@ -657,16 +726,16 @@ export default function ConfirmOrder() {
         </div>
 
         {/* Row 2: Phí giao hàng */}
-        <div style={{ ...paymentStyles.paymentRow, marginTop: "1.875vh" }}>
+        <div style={paymentStyles.paymentRow}>
           <div style={paymentStyles.paymentLabel}>Phí giao hàng</div>
           <div style={paymentStyles.paymentValue}>{formatPrice(shippingFee)}</div>
         </div>
 
         {/* Row 3: Giảm giá món ăn */}
         {foodDiscount > 0 && (
-          <div style={{ ...paymentStyles.paymentRow, marginTop: "1.875vh" }}>
+          <div style={paymentStyles.paymentRow}>
             <div style={paymentStyles.paymentLabel}>Giảm giá món ăn</div>
-            <div style={{ ...paymentStyles.paymentValue, color: "#007E51" }}>
+            <div style={{ ...paymentStyles.paymentValue, color: "#16A34A" }}>
               -{formatPrice(foodDiscount)}
             </div>
           </div>
@@ -674,16 +743,16 @@ export default function ConfirmOrder() {
 
         {/* Row 4: Giảm giá vận chuyển */}
         {shippingDiscount > 0 && (
-          <div style={{ ...paymentStyles.paymentRow, marginTop: "1.875vh" }}>
+          <div style={paymentStyles.paymentRow}>
             <div style={paymentStyles.paymentLabel}>Giảm giá vận chuyển</div>
-            <div style={{ ...paymentStyles.paymentValue, color: "#007E51" }}>
+            <div style={{ ...paymentStyles.paymentValue, color: "#16A34A" }}>
               -{formatPrice(shippingDiscount)}
             </div>
           </div>
         )}
 
         {/* Row 5: Tổng thanh toán */}
-        <div style={{ ...paymentStyles.paymentRow, marginTop: "2.125vh" }}>
+        <div style={{ ...paymentStyles.paymentRow, marginTop: "0.5rem", paddingTop: "1rem", borderTop: "2px dashed #F0F0F0" }}>
           <div style={paymentStyles.paymentTotalLabel}>Tổng thanh toán</div>
           <div style={paymentStyles.paymentTotalValue}>
             {formatPrice(totalPrice)}
@@ -697,72 +766,88 @@ export default function ConfirmOrder() {
       <div
         style={{
           width: "100%",
-          height: "13.875vh",
           background: "white",
-          boxShadow: "0px 1px 10px rgba(0, 0, 0, 0.25)",
-          borderTopLeftRadius: "1.6rem",
-          borderTopRightRadius: "1.6rem",
+          boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.1)",
+          borderTopLeftRadius: "2rem",
+          borderTopRightRadius: "2rem",
           position: "fixed",
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 2,
+          zIndex: 10,
+          padding: "1.5rem 0",
         }}
       >
         <div
           style={{
-            position: "absolute",
-            top: "2.125vh",
-            left: "5.55vw",
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-around",
+            padding: "0 4.17vw",
+            marginBottom: "1rem",
           }}
         >
-          {paymentMethod === "Tiền mặt" ? (
-            <PaymentIcon height="1.2rem" width="1.267rem" />
-          ) : (
-            <CardIcon height="1.2rem" width="1.267rem" />
-          )}
-          <div
-            style={{
-              marginLeft: "3.7vw",
-              color: "black",
-              fontSize: "1.1rem",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-            onClick={() => navigate("/customer/payment-method")}
-          >
-            {paymentMethod}
-          </div>
-
-          <div
-            style={{
-              marginLeft: "3.7vw",
-              width: "1px",
-              height: "1.2rem",
-              background: "#F2F2F2",
-            }}
-          />
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              marginLeft: "3.7vw",
+              gap: "0.8rem",
               cursor: "pointer",
+              padding: "0.8rem 1.2rem",
+              borderRadius: "10px",
+              transition: "background-color 0.2s ease",
             }}
-            onClick={() => navigate("/customer/add-coupon")}
+            onClick={() => navigate("/customer/payment-method")}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F5F5F5"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
           >
-            <TagIcon height="1.2rem" width="1.267rem" />
+            {paymentMethod === "Tiền mặt" ? (
+              <PaymentIcon height="1.4rem" width="1.4rem" />
+            ) : (
+              <CardIcon height="1.4rem" width="1.4rem" />
+            )}
             <div
               style={{
-                marginLeft: "3.7vw",
-                color: "black",
-                fontSize: "1.1rem",
-                fontWeight: "500",
+                color: "#1A1A1A",
+                fontSize: "1.3rem",
+                fontWeight: "600",
               }}
             >
-              {couponCount > 0 ? `Đã áp dụng ${couponCount} mã` : "Ưu đãi"}
+              {paymentMethod}
+            </div>
+          </div>
+
+          <div
+            style={{
+              width: "2px",
+              height: "2.5rem",
+              background: "#E0E0E0",
+            }}
+          />
+          
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.8rem",
+              cursor: "pointer",
+              padding: "0.8rem 1.2rem",
+              borderRadius: "10px",
+              transition: "background-color 0.2s ease",
+            }}
+            onClick={() => navigate("/customer/add-coupon")}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F5F5F5"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+          >
+            <TagIcon height="1.4rem" width="1.4rem" />
+            <div
+              style={{
+                color: "#1A1A1A",
+                fontSize: "1.3rem",
+                fontWeight: "600",
+              }}
+            >
+              {couponCount > 0 ? `${couponCount} mã` : "Ưu đãi"}
             </div>
           </div>
         </div>
@@ -770,40 +855,42 @@ export default function ConfirmOrder() {
         {/* Nút đặt đơn */}
         <div
           style={{
-            position: "absolute",
             width: "87.78vw",
-            height: "6.375vh",
-            background: "#FE5621",
-            borderRadius: 999,
-            marginLeft: "50%",
-            transform: "translateX(-50%)",
-            bottom: "1.875vh",
+            margin: "0 auto",
+            padding: "1.4rem",
+            background: "linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)",
+            borderRadius: "12px",
             cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(254, 86, 33, 0.35)",
+            transition: "all 0.3s ease",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
           onClick={handleConfirmOrder}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(254, 86, 33, 0.45)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(254, 86, 33, 0.35)";
+          }}
         >
           <div
             style={{
-              position: "absolute",
               color: "white",
-              fontSize: "1.4rem",
+              fontSize: "1.6rem",
               fontWeight: "700",
-              top: "50%",
-              transform: "translateY(-50%)",
-              left: "4.44vw",
             }}
           >
             Đặt đơn
           </div>
           <div
             style={{
-              position: "absolute",
               color: "white",
-              fontSize: "1.4rem",
+              fontSize: "1.6rem",
               fontWeight: "700",
-              top: "50%",
-              transform: "translateY(-50%)",
-              right: "4.44vw",
             }}
           >
             {formatPrice(totalPrice)}
