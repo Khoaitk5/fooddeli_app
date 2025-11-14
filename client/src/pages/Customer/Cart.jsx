@@ -149,7 +149,7 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
     @keyframes slideInUp {
       from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
       }
       to {
         opacity: 1;
@@ -157,21 +157,21 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
       }
     }
 
-    @keyframes shimmer {
-      0% {
-        background-position: -1000px 0;
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
       }
-      100% {
-        background-position: 1000px 0;
+      to {
+        transform: rotate(360deg);
       }
     }
 
     @keyframes pulse {
       0%, 100% {
-        opacity: 1;
+        transform: scale(1);
       }
       50% {
-        opacity: 0.8;
+        transform: scale(1.05);
       }
     }
 
@@ -180,23 +180,12 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
         transform: translateY(0px);
       }
       50% {
-        transform: translateY(-10px);
+        transform: translateY(-15px);
       }
     }
 
     .cart-card {
-      animation: slideInUp 0.5s ease-out;
-    }
-
-    .shimmer-loading {
-      background: linear-gradient(
-        90deg,
-        #f0f0f0 25%,
-        #e0e0e0 50%,
-        #f0f0f0 75%
-      );
-      background-size: 1000px 100%;
-      animation: shimmer 2s infinite;
+      animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
   `;
 
@@ -210,20 +199,22 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "linear-gradient(135deg, #FFF5F5 0%, #FFF8E1 100%)",
+            background: "#FAFAFA",
           }}
         >
           <div style={{ textAlign: "center" }}>
             <div
-              className="shimmer-loading"
               style={{
-                width: "80px",
-                height: "80px",
+                width: "60px",
+                height: "60px",
+                border: "4px solid #F0F0F0",
+                borderTop: "4px solid #FE5621",
                 borderRadius: "50%",
-                margin: "0 auto 1rem",
+                margin: "0 auto 1.5rem",
+                animation: "spin 0.8s linear infinite",
               }}
             />
-            <p style={{ fontSize: "1.1rem", color: "#636E72", fontWeight: 500 }}>
+            <p style={{ fontSize: "1.3rem", color: "#666", fontWeight: 600 }}>
               Đang tải giỏ hàng...
             </p>
           </div>
@@ -238,54 +229,10 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
         style={{
           width: "100%",
           minHeight: "100vh",
-          background: "linear-gradient(135deg, #FFF5F5 0%, #FFF8E1 100%)",
+          background: "#FAFAFA",
           position: "relative",
-          overflow: "hidden",
         }}
       >
-        {/* Floating Food Decorations */}
-        <div
-          style={{
-            position: "fixed",
-            top: "20%",
-            left: "5%",
-            fontSize: "3rem",
-            opacity: 0.05,
-            animation: "float 6s ease-in-out infinite",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        >
-          🍕
-        </div>
-        <div
-          style={{
-            position: "fixed",
-            top: "60%",
-            right: "8%",
-            fontSize: "2.5rem",
-            opacity: 0.05,
-            animation: "float 5s ease-in-out infinite 1s",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        >
-          🍔
-        </div>
-        <div
-          style={{
-            position: "fixed",
-            top: "40%",
-            right: "15%",
-            fontSize: "2.8rem",
-            opacity: 0.05,
-            animation: "float 7s ease-in-out infinite 0.5s",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        >
-          🍜
-        </div>
 
         {/* Header */}
         <div
@@ -294,50 +241,44 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
             top: 0,
             left: 0,
             right: 0,
-            background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 50%, #FFA726 100%)",
-            padding: "1rem 1rem 1.2rem",
+            background: "white",
+            padding: "1.2rem 1rem",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontWeight: 800,
-            fontSize: "1.25rem",
-            boxShadow: "0 4px 20px rgba(254, 86, 33, 0.25)",
+            fontWeight: 700,
+            fontSize: "1.7rem",
+            boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
             zIndex: 1100,
-            color: "#fff",
-            textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            color: "#1A1A1A",
           }}
         >
-          <button
+          <div
             onClick={() => navigate("/customer/discover")}
             style={{
               position: "absolute",
-              left: "1rem",
-              background: "rgba(255, 255, 255, 0.2)",
-              border: "none",
+              left: "4.17vw",
               cursor: "pointer",
-              width: "36px",
-              height: "36px",
+              width: "40px",
+              height: "40px",
               borderRadius: "50%",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backdropFilter: "blur(10px)",
-              transition: "all 0.3s ease",
+              transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.background = "#F5F5F5";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.background = "transparent";
             }}
           >
-            <BackArrow style={{ color: "#fff" }} />
-          </button>
+            <BackArrow />
+          </div>
           <ShoppingCart
-            size={22}
-            style={{ marginRight: "0.5rem" }}
+            size={24}
+            style={{ marginRight: "0.6rem", color: "#FE5621" }}
             strokeWidth={2.5}
           />
           Giỏ hàng
@@ -378,24 +319,28 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                   onMouseMove={(e) => handleTouchMove(shopId, e)}
                   onMouseUp={() => handleTouchEnd(shopId)}
                   style={{
-                    background: "linear-gradient(135deg, #ffffff 0%, #fffbf8 100%)",
-                    borderRadius: "1.25rem",
+                    background: "white",
+                    borderRadius: "1.6rem",
                     padding: "1.5rem",
-                    marginBottom: "1.25rem",
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    marginBottom: "1rem",
+                    boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
                     cursor: "pointer",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    transition: "all 0.2s ease",
                     position: "relative",
                     animationDelay: `${index * 0.05}s`,
                     transform: `translateX(${swipeStates[shopId]?.offset || 0}px)`,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.02)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.12)";
+                    if (!swipeStates[shopId]?.offset) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.1)";
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+                    if (!swipeStates[shopId]?.offset) {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 2px 12px rgba(0, 0, 0, 0.06)";
+                    }
                     handleTouchEnd(shopId);
                   }}
                 >
@@ -404,16 +349,16 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                     <div
                       style={{
                         position: "absolute",
-                        right: "1rem",
+                        right: "1.5rem",
                         top: "50%",
                         transform: "translateY(-50%)",
-                        background: "#ff4757",
-                        color: "#fff",
-                        padding: "0.5rem 1rem",
-                        borderRadius: "0.5rem",
-                        fontSize: "0.9rem",
-                        fontWeight: 600,
-                        boxShadow: "0 2px 8px rgba(255, 71, 87, 0.3)",
+                        background: "#EF4444",
+                        color: "white",
+                        padding: "0.8rem 1.5rem",
+                        borderRadius: "10px",
+                        fontSize: "1.3rem",
+                        fontWeight: 700,
+                        boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
                       }}
                     >
                       Xóa
@@ -423,59 +368,42 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                   <div
                     style={{
                       position: "absolute",
-                      top: "-8px",
+                      top: "-10px",
                       right: "1.5rem",
-                      background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
-                      color: "#fff",
-                      padding: "0.35rem 0.75rem",
-                      borderRadius: "20px",
-                      fontSize: "0.75rem",
+                      background: "#FE5621",
+                      color: "white",
+                      padding: "0.5rem 1rem",
+                      borderRadius: "999px",
+                      fontSize: "1.1rem",
                       fontWeight: 700,
-                      boxShadow: "0 2px 8px rgba(254, 86, 33, 0.3)",
+                      boxShadow: "0 4px 12px rgba(254, 86, 33, 0.3)",
                       display: "flex",
                       alignItems: "center",
-                      gap: "0.25rem",
+                      gap: "0.4rem",
                     }}
                   >
-                    <UtensilsCrossed size={12} />
+                    <UtensilsCrossed size={14} />
                     {totalItems} món
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    {/* Ảnh shop với gradient background */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "1.2rem" }}>
+                    {/* Ảnh shop */}
                     <div
                       style={{
                         position: "relative",
                         flexShrink: 0,
                       }}
                     >
-                      {/* Gradient background circle */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          left: "50%",
-                          transform: "translate(-50%, -50%)",
-                          width: "85px",
-                          height: "85px",
-                          borderRadius: "16px",
-                          background: "linear-gradient(135deg, rgba(254, 86, 33, 0.15) 0%, rgba(255, 167, 38, 0.15) 100%)",
-                          filter: "blur(8px)",
-                          zIndex: 0,
-                        }}
-                      />
                       <img
                         src={shopAvatar}
                         alt={group.shop_name}
                         style={{
-                          position: "relative",
-                          width: "70px",
-                          height: "70px",
-                          borderRadius: "12px",
+                          width: "80px",
+                          height: "80px",
+                          borderRadius: "1.2rem",
                           objectFit: "cover",
                           display: "block",
-                          boxShadow: "0 6px 20px rgba(254, 86, 33, 0.3)",
-                          zIndex: 1,
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
                         }}
                         onError={(e) => {
                           e.target.src = "/default-avatar.png";
@@ -488,13 +416,10 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                       <h3
                         style={{
                           margin: 0,
-                          fontSize: "1.2rem",
-                          fontWeight: 800,
-                          background: "linear-gradient(135deg, #2D3436 0%, #636E72 100%)",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
-                          marginBottom: "0.5rem",
+                          fontSize: "1.5rem",
+                          fontWeight: 700,
+                          color: "#1A1A1A",
+                          marginBottom: "0.6rem",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -502,45 +427,33 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                       >
                         {group.shop_name}
                       </h3>
-                      <div
+                      <p
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          flexWrap: "wrap",
+                          margin: 0,
+                          fontSize: "1.5rem",
+                          fontWeight: 700,
+                          color: "#FE5621",
                         }}
                       >
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: "1.1rem",
-                            fontWeight: 700,
-                            background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                          }}
-                        >
-                          {formatPrice(storeTotal)}
-                        </p>
-                      </div>
+                        {formatPrice(storeTotal)}
+                      </p>
                     </div>
 
-                    {/* Icon mũi tên với gradient */}
+                    {/* Icon mũi tên */}
                     <div
                       style={{
-                        width: "36px",
-                        height: "36px",
+                        width: "40px",
+                        height: "40px",
                         borderRadius: "50%",
-                        background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
+                        background: "#FE5621",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         flexShrink: 0,
-                        animation: "pulse 2s ease-in-out infinite",
+                        boxShadow: "0 2px 8px rgba(254, 86, 33, 0.2)",
                       }}
                     >
-                      <ChevronRight size={20} color="#fff" strokeWidth={3} />
+                      <ChevronRight size={22} color="white" strokeWidth={2.5} />
                     </div>
                   </div>
                 </div>
@@ -558,52 +471,27 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
                 padding: "2rem",
               }}
             >
-              {/* Gradient Circle Background */}
+              {/* Icon */}
               <div
                 style={{
-                  position: "relative",
                   marginBottom: "2rem",
+                  padding: "2.5rem",
+                  background: "white",
+                  borderRadius: "50%",
+                  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: "180px",
-                    height: "180px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #FE5621 0%, #FFA726 100%)",
-                    opacity: 0.1,
-                    animation: "pulse 3s ease-in-out infinite",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "relative",
-                    padding: "2rem",
-                    background: "linear-gradient(135deg, #FE5621 0%, #FF7A45 100%)",
-                    borderRadius: "50%",
-                    display: "inline-flex",
-                    boxShadow: "0 8px 30px rgba(254, 86, 33, 0.25)",
-                  }}
-                >
-                  <ShoppingCart size={64} color="#fff" strokeWidth={2} />
-                </div>
+                <ShoppingCart size={80} color="#FE5621" strokeWidth={1.5} />
               </div>
 
               {/* Text */}
               <h3
                 style={{
                   margin: 0,
-                  fontSize: "1.5rem",
-                  fontWeight: 800,
-                  background: "linear-gradient(135deg, #2D3436 0%, #636E72 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  marginBottom: "0.5rem",
+                  fontSize: "2rem",
+                  fontWeight: 700,
+                  color: "#1A1A1A",
+                  marginBottom: "1rem",
                 }}
               >
                 Giỏ hàng trống
@@ -611,35 +499,14 @@ export function CartPage({ isMobile, isTablet, onCheckout }) {
               <p
                 style={{
                   margin: 0,
-                  fontSize: "1rem",
-                  color: "#636E72",
-                  marginBottom: "2rem",
-                  maxWidth: "280px",
+                  fontSize: "1.3rem",
+                  color: "#666",
+                  lineHeight: 1.6,
+                  maxWidth: "300px",
                 }}
               >
                 Hãy thêm món ăn yêu thích vào giỏ hàng để bắt đầu đặt hàng nhé!
               </p>
-
-              {/* Food Emojis Decoration */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  fontSize: "2rem",
-                  opacity: 0.3,
-                }}
-              >
-                <span style={{ animation: "float 3s ease-in-out infinite" }}>🍕</span>
-                <span style={{ animation: "float 3s ease-in-out infinite 0.3s" }}>
-                  🍔
-                </span>
-                <span style={{ animation: "float 3s ease-in-out infinite 0.6s" }}>
-                  🍜
-                </span>
-                <span style={{ animation: "float 3s ease-in-out infinite 0.9s" }}>
-                  🍰
-                </span>
-              </div>
             </div>
           )}
         </div>

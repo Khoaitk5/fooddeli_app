@@ -88,6 +88,17 @@ class ReviewDao extends GenericDao {
     console.log('hasReviewed query:', { query, params, rowCount: result.rowCount, rows: result.rows });
     return result.rowCount > 0;
   }
+
+  /**
+   * Đếm số đánh giá mà một user đã viết
+   * @param {number} reviewerId - ID người đánh giá
+   * @returns {Promise<number>} - Số đánh giá
+   */
+  async countReviewsByReviewer(reviewerId) {
+    const query = `SELECT COUNT(*) as count FROM reviews WHERE reviewer_id = $1`;
+    const result = await pool.query(query, [reviewerId]);
+    return parseInt(result.rows[0].count) || 0;
+  }
 }
 
 module.exports = new ReviewDao();

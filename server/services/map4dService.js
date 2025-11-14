@@ -1,10 +1,10 @@
-const fetch = require("node-fetch");
-const MAP4D_CONFIG = require("../config/map4d");
+import fetch from "node-fetch";
+import MAP4D_CONFIG from "../config/map4d.js";
 
 const key = MAP4D_CONFIG.API_KEY;
 const base = MAP4D_CONFIG.BASE_URL;
 
-exports.getRoute = async (origin, destination, mode = "car") => {
+export const getRoute = async (origin, destination, mode = "car") => {
   // Lưu ý: 1 số phiên bản Map4D cần 'vehicle=car' hoặc 'mode=car'. Tuỳ doc bạn dùng.
   // Dùng encodeURIComponent để tránh lỗi URL.
   const url =
@@ -46,13 +46,13 @@ exports.getRoute = async (origin, destination, mode = "car") => {
   }
 };
 
-exports.getMatrix = async (origins, destinations) => {
+export const getMatrix = async (origins, destinations) => {
   const url = `${base}/route/matrix?key=${key}&origins=${origins}&destinations=${destinations}`;
   const res = await fetch(url);
   return res.json();
 };
 
-exports.getAutoSuggest = async (text, location, acronym) => {
+export const getAutoSuggest = async (text, location, acronym) => {
   const url = `${base}/autosuggest?key=${key}&text=${encodeURIComponent(text)}${
     location ? `&location=${location}` : ""
   }${acronym ? `&acronym=${acronym}` : ""}`;
@@ -60,13 +60,13 @@ exports.getAutoSuggest = async (text, location, acronym) => {
   return res.json();
 };
 
-exports.getPlaceDetail = async (id) => {
+export const getPlaceDetail = async (id) => {
   const url = `${base}/place/detail/${id}?key=${key}`;
   const res = await fetch(url);
   return res.json();
 };
 
-exports.getTextSearch = async (text, types, datetime, location) => {
+export const getTextSearch = async (text, types, datetime, location) => {
   const url = `${base}/place/text-search?key=${key}&text=${encodeURIComponent(text)}${
     types ? `&types=${types}` : ""
   }${datetime ? `&datetime=${datetime}` : ""}${location ? `&location=${location}` : ""}`;
@@ -74,7 +74,7 @@ exports.getTextSearch = async (text, types, datetime, location) => {
   return res.json();
 };
 
-exports.getNearbySearch = async (location, radius, text, types, tags, datetime) => {
+export const getNearbySearch = async (location, radius, text, types, tags, datetime) => {
   const url = `${base}/place/nearby-search?key=${key}&location=${location}${
     radius ? `&radius=${radius}` : ""
   }${text ? `&text=${encodeURIComponent(text)}` : ""}${types ? `&types=${types}` : ""}${
@@ -84,7 +84,7 @@ exports.getNearbySearch = async (location, radius, text, types, tags, datetime) 
   return res.json();
 };
 
-exports.getViewboxSearch = async (viewbox, text, types, tags, datetime) => {
+export const getViewboxSearch = async (viewbox, text, types, tags, datetime) => {
   const url = `${base}/place/viewbox-search?key=${key}&viewbox=${viewbox}${
     text ? `&text=${encodeURIComponent(text)}` : ""
   }${types ? `&types=${types}` : ""}${tags ? `&tags=${tags}` : ""}${
@@ -94,10 +94,73 @@ exports.getViewboxSearch = async (viewbox, text, types, tags, datetime) => {
   return res.json();
 };
 
-exports.getGeocodeV2 = async (address, location, viewbox) => {
+export const getGeocodeV2 = async (address, location, viewbox) => {
   const url = `${base}/v2/geocode?key=${key}${
     address ? `&address=${encodeURIComponent(address)}` : ""
   }${location ? `&location=${location}` : ""}${viewbox ? `&viewbox=${viewbox}` : ""}`;
   const res = await fetch(url);
   return res.json();
+};
+
+export const getReverseGeocode = async (location) => {
+  // Map4D Places API - viewbox search to get address from coordinates
+  // Using a small viewbox around the point for reverse geocoding
+  const [lat, lon] = location.split(',').map(s => parseFloat(s.trim()));
+  const delta = 0.001; // ~100m radius
+  const viewbox = `${lon - delta},${lat - delta},${lon + delta},${lat + delta}`;
+  
+  const url = `${base}/place/viewbox-search?key=${encodeURIComponent(key)}&viewbox=${encodeURIComponent(viewbox)}`;
+  console.log("[Map4D:getReverseGeocode] URL =", url);
+  console.log("[Map4D:getReverseGeocode] Location:", location, "Viewbox:", viewbox);
+  
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (e) {
+    console.error("[Map4D:getReverseGeocode] fetch error:", e);
+    return { 
+      success: false, 
+      code: 'fetch_error',
+      message: e?.message || "Failed to fetch from Map4D" 
+    };
+  }
+
+  const text = await res.text();
+  console.log("[Map4D:getReverseGeocode] Response status:", res.status, "Body:", text.slice(0, 500));
+  
+  try {
+    const json = JSON.parse(text);
+    if (!res.ok) {
+      return {
+        success: false,
+        code: json?.code || 'api_error',
+        message: json?.message || `Map4D API returned HTTP ${res.status}`,
+        status: res.status,
+      };
+    }
+    
+    // Transform viewbox-search response to match reverse-geocode format
+    // Return the closest result
+    if (json.result && json.result.length > 0) {
+      const place = json.result[0];
+      return {
+        code: 'ok',
+        result: [{
+          address: place.address || '',
+          name: place.name || '',
+          location: place.location,
+          types: place.types
+        }]
+      };
+    }
+    
+    return json;
+  } catch {
+    return {
+      success: false,
+      code: 'parse_error',
+      message: `Invalid JSON response from Map4D (HTTP ${res.status})`,
+      body: text.slice(0, 200),
+    };
+  }
 };

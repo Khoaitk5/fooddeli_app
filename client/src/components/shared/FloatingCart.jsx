@@ -78,10 +78,10 @@ export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice
           style={{
             width: "100%",
             padding: "14px 18px",
-            background: "linear-gradient(135deg, #5EAD1D 0%, #54A312 100%)",
+            background: "linear-gradient(135deg, #FE5621 0%, #EE4D2D 100%)",
             borderRadius: "16px",
             border: "none",
-            boxShadow: "0 6px 24px rgba(94, 173, 29, 0.35)",
+            boxShadow: "0 6px 24px rgba(254, 86, 33, 0.35)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -141,7 +141,7 @@ export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice
                   justifyContent: "center",
                   fontSize: "11px",
                   fontWeight: "700",
-                  border: "2px solid #5EAD1D",
+                  border: "2px solid #FE5621",
                   boxShadow: "0 2px 8px rgba(255, 107, 53, 0.4)",
                 }}
               >

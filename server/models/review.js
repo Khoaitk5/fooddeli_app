@@ -1,4 +1,3 @@
-// models/Review.js
 class Review {
   constructor({
     review_id,

@@ -59,7 +59,7 @@ const OngoingOrderCard = ({ order, cardMargin }) => {
           <div
             style={{
               background: order.status === "Đang giao hàng" ? "#fff7ed" : "#f0fdf4",
-              color: order.status === "Đang giao hàng" ? "#ea580c" : "#16a34a",
+              color: order.status === "Đang giao hàng" ? "#ea580c" : "#FE5621",
               padding: "0.375rem 0.75rem",
               borderRadius: "0.5rem",
               fontSize: "1.375rem",
@@ -152,7 +152,7 @@ const OngoingOrderCard = ({ order, cardMargin }) => {
               style={{
                 fontSize: "1.5rem",
                 fontWeight: "700",
-                color: "#5EAD1D",
+                color: "#FE5621",
                 marginTop: "0.5rem",
               }}
             >
@@ -169,7 +169,7 @@ const OngoingOrderCard = ({ order, cardMargin }) => {
           style={{
             width: "100%",
             padding: "1.125rem",
-            background: "linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)",
+            background: "linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)",
             border: "none",
             borderRadius: "0.75rem",
             color: "#fff",
@@ -180,7 +180,7 @@ const OngoingOrderCard = ({ order, cardMargin }) => {
             alignItems: "center",
             justifyContent: "center",
             gap: "0.5rem",
-            boxShadow: "0 0.25rem 0.75rem rgba(94, 173, 29, 0.3)",
+            boxShadow: "0 0.25rem 0.75rem rgba(254, 86, 33, 0.3)",
             transition: "all 0.2s",
           }}
         >

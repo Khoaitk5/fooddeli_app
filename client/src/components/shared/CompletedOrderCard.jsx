@@ -143,7 +143,7 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
         </div>
         <div style={{
           fontSize: '1.125rem',
-          color: '#16a34a',
+          color: '#FE5621',
           marginTop: '0.5rem'
         }}>
           Đã giao • {order.deliveredAt}
@@ -184,7 +184,7 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
             <div style={{
               fontSize: '1.375rem',
               fontWeight: '700',
-              color: '#5EAD1D',
+              color: '#FE5621',
               marginTop: '0.5rem'
             }}>
               {formatPrice(order.total)}
@@ -195,44 +195,13 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
 
       {/* Actions */}
       <div style={{
-        padding: '1.25rem',
-        display: 'flex',
-        gap: '1rem'
+        padding: '1.25rem'
       }}>
         <button
           style={{
-            flex: 1,
+            width: '100%',
             padding: '1.125rem',
-            background: '#fff',
-            border: '0.125rem solid #e5e5e5',
-            borderRadius: '0.75rem',
-            color: '#666',
-            fontSize: '1.375rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#5EAD1D';
-            e.currentTarget.style.color = '#5EAD1D';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#e5e5e5';
-            e.currentTarget.style.color = '#666';
-          }}
-        >
-          <RotateCcw size={20} strokeWidth={2} />
-          Đặt lại
-        </button>
-        <button
-          style={{
-            flex: 1,
-            padding: '1.125rem',
-            background: (shipperRated && shopRated) ? '#f5f5f5' : 'linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)',
+            background: (shipperRated && shopRated) ? '#f5f5f5' : 'linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)',
             border: 'none',
             borderRadius: '0.75rem',
             color: (shipperRated && shopRated) ? '#999' : '#fff',
