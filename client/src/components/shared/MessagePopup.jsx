@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from "react";
 import ReportForm from "./ReportForm";
 
-const MessagePopup = ({ isVisible, onClose, videoId }) => {
+const MessagePopup = ({ isVisible, onClose, videoId,onCommentCountChange  }) => {
   const [showReportForm, setShowReportForm] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewCount, setReviewCount] = useState(0);
   const [newComment, setNewComment] = useState("");
+
+  const formatTimeAgo = (dateString) => {
+  const now = new Date();
+  const past = new Date(dateString);
+  const diff = (now - past) / 1000; // seconds
+
+  if (diff < 60) return "vừa xong";
+  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
+
+  return past.toLocaleDateString("vi-VN");
+};
+
 
   // 🔥 ALWAYS call hooks – no early return before this
   useEffect(() => {
@@ -23,11 +37,13 @@ const MessagePopup = ({ isVisible, onClose, videoId }) => {
             data.data.map((c) => ({
               userName: c.username,
               reviewText: c.content,
-              timeAgo: "vừa xong",
+              timeAgo: formatTimeAgo(c.created_at),
               avatarSrc: c.avatar_url || "https://placehold.co/40x40",
             }))
           );
           setReviewCount(data.data.length);
+          onCommentCountChange?.(data.data.length);
+          
         }
       } catch (err) {
         console.log("Fetch comments error:", err);
@@ -62,14 +78,22 @@ const submitComment = async () => {
         {
           userName: data.data.username || "Bạn",
           reviewText: data.data.content,
-          timeAgo: "vừa xong",
+          timeAgo: data.data.created_at
+      ? formatTimeAgo(data.data.created_at)
+      : "vừa xong",
           avatarSrc: data.data.avatar_url || "https://placehold.co/40x40",
         },
         ...prev,
       ]);
+      // 🔥 Gửi tín hiệu reload cho Home
+  onCommentCountChange?.("reload");
 
       // Tăng tổng số bình luận
-      setReviewCount((prev) => prev + 1);
+      setReviewCount((prev) => {
+  const updated = prev + 1;
+  onCommentCountChange?.(updated);
+  return updated;
+});
     } else {
       console.log("Error creating comment:", data.message);
     }
