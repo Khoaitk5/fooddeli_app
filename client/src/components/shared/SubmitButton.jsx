@@ -19,8 +19,8 @@ const SubmitButton = ({
         style={{
           width: "89.33vw",
           height: "6.4vh",
-          background: isValid ? "linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)" : "#E8EBE6",
-          boxShadow: isValid ? "0px -1px 0px #46890D inset" : "none",
+          background: isValid ? "linear-gradient(90deg, #FE5621 0%, #FD4E1E 100%)" : "#E8EBE6",
+          boxShadow: isValid ? "0px -1px 0px #D43B0A inset" : "none",
           borderRadius: "1.2rem",
         }}
       />

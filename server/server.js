@@ -26,6 +26,8 @@ import shopContractRoutes from "./routes/shopContractRoutes.js";
 import shipperContractRoutes from "./routes/shipperContractRoutes.js";
 import userShopContractRoutes from "./routes/userShopContractRoutes.js";
 import userShipperContractRoutes from "./routes/userShipperContractRoutes.js";
+import addressRoutes from "./routes/addressRoutes.js";
+import provinceRoutes from "./routes/provinceRoutes.js";
 
 dotenv.config();
 
@@ -91,6 +93,8 @@ app.use("/api/shop-contracts", shopContractRoutes);
 app.use("/api/shipper-contracts", shipperContractRoutes);
 app.use("/api/user-shop-contracts", userShopContractRoutes);
 app.use("/api/user-shipper-contracts", userShipperContractRoutes);
+app.use("/api/addresses", addressRoutes);
+app.use("/api/provinces", provinceRoutes);
 
 // ✅ Route kiểm tra nhanh
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));

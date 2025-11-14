@@ -41,7 +41,7 @@ const PaymentOption = ({ icon, title, description, isSelected, onClick, marginTo
         style={{
           width: "27px",
           height: "27px",
-          border: isSelected ? "8px #2BCDD2 solid" : "3px #949494 solid",
+          border: isSelected ? "8px #FE5621 solid" : "3px #949494 solid",
           borderRadius: "50%",
           marginRight: "4.44vw",
           marginLeft: "auto",

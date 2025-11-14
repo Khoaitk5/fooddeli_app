@@ -375,6 +375,17 @@ class OrderDao extends GenericDao {
     );
     return res.rows[0] || null;
   }
+
+  /**
+   * Đếm số đơn hàng của một user
+   * @param {number} userId - ID người dùng
+   * @returns {Promise<number>} - Số đơn hàng
+   */
+  async countOrdersByUserId(userId) {
+    const query = `SELECT COUNT(*) as count FROM orders WHERE user_id = $1`;
+    const result = await pool.query(query, [userId]);
+    return parseInt(result.rows[0].count) || 0;
+  }
 }
 
 module.exports = new OrderDao();
