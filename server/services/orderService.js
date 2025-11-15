@@ -2,6 +2,30 @@
 const orderDao = require("../dao/orderDao");
 const orderDetailDao = require("../dao/order_detailDao");
 const orderDetailService = require("./order_detailService");
+const notificationService = require("./notificationService");
+
+const ORDER_STATUS_MESSAGES = {
+  pending: {
+    title: (label) => `${label} đang chờ xác nhận`,
+    body: () => "Cửa hàng đã nhận được đơn và sẽ xử lý trong ít phút nữa.",
+  },
+  cooking: {
+    title: (label) => `${label} đang được chế biến`,
+    body: () => "Đầu bếp đang chuẩn bị món ăn cho bạn, vui lòng đợi trong giây lát.",
+  },
+  shipping: {
+    title: (label) => `${label} đang trên đường giao`,
+    body: () => "Shipper đã rời quán và sẽ sớm tới địa chỉ của bạn.",
+  },
+  completed: {
+    title: (label) => `${label} đã giao thành công`,
+    body: () => "Chúc bạn ngon miệng! Đừng quên chia sẻ đánh giá về trải nghiệm nhé.",
+  },
+  cancelled: {
+    title: (label) => `${label} đã bị huỷ`,
+    body: () => "Đơn hàng đã bị huỷ. Nếu cần hỗ trợ, vui lòng liên hệ chăm sóc khách hàng.",
+  },
+};
 
 class OrderService {
   /**
@@ -90,7 +114,13 @@ class OrderService {
   async updateStatus(orderId, status) {
     const id = Number(orderId);
     if (!id || !status) throw new Error("orderId and status are required");
-    return await orderDao.updateStatus(id, status);
+    const updated = await orderDao.updateStatus(id, status);
+    if (updated) {
+      await this.#notifyOrderStatus(updated).catch((err) =>
+        console.error("[OrderService] notifyOrderStatus error", err)
+      );
+    }
+    return updated;
   }
 
   /**
@@ -211,6 +241,13 @@ class OrderService {
     });
 
     console.log("✅ [Service] Order rỗng đã tạo:", result);
+
+    if (result) {
+      await this.#notifyOrderStatus(result).catch((err) =>
+        console.error("[OrderService] notifyOrderStatus error", err)
+      );
+    }
+
     return result;
   }
 async listByUser(userId, { status, limit = 20, offset = 0, full = false } = {}) {
@@ -236,6 +273,17 @@ async getFullOrdersByUserId(userId, { status, limit = 20, offset = 0 } = {}) {
   return await orderDao.getFullOrdersByUserId(uid, { status, limit, offset });
 }
 
+  async #notifyOrderStatus(order) {
+    if (!order?.user_id) return;
+    const meta = ORDER_STATUS_MESSAGES[order.status];
+    if (!meta) return;
+    const orderLabel = `Đơn #${order.order_id}`;
+    await notificationService.createNotification({
+      user_id: order.user_id,
+      title: meta.title(orderLabel),
+      body: meta.body(orderLabel),
+    });
+  }
 }
 
 module.exports = new OrderService();
