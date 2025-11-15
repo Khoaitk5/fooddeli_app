@@ -101,15 +101,12 @@ app.use("/api/addresses", addressRoutes);
 app.use("/api/provinces", provinceRoutes);
 app.use("/api/video-comments", videoCommentRoutes);
 
+import { onRequest } from "firebase-functions/v2/https";
+
 // ✅ Route kiểm tra nhanh
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));
 app.get("/", (req, res) => res.send("✅ API hoạt động ổn định!"));
 app.get("/api/payments/ping", (req, res) => res.send("✅ /api/payments route hoạt động OK!"));
 
-// ✅ Khởi động server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
-});
-
-export default app;
+// ✅ Export the app for Firebase Cloud Functions
+export const api = onRequest(app);
