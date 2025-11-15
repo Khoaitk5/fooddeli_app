@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import BackArrow from "../../components/shared/BackArrow";
 import { useCart } from "../../hooks/useCart";
 
-export function CartPage({ isMobile, isTablet, onCheckout }) {
+export function CartPage() {
   const navigate = useNavigate();
   const { cartItems: initialCartItems, loading, refreshCart } = useCart();
   const [cartItems, setCartItems] = useState(initialCartItems || []);

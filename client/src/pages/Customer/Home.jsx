@@ -33,7 +33,12 @@ const Home = () => {
   const [showCopyMessage, setShowCopyMessage] = useState(false); // State for copy message
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
+const [hasMore, setHasMore] = useState(true);
+const userLocationRef = useRef(null); // lưu lat/lon để dùng lại
 
+const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+const scrollContainerRef = useRef(null);
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
@@ -86,82 +91,101 @@ const Home = () => {
 
   // Fetch videos based on user location
   useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        if (!navigator.geolocation) {
-          console.error("Geolocation not supported");
-          return;
-        }
+  const fetchVideos = async () => {
+    try {
+      if (!navigator.geolocation) {
+        console.error("Geolocation not supported");
+        return;
+      }
 
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude; // Map4D standardization: use lon
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude; // Map4D standardization: use lon
 
+          // ✅ Lưu lại vị trí để dùng cho /feed/next
+          userLocationRef.current = { lat, lon };
+
+          try {
             const response = await fetch(
               `http://localhost:5000/api/videos/feed/nearby?lat=${lat}&lon=${lon}`
             );
             const data = await response.json();
 
-            if (data.success) {
-              setVideos(data.data);
-              // 🔥 Fetch số comment thật cho từng video
-              data.data.forEach(async (video) => {
-                try {
-                  const res = await fetch(
-                    `http://localhost:5000/api/video-comments/video/${video.video_id}`
-                  );
-                  const cmt = await res.json();
-
-                  if (cmt.success) {
-                    setCommentCounts((prev) => ({
-                      ...prev,
-                      [video.video_id]: cmt.data.length,
-                    }));
-                  }
-                } catch (err) {
-                  console.log("Fetch comment count failed:", err);
-                }
-              });
-              // Check like status for each video
-              const checkPromises = data.data.map(async (video, index) => {
-                try {
-                  const res = await fetch(
-                    "http://localhost:5000/api/video-likes/check",
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      credentials: "include",
-                      body: JSON.stringify({ video_id: video.video_id }),
-                    }
-                  );
-
-                  const result = await res.json();
-                  if (result.success && result.liked) {
-                    setLikedVideos((prev) => new Set(prev).add(index));
-                  }
-                } catch (err) {
-                  console.warn("Like check failed:", err);
-                }
-              });
-
-              await Promise.all(checkPromises);
-            } else {
+            if (!data.success) {
               console.error("Failed to fetch videos:", data.message);
+              return;
             }
-          },
-          (err) => {
-            console.error("Geolocation error:", err);
-          },
-          { enableHighAccuracy: true }
-        );
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    };
 
-    fetchVideos();
-  }, []);
+            // ✅ Set danh sách video đầu tiên (batch đầu)
+            setVideos(data.data);
+            if (!data.data.length) {
+              setHasMore(false); // không có video nào luôn
+            }
+
+            // 🔥 Fetch số comment thật cho từng video
+            data.data.forEach(async (video) => {
+              try {
+                const res = await fetch(
+                  `http://localhost:5000/api/video-comments/video/${video.video_id}`
+                );
+                const cmt = await res.json();
+
+                if (cmt.success) {
+                  setCommentCounts((prev) => ({
+                    ...prev,
+                    [video.video_id]: cmt.data.length,
+                  }));
+                }
+              } catch (err) {
+                console.log("Fetch comment count failed:", err);
+              }
+            });
+
+            // 💗 Check like status cho từng video
+            const checkPromises = data.data.map(async (video, index) => {
+              try {
+                const res = await fetch(
+                  "http://localhost:5000/api/video-likes/check",
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ video_id: video.video_id }),
+                  }
+                );
+
+                const result = await res.json();
+                if (result.success && result.liked) {
+                  setLikedVideos((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.add(index); // index tương ứng video trong mảng hiện tại
+                    return newSet;
+                  });
+                }
+              } catch (err) {
+                console.warn("Like check failed:", err);
+              }
+            });
+
+            await Promise.all(checkPromises);
+          } catch (error) {
+            console.error("Fetch videos error:", error);
+          }
+        },
+        (err) => {
+          console.error("Geolocation error:", err);
+        },
+        { enableHighAccuracy: true }
+      );
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+  };
+
+  fetchVideos();
+}, []);
+
 
   // Auto-play videos using Intersection Observer
   useEffect(() => {
@@ -171,6 +195,8 @@ const Home = () => {
           const video = entry.target;
           const index = videoRefs.current.indexOf(video);
           if (entry.isIntersecting) {
+            setActiveVideoIndex(index);
+          sessionStorage.setItem("homeActiveVideoIndex", String(index));
             videoRefs.current.forEach((v, i) => {
               if (v && i !== index) v.pause();
             });
@@ -262,6 +288,8 @@ const Home = () => {
       console.error("API error:", err);
     }
   };
+
+
   const reloadCommentCount = async (videoId) => {
   try {
     const res = await fetch(
@@ -280,6 +308,46 @@ const Home = () => {
   }
 };
 
+  const loadNextVideo = async () => {
+    // tránh gọi nhiều lần hoặc khi đã hết video
+    if (isLoadingNext || !hasMore) return;
+    if (!userLocationRef.current) return;
+
+    const { lat, lon } = userLocationRef.current;
+
+    try {
+      setIsLoadingNext(true);
+
+      // danh sách video_id đã có
+      const viewedParam = videos.map((v) => v.video_id).join(",");
+
+      const res = await fetch(
+        `http://localhost:5000/api/videos/feed/next?lat=${lat}&lon=${lon}&viewed=${viewedParam}`
+      );
+
+      if (res.status === 404) {
+        // backend báo không còn video mới
+        setHasMore(false);
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.success || !data.data) return;
+
+      const newVideo = data.data;
+
+      // ✅ Thêm video mới vào cuối danh sách
+      setVideos((prev) => [...prev, newVideo]);
+      // Nếu muốn fetch comment/like cho video mới,
+      // sau này có thể bổ sung thêm logic giống fetchVideos()
+    } catch (error) {
+      console.error("Fetch next video error:", error);
+    } finally {
+      setIsLoadingNext(false);
+    }
+  };
+
+
 
   // Cleanup on unmount
   useEffect(() => {
@@ -289,6 +357,25 @@ const Home = () => {
       });
     };
   }, []);
+
+  useEffect(() => {
+  if (!videos.length || !scrollContainerRef.current) return;
+
+  const savedIndexStr = sessionStorage.getItem("homeActiveVideoIndex");
+  if (!savedIndexStr) return;
+
+  const savedIndex = parseInt(savedIndexStr, 10);
+  if (Number.isNaN(savedIndex) || savedIndex <= 0) return;
+
+  const container = scrollContainerRef.current;
+  const sectionHeight = container.clientHeight; // ~ 93.75vh
+
+  container.scrollTo({
+    top: sectionHeight * savedIndex,
+    behavior: "auto", // hoặc "smooth" nếu muốn mượt
+  });
+}, [videos.length]);
+
 
   return (
     <>
@@ -301,13 +388,25 @@ const Home = () => {
           margin: "0 auto",
         }}
       >
-        <div
+                <div
+                ref={scrollContainerRef}
           style={{
             height: "93.75vh",
             overflowY: "auto",
             scrollSnapType: "y mandatory",
           }}
+          onScroll={(e) => {
+            const el = e.target;
+            const distanceToBottom =
+              el.scrollHeight - el.scrollTop - el.clientHeight;
+
+            // Khi còn < 200px là gần chạm đáy → load thêm video
+            if (distanceToBottom < 200) {
+              loadNextVideo();
+            }
+          }}
         >
+
           {videos.map((video, index) => (
             <section
               key={index}
@@ -439,6 +538,7 @@ const Home = () => {
                     cursor: "pointer",
                   }}
                   onClick={() => {
+                    sessionStorage.setItem("homeActiveVideoIndex", String(index));
                     if (video.shop_id) {
                       navigate("/customer/restaurant-details", {
                         state: { shopId: video.shop_id },
@@ -527,6 +627,7 @@ const Home = () => {
                     cursor: "pointer",
                   }}
                   onClick={() => {
+                    sessionStorage.setItem("homeActiveVideoIndex", String(index));
                     if (video.shop_id) {
                       navigate("/customer/restaurant-details", {
                         state: { shopId: video.shop_id },
