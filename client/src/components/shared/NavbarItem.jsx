@@ -1,6 +1,7 @@
 import React from 'react';
 
-const NavbarItem = ({ icon: Icon, label, isActive = false, onClick, badgeCount = 0 }) => {
+const NavbarItem = ({ icon, label, isActive = false, onClick, badgeCount = 0 }) => {
+  const IconComponent = icon;
   return (
     <div style={{
       display: 'flex',
@@ -18,7 +19,9 @@ const NavbarItem = ({ icon: Icon, label, isActive = false, onClick, badgeCount =
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <Icon width="2rem" height="2rem" fill={isActive ? '#FE5621' : '#D3D1D8'} />
+        {IconComponent && (
+          <IconComponent width="2rem" height="2rem" fill={isActive ? '#FE5621' : '#D3D1D8'} />
+        )}
         {badgeCount > 0 && (
           <div style={{
             position: 'absolute',

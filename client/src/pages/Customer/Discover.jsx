@@ -28,7 +28,7 @@ const Discover = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   const transformShopData = (shop) => ({
-    id: shop.id || shop.shop_profile_id,
+    id: shop.shop_profile_id || shop.id,
     name: shop.shop_name || "Chưa có tên",
     avatar_url:
       shop.avatar_url ||
