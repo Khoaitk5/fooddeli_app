@@ -4,7 +4,6 @@ import Navbar from "../../components/shared/Navbar";
 import HeartIcon from "../../components/shared/HeartIcon";
 import CommentIcon from "../../components/shared/CommentIcon";
 import ShareIcon from "../../components/shared/ShareIcon";
-import SearchIcon from "../../components/shared/SearchIcon";
 import TabItem from "../../components/role-specific/Customer/TabItem.jsx";
 import MessagePopup from "../../components/shared/MessagePopup";
 
@@ -394,18 +393,6 @@ const Home = () => {
                   statusStyle={statusStyle}
                 />
               </div>
-
-              {/* Search */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "2vh",
-                  right: "4.8vw",
-                }}
-              >
-                <SearchIcon onClick={() => navigate("/customer/search")} />
-              </div>
-
               {/* Author */}
               <div
                 style={{

@@ -1,6 +1,4 @@
 import Navbar from "@/components/shared/Navbar";
-import RestaurantCard from "../../components/role-specific/Customer/RestaurantCard";
-import FloatingAd from "@/components/shared/FloatingAd";
 import CarouselBanner from "@/components/shared/CarouselBanner";
 import CategoriesSection from "@/components/shared/CategoriesSection";
 import RestaurantList from "@/components/shared/RestaurantList";
@@ -163,7 +161,6 @@ const Discover = () => {
         </>
       )}
       <Navbar />
-      <FloatingAd />
     </div>
   );
 };
