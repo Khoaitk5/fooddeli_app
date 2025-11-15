@@ -19,6 +19,14 @@ class UserShopContractDao extends GenericDao {
     return res.rows.map((r) => new UserShopContract(r));
   }
 
+  async findLatestByContractId(contractId) {
+    const res = await pool.query(
+      `SELECT * FROM user_shop_contracts WHERE contract_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [contractId]
+    );
+    return res.rows[0] ? new UserShopContract(res.rows[0]) : null;
+  }
+
   async updateById(id, data) {
     return super.update("id", id, data);
   }

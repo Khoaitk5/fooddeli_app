@@ -15,19 +15,25 @@ import {
   IconButton,
   InputAdornment,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
 import StarIcon from "@mui/icons-material/Star";
-import PedalBikeIcon from "@mui/icons-material/PedalBike";
-import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
 import { getShippers } from "../../api/adminApi";
 
 const Shippers = () => {
   const [shippers, setShippers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedShipper, setSelectedShipper] = useState(null);
 
   // 🧭 Lấy danh sách shipper từ DB
   useEffect(() => {
@@ -49,9 +55,15 @@ const Shippers = () => {
     const keyword = search.toLowerCase();
     return (
       s.username?.toLowerCase().includes(keyword) ||
-      s.vehicle_type?.toLowerCase().includes(keyword)
+      s.email?.toLowerCase().includes(keyword) ||
+      s.phone?.toLowerCase().includes(keyword)
     );
   });
+
+  const handleViewDetail = (shipper) => {
+    setSelectedShipper(shipper);
+    setDetailOpen(true);
+  };
 
   // 📊 Tính toán thống kê
   const totalShippers = shippers.length;
@@ -184,7 +196,7 @@ const Shippers = () => {
           <TableHead>
             <TableRow>
               <TableCell>Shipper</TableCell>
-              <TableCell>Phương tiện</TableCell>
+              <TableCell>Thông tin</TableCell>
               <TableCell>Trạng thái</TableCell>
               <TableCell>Online</TableCell>
               <TableCell align="right">Thao tác</TableCell>
@@ -201,16 +213,12 @@ const Shippers = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      {s.vehicle_type === "Xe máy" ? (
-                        <TwoWheelerIcon fontSize="small" color="primary" />
-                      ) : (
-                        <PedalBikeIcon fontSize="small" color="secondary" />
-                      )}
-                      <Typography variant="body2">
-                        {s.vehicle_type || "Không rõ"}
-                      </Typography>
-                    </Stack>
+                    <Typography variant="body2">
+                      SĐT: {s.phone || "Chưa có"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Email: {s.email || "Chưa có"}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -250,7 +258,11 @@ const Shippers = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
-                      <IconButton size="small" color="primary">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleViewDetail(s)}
+                      >
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                       <IconButton size="small" color="error">
@@ -272,6 +284,46 @@ const Shippers = () => {
           </TableBody>
         </Table>
       </Paper>
+
+      <Dialog
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Thông tin shipper</DialogTitle>
+        <DialogContent dividers>
+          {selectedShipper ? (
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                Thông tin cơ bản
+              </Typography>
+              <Typography variant="body2">
+                <strong>Tên đăng nhập:</strong> {selectedShipper.username}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Số điện thoại:</strong> {selectedShipper.phone || "-"}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Email:</strong> {selectedShipper.email || "-"}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Trạng thái:</strong> {selectedShipper.status}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Online:</strong> {selectedShipper.online_status}
+              </Typography>
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Không có dữ liệu shipper.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailOpen(false)}>Đóng</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

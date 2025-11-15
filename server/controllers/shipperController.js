@@ -114,14 +114,17 @@ exports.createShipper = async (req, res) => {
     // (tùy chọn - không làm hỏng flow hợp đồng)
     let createdProfile = null;
     const shouldCreateProfile = Boolean(create_profile) || Boolean(vehicle_type) || Boolean(vehicle_plate_number) || Boolean(id_card_number);
+
     if (shouldCreateProfile) {
       try {
         createdProfile = await ShipperProfileService.createShipperProfile({
           user_id,
-          vehicle_type: vehicle_type || "motorcycle",
+          // DB constraint: vehicle_type IN ('bike','motorbike','car')
+          vehicle_type: vehicle_type || "motorbike",
           vehicle_number: vehicle_plate_number || null,
           identity_card: id_card_number || null,
         });
+
       } catch (e) {
         // Không chặn quy trình chính
         console.warn("⚠️ Tạo shipper_profile thất bại (bỏ qua):", e.message);

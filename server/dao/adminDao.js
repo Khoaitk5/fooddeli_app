@@ -34,7 +34,15 @@ async function updateShopStatus(id, status) {
 async function getAllShippers() {
   console.log('🧩 [DAO] getAllShippers()');
   const sql = `
-    SELECT s.id, u.username, s.vehicle_type, s.status, s.online_status
+    SELECT
+      s.id,
+      s.user_id,
+      u.username,
+      u.email,
+      u.phone,
+      s.vehicle_type,
+      s.status,
+      s.online_status
     FROM shipper_profiles s
     JOIN users u ON u.id = s.user_id
     ORDER BY s.created_at DESC;

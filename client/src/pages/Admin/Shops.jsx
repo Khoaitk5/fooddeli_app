@@ -15,6 +15,11 @@ import {
   IconButton,
   InputAdornment,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -26,6 +31,8 @@ const Shops = () => {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedShop, setSelectedShop] = useState(null);
 
   // 🟢 Gọi API khi component mount
   useEffect(() => {
@@ -48,6 +55,11 @@ const Shops = () => {
       s.shop_name?.toLowerCase().includes(search.toLowerCase()) ||
       s.username?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleViewDetail = (shop) => {
+    setSelectedShop(shop);
+    setDetailOpen(true);
+  };
 
   // 📊 Thẻ thống kê (giữ nguyên giao diện)
   const StatCard = ({ title, value, sub, color }) => (
@@ -213,7 +225,11 @@ const Shops = () => {
                       spacing={1}
                       justifyContent="flex-end"
                     >
-                      <IconButton size="small" color="primary">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleViewDetail(s)}
+                      >
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                       <IconButton size="small" color="error">
@@ -236,6 +252,43 @@ const Shops = () => {
           </Table>
         </Paper>
       )}
+
+      <Dialog
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Thông tin cửa hàng</DialogTitle>
+        <DialogContent dividers>
+          {selectedShop ? (
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                Thông tin cơ bản
+              </Typography>
+              <Typography variant="body2">
+                <strong>Tên cửa hàng:</strong> {selectedShop.shop_name}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Chủ cửa hàng:</strong> {selectedShop.username}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Trạng thái:</strong> {selectedShop.shop_status}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Số sản phẩm:</strong> {selectedShop.total_products || 0}
+              </Typography>
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Không có dữ liệu cửa hàng.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailOpen(false)}>Đóng</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

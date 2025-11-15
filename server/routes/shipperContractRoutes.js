@@ -6,6 +6,7 @@ router.get("/ping", (req, res) => res.send("✅ shipperContractRoutes OK"));
 
 router.post("/", controller.create);
 router.get("/", controller.list);
+router.get("/by-user/:userId", controller.getLatestByUser);
 router.get("/:id", controller.getById);
 router.patch("/:id", controller.update);
 router.delete("/:id", controller.remove);

@@ -12,7 +12,7 @@ class ShopProfileService {
   async createShopProfile(userId, shopData) {
     try {
       // Kiểm tra user tồn tại
-      const user = await userDao.findById("id", userId);
+      const user = await userDao.findById(userId);
       if (!user) throw new Error("Người dùng không tồn tại.");
       if (user.role !== "shop") {
         throw new Error(
@@ -27,6 +27,8 @@ class ShopProfileService {
         description: shopData.description ?? "",
         open_hours: shopData.open_hours ?? "",
         closed_hours: shopData.closed_hours ?? "",
+        // Sau khi hợp đồng được duyệt, shop mới nên ở trạng thái 'open'
+        status: "open",
         shop_address_id: shopData.shop_address_id ?? null,
       });
 
