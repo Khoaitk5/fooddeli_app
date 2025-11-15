@@ -17,6 +17,8 @@ export default function ShipperRegistration() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState(null); // null | 'already_shipper' | 'shop_restriction' | 'allowed'
+  const [popup, setPopup] = useState({ open: false, type: 'info', message: '' });
+
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -182,12 +184,12 @@ export default function ShipperRegistration() {
     
     // Validation
     if (!formData.fullName || !formData.phone || !formData.email) {
-      alert('⚠️ Vui lòng điền đầy đủ thông tin bắt buộc');
+      setPopup({ open: true, type: 'error', message: '⚠️ Vui lòng điền đầy đủ thông tin bắt buộc' });
       return;
     }
 
     if (!agreedToTerms) {
-      alert('⚠️ Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục');
+      setPopup({ open: true, type: 'error', message: '⚠️ Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục' });
       return;
     }
 
@@ -196,15 +198,15 @@ export default function ShipperRegistration() {
     const hasCriminal = Boolean(files.criminalRecord);
     const hasLltpCombo = Boolean(files.lltp01) && Boolean(files.lltpAppointment);
     if (!hasHealth) {
-      alert('⚠️ Yêu cầu giấy khám sức khỏe.');
+      setPopup({ open: true, type: 'error', message: '⚠️ Yêu cầu giấy khám sức khỏe.' });
       return;
     }
     if (lltpOption === 'lltp2' && !hasCriminal) {
-      alert('⚠️ Vui lòng tải lên LLTP số 02.');
+      setPopup({ open: true, type: 'error', message: '⚠️ Vui lòng tải lên LLTP số 02.' });
       return;
     }
     if (lltpOption === 'lltp1_combo' && !hasLltpCombo) {
-      alert('⚠️ Vui lòng tải lên LLTP số 01 và Giấy hẹn LLTP số 02.');
+      setPopup({ open: true, type: 'error', message: '⚠️ Vui lòng tải lên LLTP số 01 và Giấy hẹn LLTP số 02.' });
       return;
     }
 
@@ -288,10 +290,16 @@ export default function ShipperRegistration() {
         { withCredentials: true }
       );
 
-      alert('✅ Đăng ký thành công! Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48 giờ.');
-      handleSafeNavigate('/customer/profile');
+      setPopup({ open: true, type: 'success', message: '✅ Đăng ký thành công! Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48 giờ.' });
+      setTimeout(() => {
+        handleSafeNavigate('/customer/profile');
+      }, 600);
     } catch (error) {
-      alert('❌ Đăng ký thất bại: ' + (error.response?.data?.message || error.message));
+      setPopup({
+        open: true,
+        type: 'error',
+        message: '❌ Đăng ký thất bại: ' + (error.response?.data?.message || error.message)
+      });
     } finally {
       setLoading(false);
     }
@@ -1540,6 +1548,87 @@ export default function ShipperRegistration() {
 
       {/* Terms Modal */}
       <ShipperTermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
+
+      {/* Popup Notification */}
+      {popup.open && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+          }}
+          onClick={() => setPopup(prev => ({ ...prev, open: false }))}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '420px',
+              width: '90%',
+              background: '#ffffff',
+              borderRadius: '1.25rem',
+              padding: '1.75rem 1.75rem 1.5rem',
+              boxShadow: '0 24px 60px rgba(15, 23, 42, 0.45)',
+              border:
+                popup.type === 'success'
+                  ? '2px solid #22c55e'
+                  : popup.type === 'error'
+                  ? '2px solid #ef4444'
+                  : '1px solid #e5e7eb',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color:
+                    popup.type === 'success'
+                      ? '#16a34a'
+                      : popup.type === 'error'
+                      ? '#b91c1c'
+                      : '#0f172a',
+                }}
+              >
+                {popup.type === 'success'
+                  ? 'Thành công'
+                  : popup.type === 'error'
+                  ? 'Có lỗi xảy ra'
+                  : 'Thông báo'}
+              </div>
+              <div style={{ fontSize: '1.05rem', color: '#4b5563', lineHeight: 1.6 }}>{popup.message}</div>
+            </div>
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setPopup(prev => ({ ...prev, open: false }))}
+                style={{
+                  minWidth: '120px',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '999px',
+                  border: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  background:
+                    popup.type === 'success'
+                      ? 'linear-gradient(135deg, #22c55e 0%, #4ade80 100%)'
+                      : popup.type === 'error'
+                      ? 'linear-gradient(135deg, #ef4444 0%, #f97373 100%)'
+                      : 'linear-gradient(135deg, #f97316 0%, #ff9447 100%)',
+                  color: '#ffffff',
+                  boxShadow: '0 12px 30px rgba(15, 23, 42, 0.25)',
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
