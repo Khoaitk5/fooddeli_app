@@ -239,20 +239,32 @@ const getVideosFeed = async (req, res) => {
 /**
  * ⏭️ Lấy video kế tiếp trong feed
  */
+// controllers/videoController.js
 const getNextVideo = async (req, res) => {
   try {
-    const { lat, lng, viewed } = req.query;
-    if (!lat || !lng)
-      return res.status(400).json({ message: "Thiếu tọa độ người dùng" });
+    const { lat, lon, lng, viewed } = req.query;
 
+    // Hỗ trợ cả lon & lng cho chắc
+    const longitude = lon ?? lng;
+
+    if (!lat || !longitude) {
+      return res.status(400).json({ message: "Thiếu tọa độ người dùng" });
+    }
+
+    // danh sách id video đã xem
     const viewedIds = viewed ? viewed.split(",").map(Number) : [];
+
     const videos = await videoService.getNearbyVideos({
       lat: parseFloat(lat),
-      lng: parseFloat(lng),
+      lon: parseFloat(longitude),
     });
 
-    const next = videos.find(v => !viewedIds.includes(v.video_id));
-    if (!next) return res.status(404).json({ message: "Không còn video mới" });
+    // tìm video đầu tiên chưa nằm trong viewedIds
+    const next = videos.find((v) => !viewedIds.includes(v.video_id));
+
+    if (!next) {
+      return res.status(404).json({ message: "Không còn video mới" });
+    }
 
     res.status(200).json({ success: true, data: next });
   } catch (error) {
@@ -260,6 +272,7 @@ const getNextVideo = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 
 // ✅ Export tất cả controller
 module.exports = {
