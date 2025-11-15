@@ -68,6 +68,8 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
           shipperAvatar: order.shipperAvatar,
           shopName: order.restaurant,
           shopAvatar: order.shop_image,
+          shopId: order.shopId,
+          userId: order.userId,
         }
       });
     } else if (!shopRated) {
@@ -77,6 +79,8 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
           orderId: order.id,
           shopName: order.restaurant,
           shopAvatar: order.shop_image,
+          shopId: order.shopId,
+          userId: order.userId,
         }
       });
     }
@@ -146,7 +150,7 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
           color: '#FE5621',
           marginTop: '0.5rem'
         }}>
-          Đã giao • {order.deliveredAt}
+          {order.isCancelled ? 'Đã hủy' : `Đã giao • ${order.deliveredAt}`}
         </div>
       </div>
 
@@ -197,42 +201,60 @@ const CompletedOrderCard = ({ order, cardMargin }) => {
       <div style={{
         padding: '1.25rem'
       }}>
-        <button
-          style={{
-            width: '100%',
-            padding: '1.125rem',
-            background: (shipperRated && shopRated) ? '#f5f5f5' : 'linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)',
-            border: 'none',
-            borderRadius: '0.75rem',
-            color: (shipperRated && shopRated) ? '#999' : '#fff',
-            fontSize: '1.375rem',
-            fontWeight: '600',
-            cursor: (shipperRated && shopRated) ? 'default' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            boxShadow: (shipperRated && shopRated) ? 'none' : '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            if (!(shipperRated && shopRated)) {
-              e.currentTarget.style.transform = 'translateY(-0.125rem)';
-              e.currentTarget.style.boxShadow = '0 0.375rem 1rem rgba(238, 77, 45, 0.4)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!(shipperRated && shopRated)) {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)';
-            }
-          }}
-          onClick={handleReviewClick}
-        >
-          <Star size={20} strokeWidth={2} fill={(shipperRated && shopRated) ? '#999' : 'none'} />
-          {(shipperRated && shopRated) ? 'Đã đánh giá' : 
-           !shipperRated ? 'Đánh giá shipper' : 'Đánh giá quán'}
-        </button>
+        {order.isCancelled ? (
+          <div
+            style={{
+              width: '100%',
+              padding: '1.125rem',
+              background: '#f5f5f5',
+              border: 'none',
+              borderRadius: '0.75rem',
+              color: '#999',
+              fontSize: '1.375rem',
+              fontWeight: '600',
+              textAlign: 'center',
+            }}
+          >
+            Đã hủy
+          </div>
+        ) : (
+          <button
+            style={{
+              width: '100%',
+              padding: '1.125rem',
+              background: (shipperRated && shopRated) ? '#f5f5f5' : 'linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)',
+              border: 'none',
+              borderRadius: '0.75rem',
+              color: (shipperRated && shopRated) ? '#999' : '#fff',
+              fontSize: '1.375rem',
+              fontWeight: '600',
+              cursor: (shipperRated && shopRated) ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              boxShadow: (shipperRated && shopRated) ? 'none' : '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (!(shipperRated && shopRated)) {
+                e.currentTarget.style.transform = 'translateY(-0.125rem)';
+                e.currentTarget.style.boxShadow = '0 0.375rem 1rem rgba(238, 77, 45, 0.4)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!(shipperRated && shopRated)) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 0.25rem 0.75rem rgba(238, 77, 45, 0.3)';
+              }
+            }}
+            onClick={handleReviewClick}
+          >
+            <Star size={20} strokeWidth={2} fill={(shipperRated && shopRated) ? '#999' : 'none'} />
+            {(shipperRated && shopRated) ? 'Đã đánh giá' : 
+             !shipperRated ? 'Đánh giá shipper' : 'Đánh giá quán'}
+          </button>
+        )}
       </div>
     </div>
   );

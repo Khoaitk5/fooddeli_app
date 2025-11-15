@@ -43,7 +43,6 @@ import ShipperReview from "./pages/Customer/ShipperReview";
 import Notifications from "./pages/Customer/Notifications";
 import RestaurantDetail from "./components/role-specific/Customer/RestaurantDetail";
 import { UserProfile } from "./pages/Customer/UserProfile";
-import SearchPage from "./pages/Customer/SearchPage";
 import SearchResults from "./components/role-specific/Customer/SearchResults";
 import VideoDetail from "./pages/Customer/VideoDetail";
 import ShipperRegistration from "./pages/Customer/ShipperRegistration";
@@ -142,7 +141,6 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="restaurant-details" element={<RestaurantDetail />} />
           <Route path="profile" element={<UserProfile />} />
-          <Route path="search" element={<SearchPage />} />
           <Route path="search-results" element={<SearchResults />} />
           <Route path="video-detail" element={<VideoDetail />} />
           <Route path="register-shipper" element={<ShipperRegistration />} />
