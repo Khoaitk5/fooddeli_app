@@ -11,7 +11,6 @@ import {
   UserCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import theme from "../../../styles/theme";
 import { useCart } from "../../../hooks/useCart";
 import FloatingCart from "../../shared/FloatingCart";
 import Toast from "../../shared/Toast";
@@ -28,6 +27,8 @@ export default function RestaurantDetail() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState(defaultTab); // Dùng defaultTab
   const [loading, setLoading] = useState(true);
+   const [routeInfo, setRouteInfo] = useState({ distance: null, duration: null });
+  const [routeLoading, setRouteLoading] = useState(true);
 
   // 🛒 Hook giỏ hàng từ backend
   const { cartItems, cartCount, refreshCart } = useCart();
@@ -92,6 +93,81 @@ export default function RestaurantDetail() {
     fetchData();
   }, [shopId]);
 
+  // Hàm tính toán khoảng cách và thời gian
+  const fetchRoute = async (shopData) => {
+  if (!shopData?.address?.lat_lon?.lat || !shopData?.address?.lat_lon?.lon) {
+    console.warn("⚠️ Thiếu lat/lon của shop:", shopData?.address?.lat_lon);
+    setRouteLoading(false);
+    setRouteInfo({ distance: "N/A", duration: "N/A" });
+    return;
+  }
+
+  setRouteLoading(true);
+
+  try {
+    const position = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      });
+    });
+
+    const userLat = position.coords.latitude;
+    const userLon = position.coords.longitude;
+    const shopLat = Number(shopData.address.lat_lon.lat);
+    const shopLon = Number(shopData.address.lat_lon.lon);
+
+    const res = await fetch("http://localhost:5000/api/shipper/route-info", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        originLat: shopLat,
+        originLon: shopLon,
+        destLat: userLat,
+        destLon: userLon,
+      }),
+    });
+
+    const data = await res.json();
+    console.log("📍 [route-info] response:", data);
+
+    if (res.ok && data?.success && data?.data) {
+     const distanceRaw = data?.data?.distance_km ?? data?.data?.distanceKm;
+ const durationRaw = data?.data?.duration_sec ?? data?.data?.durationSec;
+ const distanceNum = Number(distanceRaw);
+ const durationNum = Number(durationRaw);
+ if (Number.isFinite(distanceNum) && Number.isFinite(durationNum)) {
+   setRouteInfo({
+     distance: `${distanceNum.toFixed(1)} km`,
+     duration: `${Math.max(1, Math.round(durationNum / 60))} phút`,
+   });
+ } else {
+   console.warn("⚠️ Dữ liệu route không hợp lệ:", data?.data);
+   setRouteInfo({ distance: "N/A", duration: "N/A" });
+ }
+    } else {
+      console.warn("⚠️ API route-info không success:", data);
+      setRouteInfo({ distance: "N/A", duration: "N/A" });
+    }
+  } catch (err) {
+    console.error("❌ Lỗi khi tính toán quãng đường:", err);
+    setRouteInfo({ distance: "N/A", duration: "N/A" });
+  } finally {
+    setRouteLoading(false);
+  }
+};
+
+
+  // 📍 Fetch route info (distance & duration)
+  useEffect(() => {
+    // Chỉ gọi khi có dữ liệu shop
+    console.log("📍 [0] useEffect[shop] được kích hoạt. Dữ liệu shop hiện tại:", shop);
+    if (shop) {
+      fetchRoute(shop);
+    }
+  }, [shop]); // Chạy lại khi có dữ liệu shop
+  
   // 🛒 Hàm thêm món vào giỏ hàng
   const handleAddToCart = async (item) => {
     // ✅ Kiểm tra dữ liệu đầu vào
@@ -283,15 +359,21 @@ export default function RestaurantDetail() {
             </span>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
-            <MapPin size={16} strokeWidth={2} />
-            <span>2.1 km</span>
-          </div>
-          
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
-            <Clock size={16} strokeWidth={2} />
-            <span>25–30 phút</span>
-          </div>
+          {routeLoading ? (
+            <div style={{ color: "#999", fontSize: "1.3rem" }}>Đang tính toán...</div>
+          ) : (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
+                <MapPin size={16} strokeWidth={2} />
+                <span>{routeInfo.distance || "N/A"}</span>
+              </div>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
+                <Clock size={16} strokeWidth={2} />
+                <span>{routeInfo.duration || "N/A"}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Follow button */}
@@ -603,7 +685,7 @@ export default function RestaurantDetail() {
                               foodPrice: item.price,
                               foodDescription: item.description,
                               foodImage: item.image_url,
-                              shopId: shop.id,
+                              shopId: shop?.id ?? shop?.shop_id,
                             },
                           })
                         }

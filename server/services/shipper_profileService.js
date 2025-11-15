@@ -659,6 +659,75 @@ async listNearbyCookingFull({
     }
     return { order: updated };
   },
+
+  /**
+   * 🗺️ Lấy thông tin quãng đường và thời gian di chuyển giữa 2 điểm
+   * @param {object} params - { originLat, originLon, destLat, destLon }
+   * @returns {Promise<object>} - { distance_km, duration_sec }
+   */
+  async getRouteInfo({ originLat, originLon, destLat, destLon }) {
+    if (
+      !Number.isFinite(originLat) ||
+      !Number.isFinite(originLon) ||
+      !Number.isFinite(destLat) ||
+      !Number.isFinite(destLon)
+    ) {
+      throw new Error("Tọa độ không hợp lệ.");
+    }
+
+    // Helpers để đọc kết quả từ Map4D
+    const readDurationSeconds = (el) => {
+      if (!el) return null;
+      if (el?.duration?.value != null) return Math.round(Number(el.duration.value));
+      if (el?.duration != null && Number.isFinite(Number(el.duration)))
+        return Math.round(Number(el.duration));
+      if (el?.time != null && Number.isFinite(Number(el.time)))
+        return Math.round(Number(el.time));
+      if (el?.travelTime != null && Number.isFinite(Number(el.travelTime)))
+        return Math.round(Number(el.travelTime));
+      if (el?.duration_in_traffic?.value != null)
+        return Math.round(Number(el.duration_in_traffic.value));
+      return null;
+    };
+
+    const readDistanceKm = (el, fallbackKm) => {
+      if (!el) return fallbackKm;
+      if (el?.distance?.value != null) return Number(el.distance.value) / 1000;
+      if (el?.distance != null && Number.isFinite(Number(el.distance))) {
+        const m = Number(el.distance);
+        return m > 1000 ? m / 1000 : fallbackKm;
+      }
+      if (el?.length != null && Number.isFinite(Number(el.length))) {
+        return Number(el.length) / 1000;
+      }
+      return fallbackKm;
+    };
+
+    let distance_km = null;
+    let duration_sec = null;
+    const fallbackKm = calculateDistance(originLat, originLon, destLat, destLon);
+
+    try {
+      const matrix = await map4dService.getMatrix(
+        `${originLat},${originLon}`,
+        `${destLat},${destLon}`
+      );
+      const element = matrix?.rows?.[0]?.elements?.[0] ?? matrix?.elements?.[0] ?? null;
+
+      distance_km = Number(readDistanceKm(element, fallbackKm).toFixed(2));
+      duration_sec = readDurationSeconds(element);
+    } catch (e) {
+      console.error("[Map4D matrix getRouteInfo] error:", e.message);
+    }
+
+    if (duration_sec == null) {
+      const AVG_SPEED_KMH = 22; // Tốc độ trung bình giả định
+      distance_km = Number(fallbackKm.toFixed(2));
+      duration_sec = Math.round((distance_km / AVG_SPEED_KMH) * 3600);
+    }
+
+    return { distance_km, duration_sec };
+  },
 };
 
 module.exports = shipperProfileService;
