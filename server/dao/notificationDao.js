@@ -1,11 +1,16 @@
 // dao/notificationDao.js
 const GenericDao = require("./generic_dao");
 const Notification = require("../models/notification");
+const pool = require("../config/db");
 
 class NotificationDao extends GenericDao {
   constructor() {
     // Gọi constructor của GenericDao, truyền tên bảng và model tương ứng
     super("notifications", Notification);
+  }
+
+  async findById(id) {
+    return super.findById("id", id);
   }
 
   /**
