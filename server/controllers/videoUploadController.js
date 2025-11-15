@@ -1,5 +1,7 @@
 const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
+const { moderateVideo } = require("../services/videoModerationService");
+const videoService = require("../services/videoService");
 
 /**
  * Upload video lên Firebase Storage và trả về URL có token bảo mật
@@ -34,12 +36,30 @@ const uploadVideoOnly = async (req, res) => {
 
     stream.on("finish", async () => {
       try {
-        // ❌ Không dùng makePublic() để giữ URL có token
         const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
           fileName
         )}?alt=media&token=${token}`;
 
         console.log(`✅ [UPLOAD] Done: ${publicUrl}`);
+        console.log(`🤖 [MODERATION] Bắt đầu kiểm duyệt video...`);
+
+        const moderationResult = await moderateVideo(publicUrl);
+
+        console.log(`✅ [MODERATION] Kết quả:`, moderationResult);
+
+        let savedVideo = null;
+        const hasShopAndTitle = req.body && req.body.shop_id && req.body.title;
+        if (hasShopAndTitle && moderationResult && moderationResult.status === "approved") {
+          const payload = {
+            title: String(req.body.title || "").trim(),
+            description: String(req.body.description || "").trim(),
+            video_url: publicUrl,
+            shop_id: Number(req.body.shop_id),
+            status: moderationResult.status,
+            moderation_result: moderationResult,
+          };
+          savedVideo = await videoService.createVideo(payload);
+        }
 
         res.status(200).json({
           success: true,
@@ -47,6 +67,8 @@ const uploadVideoOnly = async (req, res) => {
           videoUrl: publicUrl,
           storagePath: `gs://${bucket.name}/${fileName}`,
           token: token,
+          moderationResult: moderationResult,
+          savedVideo: savedVideo,
         });
       } catch (err) {
         console.error("⚠️ Lỗi khi xử lý URL:", err);

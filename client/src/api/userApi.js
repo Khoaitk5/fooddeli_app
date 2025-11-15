@@ -133,7 +133,7 @@ export const deleteUser = async (userId) => {
  */
 export const getMyShop = async () => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/shops/me`, axiosConfig);
+    const res = await axios.get(`${API_BASE_URL}/users/shops/me`, axiosConfig);
     return res.data?.data || null;
   } catch (error) {
     console.error("❌ getMyShop:", error);

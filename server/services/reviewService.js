@@ -1,5 +1,6 @@
 // services/reviewService.js
 const reviewDao = require("../dao/reviewDao");
+const notificationService = require("./notificationService");
 
 const reviewService = {
   /**
@@ -55,7 +56,18 @@ const reviewService = {
       comment,
     };
 
-    return await this.createReview(reviewData);
+    const review = await this.createReview(reviewData);
+
+    const orderLabel = `Đơn #${orderId}`;
+    await notificationService
+      .createNotification({
+        user_id: shopUserId,
+        title: `${orderLabel} nhận đánh giá mới`,
+        body: `Khách hàng vừa đánh giá ${rating}⭐ cho ${orderLabel}.${comment ? ` Nhận xét: ${comment}` : ""}`.trim(),
+      })
+      .catch((err) => console.error("[ReviewService] notify shop review error", err));
+
+    return review;
   },
 
   /**
@@ -118,7 +130,18 @@ const reviewService = {
       comment,
     };
 
-    return await this.createReview(reviewData);
+    const review = await this.createReview(reviewData);
+
+    const orderLabel = `Đơn #${orderId}`;
+    await notificationService
+      .createNotification({
+        user_id: shipperUserId,
+        title: `${orderLabel} có đánh giá mới từ khách`,
+        body: `Khách hàng vừa chấm bạn ${rating}⭐ cho ${orderLabel}.${comment ? ` Nhận xét: ${comment}` : ""}`.trim(),
+      })
+      .catch((err) => console.error("[ReviewService] notify shipper review error", err));
+
+    return review;
   },
 
   /**
@@ -166,7 +189,18 @@ const reviewService = {
       comment,
     };
 
-    return await this.createReview(reviewData);
+    const review = await this.createReview(reviewData);
+
+    const orderLabel = `Đơn #${orderId}`;
+    await notificationService
+      .createNotification({
+        user_id: order.user_id,
+        title: `${orderLabel} nhận đánh giá từ shipper`,
+        body: `Shipper vừa đánh giá bạn ${rating}⭐ cho ${orderLabel}.${comment ? ` Nhận xét: ${comment}` : ""}`.trim(),
+      })
+      .catch((err) => console.error("[ReviewService] notify user review error", err));
+
+    return review;
   },
 
   /**
