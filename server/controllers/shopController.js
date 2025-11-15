@@ -1,5 +1,6 @@
 // controllers/shopController.js
 const shopService = require("../services/shop_profileService");
+const shopDashboardService = require("../services/shopDashboardService");
 
 /**
  * 🏪 Tạo hồ sơ cửa hàng mới (role = 'shop')
@@ -238,6 +239,25 @@ exports.getShopProfilesAndAddressesByShopId = async (req, res) => {
       "[ShopController:getShopProfilesAndAddressesByShopId]",
       err.message
     );
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const shopId = Number(id);
+
+    if (!shopId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu hoặc sai shopId" });
+    }
+
+    const data = await shopDashboardService.getDashboard(shopId);
+    res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("[ShopController:getDashboardStats]", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };

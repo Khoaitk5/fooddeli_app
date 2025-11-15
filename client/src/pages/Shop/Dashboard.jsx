@@ -1,27 +1,93 @@
-import React from 'react';
-import { Typography, Box, Grid, Paper, Stack, Chip, LinearProgress, Divider } from '@mui/material';
+import React, { useContext, useEffect, useState } from 'react';
+import { Typography, Box, Grid, Paper, Stack, Chip, LinearProgress, Divider, CircularProgress } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ShopContext } from '../../contexts/ShopContext';
+
+const API_BASE = 'http://localhost:5000/api/shops';
 
 const Dashboard = () => {
-  const revenueData = [
-    { month: 'T1', revenue: 18500000, orders: 156 },
-    { month: 'T2', revenue: 22100000, orders: 189 },
-    { month: 'T3', revenue: 19800000, orders: 167 },
-    { month: 'T4', revenue: 25600000, orders: 223 },
-    { month: 'T5', revenue: 28900000, orders: 245 },
-    { month: 'T6', revenue: 31200000, orders: 278 },
-    { month: 'T7', revenue: 29800000, orders: 256 },
-    { month: 'T8', revenue: 33400000, orders: 289 },
-    { month: 'T9', revenue: 26700000, orders: 234 },
-    { month: 'T10', revenue: 28900000, orders: 251 },
-    { month: 'T11', revenue: 31200000, orders: 267 },
-    { month: 'T12', revenue: 35600000, orders: 298 }
-  ];
+  const shopId = useContext(ShopContext);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0,
+    }).format(value || 0);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      if (!shopId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_BASE}/${shopId}/dashboard`, {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          console.error('❌ Lỗi lấy dashboard shop:', data);
+          setStats(null);
+        } else {
+          setStats(data.data);
+        }
+      } catch (err) {
+        console.error('❌ Lỗi gọi API dashboard shop:', err);
+        setStats(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, [shopId]);
+
+  const revenueData = (stats?.monthly || []).map((m) => ({
+    month: `T${m.month}`,
+    revenue: m.revenue,
+    orders: m.orders,
+  }));
 
   const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
-  const averageRevenue = Math.round(totalRevenue / revenueData.length);
-  const maxMonth = revenueData.reduce((max, item) => item.revenue > max.revenue ? item : max);
+  const averageRevenue = revenueData.length
+    ? Math.round(totalRevenue / revenueData.length)
+    : 0;
+  const maxMonth = revenueData.length
+    ? revenueData.reduce((max, item) => (item.revenue > max.revenue ? item : max))
+    : { month: '-', revenue: 0 };
   const totalOrders = revenueData.reduce((sum, item) => sum + item.orders, 0);
+
+  const today = stats?.today || { totalOrders: 0, revenue: 0, statusCounts: {} };
+  const statusCounts = today.statusCounts || {};
+  const totalToday = today.totalOrders || 0;
+  const completedCount = statusCounts.completed || 0;
+  const inProgressCount = (statusCounts.cooking || 0) + (statusCounts.shipping || 0);
+  const pendingCount = statusCounts.pending || 0;
+  const base = totalToday > 0 ? totalToday : 1;
+  const completedPct = Math.round((completedCount * 100) / base);
+  const inProgressPct = Math.round((inProgressCount * 100) / base);
+  const pendingPct = Math.round((pendingCount * 100) / base);
+
+  const statusConfig = (status) => {
+    switch (status) {
+      case 'pending':
+        return { text: 'chờ', color: { bg: '#fef9c2', text: '#894b00' } };
+      case 'cooking':
+        return { text: 'chế biến', color: { bg: '#dbeafe', text: '#193cb8' } };
+      case 'shipping':
+        return { text: 'đang giao', color: { bg: '#e0f2fe', text: '#075985' } };
+      case 'completed':
+        return { text: 'hoàn tất', color: { bg: '#dcfce7', text: '#016630' } };
+      case 'cancelled':
+        return { text: 'đã huỷ', color: { bg: '#fee2e2', text: '#991b1b' } };
+      default:
+        return { text: status || 'khác', color: { bg: '#e5e7eb', text: '#111827' } };
+    }
+  };
 
   const StatCard = ({ title, value, sub, iconBg, icon }) => (
     <Paper 
@@ -114,6 +180,14 @@ const Dashboard = () => {
     </Box>
   );
 
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f9fafb', p: { xs: 2, sm: 3, md: 4 } }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
@@ -127,10 +201,10 @@ const Dashboard = () => {
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, minmax(0, 1fr))', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 } }}>
-        <StatCard title="Tổng món ăn" value="24" sub="Đang phục vụ" iconBg="#dbeafe" icon="🍲" />
-        <StatCard title="Video Reviews" value="18" sub="Video đã upload" iconBg="#f3e8ff" icon="🎬" />
-        <StatCard title="Đơn hàng hôm nay" value="42" sub="+12% so với hôm qua" iconBg="#dcfce7" icon="🧾" />
-        <StatCard title="Doanh thu" value="1.2M VND" sub="Trong ngày" iconBg="#ffedd4" icon="$" />
+        <StatCard title="Tổng món ăn" value={stats?.totalProducts ?? 0} sub="Đang phục vụ" iconBg="#dbeafe" icon="🍲" />
+        <StatCard title="Video Reviews" value={stats?.totalVideos ?? 0} sub="Video đã upload" iconBg="#f3e8ff" icon="🎬" />
+        <StatCard title="Đơn hàng hôm nay" value={today.totalOrders} sub="Trong ngày" iconBg="#dcfce7" icon="🧾" />
+        <StatCard title="Doanh thu" value={formatCurrency(today.revenue)} sub="Trong ngày" iconBg="#ffedd4" icon="$" />
       </Box>
 
       {/* Revenue Chart */}
@@ -175,7 +249,7 @@ const Dashboard = () => {
             <Box sx={{ textAlign: 'center', p: 2, borderRadius: '12px', backgroundColor: 'rgba(0, 166, 62, 0.05)', border: '1px solid rgba(0, 166, 62, 0.1)' }}>
               <Typography variant="body2" sx={{ color: '#717182', fontSize: { xs: '12px', sm: '14px' }, mb: 1, fontWeight: 500 }}>Tổng doanh thu</Typography>
               <Typography variant="h6" sx={{ color: '#00a63e', fontWeight: 700, fontSize: { xs: '16px', sm: '18px' } }}>
-                {(totalRevenue / 1000000).toFixed(1)}M $
+                {formatCurrency(totalRevenue)}
               </Typography>
             </Box>
           </Grid>
@@ -183,7 +257,7 @@ const Dashboard = () => {
             <Box sx={{ textAlign: 'center', p: 2, borderRadius: '12px', backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)' }}>
               <Typography variant="body2" sx={{ color: '#717182', fontSize: { xs: '12px', sm: '14px' }, mb: 1, fontWeight: 500 }}>TB/tháng</Typography>
               <Typography variant="h6" sx={{ fontWeight: 700, fontSize: { xs: '16px', sm: '18px' } }}>
-                {(averageRevenue / 1000000).toFixed(1)}M $
+                {formatCurrency(averageRevenue)}
               </Typography>
             </Box>
           </Grid>
@@ -217,9 +291,32 @@ const Dashboard = () => {
               </Typography>
             </Box>
             <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-              <OrderItem id="#001" statusText="chờ" statusColor={{ bg: '#fef9c2', text: '#894b00' }} customer="Nguyễn Văn A" items="Phở bò, Chả cá, Bánh mì thịt nướng, Cà phê sữa đá, Trà sữa trân châu" time="2 phút trước" />
-              <OrderItem id="#002" statusText="chế biến" statusColor={{ bg: '#dbeafe', text: '#193cb8' }} customer="Trần Thị B" items="Bún bò Huế, Nem nướng, Chả cá Lã Vọng, Bánh bèo, Nước mía" time="5 phút trước" />
-              <OrderItem id="#003" statusText="hoàn tất" statusColor={{ bg: '#dcfce7', text: '#016630' }} customer="Lê Văn C" items="Cơm tấm, Nước ngọt, Bánh flan, Chè đậu đỏ" time="10 phút trước" />
+              {stats?.recentOrders && stats.recentOrders.length > 0 ? (
+                stats.recentOrders.map((o) => {
+                  const cfg = statusConfig(o.status);
+                  const customerLabel = o.customerPhone
+                    ? `${o.customerName || 'Khách hàng'} (${o.customerPhone})`
+                    : o.customerName || 'Khách hàng';
+                  const timeLabel = o.createdAt
+                    ? new Date(o.createdAt).toLocaleString('vi-VN')
+                    : '';
+                  return (
+                    <OrderItem
+                      key={o.id}
+                      id={`#${o.id}`}
+                      statusText={cfg.text}
+                      statusColor={cfg.color}
+                      customer={customerLabel}
+                      items={o.itemsSummary || ''}
+                      time={timeLabel}
+                    />
+                  );
+                })
+              ) : (
+                <Typography variant="body2" sx={{ color: '#717182' }}>
+                  Chưa có đơn hàng nào.
+                </Typography>
+              )}
             </Box>
         </Paper>
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', height: { xs: 'auto', md: '542px' }, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
@@ -235,42 +332,42 @@ const Dashboard = () => {
               <Box>
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 1.5 }}>
                   <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 500 }}>Đơn hoàn tất</Typography>
-                  <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 600, color: '#00a63e' }}>85%</Typography>
+                  <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 600, color: '#00a63e' }}>{completedPct}%</Typography>
                 </Stack>
-                <LinearProgress variant="determinate" value={85} sx={{ height: 8, borderRadius: '999px', backgroundColor: 'rgba(0, 166, 62, 0.1)', '& .MuiLinearProgress-bar': { backgroundColor: '#00a63e' } }} />
+                <LinearProgress variant="determinate" value={completedPct} sx={{ height: 8, borderRadius: '999px', backgroundColor: 'rgba(0, 166, 62, 0.1)', '& .MuiLinearProgress-bar': { backgroundColor: '#00a63e' } }} />
               </Box>
               <Box>
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 1.5 }}>
                   <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 500 }}>Đơn đang chế biến</Typography>
-                  <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 600, color: '#155dfc' }}>12%</Typography>
+                  <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 600, color: '#155dfc' }}>{inProgressPct}%</Typography>
                 </Stack>
-                <LinearProgress variant="determinate" value={12} sx={{ height: 8, borderRadius: '999px', backgroundColor: 'rgba(21, 93, 252, 0.1)', '& .MuiLinearProgress-bar': { backgroundColor: '#155dfc' } }} />
+                <LinearProgress variant="determinate" value={inProgressPct} sx={{ height: 8, borderRadius: '999px', backgroundColor: 'rgba(21, 93, 252, 0.1)', '& .MuiLinearProgress-bar': { backgroundColor: '#155dfc' } }} />
               </Box>
               <Box>
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 1.5 }}>
                   <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 500 }}>Đơn chờ xử lý</Typography>
-                  <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 600, color: '#d08700' }}>3%</Typography>
+                  <Typography variant="body2" sx={{ fontSize: { xs: '13px', sm: '14px' }, fontWeight: 600, color: '#d08700' }}>{pendingPct}%</Typography>
                 </Stack>
-                <LinearProgress variant="determinate" value={3} sx={{ height: 8, borderRadius: '999px', backgroundColor: 'rgba(208, 135, 0, 0.1)', '& .MuiLinearProgress-bar': { backgroundColor: '#d08700' } }} />
+                <LinearProgress variant="determinate" value={pendingPct} sx={{ height: 8, borderRadius: '999px', backgroundColor: 'rgba(208, 135, 0, 0.1)', '& .MuiLinearProgress-bar': { backgroundColor: '#d08700' } }} />
               </Box>
             </Stack>
             <Divider sx={{ my: 3 }} />
             <Grid container spacing={2}>
               <Grid item xs={4}>
                 <Stack alignItems="center" spacing={1}>
-                  <Typography variant="h5" sx={{ color: '#00a63e', fontWeight: 700, fontSize: { xs: '20px', sm: '24px' } }}>36</Typography>
+                  <Typography variant="h5" sx={{ color: '#00a63e', fontWeight: 700, fontSize: { xs: '20px', sm: '24px' } }}>{completedCount}</Typography>
                   <Typography variant="caption" sx={{ color: '#717182', fontSize: { xs: '11px', sm: '12px' }, fontWeight: 500 }}>Hoàn tất</Typography>
                 </Stack>
               </Grid>
               <Grid item xs={4}>
                 <Stack alignItems="center" spacing={1}>
-                  <Typography variant="h5" sx={{ color: '#155dfc', fontWeight: 700, fontSize: { xs: '20px', sm: '24px' } }}>5</Typography>
+                  <Typography variant="h5" sx={{ color: '#155dfc', fontWeight: 700, fontSize: { xs: '20px', sm: '24px' } }}>{inProgressCount}</Typography>
                   <Typography variant="caption" sx={{ color: '#717182', fontSize: { xs: '11px', sm: '12px' }, fontWeight: 500 }}>Đang chế biến</Typography>
                 </Stack>
               </Grid>
               <Grid item xs={4}>
                 <Stack alignItems="center" spacing={1}>
-                  <Typography variant="h5" sx={{ color: '#d08700', fontWeight: 700, fontSize: { xs: '20px', sm: '24px' } }}>1</Typography>
+                  <Typography variant="h5" sx={{ color: '#d08700', fontWeight: 700, fontSize: { xs: '20px', sm: '24px' } }}>{pendingCount}</Typography>
                   <Typography variant="caption" sx={{ color: '#717182', fontSize: { xs: '11px', sm: '12px' }, fontWeight: 500 }}>Chờ xử lý</Typography>
                 </Stack>
               </Grid>

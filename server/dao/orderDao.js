@@ -322,9 +322,87 @@ class OrderDao extends GenericDao {
     return res.rows.map((r) => ({ ...r }));
   }
 
-  /** ============================================================
-   * 🔧 KHÁC
-   * ============================================================ */
+  async getShopMonthlyRevenue(shopId, year = new Date().getFullYear()) {
+    const query = `
+      WITH months AS (
+        SELECT generate_series(1, 12) AS month
+      ),
+      stats AS (
+        SELECT
+          EXTRACT(MONTH FROM created_at)::int AS month,
+          SUM(total_price) AS revenue,
+          COUNT(*)::int AS orders
+        FROM orders
+        WHERE shop_id = $1
+          AND status = 'completed'
+          AND EXTRACT(YEAR FROM created_at)::int = $2
+        GROUP BY EXTRACT(MONTH FROM created_at)
+      )
+      SELECT
+        m.month,
+        COALESCE(s.revenue, 0)::numeric AS revenue,
+        COALESCE(s.orders, 0)::int AS orders
+      FROM months m
+      LEFT JOIN stats s ON s.month = m.month
+      ORDER BY m.month;
+    `;
+
+    const { rows } = await pool.query(query, [shopId, year]);
+    return rows;
+  }
+
+  async getShopTodayStats(shopId) {
+    const sql = `
+      SELECT
+        COUNT(*)::int AS total_orders,
+        COALESCE(SUM(total_price), 0)::numeric AS total_revenue,
+        COUNT(*) FILTER (WHERE status = 'completed')::int AS completed_count,
+        COUNT(*) FILTER (WHERE status = 'cooking')::int AS cooking_count,
+        COUNT(*) FILTER (WHERE status = 'pending')::int AS pending_count,
+        COUNT(*) FILTER (WHERE status = 'shipping')::int AS shipping_count,
+        COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled_count
+      FROM orders
+      WHERE shop_id = $1
+        AND created_at::date = CURRENT_DATE;
+    `;
+
+    const { rows } = await pool.query(sql, [shopId]);
+    return rows[0] || null;
+  }
+
+  async getShopRecentOrders(shopId, limit = 5) {
+    const sql = `
+      SELECT
+        o.order_id,
+        o.status,
+        o.total_price,
+        o.created_at,
+        u.full_name AS customer_name,
+        u.phone AS customer_phone,
+        COALESCE(
+          STRING_AGG(p.name || ' x' || od.quantity, ', ' ORDER BY od.created_at),
+          ''
+        ) AS items_summary
+      FROM orders o
+      JOIN users u ON u.id = o.user_id
+      LEFT JOIN order_details od ON od.order_id = o.order_id
+      LEFT JOIN products p ON p.product_id = od.product_id
+      WHERE o.shop_id = $1
+      GROUP BY
+        o.order_id,
+        o.status,
+        o.total_price,
+        o.created_at,
+        u.full_name,
+        u.phone
+      ORDER BY o.created_at DESC
+      LIMIT $2;
+    `;
+
+    const { rows } = await pool.query(sql, [shopId, limit]);
+    return rows;
+  }
+
   async recalcTotals(orderId) {
     const sql = `
       WITH food_sum AS (
