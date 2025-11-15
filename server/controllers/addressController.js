@@ -61,7 +61,7 @@ exports.updateUserAddress = async (req, res) => {
     }
 
     const { address_id } = req.params;
-    const { address_line, note, address_type, is_primary } = req.body;
+    const { address_line, lat_lon, note, address_type, is_primary } = req.body;
 
     console.log(`[UpdateAddress] User ${userId} updating address ${address_id}`);
 
@@ -76,6 +76,7 @@ exports.updateUserAddress = async (req, res) => {
 
     const updated = await addressService.updateAddress(address_id, {
       address_line,
+      lat_lon,
       note,
       address_type,
       is_primary

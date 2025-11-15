@@ -45,8 +45,10 @@ async create(data) {
 
       if (!keys.length) return null;
 
-      const setString =
-        keys.map((key, i) => `${key}=$${i + 1}`).join(", ") + ", updated_at=NOW()";
+      // ⚠️ Chỉ thêm updated_at cho bảng addresses, không áp dụng cho user_addresses
+      const hasUpdatedAt = this.table === 'addresses' || this.table === 'users' || this.table === 'products' || this.table === 'orders';
+      const setString = keys.map((key, i) => `${key}=$${i + 1}`).join(", ") + 
+        (hasUpdatedAt ? ", updated_at=NOW()" : "");
 
       const query = `
       UPDATE ${this.table}

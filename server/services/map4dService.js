@@ -95,11 +95,40 @@ export const getViewboxSearch = async (viewbox, text, types, tags, datetime) => 
 };
 
 export const getGeocodeV2 = async (address, location, viewbox) => {
-  const url = `${base}/v2/geocode?key=${key}${
+  const url = `https://api.map4d.vn/sdk/v2/geocode?key=${key}${
     address ? `&address=${encodeURIComponent(address)}` : ""
   }${location ? `&location=${location}` : ""}${viewbox ? `&viewbox=${viewbox}` : ""}`;
-  const res = await fetch(url);
-  return res.json();
+  console.log('[Map4D:geocode] URL =', url);
+  
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (e) {
+    console.error('[Map4D:geocode] fetch error:', e);
+    return { 
+      success: false, 
+      message: e?.message || "Failed to fetch from Map4D" 
+    };
+  }
+  
+  const text = await res.text();
+  try {
+    const json = JSON.parse(text);
+    if (!res.ok) {
+      return {
+        success: false,
+        message: json?.message || `Map4D API returned HTTP ${res.status}`,
+        status: res.status,
+      };
+    }
+    return json;
+  } catch {
+    return {
+      success: false,
+      message: `Invalid JSON response from Map4D (HTTP ${res.status})`,
+      body: text.slice(0, 200),
+    };
+  }
 };
 
 export const getReverseGeocode = async (location) => {

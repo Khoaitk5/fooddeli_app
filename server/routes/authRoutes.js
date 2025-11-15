@@ -32,6 +32,4 @@ router.post("/check-email", authController.checkEmailExists);
 
 router.post("/change-password", authController.changePassword);
 
-
-
 module.exports = router;

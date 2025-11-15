@@ -2,7 +2,25 @@
 const orderDao = require("../dao/orderDao");
 const orderDetailDao = require("../dao/order_detailDao");
 const orderDetailService = require("./order_detailService");
+const shopProfileService = require("./shop_profileService");
+const addressService = require("./addressService");
 const notificationService = require("./notificationService");
+
+/**
+ * 📍 Tính khoảng cách giữa 2 tọa độ theo công thức Haversine (km)
+ */
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Bán kính Trái đất (km)
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 const ORDER_STATUS_MESSAGES = {
   pending: {
@@ -29,7 +47,7 @@ const ORDER_STATUS_MESSAGES = {
 
 class OrderService {
   /**
-   * 📦 Lấy danh sách đơn theo shipper_id
+   * � Lấy danh sách đơn theo shipper_id
    */
   async listByShipper(shipperId, { status, limit = 20, offset = 0, full = false } = {}) {
     const sid = Number(shipperId);
@@ -153,7 +171,7 @@ class OrderService {
   /**
    * 💵 Tạo đơn hàng tiền mặt (COD)
    */
-  async createCashOrder({ user_id, shop_id, items = [], note = "", delivery_address = null }) {
+  async createCashOrder({ user_id, shop_id, items = [], note = "", delivery_address = null, address_id = null }) {
     const uid = Number(user_id);
     const sid = Number(shop_id);
 
@@ -163,7 +181,67 @@ class OrderService {
       user_id: uid,
       shop_id: sid,
       itemsCount: items.length,
+      address_id, // 📍 Log address_id
     });
+
+    // 🗺️ Kiểm tra khoảng cách giữa shop và địa chỉ giao hàng
+    try {
+      // Lấy thông tin shop và địa chỉ
+      const shopInfo = await shopProfileService.getShopProfilesAndAddressesByShopId(sid);
+      const userAddresses = await addressService.getUserAddresses(uid);
+      
+      if (!shopInfo?.address?.lat_lon) {
+        throw new Error("Cửa hàng chưa cập nhật địa chỉ với tọa độ");
+      }
+      
+      if (!userAddresses || userAddresses.length === 0) {
+        throw new Error("Vui lòng thêm địa chỉ giao hàng trước khi đặt hàng");
+      }
+      
+      // 📍 Ưu tiên địa chỉ được chọn (address_id), nếu không có thì lấy mặc định
+      let selectedAddress;
+      if (address_id) {
+        selectedAddress = userAddresses.find(addr => addr.address_id === Number(address_id));
+        if (!selectedAddress) {
+          throw new Error(`Không tìm thấy địa chỉ ID ${address_id}`);
+        }
+      } else {
+        selectedAddress = userAddresses.find(addr => addr.is_primary) || userAddresses[0];
+      }
+      
+      if (!selectedAddress?.lat_lon?.lat || !selectedAddress?.lat_lon?.lon) {
+        throw new Error("Địa chỉ giao hàng chưa có tọa độ. Vui lòng cập nhật lại địa chỉ");
+      }
+      
+      const shopLat = Number(shopInfo.address.lat_lon.lat);
+      const shopLon = Number(shopInfo.address.lat_lon.lon);
+      const userLat = Number(selectedAddress.lat_lon.lat);
+      const userLon = Number(selectedAddress.lat_lon.lon);
+      
+      const distance = calculateDistance(shopLat, shopLon, userLat, userLon);
+      
+      console.log("📍 Khoảng cách shop -> customer:", {
+        shop_id: sid,
+        user_id: uid,
+        address_id: selectedAddress.address_id,
+        distance_km: distance.toFixed(2),
+        shopCoords: { lat: shopLat, lon: shopLon },
+        userCoords: { lat: userLat, lon: userLon }
+      });
+      
+      const MAX_DELIVERY_DISTANCE_KM = 5;
+      if (distance > MAX_DELIVERY_DISTANCE_KM) {
+        throw new Error(
+          `Khoảng cách giao hàng quá xa (${distance.toFixed(1)}km). ` +
+          `Chúng tôi chỉ giao hàng trong bán kính ${MAX_DELIVERY_DISTANCE_KM}km`
+        );
+      }
+      
+      console.log("✅ Khoảng cách hợp lệ:", distance.toFixed(2), "km");
+    } catch (error) {
+      console.error("❌ Lỗi kiểm tra khoảng cách:", error.message);
+      throw error;
+    }
 
     // 1️⃣ Tạo order trống
     console.log("🧾 [Service] Tạo order rỗng (COD)...");
@@ -316,6 +394,37 @@ async getFullOrdersByUserId(userId, { status, limit = 20, offset = 0 } = {}) {
     const result = await orderDao.updateStatus(id, "cancelled");
     console.log("✅ [Service Cancel] Updated:", result);
     return result;
+  }
+
+  /**
+   * 🔔 Private method: Gửi thông báo khi đơn hàng thay đổi trạng thái
+   */
+  async #notifyOrderStatus(order) {
+    if (!order || !order.status) return;
+
+    const statusConfig = ORDER_STATUS_MESSAGES[order.status];
+    if (!statusConfig) {
+      console.warn(`[OrderService] Không có config thông báo cho status: ${order.status}`);
+      return;
+    }
+
+    const orderLabel = `Đơn hàng #${order.order_id}`;
+    const title = statusConfig.title(orderLabel);
+    const body = statusConfig.body();
+
+    try {
+      await notificationService.createNotification({
+        user_id: order.user_id,
+        title,
+        body,
+        type: "order_update",
+        reference_id: order.order_id,
+      });
+      console.log(`✅ [OrderService] Đã gửi thông báo: ${title}`);
+    } catch (error) {
+      console.error(`❌ [OrderService] Lỗi gửi thông báo:`, error);
+      throw error;
+    }
   }
 }
 

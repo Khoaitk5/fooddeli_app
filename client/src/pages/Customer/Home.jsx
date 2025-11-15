@@ -30,11 +30,35 @@ const Home = () => {
   const videoRefs = useRef([]);
   const [activeTab, setActiveTab] = useState("suggestion");
   const [showMessagePopup, setShowMessagePopup] = useState(false);
+  const [showCopyMessage, setShowCopyMessage] = useState(false); // State for copy message
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
+
+    const handleShare = async (video) => {
+    const shareUrl = `${window.location.origin}/customer/video/${video.video_id}`;
+    const shareData = {
+      title: `Xem video từ "${video.shop_name || "FoodDeli"}"`,
+      text: video.title || "Hãy xem video này trên FoodDeli nhé!",
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Share cancelled or failed", err);
+      }
+    } else {
+      // Fallback for desktop or unsupported browsers
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setShowCopyMessage(true);
+        setTimeout(() => setShowCopyMessage(false), 2000); // Hide message after 2s
+      });
+    }
+  };
 
   const handlePopupClose = () => {
   setShowMessagePopup(false);
@@ -72,10 +96,10 @@ const Home = () => {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
+            const lon = pos.coords.longitude; // Map4D standardization: use lon
 
             const response = await fetch(
-              `http://localhost:5000/api/videos/feed/nearby?lat=${lat}&lng=${lng}`
+              `http://localhost:5000/api/videos/feed/nearby?lat=${lat}&lon=${lon}`
             );
             const data = await response.json();
 
@@ -664,12 +688,22 @@ const Home = () => {
                       onMouseUp={(e) => {
                         e.currentTarget.style.transform = "scale(1)";
                       }}
+                      onClick={() => handleShare(video)}
                     >
                       <ShareIcon
                         style={{
                           filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
                         }}
                       />
+                    </div>
+                    <div
+                      style={{
+                        ...countStyle,
+                        fontWeight: "700",
+                        fontSize: "1.3rem",
+                      }}
+                    >
+                      {SHARE_COUNT_DEFAULT}
                     </div>
                   </div>
                 </div>
@@ -678,6 +712,25 @@ const Home = () => {
           ))}
         </div>
       </div>
+      {showCopyMessage && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            color: "white",
+            padding: "1rem 2rem",
+            borderRadius: "8px",
+            zIndex: 1000,
+            fontFamily: "Be Vietnam Pro",
+            fontSize: "1.4rem",
+          }}
+        >
+          Đã sao chép link!
+        </div>
+      )}
 
 <MessagePopup
   isVisible={showMessagePopup}

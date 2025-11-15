@@ -11,7 +11,8 @@ import DesktopAdminLayout from "./components/layout/DesktopAdminLayout";
 // Contexts
 import { AuthProvider } from "./contexts/AuthContext";
 import { ShopProvider } from "./contexts/ShopContext";
-import { OrderProvider } from "./contexts/OrderContext"; 
+import { OrderProvider } from "./contexts/OrderContext";
+import { AddressProvider } from "./contexts/AddressContext"; 
 
 // Shared Components
 import SplashScreen from "./components/shared/SplashScreen";
@@ -102,7 +103,8 @@ function App() {
 
   return (
     <AuthProvider>
-      <Routes>
+      <AddressProvider>
+        <Routes>
         {/* ========== AUTH ========== */}
         <Route path="/login" element={<Login />} />
         <Route path="/login/phone" element={<LoginPhone />} />
@@ -142,7 +144,7 @@ function App() {
           <Route path="restaurant-details" element={<RestaurantDetail />} />
           <Route path="profile" element={<UserProfile />} />
           <Route path="search-results" element={<SearchResults />} />
-          <Route path="video-detail" element={<VideoDetail />} />
+          <Route path="video/:id" element={<VideoDetail />} />
           <Route path="register-shipper" element={<ShipperRegistration />} />
           <Route path="register-shop" element={<ShopRegistration />} />
           <Route path="payment-method" element={<PaymentMethod />} />
@@ -203,6 +205,7 @@ function App() {
         {/* ========== DEFAULT REDIRECT ========== */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
+      </AddressProvider>
     </AuthProvider>
   );
 }

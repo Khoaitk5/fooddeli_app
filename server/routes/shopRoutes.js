@@ -15,6 +15,9 @@ router.get("/list", shopController.getAllShops);
 // 🍱 Lấy shops theo loại món ăn (query: ?foodType=Đồ Ăn Nhanh)
 router.get("/by-food-type", shopController.getShopsByFoodType);
 
+// 🔍 Lấy thông tin cửa hàng theo ID (phải đặt sau các route cụ thể)
+router.get("/:id", shopController.getShopById);
+
 // 🔍 Lấy chi tiết cửa hàng (ẩn ID khỏi URL)
 router.post("/detail", shopController.getShopDetail);
 

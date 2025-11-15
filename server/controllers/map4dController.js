@@ -74,9 +74,25 @@ export const viewboxSearchHandler = async (req, res) => {
 };
 
 export const geocodeHandler = async (req, res) => {
-  const { address, location, viewbox } = req.query;
-  const data = await map4dService.getGeocodeV2(address, location, viewbox);
-  res.json(data);
+  try {
+    const { address, location, viewbox } = req.query;
+    
+    if (!address) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing address parameter"
+      });
+    }
+    
+    console.log('[Map4D:geocode] Request address:', address);
+    const data = await map4dService.getGeocodeV2(address, location, viewbox);
+    console.log('[Map4D:geocode] Response:', JSON.stringify(data).slice(0, 200));
+    
+    res.json(data);
+  } catch (error) {
+    console.error('[Map4D:geocode] Error:', error);
+    res.status(500).json({ success: false, message: error?.message || 'Geocode error' });
+  }
 };
 
 export const reverseGeocodeHandler = async (req, res) => {

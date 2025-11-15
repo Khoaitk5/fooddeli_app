@@ -102,6 +102,34 @@ export default function AddressSelector({ isOpen, onClose, onSelectAddress, curr
 
     try {
       setLoading(true);
+      
+      // 🗺️ Gọi Map4D Geocode API để lấy tọa độ
+      const fullAddress = `${formData.detail}, ${formData.ward}, ${formData.province}`;
+      console.log('🌍 Geocoding address:', fullAddress);
+      
+      let lat_lon = null;
+      try {
+        const geocodeRes = await axios.get(`${API_BASE_URL}/map4d/geocode`, {
+          params: { address: fullAddress }
+        });
+        
+        console.log('📍 Geocode response:', geocodeRes.data);
+        
+        if (geocodeRes.data?.result && geocodeRes.data.result.length > 0) {
+          const location = geocodeRes.data.result[0].location;
+          if (location && location.lat && location.lng) {
+            lat_lon = {
+              lat: location.lat,
+              lon: location.lng
+            };
+            console.log('✅ Got coordinates:', lat_lon);
+          }
+        }
+      } catch (geocodeErr) {
+        console.warn('⚠️ Geocode error, continuing without coordinates:', geocodeErr);
+        // Tiếp tục lưu địa chỉ ngay cả khi không lấy được tọa độ
+      }
+      
       const res = await axios.post(
         `${API_BASE_URL}/addresses/user-addresses`,
         {
@@ -110,6 +138,7 @@ export default function AddressSelector({ isOpen, onClose, onSelectAddress, curr
             ward: formData.ward,
             province: formData.province,
           },
+          lat_lon: lat_lon,
           note: formData.note,
           address_type: formData.address_type,
           is_primary: addresses.length === 0, // Nếu chưa có địa chỉ nào thì set làm mặc định
@@ -235,6 +264,34 @@ export default function AddressSelector({ isOpen, onClose, onSelectAddress, curr
 
     try {
       setLoading(true);
+      
+      // 🗺️ Gọi Map4D Geocode API để lấy tọa độ
+      const fullAddress = `${formData.detail}, ${formData.ward}, ${formData.province}`;
+      console.log('🌍 Geocoding address:', fullAddress);
+      
+      let lat_lon = null;
+      try {
+        const geocodeRes = await axios.get(`${API_BASE_URL}/map4d/geocode`, {
+          params: { address: fullAddress }
+        });
+        
+        console.log('📍 Geocode response:', geocodeRes.data);
+        
+        if (geocodeRes.data?.result && geocodeRes.data.result.length > 0) {
+          const location = geocodeRes.data.result[0].location;
+          if (location && location.lat && location.lng) {
+            lat_lon = {
+              lat: location.lat,
+              lon: location.lng
+            };
+            console.log('✅ Got coordinates:', lat_lon);
+          }
+        }
+      } catch (geocodeErr) {
+        console.warn('⚠️ Geocode error, continuing without coordinates:', geocodeErr);
+        // Tiếp tục cập nhật địa chỉ ngay cả khi không lấy được tọa độ
+      }
+      
       console.log('Updating address ID:', editingAddress.address_id);
       const res = await axios.put(
         `${API_BASE_URL}/addresses/user-addresses/${editingAddress.address_id}`,
@@ -244,6 +301,7 @@ export default function AddressSelector({ isOpen, onClose, onSelectAddress, curr
             ward: formData.ward,
             province: formData.province,
           },
+          lat_lon: lat_lon,
           note: formData.note,
           address_type: formData.address_type,
         },

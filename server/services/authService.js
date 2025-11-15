@@ -1,6 +1,34 @@
 const bcrypt = require("bcrypt");
 const userDao = require("../dao/userDao");
 const addressService = require("../services/addressService");
+const fetch = require("node-fetch");
+
+/**
+ * Helper function to geocode address using Map4D API
+ */
+async function geocodeAddress(fullAddress) {
+  try {
+    const MAP4D_KEY = process.env.MAP4D_API_KEY || '62b853a87d7eec55f5f37dfd215a6e85';
+    const url = `https://api.map4d.vn/sdk/v2/geocode?key=${MAP4D_KEY}&address=${encodeURIComponent(fullAddress)}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data?.result && data.result.length > 0) {
+      const location = data.result[0].location;
+      if (location && location.lat && location.lng) {
+        return {
+          lat: location.lat,
+          lon: location.lng
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.warn('⚠️ Geocode error:', error.message);
+    return null;
+  }
+}
 
 /**
  * @module AuthService
@@ -80,10 +108,28 @@ const AuthService = {
     if (address_line && typeof address_line === "object") {
       console.log("📦 [AuthService] Nhận address_line từ FE:", address_line);
 
+      // 🗺️ Gọi Map4D Geocode API để lấy tọa độ
+      let lat_lon = null;
+      try {
+        const { detail, ward, city, province } = address_line;
+        const fullAddress = `${detail || ''}, ${ward || ''}, ${city || province || ''}`.trim();
+        
+        if (fullAddress) {
+          console.log('🌍 [AuthService] Geocoding address:', fullAddress);
+          lat_lon = await geocodeAddress(fullAddress);
+          if (lat_lon) {
+            console.log('✅ [AuthService] Got coordinates:', lat_lon);
+          }
+        }
+      } catch (geocodeErr) {
+        console.warn('⚠️ [AuthService] Geocode error, continuing without coordinates:', geocodeErr.message);
+      }
+
       const addr = await addressService.createAddressForUser(
         newUser.id,
         {
           address_line, // ✅ truyền đúng key
+          lat_lon,
           note: note ?? "",
           address_type: address_type ?? "Nhà",
         },
