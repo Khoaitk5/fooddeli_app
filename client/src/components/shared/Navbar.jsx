@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import HomeIcon from "./HomeIcon";
 import DiscoverIcon from "./DiscoverIcon";
@@ -6,14 +6,28 @@ import OrderIcon from "./OrderIcon";
 import NotificationIcon from "./NotificationIcon";
 import ProfileIcon from "./ProfileIcon";
 import NavbarItem from "./NavbarItem";
-import { pxW, pxH } from "../../utils/scale.js";
+import { pxH } from "../../utils/scale.js";
+import { getMyUnreadNotifications } from "../../api/notificationApi";
 
 const Navbar = ({ isProfilePage = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     console.log("Navbar location:", location.pathname);
+    const fetchUnread = async () => {
+      try {
+        const res = await getMyUnreadNotifications();
+        const items = res?.data || [];
+        setUnreadCount(Array.isArray(items) ? items.length : 0);
+      } catch (error) {
+        console.error("❌ [Navbar] Lỗi khi lấy thông báo chưa đọc:", error);
+        setUnreadCount(0);
+      }
+    };
+
+    fetchUnread();
   }, [location.pathname]);
 
   const handleNavigation = (path) => {
@@ -71,6 +85,7 @@ const Navbar = ({ isProfilePage = false }) => {
         label="Thông báo"
         isActive={location.pathname === "/customer/notifications"}
         onClick={() => handleNavigation("/customer/notifications")}
+        badgeCount={unreadCount}
       />
       <NavbarItem
         icon={ProfileIcon}

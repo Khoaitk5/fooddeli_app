@@ -1,7 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Navbar from "../../components/shared/Navbar";
 import NotificationContent from "../../components/shared/NotificationContent";
-import { MessageCircle, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
+import {
+  getMyNotifications,
+  markAllNotificationsAsRead,
+} from "../../api/notificationApi";
 
 const hideScrollbarStyles = `
   .hide-scrollbar {
@@ -21,95 +25,167 @@ const hideScrollbarStyles = `
   }
 `;
 
+const FILTERS = [
+  { key: "all", label: "Tất cả" },
+  { key: "unread", label: "Chưa đọc" },
+];
+
+const ORDER_STATUS_SEQUENCE = ["pending", "cooking", "shipping", "completed", "cancelled"];
+
+const STATUS_META = {
+  pending: {
+    label: "Chờ xác nhận",
+    color: "#d97706",
+    pillBg: "rgba(248, 180, 0, 0.14)",
+    title: (orderLabel) => `${orderLabel} đang chờ xác nhận`,
+    description: (orderLabel) => `${orderLabel} đã được ghi nhận và chờ cửa hàng phê duyệt.`,
+  },
+  cooking: {
+    label: "Đang chế biến",
+    color: "#0ea5e9",
+    pillBg: "rgba(14,165,233,0.14)",
+    title: (orderLabel) => `${orderLabel} đang được chế biến`,
+    description: () => "Đội ngũ bếp đang chuẩn bị món ăn cho bạn.",
+  },
+  shipping: {
+    label: "Đang giao hàng",
+    color: "#2563eb",
+    pillBg: "rgba(37,99,235,0.14)",
+    title: (orderLabel) => `${orderLabel} đang được giao`,
+    description: () => "Shipper đang trên đường tới địa chỉ của bạn.",
+  },
+  completed: {
+    label: "Hoàn tất",
+    color: "#16a34a",
+    pillBg: "rgba(22,163,74,0.14)",
+    title: (orderLabel) => `${orderLabel} đã giao thành công`,
+    description: () => "Chúc bạn ngon miệng! Đừng quên đánh giá trải nghiệm nhé.",
+  },
+  cancelled: {
+    label: "Đã huỷ",
+    color: "#dc2626",
+    pillBg: "rgba(220,38,38,0.14)",
+    title: (orderLabel) => `${orderLabel} đã bị huỷ`,
+    description: () => "Đơn hàng đã bị huỷ. Vui lòng kiểm tra lại chi tiết hoặc đặt lại đơn khác.",
+  },
+};
+
 const Notifications = () => {
-  const [isNotificationActive, setIsNotificationActive] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [markingAll, setMarkingAll] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
 
-  // Sample data - in real app this would come from API
-  const notifications = [
-    {
-      id: 1,
-      title: "Đơn hàng của bạn đã được giao thành công!",
-      body: "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi. Đơn hàng #12345 đã được giao đến địa chỉ của bạn.",
-      time: "2 giờ trước"
-    },
-    {
-      id: 2,
-      title: "Khuyến mãi đặc biệt!",
-      body: "Giảm 30% cho đơn hàng tiếp theo. Sử dụng mã FOOD30 khi đặt hàng.",
-      time: "1 ngày trước"
-    },
-    {
-      id: 3,
-      title: "Cập nhật trạng thái đơn hàng",
-      body: "Đơn hàng #12344 đang được chuẩn bị bởi nhà bếp. Dự kiến giao trong 25 phút.",
-      time: "3 giờ trước"
-    },
-    {
-      id: 4,
-      title: "Phản hồi từ nhà hàng",
-      body: "Cảm ơn bạn đã đánh giá 5 sao! Chúng tôi rất vui khi phục vụ bạn.",
-      time: "2 ngày trước"
-    },
-    {
-      id: 5,
-      title: "Món mới trong tuần",
-      body: "Khám phá các món ăn mới với giá ưu đãi. Burger gà sốt mật ong chỉ 45k!",
-      time: "3 ngày trước"
-    },
-    {
-      id: 6,
-      title: "Chương trình tích điểm",
-      body: "Bạn đã tích được 150 điểm. Đổi 100 điểm để được giảm 10k cho đơn hàng tiếp theo!",
-      time: "5 ngày trước"
+  const normalizeNotifications = useCallback((items = []) => {
+    return items.map((item) => {
+      const rawStatus =
+        item?.status ||
+        item?.order_status ||
+        item?.orderStatus ||
+        item?.meta?.status ||
+        item?.metadata?.status ||
+        item?.payload?.status;
+
+      const orderId =
+        item?.order_id ||
+        item?.orderId ||
+        item?.order_code ||
+        item?.orderCode ||
+        item?.meta?.order_id ||
+        item?.metadata?.order_id;
+
+      const orderLabel = orderId ? `Đơn #${orderId}` : "Đơn hàng";
+
+      if (rawStatus && STATUS_META[rawStatus]) {
+        const meta = STATUS_META[rawStatus];
+        return {
+          ...item,
+          status_key: rawStatus,
+          title: meta.title(orderLabel),
+          body: meta.description(orderLabel),
+          status_meta: meta,
+          order_label: orderLabel,
+        };
+      }
+
+      return {
+        ...item,
+        status_key: rawStatus,
+        order_label: orderLabel,
+      };
+    });
+  }, []);
+
+  const dispatchNavbarRefresh = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("notifications-refresh"));
     }
-  ];
-
-  const chats = [
-    {
-      id: 1,
-      sender: "Hỗ trợ khách hàng",
-      message: "Xin chào! Tôi có thể giúp gì cho bạn hôm nay? Nếu bạn có câu hỏi về đơn hàng hoặc cần hỗ trợ, hãy cho tôi biết nhé!",
-      time: "Online • 2 phút trước"
-    },
-    {
-      id: 2,
-      sender: "Nhà hàng ABC",
-      message: "Đơn hàng của bạn đang được chuẩn bị. Bếp trưởng đang làm món gà rán đặc biệt theo yêu cầu của bạn.",
-      time: "5 phút trước"
-    },
-    {
-      id: 3,
-      sender: "Tài xế giao hàng",
-      message: "Xin chào! Tôi là tài xế giao hàng. Tôi đang trên đường đến nhà bạn, dự kiến 10 phút nữa sẽ đến.",
-      time: "15 phút trước"
-    },
-    {
-      id: 4,
-      sender: "Nhà hàng Pizza Hot",
-      message: "Cảm ơn bạn đã đặt hàng! Pizza hải sản của bạn sẽ được nướng trong 15 phút. Bạn có muốn thêm nước uống không?",
-      time: "1 giờ trước"
-    },
-    {
-      id: 5,
-      sender: "Hỗ trợ kỹ thuật",
-      message: "Vấn đề đăng nhập của bạn đã được khắc phục. Bạn có thể thử đăng nhập lại bây giờ.",
-      time: "2 giờ trước"
-    },
-    {
-      id: 6,
-      sender: "Nhà hàng Sushi Fresh",
-      message: "Combo sushi đặc biệt hôm nay giảm 20%! Bao gồm 12 miếng sushi tươi ngon với giá chỉ 120k.",
-      time: "3 giờ trước"
-    }
-  ];
-
-  const handleChatClick = () => {
-    setIsNotificationActive(false);
   };
 
-  const handleNotificationClick = () => {
-    setIsNotificationActive(true);
+  const handleMarkAllAsRead = async () => {
+    if (markingAll || notifications.length === 0) return;
+    setMarkingAll(true);
+    setActionMessage("");
+    try {
+      await markAllNotificationsAsRead();
+      setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
+      setActionMessage("Đã đánh dấu tất cả thông báo.");
+      dispatchNavbarRefresh();
+    } catch (err) {
+      console.error("❌ Lỗi markAllNotificationsAsRead:", err);
+      setActionMessage(
+        err?.response?.data?.message || "Không thể cập nhật trạng thái."
+      );
+    } finally {
+      setMarkingAll(false);
+    }
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await getMyNotifications();
+        const items = res?.data || [];
+        if (!Array.isArray(items)) {
+          throw new Error("Dữ liệu thông báo không hợp lệ.");
+        }
+        if (isMounted) {
+          setNotifications(normalizeNotifications(items));
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi lấy thông báo:", err);
+        if (isMounted) {
+          setError(
+            err?.response?.data?.message ||
+              "Không thể tải danh sách thông báo."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [normalizeNotifications]);
+
+  const filteredNotifications = useMemo(() => {
+    let list = notifications;
+    if (activeFilter === "unread") {
+      list = list.filter((item) => item?.is_read === false);
+    }
+    return list;
+  }, [notifications, activeFilter]);
+
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#FAFAFA" }}>
       <style>{hideScrollbarStyles}</style>
@@ -123,134 +199,127 @@ const Notifications = () => {
             background: "linear-gradient(135deg, #FE5621 0%, #FF7A50 100%)",
           }}
         >
-          {/* Title with icon */}
           <div
             style={{
               position: "absolute",
-              top: "2.5vh",
-              left: "6.11vw",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-            }}
-          >
-            <div style={{
-              width: "2.8rem",
-              height: "2.8rem",
-              borderRadius: "50%",
-              backgroundColor: "rgba(255,255,255,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}>
-              <Bell size={18} color="white" strokeWidth={2.5} />
-            </div>
-            <div
-              style={{
-                color: "white",
-                fontSize: "2.2rem",
-                fontWeight: "600",
-                letterSpacing: "-0.5px",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              }}
-            >
-              Thông báo
-            </div>
-          </div>
-
-          {/* Tab Buttons */}
-          <div
-            style={{
-              position: "absolute",
-              top: "8.5vh",
+              top: "2.2vh",
               left: "6.11vw",
               right: "6.11vw",
               display: "flex",
-              gap: "1rem",
-              padding: "0.4rem",
-              backgroundColor: "rgba(255,255,255,0.15)",
-              borderRadius: "1.2rem",
-              backdropFilter: "blur(10px)",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            {/* Chat Tab */}
-            <div
-              className="tab-button"
-              style={{
-                flex: 1,
-                height: "4.5vh",
-                background: !isNotificationActive 
-                  ? "white" 
-                  : "transparent",
-                borderRadius: "0.9rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-                boxShadow: !isNotificationActive 
-                  ? "0 4px 12px rgba(0,0,0,0.15)" 
-                  : "none",
-              }}
-              onClick={handleChatClick}
-            >
-              <MessageCircle 
-                size={16} 
-                color={!isNotificationActive ? "#FE5621" : "white"} 
-                strokeWidth={2.5}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <div
                 style={{
-                  color: !isNotificationActive ? "#FE5621" : "white",
-                  fontSize: "1.35rem",
-                  fontWeight: "600",
-                  letterSpacing: "-0.3px",
+                  width: "2.8rem",
+                  height: "2.8rem",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                Trò chuyện
+                <Bell size={18} color="white" strokeWidth={2.5} />
               </div>
-            </div>
-
-            {/* Notification Tab */}
-            <div
-              className="tab-button"
-              style={{
-                flex: 1,
-                height: "4.5vh",
-                background: isNotificationActive 
-                  ? "white" 
-                  : "transparent",
-                borderRadius: "0.9rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-                boxShadow: isNotificationActive 
-                  ? "0 4px 12px rgba(0,0,0,0.15)" 
-                  : "none",
-              }}
-              onClick={handleNotificationClick}
-            >
-              <Bell 
-                size={16} 
-                color={isNotificationActive ? "#FE5621" : "white"} 
-                strokeWidth={2.5}
-              />
               <div
                 style={{
-                  color: isNotificationActive ? "#FE5621" : "white",
-                  fontSize: "1.35rem",
+                  color: "white",
+                  fontSize: "2.2rem",
                   fontWeight: "600",
-                  letterSpacing: "-0.3px",
+                  letterSpacing: "-0.5px",
+                  textShadow: "0 2px 4px rgba(0,0,0,0.1)",
                 }}
               >
                 Thông báo
               </div>
             </div>
+
+            <button
+              onClick={handleMarkAllAsRead}
+              disabled={markingAll || notifications.length === 0}
+              style={{
+                padding: "0.55rem 1rem",
+                borderRadius: "999px",
+                border: "none",
+                background:
+                  markingAll || notifications.length === 0
+                    ? "rgba(255,255,255,0.55)"
+                    : "rgba(255,255,255,0.9)",
+                color: "#FE5621",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                letterSpacing: "-0.1px",
+                boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
+                cursor:
+                  markingAll || notifications.length === 0 ? "not-allowed" : "pointer",
+                transition: "transform 0.2s ease, opacity 0.2s ease",
+                opacity: markingAll ? 0.7 : 1,
+              }}
+            >
+              {markingAll ? "Đang xử lý..." : "Đánh dấu đã đọc"}
+            </button>
+          </div>
+
+          {/* Filter Tabs */}
+          <div
+            style={{
+              position: "absolute",
+              top: "8.2vh",
+              left: "6.11vw",
+              right: "6.11vw",
+              display: "flex",
+              padding: "0.35rem",
+              backgroundColor: "rgba(255,255,255,0.18)",
+              borderRadius: "1.1rem",
+              backdropFilter: "blur(10px)",
+              gap: "0.4rem",
+            }}
+          >
+            {FILTERS.map((filter) => {
+              const isActive = activeFilter === filter.key;
+              return (
+                <button
+                  key={filter.key}
+                  onClick={() => setActiveFilter(filter.key)}
+                  className="tab-button"
+                  style={{
+                    flex: 1,
+                    height: "4.3vh",
+                    borderRadius: "0.85rem",
+                    border: "none",
+                    background: isActive ? "white" : "transparent",
+                    color: isActive ? "#FE5621" : "rgba(255,255,255,0.9)",
+                    fontSize: "1.23rem",
+                    fontWeight: 600,
+                    letterSpacing: "-0.2px",
+                    boxShadow: isActive ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
+                    cursor: isActive ? "default" : "pointer",
+                  }}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
+
+      {actionMessage && (
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: "0.95rem",
+            fontWeight: 500,
+            color: actionMessage.includes("không") ? "#f97316" : "#16a34a",
+            marginTop: "0.4rem",
+          }}
+        >
+          {actionMessage}
+        </div>
+      )}
 
       {/* Scrollable Content */}
       <div 
@@ -262,11 +331,17 @@ const Notifications = () => {
           paddingTop: "1rem",
         }}
       >
-        <NotificationContent
-          isNotificationActive={isNotificationActive}
-          notifications={notifications}
-          chats={chats}
-        />
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "4vh", color: "#999" }}>
+            Đang tải thông báo...
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: "center", padding: "4vh", color: "#f04438" }}>
+            {error}
+          </div>
+        ) : (
+          <NotificationContent notifications={filteredNotifications} />
+        )}
       </div>
 
       <Navbar />

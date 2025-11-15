@@ -3,8 +3,15 @@ const shopContractService = require("../services/shopContractService");
 const shopContractController = {
   async create(req, res) {
     try {
-      const data = req.body;
-      const created = await shopContractService.create(data);
+      const data = req.body || {};
+
+      // Đảm bảo hợp đồng shop mới luôn bắt đầu với trạng thái pending
+      const payload = {
+        ...data,
+        status: "pending",
+      };
+
+      const created = await shopContractService.create(payload);
       return res.status(201).json({ success: true, data: created });
     } catch (err) {
       console.error("❌ [shopContractController.create]", err.message);
