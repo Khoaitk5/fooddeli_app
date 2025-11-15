@@ -1,5 +1,4 @@
-// controllers/videoCommentController.js
-const videoCommentService = require("../services/videoCommentService");
+import videoCommentService from "../services/videoCommentService.js";
 
 const videoCommentController = {
   async createComment(req, res) {
@@ -14,13 +13,12 @@ const videoCommentController = {
       const newComment = await videoCommentService.createComment({
         video_id,
         user_id: userId,
-        content
+        content,
       });
 
       return res.json({ success: true, data: newComment });
-
     } catch (err) {
-      console.log(err);
+      console.error(err);
       res.status(500).json({ success: false, message: "Lỗi server" });
     }
   },
@@ -63,7 +61,7 @@ const videoCommentController = {
     } catch (err) {
       res.status(500).json({ success: false, message: "Không thể xóa" });
     }
-  }
+  },
 };
 
-module.exports = videoCommentController;
+export default videoCommentController;

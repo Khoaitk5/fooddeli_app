@@ -1,109 +1,93 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ReportForm from "./ReportForm";
 
-const MessagePopup = ({ isVisible, onClose, videoId,onCommentCountChange  }) => {
+const MessagePopup = ({ isVisible, onClose, videoId, onCommentCountChange }) => {
   const [showReportForm, setShowReportForm] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewCount, setReviewCount] = useState(0);
   const [newComment, setNewComment] = useState("");
 
+  // Format thời gian + fix lệch GMT+7
   const formatTimeAgo = (dateString) => {
-  const now = new Date();
-  const past = new Date(dateString);
-  const diff = (now - past) / 1000; // seconds
+    const now = new Date();
+    const past = new Date(new Date(dateString).getTime() + 7 * 60 * 60 * 1000);
+    const diff = (now - past) / 1000;
 
-  if (diff < 60) return "vừa xong";
-  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
+    if (diff < 60) return "vừa xong";
+    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+    if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
 
-  return past.toLocaleDateString("vi-VN");
-};
+    return past.toLocaleDateString("vi-VN");
+  };
 
+  // ⭐ FETCH COMMENT - để ngoài useEffect
+  const fetchComments = useCallback(async () => {
+    if (!videoId) return;
 
-  // 🔥 ALWAYS call hooks – no early return before this
-  useEffect(() => {
-    if (!isVisible || !videoId) return;   // ✅ check ở đây
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/video-comments/video/${videoId}`
+      );
+      const data = await res.json();
 
-    const fetchComments = async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/video-comments/video/${videoId}`
+      if (data.success) {
+        setReviews(
+          data.data.map((c) => ({
+            userName: c.username,
+            reviewText: c.content,
+            timeAgo: formatTimeAgo(c.created_at),
+            avatarSrc: c.avatar_url || "https://placehold.co/40x40",
+          }))
         );
-        const data = await res.json();
 
-        if (data.success) {
-          setReviews(
-            data.data.map((c) => ({
-              userName: c.username,
-              reviewText: c.content,
-              timeAgo: formatTimeAgo(c.created_at),
-              avatarSrc: c.avatar_url || "https://placehold.co/40x40",
-            }))
-          );
-          setReviewCount(data.data.length);
-          onCommentCountChange?.(data.data.length);
-          
-        }
-      } catch (err) {
-        console.log("Fetch comments error:", err);
+        setReviewCount(data.data.length);
+
+        // Báo cho Home biết để update số lượng comment
+        onCommentCountChange?.(data.data.length);
       }
-    };
-
-    fetchComments();
-  }, [isVisible, videoId]);   // ✅ thêm isVisible vào deps
-
-const submitComment = async () => {
-  if (!newComment.trim() || !videoId) return;
-
-  try {
-    const res = await fetch("http://localhost:5000/api/video-comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        video_id: videoId,
-        content: newComment,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      // Xóa ô input
-      setNewComment("");
-
-      // THÊM COMMENT MỚI VÀO UI NGAY
-      setReviews((prev) => [
-        {
-          userName: data.data.username || "Bạn",
-          reviewText: data.data.content,
-          timeAgo: data.data.created_at
-      ? formatTimeAgo(data.data.created_at)
-      : "vừa xong",
-          avatarSrc: data.data.avatar_url || "https://placehold.co/40x40",
-        },
-        ...prev,
-      ]);
-      // 🔥 Gửi tín hiệu reload cho Home
-  onCommentCountChange?.("reload");
-
-      // Tăng tổng số bình luận
-      setReviewCount((prev) => {
-  const updated = prev + 1;
-  onCommentCountChange?.(updated);
-  return updated;
-});
-    } else {
-      console.log("Error creating comment:", data.message);
+    } catch (err) {
+      console.log("Fetch comments error:", err);
     }
-  } catch (err) {
-    console.log("API error:", err);
-  }
-};
+  }, [videoId, onCommentCountChange]);
 
+  // ⭐ Gọi fetch khi popup mở
+  useEffect(() => {
+    if (isVisible && videoId) {
+      fetchComments();
+    }
+  }, [isVisible, videoId, fetchComments]);
 
-  // ✅ BÂY GIỜ MỚI ĐƯỢC RETURN SỚM
+  // ⭐ Gửi comment
+  const submitComment = async () => {
+    if (!newComment.trim() || !videoId) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/video-comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          video_id: videoId,
+          content: newComment,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setNewComment("");
+
+        // Reload comments từ server để hiển thị bình luận mới
+        await fetchComments();
+      } else {
+        console.log("Error creating comment:", data.message);
+      }
+    } catch (err) {
+      console.log("API error:", err);
+    }
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -120,7 +104,9 @@ const submitComment = async () => {
         alignItems: "flex-end",
         zIndex: 1000,
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         onClick={(e) => e.stopPropagation()}

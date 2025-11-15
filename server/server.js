@@ -29,6 +29,8 @@ import userShipperContractRoutes from "./routes/userShipperContractRoutes.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import provinceRoutes from "./routes/provinceRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import videoCommentRoutes from "./routes/videoCommentRoutes.js";
+
 
 dotenv.config();
 
@@ -97,6 +99,7 @@ app.use("/api/user-shop-contracts", userShopContractRoutes);
 app.use("/api/user-shipper-contracts", userShipperContractRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/provinces", provinceRoutes);
+app.use("/api/video-comments", videoCommentRoutes);
 
 // ✅ Route kiểm tra nhanh
 app.get("/debug", (req, res) => res.send("✅ Server đang chạy!"));
