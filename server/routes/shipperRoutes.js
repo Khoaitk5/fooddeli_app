@@ -12,6 +12,9 @@ router.get("/list", shipperController.getAllShippers);
 // 👤 Lấy thông tin shipper profile của user hiện tại
 router.get("/me", shipperController.getMyShipperProfile);
 
+// 📊 Lấy điểm và xếp hạng của shipper hiện tại
+router.get("/score/me", shipperController.getMyShipperScore);
+
 // 📊 Lấy thống kê hiệu suất của shipper
 router.get("/stats/:shipperId", shipperController.getShipperStats);
 

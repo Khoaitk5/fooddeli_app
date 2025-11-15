@@ -7,6 +7,7 @@ const shopService = require("./shop_profileService");
 const orderDao = require("../dao/orderDao");
 const map4dService = require("../services/map4dService");
 const userDao = require("../dao/userDao");
+const shipperScoreService = require("./shipper_scoreService");
 
 // 📍 Tính khoảng cách giữa 2 tọa độ theo công thức Haversine (km)
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -657,6 +658,20 @@ async listNearbyCookingFull({
       e.code = 409;
       throw e;
     }
+    try {
+      const details = await orderDetailService.list(orderId, { withProduct: true });
+      const productsCount = Array.isArray(details) ? details.length : 0;
+
+      await shipperScoreService.addScoreForCompletedOrder({
+        shipperId,
+        order: updated,
+        basePoints: productsCount,
+        bonusPoints: 0,
+      });
+    } catch (err) {
+      console.error("[shipper_profileService.completeOrder] update score failed", err.message);
+    }
+
     return { order: updated };
   },
 

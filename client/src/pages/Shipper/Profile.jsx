@@ -27,7 +27,7 @@ import {
   Speed,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, getOrdersByShipperId } from "../../api/userApi";
+import { getCurrentUser, getOrdersByShipperId, getMyShipperScore } from "../../api/userApi";
 
 // Helper function để format ngày tham gia
 const formatJoinDate = (dateString) => {
@@ -131,7 +131,7 @@ const Profile = () => {
         }
         
         const shipperId = shipperProfile.id;
-        
+
         // Gọi API để lấy orders của shipper
         const ordersRes = await getOrdersByShipperId(shipperId, { limit: 100 });
         
@@ -160,6 +160,20 @@ const Profile = () => {
         
         console.log("📅 [Profile] Orders completed hôm nay:", todayOrders.length);
         console.log("📅 [Profile] Chi tiết orders hôm nay:", todayOrders);
+
+        // Lấy điểm & xếp hạng shipper
+        const scoreRes = await getMyShipperScore();
+        let totalPoints = 0;
+        let completedOrders = 0;
+        let rank = null;
+        let totalShippers = 0;
+
+        if (scoreRes?.success && scoreRes.data) {
+          totalPoints = Number(scoreRes.data.total_points || 0);
+          completedOrders = Number(scoreRes.data.completed_orders || 0);
+          rank = scoreRes.data.rank ?? null;
+          totalShippers = Number(scoreRes.data.total_shippers || 0);
+        }
         
         // Tính tổng thu nhập hôm nay (tất cả orders đã là completed rồi)
         const todayIncome = todayOrders.reduce((sum, order) => {
@@ -194,6 +208,10 @@ const Profile = () => {
           onlineStatus: shipperProfile.online_status || "offline",
           todayOrders: todayOrders.length || 0,
           todayIncome: todayIncome > 0 ? formatCurrency(todayIncome) : "0đ",
+          scorePoints: totalPoints,
+          scoreRank: rank,
+          scoreTotalShippers: totalShippers,
+          completedOrders,
         });
       } catch (error) {
         console.error("❌ Lỗi khi lấy thông tin shipper:", error);
@@ -236,16 +254,28 @@ const Profile = () => {
     );
   }
   
+  const computeRankLabel = (numericRank) => {
+    if (!numericRank || !Number.isFinite(Number(numericRank))) return "Mới";
+    const n = Number(numericRank);
+    if (n <= 10) return "Top";
+    if (n <= 50) return "Bạc";
+    if (n <= 200) return "Đồng";
+    return "Mới";
+  };
+
   const shipper = {
     ...shipperData,
-    // Tạm thời set các giá trị mặc định cho phần thống kê (sẽ cập nhật sau)
-    rank: "Mới",
+    rank: computeRankLabel(shipperData.scoreRank),
     avgRating: shipperData.rating,
-    completionRate: "0%",
-    progress: 0,
+    completionRate: shipperData.completedOrders
+      ? `${Math.min(100, shipperData.completedOrders)}%`
+      : "0%",
+    progress: shipperData.scorePoints
+      ? Math.max(0, Math.min(100, Math.round((shipperData.scorePoints % 100) || 0)))
+      : 0,
     nextRank: "Đồng",
-    totalOrders: 0,
-    totalIncome: "0đ",
+    totalOrders: shipperData.completedOrders || 0,
+    totalIncome: shipperData.todayIncome || "0đ",
     fiveStars: 0,
   };
 
@@ -448,7 +478,7 @@ const Profile = () => {
           </Stack>
         </Fade>
 
-        {/* Cấp độ - Đẹp hơn */}
+        {/* 📊 Tổng quan - hiển thị các chỉ số chính */}
         <Fade in timeout={1200}>
           <Card
             sx={{
@@ -456,155 +486,132 @@ const Profile = () => {
               borderRadius: 4,
               mb: 2.5,
               boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-              background: "linear-gradient(135deg, #fff 0%, #fafafa 100%)",
-              border: '1px solid rgba(0,0,0,0.05)',
+              background: "linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%)",
+              border: "1px solid rgba(59,130,246,0.1)",
             }}
           >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-              <Box>
-                <Typography sx={{ fontWeight: 800, fontSize: 18, color: "#ff6b35", mb: 0.5 }}>
-                  Cấp độ Shipper
-                </Typography>
-                <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
-                  Hoàn thành thêm 25 đơn để lên cấp
-                </Typography>
-              </Box>
-              <Box sx={{
-                width: 52,
-                height: 52,
-                borderRadius: 3,
-                background: "linear-gradient(135deg, #fef3c7 0%, #fde047 100%)",
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 26,
-                boxShadow: '0 4px 12px rgba(253,224,71,0.3)'
-              }}>
-                🏆
-              </Box>
-            </Stack>
-            
-            <Stack direction="row" justifyContent="space-between" mb={1}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#374151" }}>{shipper.rank}</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#6b7280" }}>{shipper.nextRank}</Typography>
-            </Stack>
-            
-            <Box sx={{ position: 'relative' }}>
-              <LinearProgress
-                variant="determinate"
-                value={shipper.progress}
-                sx={{
-                  height: 12,
-                  borderRadius: 6,
-                  background: "#e5e7eb",
-                  "& .MuiLinearProgress-bar": {
-                    background: "linear-gradient(90deg, #ff6b35 0%, #ff5722 100%)",
-                    borderRadius: 6,
+            <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#1d4ed8", mb: 2 }}>
+              Tổng quan
+            </Typography>
+
+            {/* Các ô thống kê dạng thẻ với icon tròn */}
+            <Stack spacing={2}>
+              <Stack direction="row" spacing={2}>
+                {[ 
+                  {
+                    icon: <LocalShipping sx={{ fontSize: 20 }} />,
+                    label: "Đơn hoàn thành",
+                    value: shipper.totalOrders,
+                    bg: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
+                    iconBg: "#1d4ed8",
                   },
-                }}
-              />
-              <Typography sx={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                fontSize: 11,
-                fontWeight: 800,
-                color: '#fff',
-                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-              }}>
-                {shipper.progress}%
-              </Typography>
-            </Box>
+                  {
+                    icon: <MonetizationOn sx={{ fontSize: 20 }} />,
+                    label: "Thu nhập hôm nay",
+                    value: shipper.todayIncome,
+                    bg: "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
+                    iconBg: "#16a34a",
+                  },
+                ].map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      p: 1.75,
+                      borderRadius: 3,
+                      background: item.bg,
+                      boxShadow: "0 6px 16px rgba(15,23,42,0.08)",
+                      border: "1px solid rgba(148,163,184,0.25)",
+                      gap: 1.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: "999px",
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: item.iconBg,
+                      }}
+                    >
+                      {item.icon}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography sx={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
+                        {item.label}
+                      </Typography>
+                      <Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a", mt: 0.25 }}>
+                        {item.value}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+
+              <Stack direction="row" spacing={2}>
+                {[ 
+                  {
+                    icon: <EmojiEvents sx={{ fontSize: 20 }} />,
+                    label: "Tổng điểm",
+                    value: shipper.scorePoints || 0,
+                    bg: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+                    iconBg: "#ca8a04",
+                  },
+                  {
+                    icon: <Insights sx={{ fontSize: 20 }} />,
+                    label: "Xếp hạng",
+                    value: shipper.scoreRank ? `#${shipper.scoreRank}/${shipper.scoreTotalShippers || 0}` : "Chưa xếp hạng",
+                    bg: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+                    iconBg: "#b91c1c",
+                  },
+                ].map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      p: 1.75,
+                      borderRadius: 3,
+                      background: item.bg,
+                      boxShadow: "0 6px 16px rgba(15,23,42,0.08)",
+                      border: "1px solid rgba(148,163,184,0.25)",
+                      gap: 1.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: "999px",
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: item.iconBg,
+                      }}
+                    >
+                      {item.icon}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography sx={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
+                        {item.label}
+                      </Typography>
+                      <Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a", mt: 0.25 }}>
+                        {item.value}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Stack>
           </Card>
         </Fade>
-
-        {/* Thành tích & Stats - tách riêng từng hàng */}
-<Stack spacing={2.5} mb={2.5}>
-  <Fade in timeout={1400}>
-    <Card
-      sx={{
-        p: 3,
-        borderRadius: 4,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-        background: "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)",
-        border: "1px solid rgba(255,107,53,0.1)",
-      }}
-    >
-      <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#c2410c", mb: 2 }}>
-        🏆 Thành tích
-      </Typography>
-      <Stack direction="row" justifyContent="space-around">
-        {[
-          { icon: "🏆", label: "Top" },
-          { icon: "⚡", label: "Nhanh" },
-          { icon: "💎", label: "1000+" },
-        ].map((item, idx) => (
-          <Box key={idx} textAlign="center">
-            <Box
-              sx={{
-                fontSize: 32,
-                width: 56,
-                height: 56,
-                borderRadius: 3,
-                background: "rgba(255,255,255,0.7)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 0.75,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              }}
-            >
-              {item.icon}
-            </Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#92400e" }}>
-              {item.label}
-            </Typography>
-          </Box>
-        ))}
-      </Stack>
-    </Card>
-  </Fade>
-
-  <Fade in timeout={1600}>
-    <Card
-      sx={{
-        p: 3,
-        borderRadius: 4,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-        background: "linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%)",
-        border: "1px solid rgba(59,130,246,0.1)",
-      }}
-    >
-      <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#1d4ed8", mb: 2 }}>
-        📊 Tổng quan
-      </Typography>
-      <Stack spacing={1.5}>
-        {[
-          { label: "Tổng đơn", value: shipper.totalOrders, color: "#ff6b35" },
-          { label: "Thu nhập", value: shipper.totalIncome, color: "#16a34a" },
-          { label: "5 sao", value: shipper.fiveStars, color: "#ca8a04" },
-        ].map((item, idx) => (
-          <Stack
-            key={idx}
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Typography sx={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>
-              {item.label}
-            </Typography>
-            <Typography sx={{ fontSize: 16, fontWeight: 900, color: item.color }}>
-              {item.value}
-            </Typography>
-          </Stack>
-        ))}
-      </Stack>
-    </Card>
-  </Fade>
-</Stack>
-
 
         {/* Navigation buttons - Modern design */}
         <Stack spacing={2}>

@@ -2,6 +2,7 @@
 const ShipperProfileService = require("../services/shipper_profileService");
 const shipperContractService = require("../services/shipperContractService");
 const userShipperContractService = require("../services/userShipperContractService");
+const shipperScoreService = require("../services/shipper_scoreService");
 
 // ➕ Đăng ký shipper (phiên bản dùng bảng shipper_contracts)
 exports.createShipper = async (req, res) => {
@@ -226,6 +227,7 @@ exports.getShipperEarnings = async (req, res) => {
 exports.getMyShipperProfile = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
+
     if (!sessionUser) {
       return res.status(401).json({
         success: false,
@@ -234,7 +236,7 @@ exports.getMyShipperProfile = async (req, res) => {
     }
 
     const shipperProfile = await ShipperProfileService.getShipperByUserId(sessionUser.id);
-    
+
     if (!shipperProfile) {
       return res.status(404).json({
         success: false,
@@ -248,14 +250,66 @@ exports.getMyShipperProfile = async (req, res) => {
       data: shipperProfile,
     });
   } catch (err) {
+
     console.error("❌ Error fetching my shipper profile:", err.message);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: err.message 
+      error: err.message
     });
   }
 };
 
+exports.getMyShipperScore = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({
+        success: false,
+        message: "❌ Chưa đăng nhập hoặc session đã hết hạn.",
+      });
+    }
+
+    const shipperProfile = await ShipperProfileService.getShipperByUserId(sessionUser.id);
+    if (!shipperProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy hồ sơ shipper.",
+      });
+    }
+
+    const shipperId = shipperProfile.id;
+
+    const [score, leaderboard] = await Promise.all([
+      shipperScoreService.getScoreByShipperId(shipperId),
+      shipperScoreService.getLeaderboard({ limit: 1000, offset: 0 }),
+    ]);
+
+    let rank = null;
+    if (Array.isArray(leaderboard) && leaderboard.length > 0) {
+      const index = leaderboard.findIndex((item) => Number(item.shipper_id) === Number(shipperId));
+      if (index !== -1) {
+        rank = index + 1;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        shipper_id: shipperId,
+        total_points: score?.total_points || 0,
+        completed_orders: score?.completed_orders || 0,
+        rank,
+        total_shippers: Array.isArray(leaderboard) ? leaderboard.length : 0,
+      },
+    });
+  } catch (err) {
+    console.error("❌ Error fetching my shipper score:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
 
 exports.listNearbyCookingFull = async (req, res) => {
   try {

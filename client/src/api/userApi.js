@@ -190,6 +190,26 @@ export const getMyShipper = async () => {
 };
 
 /**
+ * 🔹 Lấy điểm và xếp hạng của shipper hiện tại
+ * GET /api/shipper/score/me
+ */
+export const getMyShipperScore = async () => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/shipper/score/me`, axiosConfig);
+    return res.data;
+  } catch (error) {
+    console.error("❌ getMyShipperScore:", error);
+    return {
+      success: false,
+      data: null,
+      message:
+        error.response?.data?.message ||
+        "Không thể lấy điểm và xếp hạng shipper hiện tại.",
+    };
+  }
+};
+
+/**
  * 🔹 Cập nhật thông tin shipper
  * PUT /api/shipper/:id
  */
