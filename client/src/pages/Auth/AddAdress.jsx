@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -11,10 +11,11 @@ import {
   Select,
   FormControl,
   useMediaQuery,
+  IconButton,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
+import BackArrow from "@/components/shared/BackArrow";
 import { getCurrentUser } from "../../api/userApi"; // 🧩 API backend /api/users/me
-import { pxW } from "../../utils/scale.js";
 
 const AddAddress = ({ onSubmit }) => {
   const navigate = useNavigate();
@@ -33,7 +34,6 @@ const AddAddress = ({ onSubmit }) => {
   });
 
   const [isDefault, setIsDefault] = useState(false);
-  const [ongoingRole, setOngoingRole] = useState("user");
   const [provinces, setProvinces] = useState([]);
   const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,46 +48,49 @@ const AddAddress = ({ onSubmit }) => {
   }, []);
 
   // 🔹 Tự động chọn tỉnh/xã theo địa chỉ có sẵn
-  const autoSelectLocation = async (addr) => {
-    try {
-      if (!addr || !addr.city) return;
+  const autoSelectLocation = useCallback(
+    async (addr) => {
+      try {
+        if (!addr || !addr.city) return;
 
-      const normalize = (s) =>
-        s
-          ?.toLowerCase()
-          .replace(/^(tỉnh|thành phố|phường|xã)\s*/g, "")
-          .trim();
+        const normalize = (s) =>
+          s
+            ?.toLowerCase()
+            .replace(/^(tỉnh|thành phố|phường|xã)\s*/g, "")
+            .trim();
 
-      const selectedProvince = provinces.find(
-        (p) => normalize(addr.city) === normalize(p.name)
-      );
+        const selectedProvince = provinces.find(
+          (p) => normalize(addr.city) === normalize(p.name)
+        );
 
-      if (!selectedProvince) return;
+        if (!selectedProvince) return;
 
-      const provinceRes = await fetch(
-        `https://provinces.open-api.vn/api/v2/p/${selectedProvince.code}?depth=2`
-      );
-      const provinceData = await provinceRes.json();
-      const wardsData =
-        provinceData.wards ||
-        provinceData.districts ||
-        provinceData.communes ||
-        [];
-      setWards(wardsData);
+        const provinceRes = await fetch(
+          `https://provinces.open-api.vn/api/v2/p/${selectedProvince.code}?depth=2`
+        );
+        const provinceData = await provinceRes.json();
+        const wardsData =
+          provinceData.wards ||
+          provinceData.districts ||
+          provinceData.communes ||
+          [];
+        setWards(wardsData);
 
-      const selectedWard = wardsData.find(
-        (w) => normalize(addr.ward) === normalize(w.name)
-      );
+        const selectedWard = wardsData.find(
+          (w) => normalize(addr.ward) === normalize(w.name)
+        );
 
-      setForm((prev) => ({
-        ...prev,
-        city: selectedProvince?.name || prev.city,
-        ward: selectedWard?.name || prev.ward,
-      }));
-    } catch (e) {
-      console.error("Error loading address:", e);
-    }
-  };
+        setForm((prev) => ({
+          ...prev,
+          city: selectedProvince?.name || prev.city,
+          ward: selectedWard?.name || prev.ward,
+        }));
+      } catch (e) {
+        console.error("Error loading address:", e);
+      }
+    },
+    [provinces]
+  );
 
   // 🔹 Lấy thông tin user hiện tại
   useEffect(() => {
@@ -101,7 +104,6 @@ const AddAddress = ({ onSubmit }) => {
         }
 
         const { user, ongoing_role } = data;
-        setOngoingRole(ongoing_role);
         let addrData = null;
 
         if (ongoing_role === "shop" && user.shop_profile?.address) {
@@ -133,7 +135,7 @@ const AddAddress = ({ onSubmit }) => {
     };
 
     fetchAddress();
-  }, []);
+  }, [provinces.length]);
 
   // 🔹 Khi có addressData & provinces → tự fill form + auto load dropdown
   useEffect(() => {
@@ -160,7 +162,7 @@ const AddAddress = ({ onSubmit }) => {
 
     // ✅ Gọi autoSelectLocation khi có đủ dữ liệu
     autoSelectLocation(addr);
-  }, [addressData, provinces.length]);
+  }, [addressData, provinces.length, autoSelectLocation]);
 
   // 🔹 Khi chọn tỉnh → lấy xã/phường
   const handleProvinceChange = (e) => {
@@ -248,17 +250,45 @@ const AddAddress = ({ onSubmit }) => {
             : "0 1px 4px rgba(0,0,0,0.06)",
         }}
       >
-        <Typography
-          variant="h5"
+        <Box
           sx={{
+            position: "relative",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
             mb: 3,
-            fontWeight: 700,
-            fontSize: isDesktop ? 24 : 20,
-            color: "#1A1A1A",
           }}
         >
-          {addressData?.address_id ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
-        </Typography>
+          <IconButton
+            onClick={() => navigate(-1)}
+            sx={{
+              position: "absolute",
+              left: 0,
+              width: 44,
+              height: 44,
+              borderRadius: 2,
+              border: "1px solid rgba(22, 24, 35, 0.12)",
+              boxShadow: "0 10px 20px rgba(22, 24, 35, 0.08)",
+              backgroundColor: "#fff",
+              color: "#161823",
+              "&:hover": {
+                backgroundColor: "#f9f9f9",
+              },
+            }}
+          >
+            <BackArrow width="12px" height="18px" />
+          </IconButton>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              fontSize: isDesktop ? 24 : 20,
+              color: "#1A1A1A",
+            }}
+          >
+            {addressData?.address_id ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
+          </Typography>
+        </Box>
 
         {/* Địa chỉ chi tiết */}
         <Box sx={{ mb: 2.5 }}>
