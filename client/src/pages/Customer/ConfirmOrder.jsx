@@ -12,6 +12,8 @@ import PlusIcon from "../../components/shared/PlusIcon";
 import MinusIcon from "../../components/shared/MinusIcon";
 import AddressSelector from "../../components/role-specific/Customer/AddressSelector";
 import axios from "axios";
+import { useOrder } from "../../contexts/OrderContext";
+import { useAddress } from "../../contexts/AddressContext";
 
 // --- Styles cho Modal ---
 const modalStyles = {
@@ -79,6 +81,20 @@ const formatPrice = (price) =>
     currency: "VND",
   }).format(price);
 
+// 📍 Tính khoảng cách giữa 2 tọa độ theo công thức Haversine (km)
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Bán kính Trái đất (km)
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
 export default function ConfirmOrder() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,11 +110,9 @@ export default function ConfirmOrder() {
   const [itemToRemove, setItemToRemove] = useState(null);
   
   const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState(null);
+  const { currentAddress, setCurrentAddress } = useAddress();
   const [note, setNote] = useState("");
-  const savedPayment =
-    localStorage.getItem("selectedPaymentMethod") || "Tiền mặt";
-  const [paymentMethod, setPaymentMethod] = useState(savedPayment);
+  const { paymentMethodName, setPaymentMethodName } = useOrder();
   const [couponCount, setCouponCount] = useState(0);
 
   // Các biến cho PaymentDetails
@@ -113,53 +127,130 @@ export default function ConfirmOrder() {
   // totalPrice (tổng cuối cùng)
   const totalPrice = totalItemPrice + shippingFee - foodDiscount - shippingDiscount;
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [shopInfo, setShopInfo] = useState(null);
+  const [deliveryDistance, setDeliveryDistance] = useState(null);
+  const [canDeliver, setCanDeliver] = useState(true);
+  const [distanceError, setDistanceError] = useState(null);
   
-  // Format contact info từ user data
-  const contactInfo = currentUser?.full_name && currentUser?.phone_number 
-    ? `${currentUser.full_name} | ${currentUser.phone_number}`
-    : currentUser?.email || "Chưa có thông tin liên hệ";
+  // Format contact info từ user data (chỉ tên và số điện thoại)
+  const contactInfo = currentUser?.full_name && currentUser?.phone
+    ? `${currentUser.full_name} | ${currentUser.phone}`
+    : "Chưa có thông tin liên hệ";
 
-  // Fetch địa chỉ mặc định khi component mount
+  // Fetch current user from database
   useEffect(() => {
-    const fetchDefaultAddress = async () => {
+    const fetchCurrentUser = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/addresses/user-addresses', {
+        const res = await fetch("http://localhost:5000/api/users/me", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.success) {
+          setCurrentUser(data.user);
+        } else {
+          // Nếu không có session, redirect to login
+          console.warn("⚠️ Session không hợp lệ:", data);
+          navigate("/login");
+        }
+      } catch (err) {
+        console.error("Lỗi fetch user:", err);
+        navigate("/login");
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
+
+  // Check số điện thoại khi component mount
+  useEffect(() => {
+    if (!loadingUser && currentUser && !currentUser.phone) {
+      alert("Vui lòng cập nhật số điện thoại trước khi đặt hàng");
+      navigate("/customer/profile");
+    }
+  }, [currentUser, loadingUser, navigate]);
+
+  // Địa chỉ đã được quản lý bởi AddressContext, không cần fetch riêng
+
+  // Sync payment method from localStorage to context on mount
+  useEffect(() => {
+    const savedPayment = localStorage.getItem("selectedPaymentMethod");
+    if (savedPayment && savedPayment !== paymentMethodName) {
+      setPaymentMethodName(savedPayment);
+    }
+  }, [paymentMethodName, setPaymentMethodName]);
+
+  // Fetch thông tin shop
+  useEffect(() => {
+    const fetchShopInfo = async () => {
+      if (!shop_id) return;
+      
+      try {
+        const res = await axios.get(`http://localhost:5000/api/shops/${shop_id}`, {
           withCredentials: true,
         });
         
-        console.log('📍 Fetched addresses:', res.data);
-        
-        // API trả về res.data.data thay vì res.data.addresses
-        const addresses = res.data?.data || [];
-        
-        if (res.data?.success && addresses.length > 0) {
-          // Tìm địa chỉ mặc định hoặc lấy địa chỉ đầu tiên
-          const defaultAddr = addresses.find(addr => addr.is_primary) || addresses[0];
-          console.log('✅ Default address:', defaultAddr);
-          setCurrentAddress(defaultAddr);
-          
-          // Tự động set địa chỉ mặc định trên backend nếu chưa có địa chỉ mặc định
-          if (defaultAddr && !defaultAddr.is_primary) {
-            try {
-              await axios.put(
-                `http://localhost:5000/api/addresses/user-addresses/${defaultAddr.address_id}/set-default`,
-                {},
-                { withCredentials: true }
-              );
-              console.log('✅ Auto-set default address:', defaultAddr.address_id);
-            } catch (err) {
-              console.error('❌ Error auto-setting default:', err);
-            }
-          }
+        if (res.data?.success) {
+          setShopInfo(res.data.data);
+          console.log('📍 Shop info:', res.data.data);
         }
       } catch (err) {
-        console.error('❌ Error fetching address:', err);
+        console.error('❌ Error fetching shop info:', err);
       }
     };
     
-    fetchDefaultAddress();
-  }, []);
+    fetchShopInfo();
+  }, [shop_id]);
+
+  // Kiểm tra khoảng cách khi có đủ thông tin
+  useEffect(() => {
+    const checkDeliveryDistance = () => {
+      if (!shopInfo?.address?.lat_lon || !currentAddress?.lat_lon) {
+        console.log('⚠️ Chưa có đủ thông tin tọa độ để kiểm tra khoảng cách');
+        return;
+      }
+      
+      const shopLat = Number(shopInfo.address.lat_lon.lat);
+      const shopLon = Number(shopInfo.address.lat_lon.lon);
+      const userLat = Number(currentAddress.lat_lon.lat);
+      const userLon = Number(currentAddress.lat_lon.lon);
+      
+      if (!shopLat || !shopLon || !userLat || !userLon) {
+        console.warn('⚠️ Tọa độ không hợp lệ');
+        setDistanceError('Không thể xác định khoảng cách giao hàng');
+        setCanDeliver(false);
+        return;
+      }
+      
+      const distance = calculateDistance(shopLat, shopLon, userLat, userLon);
+      setDeliveryDistance(distance);
+      
+      const MAX_DELIVERY_DISTANCE_KM = 5;
+      
+      console.log('📍 Khoảng cách giao hàng:', {
+        distance: distance.toFixed(2) + ' km',
+        shopCoords: { lat: shopLat, lon: shopLon },
+        userCoords: { lat: userLat, lon: userLon },
+        canDeliver: distance <= MAX_DELIVERY_DISTANCE_KM
+      });
+      
+      if (distance > MAX_DELIVERY_DISTANCE_KM) {
+        setCanDeliver(false);
+        setDistanceError(
+          `Khoảng cách giao hàng quá xa (${distance.toFixed(1)}km). ` +
+          `Chúng tôi chỉ giao hàng trong bán kính ${MAX_DELIVERY_DISTANCE_KM}km`
+        );
+      } else {
+        setCanDeliver(true);
+        setDistanceError(null);
+      }
+    };
+    
+    checkDeliveryDistance();
+  }, [shopInfo, currentAddress]);
 
   // Format địa chỉ hiển thị
   const formatAddress = (addr) => {
@@ -344,11 +435,45 @@ export default function ConfirmOrder() {
     );
   }
 
+  // Nếu đang loading user
+  if (loadingUser) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <p style={{ fontSize: "1.2rem", color: "#555" }}>Đang tải...</p>
+      </div>
+    );
+  }
+
   // ==========================
   // 🔘 Nút "Đặt đơn"
   // ==========================
   const handleConfirmOrder = async () => {
-    if (paymentMethod === "Chuyển khoản") {
+    // Check số điện thoại trước khi đặt hàng
+    if (!currentUser?.phone) {
+      alert("Vui lòng cập nhật số điện thoại trước khi đặt hàng");
+      navigate("/customer/profile");
+      return;
+    }
+
+    // 📍 Kiểm tra khoảng cách giao hàng
+    if (!canDeliver) {
+      alert(distanceError || "Khoảng cách giao hàng quá xa. Vui lòng chọn cửa hàng gần hơn");
+      return;
+    }
+
+    if (!currentAddress?.lat_lon?.lat || !currentAddress?.lat_lon?.lon) {
+      alert("Địa chỉ giao hàng chưa có tọa độ. Vui lòng cập nhật lại địa chỉ");
+      return;
+    }
+
+    if (paymentMethodName === "Chuyển khoản") {
       try {
         const res = await fetch("http://localhost:5000/api/payments/create", {
           method: "POST",
@@ -356,12 +481,21 @@ export default function ConfirmOrder() {
           body: JSON.stringify({
             orderCode: Date.now(),
             amount: 5000, // test, có thể đổi thành totalPrice
-            description: `FD-${currentUser?.id || 0}-${shop_id}-${Date.now()
-              .toString()
-              .slice(-5)}`,
+            description: JSON.stringify({
+              user_id: currentUser?.id,
+              shop_id,
+              address_id: currentAddress?.address_id, // 📍 Thêm address_id
+              delivery_address: currentAddress ? JSON.stringify(currentAddress) : null,
+              items: cartItems.map((i) => ({
+                product_id: i.product_id,
+                quantity: i.quantity,
+                unit_price: i.unit_price,
+              })),
+            }),
             metadata: JSON.stringify({
               user_id: currentUser?.id,
               shop_id,
+              address_id: currentAddress?.address_id, // 📍 Thêm address_id
               items: cartItems.map((i) => ({
                 product_id: i.product_id,
                 quantity: i.quantity,
@@ -394,6 +528,8 @@ export default function ConfirmOrder() {
               user_id: currentUser?.id,
               shop_id,
               note,
+              address_id: currentAddress?.address_id, // 📍 Thêm address_id để backend dùng đúng địa chỉ
+              delivery_address: currentAddress ? JSON.stringify(currentAddress) : null,
               items: cartItems.map((i) => ({
                 product_id: i.product_id,
                 quantity: i.quantity,
@@ -406,8 +542,30 @@ export default function ConfirmOrder() {
         const data = await res.json();
         if (data.success) {
           console.log("✅ Đã tạo đơn tiền mặt:", data.order);
+          
+          // Xóa các sản phẩm đã đặt từ giỏ hàng
+          try {
+            for (const item of cartItems) {
+              await fetch(`http://localhost:5000/api/cart/items`, {
+                method: "DELETE",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ itemId: item.id }),
+              });
+            }
+            console.log("✅ Đã xóa sản phẩm đã đặt khỏi giỏ hàng");
+          } catch (err) {
+            console.error("❌ Lỗi xóa sản phẩm khỏi giỏ hàng:", err);
+          }
+          
           navigate("/customer/order-success", {
-            state: { shop_id, shop_name, totalPrice, paymentMethod },
+            state: { 
+              shop_id, 
+              shop_name, 
+              totalPrice, 
+              paymentMethod: paymentMethodName,
+              order_id: data.order?.id || data.order?.order_id,
+            },
           });
         } else {
           alert("❌ Không thể tạo đơn hàng tiền mặt!");
@@ -548,8 +706,37 @@ export default function ConfirmOrder() {
           }}
         >
           <ClockIcon2 />
-          <span>Giao nhanh • 1.2km</span>
+          <span>
+            Giao nhanh
+            {deliveryDistance !== null && ` • ${deliveryDistance.toFixed(1)}km`}
+          </span>
         </div>
+        
+        {/* Cảnh báo khoảng cách */}
+        {!canDeliver && distanceError && (
+          <div
+            style={{
+              marginTop: "1rem",
+              padding: "1rem",
+              background: "#FEF3F2",
+              border: "1px solid #FEE4E2",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.8rem",
+            }}
+          >
+            <span style={{ fontSize: "1.4rem" }}>⚠️</span>
+            <div>
+              <div style={{ color: "#B42318", fontSize: "1.3rem", fontWeight: "600", marginBottom: "0.3rem" }}>
+                Không thể giao hàng
+              </div>
+              <div style={{ color: "#B42318", fontSize: "1.2rem", lineHeight: "1.5" }}>
+                {distanceError}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* AddressSelector Modal */}
@@ -801,7 +988,7 @@ export default function ConfirmOrder() {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F5F5F5"}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
           >
-            {paymentMethod === "Tiền mặt" ? (
+            {paymentMethodName === "Tiền mặt" ? (
               <PaymentIcon height="1.4rem" width="1.4rem" />
             ) : (
               <CardIcon height="1.4rem" width="1.4rem" />
@@ -813,7 +1000,7 @@ export default function ConfirmOrder() {
                 fontWeight: "600",
               }}
             >
-              {paymentMethod}
+              {paymentMethodName}
             </div>
           </div>
 
@@ -858,23 +1045,32 @@ export default function ConfirmOrder() {
             width: "87.78vw",
             margin: "0 auto",
             padding: "1.4rem",
-            background: "linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)",
+            background: canDeliver 
+              ? "linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)"
+              : "#CCCCCC",
             borderRadius: "12px",
-            cursor: "pointer",
-            boxShadow: "0 4px 16px rgba(254, 86, 33, 0.35)",
+            cursor: canDeliver ? "pointer" : "not-allowed",
+            boxShadow: canDeliver 
+              ? "0 4px 16px rgba(254, 86, 33, 0.35)"
+              : "0 2px 8px rgba(0, 0, 0, 0.1)",
             transition: "all 0.3s ease",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            opacity: canDeliver ? 1 : 0.6,
           }}
-          onClick={handleConfirmOrder}
+          onClick={canDeliver ? handleConfirmOrder : undefined}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(254, 86, 33, 0.45)";
+            if (canDeliver) {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 6px 20px rgba(254, 86, 33, 0.45)";
+            }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 4px 16px rgba(254, 86, 33, 0.35)";
+            if (canDeliver) {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(254, 86, 33, 0.35)";
+            }
           }}
         >
           <div
@@ -884,7 +1080,7 @@ export default function ConfirmOrder() {
               fontWeight: "700",
             }}
           >
-            Đặt đơn
+            {canDeliver ? "Đặt đơn" : "Không thể giao hàng"}
           </div>
           <div
             style={{
@@ -893,7 +1089,7 @@ export default function ConfirmOrder() {
               fontWeight: "700",
             }}
           >
-            {formatPrice(totalPrice)}
+            {canDeliver && formatPrice(totalPrice)}
           </div>
         </div>
       </div>

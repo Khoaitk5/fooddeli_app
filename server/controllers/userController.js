@@ -3,6 +3,34 @@ const addressService = require("../services/addressService");
 const shopProfileService = require("../services/shop_profileService");
 const orderDao = require("../dao/orderDao");
 const reviewDao = require("../dao/reviewDao");
+const fetch = require("node-fetch");
+
+/**
+ * Helper function to geocode address using Map4D API
+ */
+async function geocodeAddress(fullAddress) {
+  try {
+    const MAP4D_KEY = process.env.MAP4D_API_KEY || '62b853a87d7eec55f5f37dfd215a6e85';
+    const url = `https://api.map4d.vn/sdk/v2/geocode?key=${MAP4D_KEY}&address=${encodeURIComponent(fullAddress)}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data?.result && data.result.length > 0) {
+      const location = data.result[0].location;
+      if (location && location.lat && location.lng) {
+        return {
+          lat: location.lat,
+          lon: location.lng
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.warn('⚠️ Geocode error:', error.message);
+    return null;
+  }
+}
 
 /**
  * 📌 Lấy danh sách tất cả người dùng (chỉ admin)
@@ -165,6 +193,21 @@ const updateCurrentUser = async (req, res) => {
           const { address_id, address_line, note, address_type, is_primary } =
             shop_profile.address;
 
+          // 🗺️ Gọi Map4D Geocode API để lấy tọa độ
+          let lat_lon = null;
+          if (address_line) {
+            const { detail, ward, district, city } = address_line;
+            const fullAddress = `${detail || ''}, ${ward || ''}, ${district || ''}, ${city || ''}`.trim();
+            
+            if (fullAddress) {
+              console.log('🌍 [UserController] Geocoding shop address:', fullAddress);
+              lat_lon = await geocodeAddress(fullAddress);
+              if (lat_lon) {
+                console.log('✅ [UserController] Got shop coordinates:', lat_lon);
+              }
+            }
+          }
+
           const normalizedAddress = {
             address_line: {
               detail: address_line?.detail || "",
@@ -172,6 +215,7 @@ const updateCurrentUser = async (req, res) => {
               district: address_line?.district || "",
               city: address_line?.city || "",
             },
+            lat_lon,
             note: note || "",
             address_type: address_type || "Cửa hàng",
           };
@@ -210,6 +254,21 @@ const updateCurrentUser = async (req, res) => {
       const { address_id, address_line, note, address_type, is_primary } =
         address;
 
+      // 🗺️ Gọi Map4D Geocode API để lấy tọa độ
+      let lat_lon = null;
+      if (address_line) {
+        const { detail, ward, district, city } = address_line;
+        const fullAddress = `${detail || ''}, ${ward || ''}, ${district || ''}, ${city || ''}`.trim();
+        
+        if (fullAddress) {
+          console.log('🌍 [UserController] Geocoding user address:', fullAddress);
+          lat_lon = await geocodeAddress(fullAddress);
+          if (lat_lon) {
+            console.log('✅ [UserController] Got user coordinates:', lat_lon);
+          }
+        }
+      }
+
       const normalizedAddress = {
         address_line: {
           detail: address_line?.detail || "",
@@ -217,6 +276,7 @@ const updateCurrentUser = async (req, res) => {
           district: address_line?.district || "",
           city: address_line?.city || "",
         },
+        lat_lon,
         note: note || "",
         address_type: address_type || "Nhà",
         is_primary: is_primary ?? true,

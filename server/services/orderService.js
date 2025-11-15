@@ -2,7 +2,25 @@
 const orderDao = require("../dao/orderDao");
 const orderDetailDao = require("../dao/order_detailDao");
 const orderDetailService = require("./order_detailService");
+const shopProfileService = require("./shop_profileService");
+const addressService = require("./addressService");
 const notificationService = require("./notificationService");
+
+/**
+ * 📍 Tính khoảng cách giữa 2 tọa độ theo công thức Haversine (km)
+ */
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Bán kính Trái đất (km)
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 const ORDER_STATUS_MESSAGES = {
   pending: {
@@ -29,7 +47,7 @@ const ORDER_STATUS_MESSAGES = {
 
 class OrderService {
   /**
-   * 📦 Lấy danh sách đơn theo shipper_id
+   * � Lấy danh sách đơn theo shipper_id
    */
   async listByShipper(shipperId, { status, limit = 20, offset = 0, full = false } = {}) {
     const sid = Number(shipperId);
@@ -153,7 +171,7 @@ class OrderService {
   /**
    * 💵 Tạo đơn hàng tiền mặt (COD)
    */
-  async createCashOrder({ user_id, shop_id, items = [], note = "" }) {
+  async createCashOrder({ user_id, shop_id, items = [], note = "", delivery_address = null, address_id = null }) {
     const uid = Number(user_id);
     const sid = Number(shop_id);
 
@@ -163,7 +181,67 @@ class OrderService {
       user_id: uid,
       shop_id: sid,
       itemsCount: items.length,
+      address_id, // 📍 Log address_id
     });
+
+    // 🗺️ Kiểm tra khoảng cách giữa shop và địa chỉ giao hàng
+    try {
+      // Lấy thông tin shop và địa chỉ
+      const shopInfo = await shopProfileService.getShopProfilesAndAddressesByShopId(sid);
+      const userAddresses = await addressService.getUserAddresses(uid);
+      
+      if (!shopInfo?.address?.lat_lon) {
+        throw new Error("Cửa hàng chưa cập nhật địa chỉ với tọa độ");
+      }
+      
+      if (!userAddresses || userAddresses.length === 0) {
+        throw new Error("Vui lòng thêm địa chỉ giao hàng trước khi đặt hàng");
+      }
+      
+      // 📍 Ưu tiên địa chỉ được chọn (address_id), nếu không có thì lấy mặc định
+      let selectedAddress;
+      if (address_id) {
+        selectedAddress = userAddresses.find(addr => addr.address_id === Number(address_id));
+        if (!selectedAddress) {
+          throw new Error(`Không tìm thấy địa chỉ ID ${address_id}`);
+        }
+      } else {
+        selectedAddress = userAddresses.find(addr => addr.is_primary) || userAddresses[0];
+      }
+      
+      if (!selectedAddress?.lat_lon?.lat || !selectedAddress?.lat_lon?.lon) {
+        throw new Error("Địa chỉ giao hàng chưa có tọa độ. Vui lòng cập nhật lại địa chỉ");
+      }
+      
+      const shopLat = Number(shopInfo.address.lat_lon.lat);
+      const shopLon = Number(shopInfo.address.lat_lon.lon);
+      const userLat = Number(selectedAddress.lat_lon.lat);
+      const userLon = Number(selectedAddress.lat_lon.lon);
+      
+      const distance = calculateDistance(shopLat, shopLon, userLat, userLon);
+      
+      console.log("📍 Khoảng cách shop -> customer:", {
+        shop_id: sid,
+        user_id: uid,
+        address_id: selectedAddress.address_id,
+        distance_km: distance.toFixed(2),
+        shopCoords: { lat: shopLat, lon: shopLon },
+        userCoords: { lat: userLat, lon: userLon }
+      });
+      
+      const MAX_DELIVERY_DISTANCE_KM = 5;
+      if (distance > MAX_DELIVERY_DISTANCE_KM) {
+        throw new Error(
+          `Khoảng cách giao hàng quá xa (${distance.toFixed(1)}km). ` +
+          `Chúng tôi chỉ giao hàng trong bán kính ${MAX_DELIVERY_DISTANCE_KM}km`
+        );
+      }
+      
+      console.log("✅ Khoảng cách hợp lệ:", distance.toFixed(2), "km");
+    } catch (error) {
+      console.error("❌ Lỗi kiểm tra khoảng cách:", error.message);
+      throw error;
+    }
 
     // 1️⃣ Tạo order trống
     console.log("🧾 [Service] Tạo order rỗng (COD)...");
@@ -172,6 +250,7 @@ class OrderService {
       shop_id: sid,
       payment_method: "COD",
       delivery_fee: 15000,
+      delivery_address,
     });
     console.log("✅ [Service] Order rỗng tạo xong:", {
       order_id: order.order_id,
@@ -206,12 +285,25 @@ class OrderService {
 
     console.log("🎯 [Service] createCashOrder() HOÀN TẤT.");
     return updated;
+
+    // 🕒 Tự động hủy sau 5 phút nếu shop chưa xác nhận (cooking)
+    setTimeout(async () => {
+      try {
+        const currentOrder = await orderDao.findById("order_id", order.order_id);
+        if (currentOrder && currentOrder.status === "pending") {
+          console.log(`⏰ [Auto-cancel] Hủy đơn ${order.order_id} sau 5 phút do shop chưa xác nhận`);
+          await orderDao.updateStatus(order.order_id, "cancelled");
+        }
+      } catch (err) {
+        console.error("❌ Lỗi auto-cancel:", err);
+      }
+    }, 5 * 60 * 1000); // 5 phút
   }
 
   /**
    * 🆕 Tạo 1 order trống (đơn cơ bản)
    */
-  async createEmptyOrder({ user_id, shop_id, payment_method = "COD", delivery_fee = 0 }) {
+  async createEmptyOrder({ user_id, shop_id, payment_method = "COD", delivery_fee = 0, delivery_address = null }) {
     const uid = Number(user_id);
     const sid = Number(shop_id);
     if (!uid || !sid) throw new Error("user_id và shop_id là bắt buộc");
@@ -238,6 +330,7 @@ class OrderService {
       payment_method,
       payment_status: "unpaid",
       is_settled: false,
+      delivery_address,
     });
 
     console.log("✅ [Service] Order rỗng đã tạo:", result);
@@ -271,18 +364,67 @@ async getFullOrdersByUserId(userId, { status, limit = 20, offset = 0 } = {}) {
   const uid = Number(userId);
   if (!uid) throw new Error("userId is required");
   return await orderDao.getFullOrdersByUserId(uid, { status, limit, offset });
-}
+  }
 
+  /**
+   * ❌ Hủy đơn hàng (chỉ khi pending và thuộc user)
+   */
+  async cancelOrder(orderId, userId) {
+    const id = Number(orderId);
+    const uid = Number(userId);
+    if (!id || !uid) throw new Error("orderId và userId là bắt buộc");
+
+    console.log("🗑️ [Service Cancel] Start:", { id, uid });
+
+    // Kiểm tra đơn hàng tồn tại và thuộc user
+    const order = await orderDao.findById("order_id", id);
+    console.log("📦 [Service Cancel] Found order:", order);
+    if (!order || order.user_id !== uid) {
+      console.log("❌ [Service Cancel] Not found or not owned");
+      return null;
+    }
+
+    // Chỉ hủy nếu pending
+    if (order.status !== "pending") {
+      console.log("❌ [Service Cancel] Status not pending:", order.status);
+      throw new Error("Chỉ có thể hủy đơn hàng đang chờ xác nhận");
+    }
+
+    // Cập nhật status thành cancelled
+    const result = await orderDao.updateStatus(id, "cancelled");
+    console.log("✅ [Service Cancel] Updated:", result);
+    return result;
+  }
+
+  /**
+   * 🔔 Private method: Gửi thông báo khi đơn hàng thay đổi trạng thái
+   */
   async #notifyOrderStatus(order) {
-    if (!order?.user_id) return;
-    const meta = ORDER_STATUS_MESSAGES[order.status];
-    if (!meta) return;
-    const orderLabel = `Đơn #${order.order_id}`;
-    await notificationService.createNotification({
-      user_id: order.user_id,
-      title: meta.title(orderLabel),
-      body: meta.body(orderLabel),
-    });
+    if (!order || !order.status) return;
+
+    const statusConfig = ORDER_STATUS_MESSAGES[order.status];
+    if (!statusConfig) {
+      console.warn(`[OrderService] Không có config thông báo cho status: ${order.status}`);
+      return;
+    }
+
+    const orderLabel = `Đơn hàng #${order.order_id}`;
+    const title = statusConfig.title(orderLabel);
+    const body = statusConfig.body();
+
+    try {
+      await notificationService.createNotification({
+        user_id: order.user_id,
+        title,
+        body,
+        type: "order_update",
+        reference_id: order.order_id,
+      });
+      console.log(`✅ [OrderService] Đã gửi thông báo: ${title}`);
+    } catch (error) {
+      console.error(`❌ [OrderService] Lỗi gửi thông báo:`, error);
+      throw error;
+    }
   }
 }
 

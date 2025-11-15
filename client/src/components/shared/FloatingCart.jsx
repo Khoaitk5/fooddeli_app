@@ -13,11 +13,6 @@ import { useNavigate } from "react-router-dom";
 export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice = 0 }) {
   const navigate = useNavigate();
 
-  // Không hiển thị nếu giỏ hàng trống
-  if (items.length === 0 || totalQuantity === 0) {
-    return null;
-  }
-
   const handleViewCart = () => {
     // Group items by shop_id
     const groupedByShop = items.reduce((groups, item) => {
@@ -57,20 +52,22 @@ export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 999,
-          padding: "0 16px 16px",
-        }}
-      >
+      {items.length > 0 && totalQuantity > 0 && (
+        <motion.div
+          key="floating-cart"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 999,
+            padding: "0 16px 16px",
+          }}
+        >
         {/* Main cart button - Full Width Design */}
         <motion.button
           whileTap={{ scale: 0.98 }}
@@ -179,6 +176,7 @@ export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice
           </div>
         </motion.button>
       </motion.div>
+      )}
 
       {/* Keyframe animation for shine effect */}
       <style>{`

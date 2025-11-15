@@ -215,13 +215,13 @@ const getLatestVideos = async (req, res) => {
  */
 const getVideosFeed = async (req, res) => {
   try {
-    const { lat, lng } = req.query;
-    if (!lat || !lng)
+    const { lat, lon } = req.query;
+    if (!lat || !lon)
       return res.status(400).json({ message: "Thiếu tọa độ người dùng" });
 
     const videos = await videoService.getNearbyVideos({
       lat: parseFloat(lat),
-      lng: parseFloat(lng),
+      lon: parseFloat(lon),
     });
 
     res.status(200).json({

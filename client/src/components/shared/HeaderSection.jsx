@@ -1,35 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
 import CartIcon from "./CartIcon";
 import SearchBarWithSuggestions from "./SearchBarWithSuggestions";
 import AddressSelector from "../role-specific/Customer/AddressSelector";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { useAddress } from "../../contexts/AddressContext";
 
 const HeaderSection = ({ isScrolled, cartCount }) => {
   const navigate = useNavigate();
   const [showAddressSelector, setShowAddressSelector] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState(null);
-
-  useEffect(() => {
-    fetchCurrentAddress();
-  }, []);
-
-  const fetchCurrentAddress = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/addresses/user-addresses`, {
-        withCredentials: true,
-      });
-      if (res.data?.success && res.data.data?.length > 0) {
-        // Lấy địa chỉ mặc định hoặc địa chỉ đầu tiên
-        const defaultAddr = res.data.data.find(addr => addr.is_primary) || res.data.data[0];
-        setCurrentAddress(defaultAddr);
-      }
-    } catch (err) {
-      console.error("Error fetching address:", err);
-    }
-  };
+  const { currentAddress, setCurrentAddress } = useAddress();
 
   const handleSelectAddress = (address) => {
     setCurrentAddress(address);
