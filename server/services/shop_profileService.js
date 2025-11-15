@@ -57,6 +57,15 @@ class ShopProfileService {
     try {
       const shop = await shopProfileDao.findDetailsById(shopId);
       if (!shop) throw new Error("Không tìm thấy cửa hàng.");
+      
+      // 📍 Format address object cho frontend
+      if (shop.shop_lat_lon || shop.shop_address_line) {
+        shop.address = {
+          lat_lon: shop.shop_lat_lon,
+          address_line: shop.shop_address_line
+        };
+      }
+      
       return shop;
     } catch (err) {
       console.error("[ShopProfileService:getShopById]", err.message);

@@ -45,7 +45,7 @@ const VideoResultItem = ({ video }) => {
           transform: 'scale(0.98)',
         },
       }}
-      onClick={() => navigate('/customer/video-detail', { state: { video } })}
+      onClick={() => navigate(`/customer/video/${video.video_id}`)}
     >
       {/* Thumbnail Video */}
       <Box sx={{ position: 'relative', paddingTop: '177.78%' }}> {/* 9:16 aspect ratio */}

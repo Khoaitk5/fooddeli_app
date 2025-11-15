@@ -52,9 +52,10 @@ class UserAddressDao extends GenericDao {
     const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(", ");
     const values = [addressId, ...Object.values(updateData)];
 
+    // user_addresses table does NOT have updated_at column
     const query = `
       UPDATE user_addresses
-      SET ${setClause}, updated_at = NOW()
+      SET ${setClause}
       WHERE address_id = $1
       RETURNING *;
     `;

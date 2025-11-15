@@ -73,8 +73,15 @@ class AddressService {
           ? JSON.stringify(updateData.address_line)
           : existing.address_line;
 
+      const safeLatLonJSON = updateData.lat_lon 
+        ? (typeof updateData.lat_lon === "object"
+            ? JSON.stringify(updateData.lat_lon)
+            : updateData.lat_lon)
+        : existing.lat_lon;
+
       const updated = await addressDao.update("address_id", addressId, {
         address_line: safeAddressJSON,
+        lat_lon: safeLatLonJSON,
         note: updateData.note ?? existing.note,
         address_type: updateData.address_type ?? existing.address_type,
       });

@@ -149,11 +149,11 @@ class VideoService {
   /**
    * 🗺️ Lấy video gần vị trí người dùng (DAO mới có SQL tính sẵn)
    */
-  async getNearbyVideos({ lat, lng, radiusKm = 10 }) {
-    if (!lat || !lng) {
-      throw new Error("Thiếu tọa độ người dùng (lat, lng)");
+  async getNearbyVideos({ lat, lon, radiusKm = 10 }) {
+    if (!lat || !lon) {
+      throw new Error("Thiếu tọa độ người dùng (lat, lon)");
     }
-    return await videoDao.getNearbyVideos(lat, lng, radiusKm);
+    return await videoDao.getNearbyVideos(lat, lon, radiusKm);
   }
 
   /**
@@ -161,8 +161,8 @@ class VideoService {
    * Dùng nếu muốn lọc logic ngoài DB (giữ tương thích code cũ)
    */
   async getNearbyVideosByFilter(userLocation) {
-    if (!userLocation?.lat || !userLocation?.lng) {
-      throw new Error("Thiếu tọa độ người dùng (lat, lng)");
+    if (!userLocation?.lat || !userLocation?.lon) {
+      throw new Error("Thiếu tọa độ người dùng (lat, lon)");
     }
 
     const videos = await videoDao.getVideosWithShopData();

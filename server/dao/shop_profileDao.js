@@ -46,9 +46,12 @@ class ShopProfileDao extends GenericDao {
            AND p.image_url IS NOT NULL
            AND TRIM(p.image_url) <> ''
          ORDER BY p.updated_at DESC
-         LIMIT 1) AS shop_image
+         LIMIT 1) AS shop_image,
+        a.lat_lon AS shop_lat_lon,
+        a.address_line AS shop_address_line
       FROM shop_profiles sp
       JOIN users u ON sp.user_id = u.id
+      LEFT JOIN addresses a ON a.address_id = sp.shop_address_id
       WHERE sp.id = $1
     `;
     const result = await pool.query(query, [shopId]);
@@ -56,6 +59,8 @@ class ShopProfileDao extends GenericDao {
       const shop = new ShopProfile(result.rows[0]);
       shop.user_id = result.rows[0].user_id;
       shop.shop_image = result.rows[0].shop_image; // ✅ Thêm ảnh shop từ product
+      shop.shop_lat_lon = result.rows[0].shop_lat_lon; // ✅ Thêm tọa độ shop
+      shop.shop_address_line = result.rows[0].shop_address_line; // ✅ Thêm địa chỉ shop (JSON)
       return shop;
     }
 
