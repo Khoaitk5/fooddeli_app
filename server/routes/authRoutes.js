@@ -32,7 +32,6 @@ router.post("/check-email", authController.checkEmailExists);
 
 router.post("/change-password", authController.changePassword);
 
-// 👤 Lấy thông tin user hiện tại
-router.get("/me", authController.getMe);
+
 
 module.exports = router;

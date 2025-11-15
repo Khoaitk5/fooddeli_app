@@ -11,8 +11,6 @@ const OTP = () => {
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(60);
   const [showHelpPopup, setShowHelpPopup] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,7 +19,7 @@ const OTP = () => {
   const email = location.state?.email || "";
   const contact = phone || email;
 
-  // Countdown for resend
+  // ⏱️ Đếm ngược resend
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -29,76 +27,68 @@ const OTP = () => {
     }
   }, [countdown]);
 
-  // Initialize reCAPTCHA
+  // ✅ Khởi tạo reCAPTCHA
   useEffect(() => {
     if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {
-          size: "invisible",
-        }
-      );
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+      });
       window.recaptchaVerifier.render();
     }
   }, []);
 
-  // Auto verify when OTP is complete
-  useEffect(() => {
-    if (otp.length === 6 && !isVerifying) {
-      handleVerify();
+  // 📤 Xác minh OTP
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  const otpCode = otp;
+  if (otpCode.length !== 6) {
+    setError("Vui lòng nhập đủ 6 chữ số OTP");
+    return;
+  }
+
+  if (!window.confirmationResult) {
+    setError("Phiên OTP đã hết hạn. Vui lòng gửi lại mã.");
+    return;
+  }
+
+  try {
+    const result = await window.confirmationResult.confirm(otpCode);
+    const user = result.user;
+
+    console.log("✅ Xác minh thành công:", user);
+
+    // 🔑 Lưu session vào localStorage nếu muốn dùng sau
+    const idToken = await user.getIdToken();
+    localStorage.setItem("authToken", idToken);
+
+    // 🧠 Tùy chọn: gửi token lên backend xác thực
+    const res = await fetch("http://localhost:5000/api/auth/verify-phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: idToken }),
+      credentials: "include", // ⚠️ bắt buộc để cookie lưu về
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      navigate("/customer/home");
+    } else {
+      setError("Xác minh thất bại. Vui lòng thử lại.");
     }
-  }, [otp]);
+  } catch (err) {
+    console.error("❌ Lỗi xác minh OTP:", err.code, err.message);
+    setError(err.message || "OTP không chính xác hoặc đã hết hạn.");
+  }
+};
 
-  // Verify OTP
-  const handleVerify = async () => {
-    setError("");
-    setSuccessMessage("");
-    setIsVerifying(true);
 
-    if (!window.confirmationResult) {
-      setError("Phiên OTP đã hết hạn. Vui lòng gửi lại mã.");
-      setOtp("");
-      setIsVerifying(false);
-      return;
-    }
 
-    try {
-      const result = await window.confirmationResult.confirm(otp);
-      const user = result.user;
+  // 📥 Nhập OTP từng ô
+  // Removed old handlers, using OTPInput
 
-      // Save session to localStorage
-      const idToken = await user.getIdToken();
-      localStorage.setItem("authToken", idToken);
-
-      // Send token to backend for verification
-      const res = await fetch("http://localhost:5000/api/auth/verify-phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: idToken }),
-        credentials: "include",
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        // Save user info to localStorage
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setSuccessMessage("Xác minh thành công! Đang chuyển hướng...");
-        setTimeout(() => navigate("/customer/home"), 1000);
-      } else {
-        setError("Xác minh thất bại. Vui lòng thử lại.");
-        setOtp("");
-        setIsVerifying(false);
-      }
-    } catch (err) {
-      console.error("Lỗi xác minh OTP:", err.code, err.message);
-      setError("Mã OTP không chính xác. Vui lòng thử lại.");
-      setOtp("");
-      setIsVerifying(false);
-    }
-  };
-
-  // Resend OTP
+  // 🔁 Gửi lại OTP
   const resendOtp = async () => {
     try {
       const appVerifier = window.recaptchaVerifier;
@@ -106,249 +96,222 @@ const OTP = () => {
         ? phone.replace(/\s/g, "")
         : "+84" + phone.substring(1);
 
-      const confirmationResult = await signInWithPhoneNumber(
-        auth,
-        formattedPhone,
-        appVerifier
-      );
+      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       window.confirmationResult = confirmationResult;
       setCountdown(60);
       setError("");
+      console.log("✅ Gửi lại OTP thành công");
     } catch (err) {
-      console.error("Lỗi gửi lại OTP:", err.code, err.message);
+      console.error("❌ Lỗi gửi lại OTP:", err.code, err.message);
       setError("Không thể gửi lại OTP. Vui lòng thử lại.");
     }
   };
 
+  // 🔁 Auto focus ô cuối cùng mỗi khi otp thay đổi
+  // Removed, handled by OTPInput
+
   return (
-    <div>
-      {/* Title */}
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f5f5f5",
+        padding: "20px",
+      }}
+    >
       <div
         style={{
-          position: "absolute",
-          left: "50%",
-          top: "10.625vh",
-          transform: "translateX(-50%)",
+          width: "360px",
+          height: "800px",
+          position: "relative",
+          background: "white",
+          borderRadius: "12px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
-        <span
-          style={{
-            color: "black",
-            fontSize: "2.8rem",
-            fontWeight: "700",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Nhập mã gồm 6 chữ số
-        </span>
-      </div>
-
-      {/* Contact info */}
-      <div
-        style={{
-          position: "absolute",
-          left: "8.06vw",
-          top: "16.75vh",
-          display: "flex",
-          flexDirection: "row",
-          color: "#868686",
-          whiteSpace: "nowrap"
-        }}
-      >
-        <span
-          style={{
-            fontSize: "1.25rem",
-            fontWeight: "400",
-            marginRight: "1.11vw",
-          }}
-        >
-          Mã của bạn đã được gửi đến
-        </span>
-        <span
-          style={{
-            fontSize: "1.25rem",
-            fontWeight: "600",
-          }}
-        >
-          {contact}
-        </span>
-      </div>
-
-      {/* Back button */}
-      <div
-        style={{
-          position: "absolute",
-          left: "5vw",
-          top: "3.375vh",
-          cursor: "pointer",
-        }}
-        onClick={() => navigate(-1)}
-      >
-        <BackArrow />
-      </div>
-
-      {/* OTP Input */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "21.5vh",
-          transform: "translateX(-50%)",
-          width: "83.33vw",
-        }}
-      >
-        <OTPInput
-          maxLength={6}
-          value={otp}
-          onChange={(value) => !isVerifying && setOtp(value)}
-          disabled={isVerifying}
-          containerClassName="flex items-center gap-3 has-disabled:opacity-50"
-          render={({ slots }) => (
-            <div
-              style={{
-                display: "flex",
-                gap: "1.67vw",
-                justifyContent: "center",
-                marginBottom: "2vh",
-              }}
-            >
-              {slots.map((slot, idx) => (
-                <Slot key={idx} {...slot} isVerifying={isVerifying} hasError={!!error} />
-              ))}
-            </div>
-          )}
-        />
-
-        {isVerifying && (
-          <div
-            style={{
-              color: "#408308",
-              marginBottom: "2vh",
-              fontSize: "1.3rem",
-              textAlign: "center",
-            }}
-          >
-            Đang xác minh...
-          </div>
-        )}
-
-        {successMessage && (
-          <div
-            style={{
-              color: "#408308",
-              marginBottom: "2vh",
-              fontSize: "1.3rem",
-              textAlign: "center",
-              fontWeight: "600",
-            }}
-          >
-            ✓ {successMessage}
-          </div>
-        )}
-
-        {error && !isVerifying && (
-          <div
-            style={{
-              color: "#FF3B30",
-              marginBottom: "2vh",
-              fontSize: "1.3rem",
-              textAlign: "center",
-              backgroundColor: "#FFE5E5",
-              padding: "1vh 2vw",
-              borderRadius: "0.8rem",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {/* Resend code */}
+        {/* 📍 Tiêu đề */}
         <div
           style={{
-            textAlign: "left",
-            width: "100%",
-            paddingLeft: "1.11vw",
-            fontSize: "1.4rem",
-            fontWeight: "500",
-            cursor: countdown === 0 && !isVerifying ? "pointer" : "default",
-            marginBottom: "3vh",
-            color: countdown === 0 && !isVerifying ? "#408308" : "#868686",
-            transition: "color 0.3s",
+            position: "absolute",
+            left: "50%",
+            top: "119px",
+            transform: "translateX(-50%)",
           }}
-          onClick={countdown === 0 && !isVerifying ? resendOtp : undefined}
-        >
-          {countdown === 0 ? "Gửi lại mã" : `Gửi lại mã sau ${countdown}s`}
-        </div>
-
-        {/* Help link */}
-        <div
-          style={{
-            marginTop: "3vh",
-            textAlign: "left",
-            cursor: "pointer",
-          }}
-          onClick={() => setShowHelpPopup(true)}
         >
           <span
             style={{
-              color: "#000",
-              fontSize: "1.4rem",
+              color: "black",
+              fontSize: 28,
+              fontFamily: 'Be Vietnam Pro',
+              fontWeight: "700",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Nhập mã gồm 6 chữ số
+          </span>
+        </div>
+
+        {/* 📱 Thông báo số/email */}
+        <div
+          style={{
+            position: "absolute",
+            left: "33px",
+            top: "168px",
+            display: "flex",
+            flexDirection: "row",
+          }}
+        >
+          <span
+            style={{
+              color: "#868686",
+              fontSize: 12.5,
+              fontFamily: 'Be Vietnam Pro',
+              fontWeight: "400",
+              marginRight: "4px",
+            }}
+          >
+            Mã của bạn đã được gửi đến
+          </span>
+          <span
+            style={{
+              color: "#868686",
+              fontSize: 12.5,
+              fontFamily: 'Be Vietnam Pro',
               fontWeight: "600",
             }}
           >
-            Bạn cần trợ giúp đăng nhập?
+            {contact}
           </span>
         </div>
+
+        {/* ⬅️ Nút quay lại */}
+        <div
+          style={{
+            position: "absolute",
+            left: "12px",
+            top: "43px",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate(-1)}
+        >
+          <BackArrow />
+        </div>
+
+        {/* 📤 Form OTP */}
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "206px",
+            transform: "translateX(-50%)",
+            width: "300px",
+          }}
+        >
+          <OTPInput
+            maxLength={6}
+            value={otp}
+            onChange={setOtp}
+            containerClassName="flex items-center gap-3 has-disabled:opacity-50"
+            render={({ slots }) => (
+              <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginBottom: "16px" }}>
+                {slots.map((slot, idx) => (
+                  <Slot key={idx} {...slot} />
+                ))}
+              </div>
+            )}
+          />
+
+          {error && <div style={{ color: "red", marginBottom: "16px" }}>{error}</div>}
+
+          {/* 🔁 Gửi lại mã */}
+          <div
+            style={{
+              textAlign: "left",
+              width: "100%",
+              paddingLeft: "4px",
+              fontSize: 14,
+              fontFamily: 'Be Vietnam Pro',
+              fontWeight: "500",
+              cursor: countdown === 0 ? "pointer" : "default",
+              marginBottom: "24px",
+            }}
+            onClick={countdown === 0 ? resendOtp : undefined}
+          >
+            Gửi lại mã{countdown > 0 ? ` ${countdown}s` : ""}
+          </div>
+
+          {/* ✅ Nút xác minh */}
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              padding: "14px",
+              background: "#F9704B",
+              color: "white",
+              fontSize: 16,
+              fontWeight: "600",
+              border: "none",
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
+            Xác minh OTP
+          </button>
+
+          {/* ❓ Trợ giúp đăng nhập */}
+          <div
+            style={{
+              marginTop: "24px",
+              textAlign: "left",
+              cursor: "pointer",
+            }}
+            onClick={() => setShowHelpPopup(true)}
+          >
+            <span
+              style={{
+                color: "#000",
+                fontSize: 14,
+                fontFamily: 'Be Vietnam Pro',
+                fontWeight: "600",
+              }}
+            >
+              Bạn cần trợ giúp đăng nhập?
+            </span>
+          </div>
+        </form>
+
+        <div id="recaptcha-container"></div>
       </div>
 
-      <div id="recaptcha-container" />
-      <style>{`.grecaptcha-badge { visibility: hidden; }`}</style>
-
-      {/* Help Popup */}
+      {/* 📦 Popup trợ giúp */}
       <HelpPopup
         isOpen={showHelpPopup}
         onClose={() => setShowHelpPopup(false)}
-        phone={phone}
+        phone={phone} // ✅ truyền state phone để giữ khi chuyển sang mật khẩu
       />
     </div>
   );
 };
 
 function Slot(props) {
-  const getBorderColor = () => {
-    if (props.hasError) return "#FF3B30";
-    if (props.isActive) return "#F9704B";
-    if (props.char !== null) return "#408308";
-    return "#E0E0E0";
-  };
-
   return (
     <div
       style={{
-        width: "4.5rem",
-        height: "4.5rem",
-        background: props.hasError ? "#FFE5E5" : "#F2F2F2",
-        borderRadius: "0.8rem",
+        width: "45px",
+        height: "48px",
+        background: "#F2F2F2",
+        borderRadius: 8,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: `0.2rem solid ${getBorderColor()}`,
-        transition: "all 0.3s ease",
-        opacity: props.isVerifying ? 0.6 : 1,
-        transform: props.hasError ? "scale(0.95)" : "scale(1)",
+        border: props.isActive ? "2px solid #F9704B" : "1px solid #ccc",
+        transition: "border-color 0.2s",
       }}
     >
-      {props.char !== null && (
-        <div
-          style={{
-            fontSize: "2.4rem",
-            fontWeight: "600",
-            color: props.hasError ? "#FF3B30" : "#363A33",
-          }}
-        >
-          {props.char}
-        </div>
-      )}
+      {props.char !== null && <div style={{ fontSize: 24, fontWeight: "600", color: "black" }}>{props.char}</div>}
     </div>
   );
 }

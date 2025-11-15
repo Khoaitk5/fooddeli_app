@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Star,
@@ -13,13 +13,11 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../../hooks/useCart";
 import FloatingCart from "../../shared/FloatingCart";
-import { AuthContext } from "../../../contexts/AuthContext";
 import Toast from "../../shared/Toast";
 
 export default function RestaurantDetail() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useContext(AuthContext);
   const shopId = location.state?.shopId || sessionStorage.getItem("lastShopId");
   const defaultTab = location.state?.defaultTab || "videos"; // Nhận defaultTab từ navigation
 
@@ -382,12 +380,6 @@ export default function RestaurantDetail() {
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={async () => {
-            if (!user) {
-              alert("Bạn cần đăng nhập để theo dõi quán!");
-              navigate("/login");
-              return;
-            }
-
             try {
               const endpoint = isFollowing
                 ? "http://localhost:5000/api/follows/unfollow"

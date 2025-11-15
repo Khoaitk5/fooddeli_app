@@ -145,6 +145,7 @@ const SearchBarWithSuggestions = ({ isScrolled }) => {
         display: "flex",
         alignItems: "center",
         transition: "all 0.3s ease",
+        position: "relative", // Thêm position relative để dropdown có thể position absolute với container này
       }}
     >
       <input

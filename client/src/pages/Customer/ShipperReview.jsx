@@ -190,46 +190,21 @@ const ShipperReview = () => {
         throw new Error(result.message || "Có lỗi xảy ra");
       }
 
-      // ✅ Thành công - đánh dấu đã submit và chuyển đến đánh giá shop nếu chưa review
+      // ✅ Thành công - đánh dấu đã submit và chuyển đến đánh giá shop
       setIsSubmitted(true);
       
-      // Check nếu đã review shop
-      const checkShopReview = async () => {
-        try {
-          const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
-          console.log('Checking shop review after submit for shopId:', orderData.shopId, 'userId:', orderData.userId);
-          const response = await fetch(`${API_BASE_URL}/reviews/shop/${orderData.shopId}/stats`, {
-            credentials: 'include'
-          });
-          const result = await response.json();
-          console.log('Shop review stats after submit:', result);
-          const userShopReviews = result.data?.reviews?.filter(r => r.reviewer_id === parseInt(orderData.userId)) || [];
-          console.log('User shop reviews after submit:', userShopReviews);
-          
-          if (userShopReviews.length === 0 && orderData.shopName) {
-            // Chưa review shop, chuyển đến
-            console.log('Chưa review shop after submit, chuyển đến order-review');
-            navigate('/customer/order-review', {
-              state: {
-                orderId: orderData.orderId,
-                shopName: orderData.shopName,
-                shopAvatar: orderData.shopAvatar,
-              },
-              replace: true
-            });
-          } else {
-            // Đã review hoặc không có shop, về orders
-            console.log('Đã review shop after submit, về orders');
-            navigate('/customer/orders', { replace: true });
-          }
-        } catch (error) {
-          console.error('Error checking shop review after submit:', error);
-          navigate('/customer/orders', { replace: true });
-        }
-      };
-
       // Delay ngắn để đảm bảo state được cập nhật
-      setTimeout(checkShopReview, 100);
+      setTimeout(() => {
+        navigate('/customer/order-review', {
+          state: {
+            orderId: orderData.orderId,
+            shopName: orderData.shopName,
+            shopAvatar: orderData.shopAvatar,
+            userId: orderData.userId,
+          },
+          replace: true // Thay thế history thay vì thêm mới
+        });
+      }, 100);
     } catch (error) {
       console.error("Error submitting shipper review:", error);
       alert(error.message || "Không thể gửi đánh giá. Vui lòng thử lại.");
@@ -308,43 +283,7 @@ const ShipperReview = () => {
       <div style={s.buttonContainer}>
         <button
           style={s.skipButton}
-          onClick={async () => {
-            if (orderData.shopName) {
-              // Check nếu đã review shop
-              try {
-                const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
-                console.log('Checking shop review for shopId:', orderData.shopId, 'userId:', orderData.userId);
-                const response = await fetch(`${API_BASE_URL}/reviews/shop/${orderData.shopId}/stats`, {
-                  credentials: 'include'
-                });
-                const result = await response.json();
-                console.log('Shop review stats:', result);
-                const userShopReviews = result.data?.reviews?.filter(r => r.reviewer_id === parseInt(orderData.userId)) || [];
-                console.log('User shop reviews:', userShopReviews);
-                
-                if (userShopReviews.length === 0) {
-                  // Chưa review shop, chuyển đến
-                  console.log('Chưa review shop, chuyển đến order-review');
-                  navigate('/customer/order-review', {
-                    state: {
-                      orderId: orderData.orderId,
-                      shopName: orderData.shopName,
-                      shopAvatar: orderData.shopAvatar,
-                    }
-                  });
-                } else {
-                  // Đã review shop, về orders
-                  console.log('Đã review shop, về orders');
-                  navigate('/customer/orders');
-                }
-              } catch (error) {
-                console.error('Error checking shop review:', error);
-                navigate('/customer/orders');
-              }
-            } else {
-              navigate('/customer/orders');
-            }
-          }}
+          onClick={() => navigate(-1)}
           onMouseEnter={(e) => e.target.style.backgroundColor = '#F5F5F5'}
           onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
         >

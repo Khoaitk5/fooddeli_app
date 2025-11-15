@@ -5,7 +5,6 @@ import { OrderStatusTimeline } from "@/components/role-specific/Customer/OrderSt
 import { DeliveryPersonCard } from "@/components/role-specific/Customer/DeliveryPersonCard";
 import { OrderDetailsCard } from "@/components/role-specific/Customer/OrderDetailsCard";
 import { DeliveryAddressCard } from "@/components/role-specific/Customer/DeliveryAddressCard";
-import SubmitButton from "@/components/shared/SubmitButton";
 
 export default function OrderTracking() {
   const navigate = useNavigate();
@@ -63,62 +62,42 @@ export default function OrderTracking() {
     return () => clearInterval(interval);
   }, [orderId]);
 
-  // 🆕 Khi đơn hàng completed, chuyển đến đánh giá shipper hoặc shop
-  useEffect(() => {
-    if (order && order.status === 'completed') {
-      // Kiểm tra review status
-      const checkReviewStatus = async () => {
-        try {
-          const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
-          
-          // Check shipper review
-          const shipperResponse = await fetch(`${API_BASE_URL}/reviews/shipper/${order.shipper_id}/stats`, {
-            credentials: 'include'
-          });
-          const shipperResult = await shipperResponse.json();
-          const userShipperReviews = shipperResult.data?.reviews?.filter(r => r.reviewer_id === order.user_id) || [];
-          const hasShipperReview = userShipperReviews.length > 0;
+  // 🆕 Khi đơn hàng completed, chuyển đến đánh giá shipper
+  // useEffect(() => {
+  //   if (order && order.status === 'completed') {
+  //     // Kiểm tra xem đã đánh giá shipper chưa
+  //     const checkShipperReview = async () => {
+  //       try {
+  //         const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:5000/api";
+  //         const response = await fetch(`${API_BASE_URL}/reviews/shipper/${order.shipper_id}/stats`, {
+  //           credentials: 'include'
+  //         });
+  //         const result = await response.json();
 
-          // Check shop review
-          const shopResponse = await fetch(`${API_BASE_URL}/reviews/shop/${order.shop_id}/stats`, {
-            credentials: 'include'
-          });
-          const shopResult = await shopResponse.json();
-          const userShopReviews = shopResult.data?.reviews?.filter(r => r.reviewer_id === order.user_id) || [];
-          const hasShopReview = userShopReviews.length > 0;
+  //         // Nếu chưa có review nào từ user này cho shipper này
+  //         const userReviews = result.data?.reviews?.filter(r => r.reviewer_id === order.user_id) || [];
 
-          if (!hasShipperReview) {
-            // Chuyển đến đánh giá shipper
-            navigate('/customer/shipper-review', {
-              state: {
-                orderId: order.order_id,
-                shipperName: order.shipper_name,
-                shipperAvatar: order.shipper_avatar,
-                shopName: order.shop_name,
-                shopAvatar: order.shop_image,
-                shopId: order.shop_id,
-                userId: order.user_id,
-              }
-            });
-          } else if (!hasShopReview) {
-            // Chuyển đến đánh giá shop
-            navigate('/customer/order-review', {
-              state: {
-                orderId: order.order_id,
-                shopName: order.shop_name,
-                shopAvatar: order.shop_image,
-              }
-            });
-          }
-          // Nếu cả hai đã review, không chuyển
-        } catch (error) {
-          console.error('Error checking review status:', error);
-        }
-      };
+  //         if (userReviews.length === 0) {
+  //           // Chuyển đến đánh giá shipper
+  //           navigate('/customer/shipper-review', {
+  //             state: {
+  //               orderId: order.order_id,
+  //               shipperName: order.shipper_name,
+  //               shipperAvatar: order.shipper_avatar,
+  //               shopName: order.shop_name,
+  //               shopAvatar: order.shop_image,
+  //               userId: order.user_id,
+  //             }
+  //           });
+  //         }
+  //       } catch (error) {
+  //         console.error('Error checking shipper review:', error);
+  //       }
+  //     };
 
-      checkReviewStatus();
-    }
-  }, [order, navigate]);
+  //     checkShipperReview();
+  //   }
+  // }, [order, navigate]);
 
   if (loading)
     return <div style={{ padding: "2rem" }}>⏳ Đang tải đơn hàng...</div>;
@@ -146,17 +125,9 @@ export default function OrderTracking() {
     if (!addr) return "Không có địa chỉ";
     try {
       const parsed = typeof addr === "string" ? JSON.parse(addr) : addr;
-      // Nếu là object từ addresses API, có address_line
-      if (parsed.address_line) {
-        const { detail, ward, province } = parsed.address_line;
-        return [detail, ward, province].filter(Boolean).join(", ");
-      }
-      // Nếu là object trực tiếp
-      if (parsed.detail) {
-        return [parsed.detail, parsed.ward, parsed.province || parsed.city].filter(Boolean).join(", ");
-      }
-      // Fallback
-      return typeof addr === "string" ? addr : "Địa chỉ không xác định";
+      return [parsed.detail, parsed.ward, parsed.district, parsed.city]
+        .filter(Boolean)
+        .join(", ");
     } catch (e) {
       return addr; // fallback nếu không parse được
     }
@@ -206,7 +177,7 @@ export default function OrderTracking() {
       {/* Header */}
       <div
         style={{
-          background: "linear-gradient(90deg, #FE5621 0%, #FE5621 100%)",
+          background: "linear-gradient(90deg, #5EAD1D 0%, #54A312 100%)",
           padding: "2rem 1.5rem",
           display: "flex",
           alignItems: "center",
@@ -242,8 +213,6 @@ export default function OrderTracking() {
           >
             {order.status === "completed"
               ? "Đơn hàng đã giao"
-              : order.status === "cancelled"
-              ? "Đơn hàng đã hủy"
               : "Đơn hàng đang giao"}
           </h1>
           <div
@@ -270,82 +239,20 @@ export default function OrderTracking() {
       <div
         style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}
       >
-        {order.status === "cancelled" ? (
-          <div
-            style={{
-              padding: "2rem",
-              textAlign: "center",
-              background: "#fff",
-              margin: "1rem",
-              borderRadius: "1rem",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
-            }}
-          >
-            <h2 style={{ color: "#666", fontSize: "1.5rem", marginBottom: "1rem" }}>
-              Đơn hàng đã bị hủy
-            </h2>
-            <p style={{ color: "#999", fontSize: "1rem" }}>
-              Đơn hàng này đã được hủy. Bạn không thể đánh giá hoặc thực hiện hành động khác.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div style={{ background: "#fff", marginBottom: "1rem" }}>
-              <OrderStatusTimeline currentStatus={currentStatus} />
-            </div>
-
-            <DeliveryPersonCard driver={driverData} />
-
-            <DeliveryAddressCard
-              pickup={formatAddress(order.shop_address)}
-              delivery={formatAddress(order.delivery_address) || "Địa chỉ của bạn"}
-              estimatedTime={order.estimated_time || "Đang cập nhật"}
-            />
-
-            <OrderDetailsCard order={orderData} />
-          </>
-        )}
-      </div>
-
-      {/* Nút hủy đơn nếu pending */}
-      {order.status === "pending" && (
-        <div
-          style={{
-            padding: "1rem",
-            background: "#fff",
-            borderTop: "1px solid #e0e0e0",
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <SubmitButton
-            onClick={async () => {
-              if (window.confirm("Bạn có chắc muốn hủy đơn hàng này?")) {
-                try {
-                  const res = await fetch("http://localhost:5000/api/orders/cancel", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({ order_id: order.order_id }),
-                  });
-                  const data = await res.json();
-                  if (data.message) {
-                    alert("Đơn hàng đã được hủy thành công");
-                    navigate("/customer/orders"); // Quay về danh sách đơn
-                  } else {
-                    alert("Lỗi khi hủy đơn: " + (data.message || "Không xác định"));
-                  }
-                } catch (err) {
-                  console.error("Lỗi hủy đơn:", err);
-                  alert("Lỗi khi hủy đơn hàng");
-                }
-              }
-            }}
-          >
-            Hủy đơn hàng
-          </SubmitButton>
+        <div style={{ background: "#fff", marginBottom: "1rem" }}>
+          <OrderStatusTimeline currentStatus={currentStatus} />
         </div>
-      )}
+
+        <DeliveryPersonCard driver={driverData} />
+
+        <DeliveryAddressCard
+          pickup={formatAddress(order.shop_address)}
+          delivery={formatAddress(order.delivery_address) || "Địa chỉ của bạn"}
+          estimatedTime={order.estimated_time || "Đang cập nhật"}
+        />
+
+        <OrderDetailsCard order={orderData} />
+      </div>
     </div>
   );
 }

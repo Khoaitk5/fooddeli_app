@@ -73,7 +73,7 @@ const PaymentMethod = () => {
   };
 
   return (
-    <div style={{ position: "relative", height: "100vh", paddingBottom: "120px" }}>
+    <div style={{ position: "relative", height: "100vh" }}>
       <div>
         <div
           style={{

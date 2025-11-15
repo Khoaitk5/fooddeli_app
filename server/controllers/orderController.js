@@ -123,7 +123,7 @@ async listMine(req, res) {
 async createCashOrder(req, res) {
 
   try {
-    const { user_id, shop_id, items = [], note, delivery_address } = req.body;
+    const { user_id, shop_id, items = [], note } = req.body;
 
     if (!user_id || !shop_id) {
       console.warn("⚠️ Thiếu user_id hoặc shop_id:", { user_id, shop_id });
@@ -138,7 +138,6 @@ async createCashOrder(req, res) {
       shop_id,
       items,
       note,
-      delivery_address,
     });
 
     console.log("✅ [Controller] createCashOrder() DONE:", order);
@@ -335,33 +334,6 @@ async createCashOrder(req, res) {
         success: false,
         message: error.message || "Lỗi khi lấy danh sách đơn hàng",
       });
-    }
-  },
-
-  /** ===========================
-   * 🔹 Hủy đơn hàng (chỉ khi pending)
-   * =========================== */
-  async cancelOrder(req, res) {
-    try {
-      const { order_id } = req.body;
-      const user = req.session?.user;
-
-      console.log("🗑️ [Cancel] Request:", { order_id, user });
-
-      if (!order_id || !user?.id) {
-        return res.status(400).json({ message: "Thiếu order_id hoặc chưa đăng nhập" });
-      }
-
-      const result = await orderService.cancelOrder(order_id, user.id);
-      if (!result) {
-        return res.status(404).json({ message: "Đơn hàng không tìm thấy hoặc không thể hủy" });
-      }
-
-      console.log("✅ [Cancel] Success:", result);
-      res.json({ message: "Đơn hàng đã được hủy thành công" });
-    } catch (e) {
-      console.error("❌ [Cancel] Error:", e);
-      res.status(400).json({ message: e.message || "Lỗi khi hủy đơn hàng" });
     }
   },
 };

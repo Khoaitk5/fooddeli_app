@@ -106,7 +106,7 @@ function OrdersPage({
           restaurant: order.shop_name || "Quán chưa rõ",
           restaurantAddress:
             formatAddress(order.shop_address) || "Địa chỉ quán chưa có",
-          deliveredAt: order.status === "completed" ? (order.updated_at || "Vừa xong") : null,
+          deliveredAt: order.updated_at || "Vừa xong",
           total: Number(order.total_price || 0),
           items:
             order.details?.map((d) => ({
@@ -123,8 +123,6 @@ function OrdersPage({
           userId: order.user_id,
           shipperName: order.shipper_name,
           shipperAvatar: order.shipper_avatar,
-          isCancelled: order.status === "cancelled",
-          status: order.status === "cancelled" ? "Đã hủy" : "Đã giao",
           rated: false, // sẽ được cập nhật trong CompletedOrderCard
         }));
 

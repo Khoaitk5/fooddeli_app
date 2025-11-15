@@ -7,6 +7,7 @@ const EmptyState = ({ message }) => {
       textAlign: 'center',
       padding: '4rem 2rem',
       color: '#999',
+      key: message // Thêm key để tránh React reconciliation issues
     }}>
       <ShoppingBag size={64} color="#ccc" strokeWidth={1.5} />
       <p style={{ marginTop: '1rem', fontSize: '1.25rem' }}>
