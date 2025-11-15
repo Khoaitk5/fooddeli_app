@@ -106,7 +106,7 @@ exports.createShipper = async (req, res) => {
     const link = await userShipperContractService.link({
       user_id,
       contract_id: createdContract.id,
-      status: "active",
+      status: "pending",
       is_active: true,
     });
 

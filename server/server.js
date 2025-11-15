@@ -28,6 +28,7 @@ import userShopContractRoutes from "./routes/userShopContractRoutes.js";
 import userShipperContractRoutes from "./routes/userShipperContractRoutes.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import provinceRoutes from "./routes/provinceRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 dotenv.config();
 
@@ -89,6 +90,7 @@ app.use("/api/vouchers", voucherRoutes);
 app.use("/api/shipper", shipperRoutes);
 app.use("/api/payments", paymentRoutes); // ✅ Mount route PayOS
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/shop-contracts", shopContractRoutes);
 app.use("/api/shipper-contracts", shipperContractRoutes);
 app.use("/api/user-shop-contracts", userShopContractRoutes);

@@ -11,6 +11,8 @@ class Video {
     likes_count,
     comments_count,
     status,
+    moderation_result,
+    moderation_date,
     created_at,
     updated_at,
   }) {
@@ -25,6 +27,8 @@ class Video {
     this.likes_count = likes_count;
     this.comments_count = comments_count;
     this.status = status;
+    this.moderation_result = moderation_result;
+    this.moderation_date = moderation_date;
     this.created_at = created_at;
     this.updated_at = updated_at;
   }

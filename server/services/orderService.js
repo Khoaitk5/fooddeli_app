@@ -4,6 +4,7 @@ const orderDetailDao = require("../dao/order_detailDao");
 const orderDetailService = require("./order_detailService");
 const shopProfileService = require("./shop_profileService");
 const addressService = require("./addressService");
+const notificationService = require("./notificationService");
 
 /**
  * 📍 Tính khoảng cách giữa 2 tọa độ theo công thức Haversine (km)
@@ -20,6 +21,29 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+const ORDER_STATUS_MESSAGES = {
+  pending: {
+    title: (label) => `${label} đang chờ xác nhận`,
+    body: () => "Cửa hàng đã nhận được đơn và sẽ xử lý trong ít phút nữa.",
+  },
+  cooking: {
+    title: (label) => `${label} đang được chế biến`,
+    body: () => "Đầu bếp đang chuẩn bị món ăn cho bạn, vui lòng đợi trong giây lát.",
+  },
+  shipping: {
+    title: (label) => `${label} đang trên đường giao`,
+    body: () => "Shipper đã rời quán và sẽ sớm tới địa chỉ của bạn.",
+  },
+  completed: {
+    title: (label) => `${label} đã giao thành công`,
+    body: () => "Chúc bạn ngon miệng! Đừng quên chia sẻ đánh giá về trải nghiệm nhé.",
+  },
+  cancelled: {
+    title: (label) => `${label} đã bị huỷ`,
+    body: () => "Đơn hàng đã bị huỷ. Nếu cần hỗ trợ, vui lòng liên hệ chăm sóc khách hàng.",
+  },
+};
 
 class OrderService {
   /**
@@ -108,7 +132,13 @@ class OrderService {
   async updateStatus(orderId, status) {
     const id = Number(orderId);
     if (!id || !status) throw new Error("orderId and status are required");
-    return await orderDao.updateStatus(id, status);
+    const updated = await orderDao.updateStatus(id, status);
+    if (updated) {
+      await this.#notifyOrderStatus(updated).catch((err) =>
+        console.error("[OrderService] notifyOrderStatus error", err)
+      );
+    }
+    return updated;
   }
 
   /**
@@ -304,6 +334,13 @@ class OrderService {
     });
 
     console.log("✅ [Service] Order rỗng đã tạo:", result);
+
+    if (result) {
+      await this.#notifyOrderStatus(result).catch((err) =>
+        console.error("[OrderService] notifyOrderStatus error", err)
+      );
+    }
+
     return result;
   }
 async listByUser(userId, { status, limit = 20, offset = 0, full = false } = {}) {
@@ -357,6 +394,37 @@ async getFullOrdersByUserId(userId, { status, limit = 20, offset = 0 } = {}) {
     const result = await orderDao.updateStatus(id, "cancelled");
     console.log("✅ [Service Cancel] Updated:", result);
     return result;
+  }
+
+  /**
+   * 🔔 Private method: Gửi thông báo khi đơn hàng thay đổi trạng thái
+   */
+  async #notifyOrderStatus(order) {
+    if (!order || !order.status) return;
+
+    const statusConfig = ORDER_STATUS_MESSAGES[order.status];
+    if (!statusConfig) {
+      console.warn(`[OrderService] Không có config thông báo cho status: ${order.status}`);
+      return;
+    }
+
+    const orderLabel = `Đơn hàng #${order.order_id}`;
+    const title = statusConfig.title(orderLabel);
+    const body = statusConfig.body();
+
+    try {
+      await notificationService.createNotification({
+        user_id: order.user_id,
+        title,
+        body,
+        type: "order_update",
+        reference_id: order.order_id,
+      });
+      console.log(`✅ [OrderService] Đã gửi thông báo: ${title}`);
+    } catch (error) {
+      console.error(`❌ [OrderService] Lỗi gửi thông báo:`, error);
+      throw error;
+    }
   }
 }
 
