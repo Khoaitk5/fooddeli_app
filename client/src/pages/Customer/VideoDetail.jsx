@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import HeartIcon from "../../components/shared/HeartIcon";
 import CommentIcon from "../../components/shared/CommentIcon";
 import ShareIcon from "../../components/shared/ShareIcon";
 import MessagePopup from "../../components/shared/MessagePopup";
 import BackArrow from "../../components/shared/BackArrow";
+import { AuthContext } from "../../contexts/AuthContext";
 
 // Utility function to format counts (e.g., 1200 -> "1.2K")
 const formatCount = (num) => {
@@ -20,6 +21,7 @@ const SHARE_COUNT_DEFAULT = "132.5K";
 const VideoDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useContext(AuthContext);
   const video = location.state?.video; // Nhận video từ state
   const [loadingVideo, setLoadingVideo] = useState(true);
   const [likedVideo, setLikedVideo] = useState(false);
@@ -87,6 +89,12 @@ const VideoDetail = () => {
   const handleHeartClick = async (e) => {
     e.stopPropagation();
     e.preventDefault();
+
+    if (!user) {
+      alert("Bạn cần đăng nhập để thích video!");
+      navigate("/login");
+      return;
+    }
 
     if (!video || !video.video_id) return;
 

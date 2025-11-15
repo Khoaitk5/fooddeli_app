@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import ReportForm from "./ReportForm";
+import { AuthContext } from "../../contexts/AuthContext";
 
 const MessagePopup = ({ isVisible, onClose, videoId,onCommentCountChange  }) => {
   const [showReportForm, setShowReportForm] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewCount, setReviewCount] = useState(0);
   const [newComment, setNewComment] = useState("");
+  const { user } = useContext(AuthContext);
 
   const formatTimeAgo = (dateString) => {
   const now = new Date();
@@ -54,6 +56,14 @@ const MessagePopup = ({ isVisible, onClose, videoId,onCommentCountChange  }) => 
   }, [isVisible, videoId]);   // ✅ thêm isVisible vào deps
 
 const submitComment = async () => {
+  if (!user) {
+    alert("Bạn cần đăng nhập để bình luận!");
+    // Có lẽ cần navigate, nhưng component này không có navigate
+    // Có thể emit event hoặc close popup
+    onClose();
+    return;
+  }
+
   if (!newComment.trim() || !videoId) return;
 
   try {

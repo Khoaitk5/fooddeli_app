@@ -14,34 +14,6 @@ const LoginPhone = () => {
   const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
 
-  // Common styles
-  const labelStyle = {
-    justifyContent: "center",
-    display: "flex",
-    flexDirection: "column",
-    fontSize: "1.5rem",
-    fontWeight: "700",
-    wordWrap: "break-word",
-  };
-
-  const activeLabelStyle = {
-    ...labelStyle,
-    color: "#363A33", // Black for active
-  };
-
-  const inactiveLabelStyle = {
-    ...labelStyle,
-    color: "#868686", // Gray for inactive
-  };
-
-  const outlineStyle = {
-    position: "absolute",
-    top: "4vh",
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 1,
-  };
-
   useEffect(() => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
@@ -50,13 +22,12 @@ const LoginPhone = () => {
         {
           size: "invisible",
           callback: (response) => {
-            console.log("✅ reCAPTCHA verified:", response);
+            // reCAPTCHA verified
           },
         }
       );
       window.recaptchaVerifier.render().then((widgetId) => {
         window.recaptchaWidgetId = widgetId;
-        console.log("✅ reCAPTCHA widget ID:", widgetId);
       });
     }
   }, []);
@@ -165,28 +136,28 @@ const LoginPhone = () => {
             transform: "translateX(-50%)",
           }}
         >
-          <MiniLogo></MiniLogo>
+          <MiniLogo />
         </div>
       </div>
 
-        {/* Email Link */}
-        <div
-          style={{
-            position: "absolute",
-            top: "27.97vh",
-            left: "50%",
-            transform: "translateX(-50%)",
-            cursor: "pointer",
-            color: '#408308',
-            fontSize: '1.2rem',
-            fontWeight: '700',
-            wordWrap: 'break-word',
-            zIndex: 10
-          }}
-          onClick={() => navigate("/login/email")}
-        >
-          Đăng nhập bằng email
-        </div>
+      {/* Email Link */}
+      <div
+        style={{
+          position: "absolute",
+          top: "27.97vh",
+          left: "50%",
+          transform: "translateX(-50%)",
+          cursor: "pointer",
+          color: "#FE5621",
+          fontSize: "1.2rem",
+          fontWeight: "700",
+          wordWrap: "break-word",
+          zIndex: 10,
+        }}
+        onClick={() => navigate("/login/email")}
+      >
+        Đăng nhập bằng email
+      </div>
 
       {/* Login Title */}
       <div
@@ -194,15 +165,23 @@ const LoginPhone = () => {
           position: "absolute",
           top: "8.79vh",
           zIndex: 10,
-          left: "5.33vw"
+          left: "5.33vw",
         }}
       >
-        <div style={{color: '#363A33', fontSize: '2.5rem', fontWeight: '700', wordWrap: 'break-word', maxWidth: '80vw',}}>
+        <div
+          style={{
+            color: "#363A33",
+            fontSize: "2.5rem",
+            fontWeight: "700",
+            wordWrap: "break-word",
+            maxWidth: "80vw",
+          }}
+        >
           Đăng nhập vào tài khoản của bạn
         </div>
       </div>
 
-      <div id="recaptcha-container" style={{ display: "none" }}></div>
+      <div id="recaptcha-container" style={{ display: "none" }} />
 
       {/* Form */}
       <form
@@ -217,11 +196,14 @@ const LoginPhone = () => {
           alignItems: "center",
         }}
       >
-        <InputFrame isFocused={isFocused} style={{
-          position: "absolute",
-          left: "50%",
-          transform: "translateX(-50%)"
-        }}>
+        <InputFrame
+          isFocused={isFocused}
+          style={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
           <input
             type="tel"
             placeholder="Số điện thoại"
@@ -249,10 +231,10 @@ const LoginPhone = () => {
       <SubmitButton
         isValid={phone.length === 10}
         style={{
-          position: 'fixed',
-          bottom: '9.335vh',
-          left: '50%',
-          transform: 'translateX(-50%)'
+          position: "fixed",
+          bottom: "9.335vh",
+          left: "50%",
+          transform: "translateX(-50%)",
         }}
         onClick={handleSubmit}
       >

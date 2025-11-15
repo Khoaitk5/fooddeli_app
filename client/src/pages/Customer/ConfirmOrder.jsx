@@ -12,6 +12,7 @@ import PlusIcon from "../../components/shared/PlusIcon";
 import MinusIcon from "../../components/shared/MinusIcon";
 import AddressSelector from "../../components/role-specific/Customer/AddressSelector";
 import axios from "axios";
+import { useOrder } from "../../contexts/OrderContext";
 
 // --- Styles cho Modal ---
 const modalStyles = {
@@ -96,9 +97,7 @@ export default function ConfirmOrder() {
   const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(null);
   const [note, setNote] = useState("");
-  const savedPayment =
-    localStorage.getItem("selectedPaymentMethod") || "Tiền mặt";
-  const [paymentMethod, setPaymentMethod] = useState(savedPayment);
+  const { paymentMethodName, setPaymentMethodName } = useOrder();
   const [couponCount, setCouponCount] = useState(0);
 
   // Các biến cho PaymentDetails
@@ -113,12 +112,46 @@ export default function ConfirmOrder() {
   // totalPrice (tổng cuối cùng)
   const totalPrice = totalItemPrice + shippingFee - foodDiscount - shippingDiscount;
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
   
-  // Format contact info từ user data
-  const contactInfo = currentUser?.full_name && currentUser?.phone_number 
-    ? `${currentUser.full_name} | ${currentUser.phone_number}`
-    : currentUser?.email || "Chưa có thông tin liên hệ";
+  // Format contact info từ user data (chỉ tên và số điện thoại)
+  const contactInfo = currentUser?.full_name && currentUser?.phone
+    ? `${currentUser.full_name} | ${currentUser.phone}`
+    : "Chưa có thông tin liên hệ";
+
+  // Fetch current user from database
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/me", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.success) {
+          setCurrentUser(data.user);
+        } else {
+          // Nếu không có session, redirect to login
+          navigate("/login");
+        }
+      } catch (err) {
+        console.error("Lỗi fetch user:", err);
+        navigate("/login");
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
+
+  // Check số điện thoại khi component mount
+  useEffect(() => {
+    if (!loadingUser && currentUser && !currentUser.phone) {
+      alert("Vui lòng cập nhật số điện thoại trước khi đặt hàng");
+      navigate("/customer/profile");
+    }
+  }, [currentUser, loadingUser, navigate]);
 
   // Fetch địa chỉ mặc định khi component mount
   useEffect(() => {
@@ -160,6 +193,14 @@ export default function ConfirmOrder() {
     
     fetchDefaultAddress();
   }, []);
+
+  // Sync payment method from localStorage to context on mount
+  useEffect(() => {
+    const savedPayment = localStorage.getItem("selectedPaymentMethod");
+    if (savedPayment && savedPayment !== paymentMethodName) {
+      setPaymentMethodName(savedPayment);
+    }
+  }, [paymentMethodName, setPaymentMethodName]);
 
   // Format địa chỉ hiển thị
   const formatAddress = (addr) => {
@@ -344,11 +385,34 @@ export default function ConfirmOrder() {
     );
   }
 
+  // Nếu đang loading user
+  if (loadingUser) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <p style={{ fontSize: "1.2rem", color: "#555" }}>Đang tải...</p>
+      </div>
+    );
+  }
+
   // ==========================
   // 🔘 Nút "Đặt đơn"
   // ==========================
   const handleConfirmOrder = async () => {
-    if (paymentMethod === "Chuyển khoản") {
+    // Check số điện thoại trước khi đặt hàng
+    if (!currentUser?.phone) {
+      alert("Vui lòng cập nhật số điện thoại trước khi đặt hàng");
+      navigate("/customer/profile");
+      return;
+    }
+
+    if (paymentMethodName === "Chuyển khoản") {
       try {
         const res = await fetch("http://localhost:5000/api/payments/create", {
           method: "POST",
@@ -356,9 +420,16 @@ export default function ConfirmOrder() {
           body: JSON.stringify({
             orderCode: Date.now(),
             amount: 5000, // test, có thể đổi thành totalPrice
-            description: `FD-${currentUser?.id || 0}-${shop_id}-${Date.now()
-              .toString()
-              .slice(-5)}`,
+            description: JSON.stringify({
+              user_id: currentUser?.id,
+              shop_id,
+              delivery_address: currentAddress ? JSON.stringify(currentAddress) : null,
+              items: cartItems.map((i) => ({
+                product_id: i.product_id,
+                quantity: i.quantity,
+                unit_price: i.unit_price,
+              })),
+            }),
             metadata: JSON.stringify({
               user_id: currentUser?.id,
               shop_id,
@@ -394,6 +465,7 @@ export default function ConfirmOrder() {
               user_id: currentUser?.id,
               shop_id,
               note,
+              delivery_address: currentAddress ? JSON.stringify(currentAddress) : null,
               items: cartItems.map((i) => ({
                 product_id: i.product_id,
                 quantity: i.quantity,
@@ -406,8 +478,30 @@ export default function ConfirmOrder() {
         const data = await res.json();
         if (data.success) {
           console.log("✅ Đã tạo đơn tiền mặt:", data.order);
+          
+          // Xóa các sản phẩm đã đặt từ giỏ hàng
+          try {
+            for (const item of cartItems) {
+              await fetch(`http://localhost:5000/api/cart/items`, {
+                method: "DELETE",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ itemId: item.id }),
+              });
+            }
+            console.log("✅ Đã xóa sản phẩm đã đặt khỏi giỏ hàng");
+          } catch (err) {
+            console.error("❌ Lỗi xóa sản phẩm khỏi giỏ hàng:", err);
+          }
+          
           navigate("/customer/order-success", {
-            state: { shop_id, shop_name, totalPrice, paymentMethod },
+            state: { 
+              shop_id, 
+              shop_name, 
+              totalPrice, 
+              paymentMethod: paymentMethodName,
+              order_id: data.order?.id || data.order?.order_id,
+            },
           });
         } else {
           alert("❌ Không thể tạo đơn hàng tiền mặt!");
@@ -801,7 +895,7 @@ export default function ConfirmOrder() {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F5F5F5"}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
           >
-            {paymentMethod === "Tiền mặt" ? (
+            {paymentMethodName === "Tiền mặt" ? (
               <PaymentIcon height="1.4rem" width="1.4rem" />
             ) : (
               <CardIcon height="1.4rem" width="1.4rem" />
@@ -813,7 +907,7 @@ export default function ConfirmOrder() {
                 fontWeight: "600",
               }}
             >
-              {paymentMethod}
+              {paymentMethodName}
             </div>
           </div>
 

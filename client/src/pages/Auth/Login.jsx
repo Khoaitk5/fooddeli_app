@@ -13,7 +13,6 @@ import "@/App.css";
 const Login = () => {
   const navigate = useNavigate();
 
-  // ⚡️ GIỮ NGUYÊN LOGIC ĐĂNG NHẬP GOOGLE
   const handleGoogleLogin = async () => {
     try {
       // 🔹 Mở popup đăng nhập Google
