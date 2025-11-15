@@ -18,6 +18,7 @@ class Order {
     is_settled,
     settled_at,
     payment_id,
+    delivery_address,
     created_at,
     updated_at,
   }) {
@@ -39,6 +40,7 @@ class Order {
     this.is_settled = is_settled;
     this.settled_at = settled_at;
     this.payment_id = payment_id;
+    this.delivery_address = delivery_address;
     this.created_at = created_at;
     this.updated_at = updated_at;
   }

@@ -3,6 +3,8 @@
   import paymentDao from "../dao/paymentDao.js";
   import orderService from "../services/orderService.js";
   import orderDetailService from "../services/order_detailService.js";
+  import cartItemService from "../services/cart_itemService.js";
+  import cartService from "../services/cartService.js";
 
   /**
    * ✅ API: Tạo link thanh toán PayOS
@@ -59,14 +61,15 @@
 
       // ✅ 2️⃣ Nếu thanh toán thành công thì tạo Order
       if (data.status === "PAID") {
-        let user_id, shop_id, items = [];
+        let user_id, shop_id, items = [], delivery_address = null;
 
         try {
-          // ⚙️ FE nên gửi JSON string trong description
-          // ví dụ: '{"user_id":1,"shop_id":3,"items":[{"product_id":1,"quantity":2,"unit_price":30000}]}'
+          // ⚙️ FE gửi JSON string trong description
+          // ví dụ: '{"user_id":1,"shop_id":3,"delivery_address":"...","items":[{"product_id":1,"quantity":2,"unit_price":30000}]}'
           const meta = JSON.parse(data.description);
           user_id = meta.user_id;
           shop_id = meta.shop_id;
+          delivery_address = meta.delivery_address;
           items = meta.items || [];
         } catch (err) {
           console.warn("⚠️ Không parse được description JSON:", data.description);
@@ -83,17 +86,33 @@
           user_id,
           shop_id,
           payment_method: "Chuyển khoản",
-          payment_status: "paid",
           delivery_fee: 15000,
-          status: "Đã thanh toán",
+          delivery_address,
         });
+
+        // 🔄 Cập nhật trạng thái đơn hàng
+        await orderService.updateStatus(order.order_id, "Đã thanh toán");
 
         // 🛒 4️⃣ Thêm chi tiết sản phẩm (order_details)
         if (Array.isArray(items) && items.length > 0) {
           await orderDetailService.addMany(order.order_id, items);
         }
 
-        // 💰 5️⃣ Cập nhật trạng thái thanh toán
+        // 🗑️ 5️⃣ Xóa sản phẩm đã đặt khỏi giỏ hàng
+        try {
+          const cart = await cartService.getCartByUserId(user_id);
+          if (cart) {
+            const cartItems = await cartItemService.getItemsByCartId(cart.cart_id);
+            for (const item of cartItems) {
+              await cartItemService.deleteCartItem(item.id);
+            }
+            console.log("✅ Đã xóa giỏ hàng sau thanh toán");
+          }
+        } catch (err) {
+          console.error("❌ Lỗi xóa giỏ hàng:", err);
+        }
+
+        // 💰 6️⃣ Cập nhật trạng thái thanh toán
         await orderService.updatePaymentStatus(order.order_id, "paid");
 
         console.log("✅ Đã tạo đơn hàng thành công:", order.order_id);

@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import {
   MapPin,
-  CreditCard,
   Settings,
   ChevronRight,
   Edit3,

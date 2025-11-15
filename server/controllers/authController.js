@@ -7,7 +7,7 @@ const {
   getUserByPhone,
 } = require("../services/userService");
 const jwt = require("jsonwebtoken");
-const { createSession } = require("../services/sessionService");
+const { createSession, getSessionUser } = require("../services/sessionService");
 
 // ✅ Khởi tạo Firebase Admin toàn cục
 let admin, auth;
@@ -517,6 +517,47 @@ exports.changePassword = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: error.message || "Không thể đổi mật khẩu.",
+    });
+  }
+};
+
+/**
+ * 👤 Lấy thông tin user hiện tại
+ */
+exports.getMe = async (req, res) => {
+  try {
+    const sessionUser = getSessionUser(req);
+    if (!sessionUser) {
+      return res.status(401).json({
+        success: false,
+        message: "Chưa đăng nhập",
+      });
+    }
+
+    const user = await getUserById(sessionUser.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy user",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("❌ Lỗi getMe:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server",
     });
   }
 };

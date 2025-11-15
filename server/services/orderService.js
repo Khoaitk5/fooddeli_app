@@ -123,7 +123,7 @@ class OrderService {
   /**
    * 💵 Tạo đơn hàng tiền mặt (COD)
    */
-  async createCashOrder({ user_id, shop_id, items = [], note = "" }) {
+  async createCashOrder({ user_id, shop_id, items = [], note = "", delivery_address = null }) {
     const uid = Number(user_id);
     const sid = Number(shop_id);
 
@@ -142,6 +142,7 @@ class OrderService {
       shop_id: sid,
       payment_method: "COD",
       delivery_fee: 15000,
+      delivery_address,
     });
     console.log("✅ [Service] Order rỗng tạo xong:", {
       order_id: order.order_id,
@@ -176,12 +177,25 @@ class OrderService {
 
     console.log("🎯 [Service] createCashOrder() HOÀN TẤT.");
     return updated;
+
+    // 🕒 Tự động hủy sau 5 phút nếu shop chưa xác nhận (cooking)
+    setTimeout(async () => {
+      try {
+        const currentOrder = await orderDao.findById("order_id", order.order_id);
+        if (currentOrder && currentOrder.status === "pending") {
+          console.log(`⏰ [Auto-cancel] Hủy đơn ${order.order_id} sau 5 phút do shop chưa xác nhận`);
+          await orderDao.updateStatus(order.order_id, "cancelled");
+        }
+      } catch (err) {
+        console.error("❌ Lỗi auto-cancel:", err);
+      }
+    }, 5 * 60 * 1000); // 5 phút
   }
 
   /**
    * 🆕 Tạo 1 order trống (đơn cơ bản)
    */
-  async createEmptyOrder({ user_id, shop_id, payment_method = "COD", delivery_fee = 0 }) {
+  async createEmptyOrder({ user_id, shop_id, payment_method = "COD", delivery_fee = 0, delivery_address = null }) {
     const uid = Number(user_id);
     const sid = Number(shop_id);
     if (!uid || !sid) throw new Error("user_id và shop_id là bắt buộc");
@@ -208,6 +222,7 @@ class OrderService {
       payment_method,
       payment_status: "unpaid",
       is_settled: false,
+      delivery_address,
     });
 
     console.log("✅ [Service] Order rỗng đã tạo:", result);
@@ -234,8 +249,37 @@ async getFullOrdersByUserId(userId, { status, limit = 20, offset = 0 } = {}) {
   const uid = Number(userId);
   if (!uid) throw new Error("userId is required");
   return await orderDao.getFullOrdersByUserId(uid, { status, limit, offset });
-}
+  }
 
+  /**
+   * ❌ Hủy đơn hàng (chỉ khi pending và thuộc user)
+   */
+  async cancelOrder(orderId, userId) {
+    const id = Number(orderId);
+    const uid = Number(userId);
+    if (!id || !uid) throw new Error("orderId và userId là bắt buộc");
+
+    console.log("🗑️ [Service Cancel] Start:", { id, uid });
+
+    // Kiểm tra đơn hàng tồn tại và thuộc user
+    const order = await orderDao.findById("order_id", id);
+    console.log("📦 [Service Cancel] Found order:", order);
+    if (!order || order.user_id !== uid) {
+      console.log("❌ [Service Cancel] Not found or not owned");
+      return null;
+    }
+
+    // Chỉ hủy nếu pending
+    if (order.status !== "pending") {
+      console.log("❌ [Service Cancel] Status not pending:", order.status);
+      throw new Error("Chỉ có thể hủy đơn hàng đang chờ xác nhận");
+    }
+
+    // Cập nhật status thành cancelled
+    const result = await orderDao.updateStatus(id, "cancelled");
+    console.log("✅ [Service Cancel] Updated:", result);
+    return result;
+  }
 }
 
 module.exports = new OrderService();
