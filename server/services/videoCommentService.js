@@ -1,12 +1,13 @@
-// services/videoCommentService.js
-const videoCommentDao = require("../dao/video_commentDao");
+import videoCommentDao from "../dao/video_commentDao.js";
 
 const videoCommentService = {
   async createComment(commentData) {
     if (!commentData.video_id || !commentData.user_id || !commentData.content) {
       throw new Error("Thiếu thông tin để tạo bình luận");
     }
-    return await videoCommentDao.create(commentData);
+
+    const created = await videoCommentDao.create(commentData);
+    return await videoCommentDao.getCommentWithUser(created.id);
   },
 
   async getCommentsByVideoId(videoId) {
@@ -30,4 +31,4 @@ const videoCommentService = {
   }
 };
 
-module.exports = videoCommentService;
+export default videoCommentService;
