@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "@/components/shared/MiniLogo";
+import MiniLogo from "@/components/shared/MiniLogo";
 import FooterBar from "@/components/shared/FooterBar";
-import InputFrame from "@/components/shared/InputFrame";
-import SubmitButton from "@/components/shared/SubmitButton";
 import { auth } from "@/firebase/firebaseConfig";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
@@ -15,7 +13,157 @@ const RegisterPhone = () => {
   const [otpVerified, setOtpVerified] = useState(false);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
+  const [focusedField, setFocusedField] = useState("");
+
+  const styles = {
+    wrapper: {
+      height: "100vh",
+      background: "#ffffff",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: "16px 16px 110px",
+      boxSizing: "border-box",
+      overflow: "hidden",
+    },
+    card: {
+      width: "100%",
+      maxWidth: "420px",
+      background: "#ffffff",
+      borderRadius: "24px",
+      padding: "28px 28px 38px",
+      boxShadow: "none",
+      position: "relative",
+      overflow: "hidden",
+    },
+    logoWrap: {
+      display: "flex",
+      justifyContent: "center",
+      marginBottom: "16px",
+      position: "relative",
+      zIndex: 1,
+    },
+    title: {
+      textAlign: "center",
+      fontSize: "28px",
+      fontFamily: "Be Vietnam Pro",
+      fontWeight: 700,
+      color: "#161823",
+      marginBottom: "6px",
+      position: "relative",
+      zIndex: 1,
+    },
+    sectionHeader: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "12px",
+      position: "relative",
+      zIndex: 1,
+    },
+    label: {
+      fontWeight: 600,
+      fontSize: "13px",
+      color: "#161823",
+    },
+    switchButton: {
+      background: "transparent",
+      border: "none",
+      color: "#EF5126",
+      fontSize: "12px",
+      fontWeight: 600,
+      cursor: "pointer",
+      textDecoration: "underline",
+    },
+    inputWrapper: {
+      borderRadius: "18px",
+      height: "56px",
+      padding: "0 18px",
+      display: "flex",
+      alignItems: "center",
+      background: "#FAFAFA",
+      transition: "all 0.2s ease",
+      position: "relative",
+      zIndex: 1,
+      border: "1.5px solid rgba(22, 24, 35, 0.08)",
+    },
+    input: {
+      flex: 1,
+      border: "none",
+      outline: "none",
+      background: "transparent",
+      fontSize: "15px",
+      fontFamily: "Be Vietnam Pro",
+      color: "#161823",
+    },
+    helper: {
+      fontSize: "12px",
+      color: "rgba(22, 24, 35, 0.55)",
+      marginTop: "8px",
+      lineHeight: 1.4,
+      position: "relative",
+      zIndex: 1,
+    },
+    divider: {
+      width: "1px",
+      height: "60%",
+      background: "rgba(22, 24, 35, 0.12)",
+    },
+    otpButton: {
+      border: "none",
+      background: "rgba(239, 81, 38, 0.08)",
+      color: "#EF5126",
+      fontWeight: 600,
+      fontSize: "13px",
+      padding: "0 18px",
+      height: "100%",
+      cursor: "pointer",
+      transition: "opacity 0.2s ease",
+    },
+    primaryButton: {
+      width: "100%",
+      marginTop: "32px",
+      height: "52px",
+      borderRadius: "999px",
+      border: "none",
+      background: "linear-gradient(120deg, #FE5621, #FD4E1E)",
+      color: "#ffffff",
+      fontSize: "16px",
+      fontWeight: 700,
+      cursor: "pointer",
+      boxShadow: "0 12px 24px rgba(253, 78, 30, 0.25)",
+      transition: "opacity 0.2s ease",
+      position: "relative",
+      zIndex: 1,
+    },
+    primaryButtonDisabled: {
+      background: "rgba(22, 24, 35, 0.08)",
+      color: "rgba(22, 24, 35, 0.45)",
+      boxShadow: "none",
+      cursor: "not-allowed",
+    },
+  };
+
+  const getInputWrapper = (field, options = {}) => {
+    const { disabled = false, style: extraStyle = {} } = options;
+    const baseBorder = disabled
+      ? "1.5px solid rgba(22, 24, 35, 0.05)"
+      : focusedField === field
+      ? "1.5px solid #EF5126"
+      : "1.5px solid rgba(22, 24, 35, 0.08)";
+
+    return {
+      ...styles.inputWrapper,
+      border: baseBorder,
+      background: disabled ? "#F0F0F0" : styles.inputWrapper.background,
+      cursor: disabled ? "not-allowed" : "text",
+      boxShadow:
+        !disabled && focusedField === field
+          ? "0 0 0 3px rgba(239, 81, 38, 0.1)"
+          : "none",
+      ...extraStyle,
+    };
+  };
 
   // ✅ Chuẩn hoá số điện thoại (+84)
   const formatPhoneNumber = (raw) => {
@@ -129,245 +277,109 @@ const RegisterPhone = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#fff",
-      }}
-    >
-      {/* 📱 Logo */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "2.82vh",
-          transform: "translateX(-50%)",
-        }}
-      >
-        <Logo />
-      </div>
+    <>
+      <div style={styles.wrapper}>
+        <div style={styles.card}>
+          <div style={styles.logoWrap}>
+            <MiniLogo />
+          </div>
+          <div style={styles.title}>Tạo tài khoản</div>
+          <div style={{ height: "8px" }} />
 
-      {/* 📝 Tiêu đề */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "200px",
-          transform: "translateX(-50%)",
-          color: "#363a33",
-          fontSize: "3.2rem",
-          fontWeight: "bold",
-        }}
-      >
-        Đăng ký
-      </div>
-
-      {/* 📞 Nhập số điện thoại */}
-      <div
-        style={{
-          position: "absolute",
-          top: "278px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "267px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div
-          style={{
-            color: "#161823",
-            fontSize: 13,
-            fontFamily: "Be Vietnam Pro",
-            fontWeight: "600",
-          }}
-        >
-          Số điện thoại
-        </div>
-
-        <div
-          style={{
-            color: "rgba(22, 24, 35, 0.75)",
-            fontSize: 11,
-            fontFamily: "IBM Plex Sans",
-            fontWeight: "600",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/register/email")}
-        >
-          Đăng ký bằng email
-        </div>
-      </div>
-
-      {/* 📥 Ô nhập số điện thoại */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "310px",
-          transform: "translateX(-50%)",
-        }}
-      >
-        <InputFrame isFocused={isFocused}>
-          <input
-            type="tel"
-            placeholder="Số điện thoại (vd: 090...)"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-          />
-        </InputFrame>
-      </div>
-
-      {/* 🔐 OTP Section */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "370px",
-          transform: "translateX(-50%)",
-          width: "267px",
-        }}
-      >
-        <div
-          style={{
-            color: "#161823",
-            fontSize: 13,
-            fontFamily: "Be Vietnam Pro",
-            fontWeight: "600",
-            marginBottom: "8px",
-          }}
-        >
-          Mã OTP
-        </div>
-
-        <div
-          style={{
-            width: "232px",
-            height: "43px",
-            background: "#F2F2F2",
-            borderRadius: 12,
-            display: "flex",
-            alignItems: "center",
-            overflow: "hidden",
-            padding: 0,
-          }}
-        >
-          <div style={{ width: "162px", paddingLeft: 12 }}>
+          <div style={styles.sectionHeader}>
+            <span style={styles.label}>Số điện thoại</span>
+            <button
+              type="button"
+              style={styles.switchButton}
+              onClick={() => navigate("/register/email")}
+            >
+              Đăng ký bằng email
+            </button>
+          </div>
+          <div style={getInputWrapper("phone")}>
             <input
-              type="text"
-              placeholder="Nhập mã"
-              value={otp}
-              onChange={(e) => handleOtpChange(e.target.value)}
-              maxLength={6}
-              style={{
-                width: "100%",
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                fontSize: 14,
-                fontFamily: "Be Vietnam Pro",
-              }}
+              type="tel"
+              placeholder="Ví dụ: 090xxxxxxx"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              onFocus={() => setFocusedField("phone")}
+              onBlur={() => setFocusedField("")}
+              style={styles.input}
             />
           </div>
 
-          <div
-            style={{
-              width: 1,
-              height: 28,
-              background: "#E3E3E3",
-              opacity: 0.7,
-              margin: "0 4px",
-            }}
-          />
+          <div style={{ marginTop: "20px" }}>
+            <div style={styles.sectionHeader}>
+              <span style={styles.label}>Mã OTP</span>
+              <span style={{ fontSize: "12px", color: "rgba(22, 24, 35, 0.55)" }}>
+                {otpVerified ? "Đã xác minh" : "Gửi mã để xác thực"}
+              </span>
+            </div>
+            <div style={getInputWrapper("otp", { style: { padding: 0 } })}>
+              <input
+                type="text"
+                placeholder="Nhập mã gồm 6 chữ số"
+                value={otp}
+                onChange={(e) => handleOtpChange(e.target.value)}
+                maxLength={6}
+                onFocus={() => setFocusedField("otp")}
+                onBlur={() => setFocusedField("")}
+                style={{ ...styles.input, padding: "0 18px" }}
+              />
+              <div style={styles.divider} />
+              <button
+                type="button"
+                style={{
+                  ...styles.otpButton,
+                  opacity: loading ? 0.6 : 1,
+                  cursor: loading ? "not-allowed" : "pointer",
+                }}
+                onClick={sendOTP}
+                disabled={loading}
+              >
+                {loading ? "Đang gửi..." : "Gửi mã"}
+              </button>
+            </div>
+            <p style={styles.helper}>Mã xác thực đã gửi qua SMS.</p>
+          </div>
+
+          <div style={{ marginTop: "20px" }}>
+            <div style={styles.sectionHeader}>
+              <span style={styles.label}>Mật khẩu</span>
+            </div>
+            <div style={getInputWrapper("password", { disabled: !otpVerified })}>
+              <input
+                type="password"
+                placeholder="Tối thiểu 6 ký tự"
+                disabled={!otpVerified}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setFocusedField("password")}
+                onBlur={() => setFocusedField("")}
+                style={{
+                  ...styles.input,
+                  color: !otpVerified ? "rgba(24, 36, 10, 0.45)" : "#162110",
+                }}
+              />
+            </div>
+            {!otpVerified && (
+              <p style={styles.helper}>Xác minh OTP trước khi tạo mật khẩu.</p>
+            )}
+          </div>
 
           <button
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#EF5126",
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              fontFamily: "Be Vietnam Pro",
-              width: "70px",
-            }}
             type="button"
-            onClick={sendOTP}
-            disabled={loading}
+            style={{
+              ...styles.primaryButton,
+              marginTop: "20px",
+              ...(!otpVerified ? styles.primaryButtonDisabled : {}),
+            }}
+            onClick={handleNext}
+            disabled={!otpVerified}
           >
-            {loading ? "..." : "Gửi mã"}
+            Tiếp tục
           </button>
         </div>
-      </div>
-
-      {/* 🔑 Password Section */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "440px",
-          transform: "translateX(-50%)",
-          width: "267px",
-        }}
-      >
-        <div
-          style={{
-            color: "#161823",
-            fontSize: 13,
-            fontFamily: "Be Vietnam Pro",
-            fontWeight: "600",
-            marginBottom: "8px",
-          }}
-        >
-          Nhập mật khẩu
-        </div>
-
-        <div
-          style={{
-            width: "232px",
-            height: "43px",
-            background: otpVerified ? "#F2F2F2" : "#E0E0E0",
-            borderRadius: 12,
-            display: "flex",
-            alignItems: "center",
-            padding: "0 12px",
-          }}
-        >
-          <input
-            type="password"
-            placeholder="Nhập mật khẩu"
-            disabled={!otpVerified}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: "100%",
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              fontSize: 14,
-              fontFamily: "Be Vietnam Pro",
-            }}
-          />
-        </div>
-      </div>
-
-      {/* ▶️ Nút tiếp */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "79.54vh",
-          transform: "translateX(-50%)",
-        }}
-      >
-        <SubmitButton onClick={handleNext} isValid={otpVerified} type="button">
-          Tiếp
-        </SubmitButton>
       </div>
 
       <FooterBar
@@ -378,7 +390,7 @@ const RegisterPhone = () => {
 
       {/* 📌 Bắt buộc có container cho reCAPTCHA */}
       <div id="recaptcha-container"></div>
-    </div>
+    </>
   );
 };
 
