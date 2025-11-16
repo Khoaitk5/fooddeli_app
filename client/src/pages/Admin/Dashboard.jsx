@@ -11,6 +11,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
+import { motion } from "motion/react";
 import {
   getOverviewStats,
   getWeeklyOrders,
@@ -19,6 +20,7 @@ import {
 import BarChartMini from "../../components/admin/charts/BarChartMini";
 import LineChartMini from "../../components/admin/charts/LineChartMini";
 import PieChartMini from "../../components/admin/charts/PieChartMini";
+import RecentActivity from "../../components/Admin/RecentActivity";
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -63,12 +65,19 @@ const Dashboard = () => {
   // Thẻ thống kê nhỏ
   const StatCard = ({ title, value, sub, icon }) => (
     <Box
+      component={motion.div}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, boxShadow: "0 18px 45px rgba(15,23,42,0.12)" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       sx={{
-        borderRadius: 2,
+        borderRadius: 3,
         border: "1px solid",
-        borderColor: "grey.200",
-        bgcolor: "white",
-        p: 2.5,
+        borderColor: "rgba(148, 163, 184, 0.35)",
+        bgcolor: "#ffffff",
+        backgroundImage:
+          "radial-gradient(circle at 0% 0%, rgba(56,189,248,0.08), transparent 55%), radial-gradient(circle at 100% 0%, rgba(251,146,60,0.1), transparent 55%)",
+        p: 2.75,
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -78,7 +87,7 @@ const Dashboard = () => {
       <Typography
         variant="body2"
         sx={{
-          color: "grey.500",
+          color: "rgba(100,116,139,1)",
           fontSize: "0.875rem",
         }}
       >
@@ -89,8 +98,9 @@ const Dashboard = () => {
         sx={{
           mt: 1.5,
           display: "flex",
-          alignItems: "flex-end",
+          alignItems: "center",
           justifyContent: "space-between",
+          gap: 1.5,
         }}
       >
         <Box>
@@ -98,37 +108,47 @@ const Dashboard = () => {
             variant="h4"
             sx={{
               fontWeight: "bold",
-              color: "grey.800",
-              fontSize: "1.5rem",
+              color: "rgba(15,23,42,1)",
+              fontSize: "1.6rem",
             }}
           >
             {value ?? "—"}
           </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-          }}
-        >
           <Typography
             variant="caption"
             sx={{
-              color: "grey.500",
+              display: "block",
+              mt: 0.5,
+              color: "rgba(100,116,139,1)",
               fontSize: "0.75rem",
             }}
           >
             {sub}
           </Typography>
         </Box>
+
+        {icon && (
+          <Box
+            sx={{
+              flexShrink: 0,
+              ml: 1,
+            }}
+          >
+            {icon}
+          </Box>
+        )}
       </Box>
     </Box>
   );
 
   return (
-    <Box>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
+    >
       {/* 4 Thẻ thống kê */}
       <Grid
         container
@@ -202,12 +222,18 @@ const Dashboard = () => {
         {/* 💰 Biểu đồ doanh thu */}
         <Grid item xs={12} sm={6} md={6} sx={{ flex: 1, minWidth: 0 }}>
           <Paper
+            component={motion.div}
             elevation={0}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
             sx={{
               p: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               border: "1px solid",
-              borderColor: "divider",
+              borderColor: "rgba(148,163,184,0.35)",
+              backgroundColor: "#ffffff",
+              boxShadow: "0 22px 45px rgba(15,23,42,0.08)",
               height: "100%",
             }}
           >
@@ -263,12 +289,18 @@ const Dashboard = () => {
         {/* 📦 Biểu đồ đơn hàng */}
         <Grid item xs={12} sm={6} md={6} sx={{ flex: 1, minWidth: 0 }}>
           <Paper
+            component={motion.div}
             elevation={0}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.06, ease: "easeOut" }}
             sx={{
               p: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               border: "1px solid",
-              borderColor: "divider",
+              borderColor: "rgba(148,163,184,0.35)",
+              backgroundColor: "#ffffff",
+              boxShadow: "0 22px 45px rgba(15,23,42,0.08)",
               height: "100%",
             }}
           >
@@ -304,12 +336,17 @@ const Dashboard = () => {
         <Grid container spacing={2} sx={{ flexWrap: "nowrap" }}>
           <Grid item xs={12} md={6} lg={6} sx={{ flex: 1, minWidth: 0 }}>
             <Box
+              component={motion.div}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 border: "1px solid",
-                borderColor: "grey.200",
-                bgcolor: "white",
+                borderColor: "rgba(148,163,184,0.35)",
+                bgcolor: "#ffffff",
                 p: { xs: 2.5, sm: 3 },
+                boxShadow: "0 22px 45px rgba(15,23,42,0.06)",
                 height: "100%",
               }}
             >
@@ -347,63 +384,22 @@ const Dashboard = () => {
 
           <Grid item xs={12} md={6} lg={6} sx={{ flex: 1, minWidth: 0 }}>
             <Paper
+              component={motion.div}
               elevation={0}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.08, ease: "easeOut" }}
               sx={{
-                p: 2,
-                borderRadius: 2,
+                p: 2.5,
+                borderRadius: 3,
                 border: "1px solid",
-                borderColor: "divider",
+                borderColor: "rgba(148,163,184,0.35)",
+                backgroundColor: "#ffffff",
+                boxShadow: "0 22px 45px rgba(15,23,42,0.06)",
                 height: "100%",
               }}
             >
-              <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-                Hoạt động gần đây
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Các sự kiện mới nhất trong hệ thống
-              </Typography>
-              <Stack spacing={1}>
-                {[
-                  'Cửa hàng "Phở Hà Nội" đã đăng ký thành công',
-                  "Shipper Nguyễn Văn A đã hoàn thành 10 đơn hàng",
-                  "Có 3 đăng ký shipper chờ duyệt",
-                  "Doanh thu hôm nay đã đạt 45 triệu VND",
-                ].map((txt, idx) => (
-                  <Stack
-                    key={idx}
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                  >
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        bgcolor: [
-                          "success.main",
-                          "info.main",
-                          "warning.main",
-                          "secondary.main",
-                        ][idx],
-                        borderRadius: "50%",
-                      }}
-                    />
-                    <Typography variant="body2">{txt}</Typography>
-                    <Chip
-                      size="small"
-                      label={
-                        [
-                          "5 phút trước",
-                          "15 phút trước",
-                          "30 phút trước",
-                          "1 giờ trước",
-                        ][idx]
-                      }
-                      variant="outlined"
-                    />
-                  </Stack>
-                ))}
-              </Stack>
+              <RecentActivity />
             </Paper>
           </Grid>
         </Grid>
