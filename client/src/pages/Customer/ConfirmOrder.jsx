@@ -108,7 +108,7 @@ export default function ConfirmOrder() {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
-  
+
   const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
   const { currentAddress, setCurrentAddress } = useAddress();
   const [note, setNote] = useState("");
@@ -125,7 +125,8 @@ export default function ConfirmOrder() {
   // total (từ state) chính là totalItemPrice
   const totalItemPrice = total;
   // totalPrice (tổng cuối cùng)
-  const totalPrice = totalItemPrice + shippingFee - foodDiscount - shippingDiscount;
+  const totalPrice =
+    totalItemPrice + shippingFee - foodDiscount - shippingDiscount;
 
   const [currentUser, setCurrentUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -133,11 +134,12 @@ export default function ConfirmOrder() {
   const [deliveryDistance, setDeliveryDistance] = useState(null);
   const [canDeliver, setCanDeliver] = useState(true);
   const [distanceError, setDistanceError] = useState(null);
-  
+
   // Format contact info từ user data (chỉ tên và số điện thoại)
-  const contactInfo = currentUser?.full_name && currentUser?.phone
-    ? `${currentUser.full_name} | ${currentUser.phone}`
-    : "Chưa có thông tin liên hệ";
+  const contactInfo =
+    currentUser?.full_name && currentUser?.phone
+      ? `${currentUser.full_name} | ${currentUser.phone}`
+      : "Chưa có thông tin liên hệ";
 
   // Fetch current user from database
   useEffect(() => {
@@ -187,21 +189,24 @@ export default function ConfirmOrder() {
   useEffect(() => {
     const fetchShopInfo = async () => {
       if (!shop_id) return;
-      
+
       try {
-        const res = await axios.get(`http://localhost:5000/api/shops/${shop_id}`, {
-          withCredentials: true,
-        });
-        
+        const res = await axios.get(
+          `http://localhost:5000/api/shops/${shop_id}`,
+          {
+            withCredentials: true,
+          }
+        );
+
         if (res.data?.success) {
           setShopInfo(res.data.data);
-          console.log('📍 Shop info:', res.data.data);
+          console.log("📍 Shop info:", res.data.data);
         }
       } catch (err) {
-        console.error('❌ Error fetching shop info:', err);
+        console.error("❌ Error fetching shop info:", err);
       }
     };
-    
+
     fetchShopInfo();
   }, [shop_id]);
 
@@ -209,46 +214,46 @@ export default function ConfirmOrder() {
   useEffect(() => {
     const checkDeliveryDistance = () => {
       if (!shopInfo?.address?.lat_lon || !currentAddress?.lat_lon) {
-        console.log('⚠️ Chưa có đủ thông tin tọa độ để kiểm tra khoảng cách');
+        console.log("⚠️ Chưa có đủ thông tin tọa độ để kiểm tra khoảng cách");
         return;
       }
-      
+
       const shopLat = Number(shopInfo.address.lat_lon.lat);
       const shopLon = Number(shopInfo.address.lat_lon.lon);
       const userLat = Number(currentAddress.lat_lon.lat);
       const userLon = Number(currentAddress.lat_lon.lon);
-      
+
       if (!shopLat || !shopLon || !userLat || !userLon) {
-        console.warn('⚠️ Tọa độ không hợp lệ');
-        setDistanceError('Không thể xác định khoảng cách giao hàng');
+        console.warn("⚠️ Tọa độ không hợp lệ");
+        setDistanceError("Không thể xác định khoảng cách giao hàng");
         setCanDeliver(false);
         return;
       }
-      
+
       const distance = calculateDistance(shopLat, shopLon, userLat, userLon);
       setDeliveryDistance(distance);
-      
+
       const MAX_DELIVERY_DISTANCE_KM = 5;
-      
-      console.log('📍 Khoảng cách giao hàng:', {
-        distance: distance.toFixed(2) + ' km',
+
+      console.log("📍 Khoảng cách giao hàng:", {
+        distance: distance.toFixed(2) + " km",
         shopCoords: { lat: shopLat, lon: shopLon },
         userCoords: { lat: userLat, lon: userLon },
-        canDeliver: distance <= MAX_DELIVERY_DISTANCE_KM
+        canDeliver: distance <= MAX_DELIVERY_DISTANCE_KM,
       });
-      
+
       if (distance > MAX_DELIVERY_DISTANCE_KM) {
         setCanDeliver(false);
         setDistanceError(
           `Khoảng cách giao hàng quá xa (${distance.toFixed(1)}km). ` +
-          `Chúng tôi chỉ giao hàng trong bán kính ${MAX_DELIVERY_DISTANCE_KM}km`
+            `Chúng tôi chỉ giao hàng trong bán kính ${MAX_DELIVERY_DISTANCE_KM}km`
         );
       } else {
         setCanDeliver(true);
         setDistanceError(null);
       }
     };
-    
+
     checkDeliveryDistance();
   }, [shopInfo, currentAddress]);
 
@@ -261,7 +266,7 @@ export default function ConfirmOrder() {
 
   // Xử lý khi chọn địa chỉ mới
   const handleSelectAddress = (address) => {
-    console.log('🔄 Address selected:', address);
+    console.log("🔄 Address selected:", address);
     setCurrentAddress(address);
     setAddressSelectorOpen(false);
   };
@@ -455,6 +460,7 @@ export default function ConfirmOrder() {
   // 🔘 Nút "Đặt đơn"
   // ==========================
   const handleConfirmOrder = async () => {
+    const orderCode = Date.now();
     // Check số điện thoại trước khi đặt hàng
     if (!currentUser?.phone) {
       alert("Vui lòng cập nhật số điện thoại trước khi đặt hàng");
@@ -464,7 +470,10 @@ export default function ConfirmOrder() {
 
     // 📍 Kiểm tra khoảng cách giao hàng
     if (!canDeliver) {
-      alert(distanceError || "Khoảng cách giao hàng quá xa. Vui lòng chọn cửa hàng gần hơn");
+      alert(
+        distanceError ||
+          "Khoảng cách giao hàng quá xa. Vui lòng chọn cửa hàng gần hơn"
+      );
       return;
     }
 
@@ -478,30 +487,22 @@ export default function ConfirmOrder() {
         const res = await fetch("http://localhost:5000/api/payments/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          
           body: JSON.stringify({
             orderCode: Date.now(),
             amount: 5000, // test, có thể đổi thành totalPrice
-            description: JSON.stringify({
+            description: `DH ${orderCode}`.slice(0, 25), // ✔ PAYOS BẮT BUỘC: string đơn giản
+            metadata: {
               user_id: currentUser?.id,
               shop_id,
-              address_id: currentAddress?.address_id, // 📍 Thêm address_id
-              delivery_address: currentAddress ? JSON.stringify(currentAddress) : null,
+              address_id: currentAddress?.address_id,
+              delivery_address: currentAddress, // ✔ object thật
               items: cartItems.map((i) => ({
                 product_id: i.product_id,
                 quantity: i.quantity,
                 unit_price: i.unit_price,
               })),
-            }),
-            metadata: JSON.stringify({
-              user_id: currentUser?.id,
-              shop_id,
-              address_id: currentAddress?.address_id, // 📍 Thêm address_id
-              items: cartItems.map((i) => ({
-                product_id: i.product_id,
-                quantity: i.quantity,
-                unit_price: i.unit_price,
-              })),
-            }),
+            },
           }),
         });
 
@@ -529,7 +530,9 @@ export default function ConfirmOrder() {
               shop_id,
               note,
               address_id: currentAddress?.address_id, // 📍 Thêm address_id để backend dùng đúng địa chỉ
-              delivery_address: currentAddress ? JSON.stringify(currentAddress) : null,
+              delivery_address: currentAddress
+                ? JSON.stringify(currentAddress)
+                : null,
               items: cartItems.map((i) => ({
                 product_id: i.product_id,
                 quantity: i.quantity,
@@ -542,7 +545,7 @@ export default function ConfirmOrder() {
         const data = await res.json();
         if (data.success) {
           console.log("✅ Đã tạo đơn tiền mặt:", data.order);
-          
+
           // Xóa các sản phẩm đã đặt từ giỏ hàng
           try {
             for (const item of cartItems) {
@@ -557,12 +560,12 @@ export default function ConfirmOrder() {
           } catch (err) {
             console.error("❌ Lỗi xóa sản phẩm khỏi giỏ hàng:", err);
           }
-          
+
           navigate("/customer/order-success", {
-            state: { 
-              shop_id, 
-              shop_name, 
-              totalPrice, 
+            state: {
+              shop_id,
+              shop_name,
+              totalPrice,
               paymentMethod: paymentMethodName,
               order_id: data.order?.id || data.order?.order_id,
             },
@@ -650,10 +653,19 @@ export default function ConfirmOrder() {
             textAlign: "center",
           }}
         >
-          <div style={{ color: "#1A1A1A", fontSize: "1.7rem", fontWeight: 700 }}>
+          <div
+            style={{ color: "#1A1A1A", fontSize: "1.7rem", fontWeight: 700 }}
+          >
             Thanh toán
           </div>
-          <div style={{ color: "#666", fontSize: "1.2rem", fontWeight: 500, marginTop: "0.2rem" }}>
+          <div
+            style={{
+              color: "#666",
+              fontSize: "1.2rem",
+              fontWeight: 500,
+              marginTop: "0.2rem",
+            }}
+          >
             {shop_name}
           </div>
         </div>
@@ -673,10 +685,19 @@ export default function ConfirmOrder() {
         <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
           <LocationIcon style={{ marginTop: "0.2rem" }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: "1.4rem", color: "#1A1A1A", marginBottom: "0.5rem" }}>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: "1.4rem",
+                color: "#1A1A1A",
+                marginBottom: "0.5rem",
+              }}
+            >
               {formatAddress(currentAddress)}
             </div>
-            <div style={{ color: "#888", fontSize: "1.2rem" }}>{contactInfo}</div>
+            <div style={{ color: "#888", fontSize: "1.2rem" }}>
+              {contactInfo}
+            </div>
           </div>
           <div
             onClick={() => setAddressSelectorOpen(true)}
@@ -687,8 +708,8 @@ export default function ConfirmOrder() {
               cursor: "pointer",
               transition: "opacity 0.2s",
             }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
             Sửa
           </div>
@@ -711,7 +732,7 @@ export default function ConfirmOrder() {
             {deliveryDistance !== null && ` • ${deliveryDistance.toFixed(1)}km`}
           </span>
         </div>
-        
+
         {/* Cảnh báo khoảng cách */}
         {!canDeliver && distanceError && (
           <div
@@ -728,10 +749,23 @@ export default function ConfirmOrder() {
           >
             <span style={{ fontSize: "1.4rem" }}>⚠️</span>
             <div>
-              <div style={{ color: "#B42318", fontSize: "1.3rem", fontWeight: "600", marginBottom: "0.3rem" }}>
+              <div
+                style={{
+                  color: "#B42318",
+                  fontSize: "1.3rem",
+                  fontWeight: "600",
+                  marginBottom: "0.3rem",
+                }}
+              >
                 Không thể giao hàng
               </div>
-              <div style={{ color: "#B42318", fontSize: "1.2rem", lineHeight: "1.5" }}>
+              <div
+                style={{
+                  color: "#B42318",
+                  fontSize: "1.2rem",
+                  lineHeight: "1.5",
+                }}
+              >
                 {distanceError}
               </div>
             </div>
@@ -818,11 +852,18 @@ export default function ConfirmOrder() {
                 display: "flex",
                 alignItems: "center",
                 padding: "1.2rem 1.5rem",
-                borderBottom: cartItems[cartItems.length - 1].id !== item.id ? "1px solid #F5F5F5" : "none",
+                borderBottom:
+                  cartItems[cartItems.length - 1].id !== item.id
+                    ? "1px solid #F5F5F5"
+                    : "none",
                 transition: "background-color 0.2s ease",
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#FAFAFA"}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "white"}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#FAFAFA")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "white")
+              }
             >
               <img
                 src={item.product_image || "/default-food.jpg"}
@@ -877,19 +918,39 @@ export default function ConfirmOrder() {
                 }}
               >
                 <MinusIcon
-                  style={{ cursor: "pointer", transition: "transform 0.2s ease" }}
+                  style={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s ease",
+                  }}
                   onClick={handleDecreaseClick}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.2)"}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.2)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
                 />
-                <span style={{ fontSize: "1.4rem", fontWeight: "700", color: "#1A1A1A" }}>
+                <span
+                  style={{
+                    fontSize: "1.4rem",
+                    fontWeight: "700",
+                    color: "#1A1A1A",
+                  }}
+                >
                   {item.quantity}
                 </span>
                 <PlusIcon
-                  style={{ cursor: "pointer", transition: "transform 0.2s ease" }}
+                  style={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s ease",
+                  }}
                   onClick={handleIncreaseClick}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.2)"}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.2)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
                 />
               </div>
             </div>
@@ -915,7 +976,9 @@ export default function ConfirmOrder() {
         {/* Row 2: Phí giao hàng */}
         <div style={paymentStyles.paymentRow}>
           <div style={paymentStyles.paymentLabel}>Phí giao hàng</div>
-          <div style={paymentStyles.paymentValue}>{formatPrice(shippingFee)}</div>
+          <div style={paymentStyles.paymentValue}>
+            {formatPrice(shippingFee)}
+          </div>
         </div>
 
         {/* Row 3: Giảm giá món ăn */}
@@ -939,7 +1002,14 @@ export default function ConfirmOrder() {
         )}
 
         {/* Row 5: Tổng thanh toán */}
-        <div style={{ ...paymentStyles.paymentRow, marginTop: "0.5rem", paddingTop: "1rem", borderTop: "2px dashed #F0F0F0" }}>
+        <div
+          style={{
+            ...paymentStyles.paymentRow,
+            marginTop: "0.5rem",
+            paddingTop: "1rem",
+            borderTop: "2px dashed #F0F0F0",
+          }}
+        >
           <div style={paymentStyles.paymentTotalLabel}>Tổng thanh toán</div>
           <div style={paymentStyles.paymentTotalValue}>
             {formatPrice(totalPrice)}
@@ -947,7 +1017,6 @@ export default function ConfirmOrder() {
         </div>
       </div>
       {/* --- HẾT PAYMENT DETAILS --- */}
-
 
       {/* Footer */}
       <div
@@ -985,8 +1054,12 @@ export default function ConfirmOrder() {
               transition: "background-color 0.2s ease",
             }}
             onClick={() => navigate("/customer/payment-method")}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F5F5F5"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#F5F5F5")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
           >
             {paymentMethodName === "Tiền mặt" ? (
               <PaymentIcon height="1.4rem" width="1.4rem" />
@@ -1011,7 +1084,7 @@ export default function ConfirmOrder() {
               background: "#E0E0E0",
             }}
           />
-          
+
           <div
             style={{
               display: "flex",
@@ -1023,8 +1096,12 @@ export default function ConfirmOrder() {
               transition: "background-color 0.2s ease",
             }}
             onClick={() => navigate("/customer/add-coupon")}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F5F5F5"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#F5F5F5")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
           >
             <TagIcon height="1.4rem" width="1.4rem" />
             <div
@@ -1045,12 +1122,12 @@ export default function ConfirmOrder() {
             width: "87.78vw",
             margin: "0 auto",
             padding: "1.4rem",
-            background: canDeliver 
+            background: canDeliver
               ? "linear-gradient(90deg, #FE5621 0%, #EE4D2D 100%)"
               : "#CCCCCC",
             borderRadius: "12px",
             cursor: canDeliver ? "pointer" : "not-allowed",
-            boxShadow: canDeliver 
+            boxShadow: canDeliver
               ? "0 4px 16px rgba(254, 86, 33, 0.35)"
               : "0 2px 8px rgba(0, 0, 0, 0.1)",
             transition: "all 0.3s ease",
@@ -1063,13 +1140,15 @@ export default function ConfirmOrder() {
           onMouseEnter={(e) => {
             if (canDeliver) {
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 6px 20px rgba(254, 86, 33, 0.45)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 20px rgba(254, 86, 33, 0.45)";
             }
           }}
           onMouseLeave={(e) => {
             if (canDeliver) {
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(254, 86, 33, 0.35)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 16px rgba(254, 86, 33, 0.35)";
             }
           }}
         >

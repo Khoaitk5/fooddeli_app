@@ -187,6 +187,7 @@ function App() {
 
         {/* ========== ADMIN ========== */}
         <Route path="/admin/*" element={<DesktopAdminLayout />}>
+        <Route index element={<Navigate to="/admin/dashboard" />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="system" element={<System />} />
           <Route path="approvals" element={<Approvals />} />
