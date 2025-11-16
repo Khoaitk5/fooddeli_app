@@ -81,10 +81,16 @@ const OTP = () => {
 
       const data = await res.json();
       if (data.success) {
-        // Save user info to localStorage
         localStorage.setItem("user", JSON.stringify(data.user));
         setSuccessMessage("Xác minh thành công! Đang chuyển hướng...");
-        setTimeout(() => navigate("/customer/home"), 1000);
+
+        setTimeout(() => {
+          if (data.user.role === "admin") {
+            navigate("/admin");
+          } else {
+            navigate("/customer/home");
+          }
+        }, 1000);
       } else {
         setError("Xác minh thất bại. Vui lòng thử lại.");
         setOtp("");
@@ -152,7 +158,7 @@ const OTP = () => {
           display: "flex",
           flexDirection: "row",
           color: "#868686",
-          whiteSpace: "nowrap"
+          whiteSpace: "nowrap",
         }}
       >
         <span
@@ -213,7 +219,12 @@ const OTP = () => {
               }}
             >
               {slots.map((slot, idx) => (
-                <Slot key={idx} {...slot} isVerifying={isVerifying} hasError={!!error} />
+                <Slot
+                  key={idx}
+                  {...slot}
+                  isVerifying={isVerifying}
+                  hasError={!!error}
+                />
               ))}
             </div>
           )}
