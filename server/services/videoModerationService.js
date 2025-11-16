@@ -46,7 +46,7 @@ const downloadVideoFromFirebase = async (videoUrl) => {
 const extractFrames = async (videoPath, frameRate = 0.5) => {
   return new Promise((resolve, reject) => {
     const sessionId = Date.now();
-    const outputPattern = path.join(FRAMES_DIR, `frame_${sessionId}_%03d.png`);
+    const outputPattern = path.join(FRAMES_DIR, `frame_${sessionId}_%03d.jpg`);
     const extractedFrames = [];
 
     ffmpeg(videoPath)
@@ -66,7 +66,8 @@ const extractFrames = async (videoPath, frameRate = 0.5) => {
       .screenshots({
         count: 20,
         folder: FRAMES_DIR,
-        filename: `frame_${sessionId}_%03d.png`,
+        filename: `frame_${sessionId}_%03d.jpg`,
+        size: "480x?",
       });
   });
 };
@@ -95,7 +96,7 @@ const analyzeFramesWithGemini = async (framePaths) => {
       console.error("❌ Không thể khởi tạo Gemini 2.5 Flash Lite:", err);
       throw err;
     }
-    const batchSize = 5;
+    const batchSize = 10;
     const results = [];
 
     for (let i = 0; i < Math.min(framePaths.length, 20); i += batchSize) {
@@ -104,7 +105,7 @@ const analyzeFramesWithGemini = async (framePaths) => {
       const imageParts = batch.map((framePath, idx) => ({
         inlineData: {
           data: imageToBase64(framePath),
-          mimeType: "image/png",
+          mimeType: "image/jpeg",
         },
       }));
 
@@ -190,6 +191,51 @@ const cleanupFiles = async (filePaths) => {
   }
 };
 
+const moderateLocalVideo = async (videoPath) => {
+  let framePaths = [];
+
+  try {
+    await ensureTempDirs();
+
+    const overallStart = Date.now();
+
+    console.log("🎬 Bắt đầu kiểm duyệt video local:", videoPath);
+
+    const extractStart = Date.now();
+    framePaths = await extractFrames(videoPath);
+    const extractEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Extract frames time (local): ${extractEnd - extractStart}ms`);
+
+    const aiStart = Date.now();
+    const moderationResult = await analyzeFramesWithGemini(framePaths);
+    const aiEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Gemini analyze time (local): ${aiEnd - aiStart}ms`);
+
+    const cleanupStart = Date.now();
+    await cleanupFiles([videoPath, ...framePaths]);
+    const cleanupEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Cleanup frames time (local): ${cleanupEnd - cleanupStart}ms`);
+
+    const overallEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Total moderation time (local): ${overallEnd - overallStart}ms`);
+
+    console.log("✅ Hoàn tất kiểm duyệt local:", moderationResult);
+    return moderationResult;
+  } catch (err) {
+    console.error("❌ Lỗi trong quá trình kiểm duyệt local:", err);
+
+    const pathsToCleanup = [videoPath, ...framePaths];
+    if (pathsToCleanup.length > 0) await cleanupFiles(pathsToCleanup);
+
+    return {
+      status: "pending",
+      reason: `Lỗi hệ thống (local): ${err.message}. Cần kiểm tra thủ công.`,
+      analyzedFrames: 0,
+      flaggedFrames: [],
+    };
+  }
+};
+
 const moderateVideo = async (videoUrl) => {
   let videoPath = null;
   let framePaths = [];
@@ -197,16 +243,33 @@ const moderateVideo = async (videoUrl) => {
   try {
     await ensureTempDirs();
     
+    const overallStart = Date.now();
+
     console.log("🎬 Bắt đầu kiểm duyệt video:", videoUrl);
     
+    const downloadStart = Date.now();
     videoPath = await downloadVideoFromFirebase(videoUrl);
-    
+    const downloadEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Download time: ${downloadEnd - downloadStart}ms`);
+
+    const extractStart = Date.now();
     framePaths = await extractFrames(videoPath);
-    
+    const extractEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Extract frames time: ${extractEnd - extractStart}ms`);
+
+    const aiStart = Date.now();
     const moderationResult = await analyzeFramesWithGemini(framePaths);
-    
+    const aiEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Gemini analyze time: ${aiEnd - aiStart}ms`);
+
+    const cleanupStart = Date.now();
     await cleanupFiles([videoPath, ...framePaths]);
-    
+    const cleanupEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Cleanup time: ${cleanupEnd - cleanupStart}ms`);
+
+    const overallEnd = Date.now();
+    console.log(`⏱️ [MODERATION] Total moderation time: ${overallEnd - overallStart}ms`);
+
     console.log("✅ Hoàn tất kiểm duyệt:", moderationResult);
     return moderationResult;
   } catch (err) {
@@ -224,4 +287,4 @@ const moderateVideo = async (videoUrl) => {
   }
 };
 
-module.exports = { moderateVideo };
+module.exports = { moderateVideo, moderateLocalVideo };

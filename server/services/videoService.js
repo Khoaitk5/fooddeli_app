@@ -152,11 +152,13 @@ class VideoService {
    * 🗺️ Lấy video gần vị trí người dùng (DAO mới có SQL tính sẵn)
    */
   async getNearbyVideos({ lat, lon, radiusKm = 10 }) {
-    if (!lat || !lon) {
-      throw new Error("Thiếu tọa độ người dùng (lat, lon)");
-    }
-    return await videoDao.getNearbyVideos(lat, lon, radiusKm);
+  if (!lat || !lon) {
+    throw new Error("Thiếu tọa độ người dùng (lat, lon)");
   }
+
+  const userLocation = { lat, lon };          // ✅ truyền đúng dạng object
+  return await videoDao.getNearbyVideos(userLocation, radiusKm);
+}
 
   /**
    * 🗺️ Hoặc: Lấy video gần vị trí (lọc bằng map4d)

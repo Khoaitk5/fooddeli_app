@@ -1,6 +1,8 @@
+const fs = require("fs");
+const path = require("path");
 const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
-const { moderateVideo } = require("../services/videoModerationService");
+const { moderateVideo, moderateLocalVideo } = require("../services/videoModerationService");
 const videoService = require("../services/videoService");
 
 /**
@@ -22,6 +24,14 @@ const uploadVideoOnly = async (req, res) => {
 
     console.log(`🎬 [UPLOAD] Uploading file ${fileName}`);
 
+    const tempDir = path.join(__dirname, "../temp");
+    const tempVideoPath = path.join(tempDir, `upload_${Date.now()}_${file.originalname}`);
+
+    await fs.promises.mkdir(tempDir, { recursive: true });
+    await fs.promises.writeFile(tempVideoPath, file.buffer);
+
+    const moderationPromise = moderateLocalVideo(tempVideoPath);
+
     const stream = fileUpload.createWriteStream({
       metadata: {
         contentType: file.mimetype,
@@ -41,9 +51,9 @@ const uploadVideoOnly = async (req, res) => {
         )}?alt=media&token=${token}`;
 
         console.log(`✅ [UPLOAD] Done: ${publicUrl}`);
-        console.log(`🤖 [MODERATION] Bắt đầu kiểm duyệt video...`);
+        console.log(`🤖 [MODERATION] Đang chờ kết quả kiểm duyệt video (local)...`);
 
-        const moderationResult = await moderateVideo(publicUrl);
+        const moderationResult = await moderationPromise;
 
         console.log(`✅ [MODERATION] Kết quả:`, moderationResult);
 
@@ -71,8 +81,8 @@ const uploadVideoOnly = async (req, res) => {
           savedVideo: savedVideo,
         });
       } catch (err) {
-        console.error("⚠️ Lỗi khi xử lý URL:", err);
-        res.status(500).json({ success: false, message: "Lỗi khi tạo URL video", details: err.message });
+        console.error("⚠️ Lỗi khi xử lý URL hoặc kiểm duyệt:", err);
+        res.status(500).json({ success: false, message: "Lỗi khi xử lý upload/kiểm duyệt video", details: err.message });
       }
     });
 
