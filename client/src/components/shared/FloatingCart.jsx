@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
  * @param {number} props.totalQuantity - Tổng số lượng món
  * @param {number} props.totalPrice - Tổng giá
  */
-export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice = 0 }) {
+export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice = 0,distance = null }) {
   const navigate = useNavigate();
 
   const handleViewCart = () => {
@@ -43,7 +43,12 @@ export default function FloatingCart({ items = [], totalQuantity = 0, totalPrice
       };
       
       localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
-      navigate('/customer/confirm-order', { state: checkoutData });
+      navigate('/customer/confirm-order', { 
+  state: { 
+    ...checkoutData,
+    distance   // 👈 TRUYỀN KHOẢNG CÁCH QUA ConfirmOrder
+  }
+});
     } else {
       // Nhiều shop - đi qua Cart page
       navigate('/customer/cart');

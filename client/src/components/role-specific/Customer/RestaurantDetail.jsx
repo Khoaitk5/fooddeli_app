@@ -139,9 +139,9 @@ export default function RestaurantDetail() {
  const durationNum = Number(durationRaw);
  if (Number.isFinite(distanceNum) && Number.isFinite(durationNum)) {
    setRouteInfo({
-     distance: `${distanceNum.toFixed(1)} km`,
-     duration: `${Math.max(1, Math.round(durationNum / 60))} phút`,
-   });
+  distance: distanceNum, // 👈 trả về số luôn (km)
+  duration: Math.max(1, Math.round(durationNum / 60)),
+});
  } else {
    console.warn("⚠️ Dữ liệu route không hợp lệ:", data?.data);
    setRouteInfo({ distance: "N/A", duration: "N/A" });
@@ -365,7 +365,7 @@ export default function RestaurantDetail() {
             <>
               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
                 <MapPin size={16} strokeWidth={2} />
-                <span>{routeInfo.distance || "N/A"}</span>
+                <span>{routeInfo.distance ? `${routeInfo.distance} km` : "N/A"}</span>
               </div>
               
               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#666", fontSize: "1.3rem" }}>
@@ -771,6 +771,7 @@ export default function RestaurantDetail() {
         items={cartItems}
         totalQuantity={cartCount}
         totalPrice={totalPrice}
+        distance={routeInfo.distance}
       />
 
       {/* 🍞 Toast Notification */}
