@@ -43,11 +43,17 @@ const DesktopAdminLayout = () => {
   const location = useLocation();
 
   React.useEffect(() => {
-    if (!auth || loading) return;
-    if (!user || user.role !== "admin") {
+    if (loading) return;
+
+    if (!user) {
+      navigate("/customer/home");
+      return;
+    }
+
+    if (user.role !== "admin") {
       navigate("/customer/home");
     }
-  }, [auth, user, loading, navigate]);
+  }, [user, loading, location.pathname, navigate]);
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
